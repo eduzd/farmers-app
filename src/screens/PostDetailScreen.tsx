@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -6,6 +6,7 @@ import {
   TextInput,
   Pressable,
   Platform,
+  Alert,
 } from "react-native";
 import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,6 +25,17 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 import { tr, useTr } from "@/lib/tr";
+import { useAuthStore } from "@/lib/authStore";
+import { useI18n } from "@/lib/i18n";
+import {
+  createServerComment,
+  fetchServerComments,
+  initialsOf,
+  isSharedPostId,
+  likeServerPost,
+  timeAgo,
+  ServerComment,
+} from "@/lib/feedApi";
 type PostDetailRouteProp = RouteProp<RootStackParamList, "PostDetail">;
 
 interface Reply {
@@ -140,7 +152,37 @@ export default function PostDetailScreen() {
   const { post } = route.params;
 
   const flatListRef = useRef<FlatList>(null);
-  const [comments, setComments] = useState<Comment[]>(INITIAL_COMMENTS);
+  // Shared posts: real comments from the server (the author is notified of each new one).
+  const shared = !!post.shared || isSharedPostId(post.id);
+  const getToken = useAuthStore((s) => s.getToken);
+  const me = useAuthStore((s) => s.user);
+  const { language } = useI18n();
+  const isBn = language === "bn";
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [sending, setSending] = useState(false);
+  const toComment = (c: ServerComment): Comment => ({
+    id: c.id,
+    author: { name: c.userName, initials: initialsOf(c.userName), avatar: c.avatar || undefined },
+    content: c.body,
+    likes: 0,
+    isLiked: false,
+    createdAt: c.createdAt ? timeAgo(c.createdAt, isBn) : "",
+    replies: [],
+  });
+
+  useEffect(() => {
+    if (!shared) return;
+    let alive = true;
+    fetchServerComments(post.id)
+      .then((list) => {
+        if (alive) setComments(list.map(toComment));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.id, shared]);
   const [newComment, setNewComment] = useState("");
   const [isLiked, setIsLiked] = useState(post.isLiked);
   const [likesCount, setLikesCount] = useState(post.likes);
@@ -207,10 +249,24 @@ export default function PostDetailScreen() {
     });
   };
 
-  const handleLike = () => {
+  const handleLike = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsLiked(!isLiked);
-    setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
+    const before = { isLiked, likesCount };
+    const liked = !isLiked;
+    setIsLiked(liked);
+    setLikesCount((prev) => Math.max(0, prev + (liked ? 1 : -1)));
+    if (!shared) return;
+    const token = getToken();
+    try {
+      if (!token) throw new Error("signed out");
+      const out = await likeServerPost(token, post.id, liked);
+      setIsLiked(out.liked);
+      setLikesCount(out.likes);
+    } catch {
+      setIsLiked(before.isLiked);
+      setLikesCount(before.likesCount);
+      Alert.alert(isBn ? "লাইক হয়নি" : "Couldn't like", token ? (isBn ? "আবার চেষ্টা করুন।" : "Check your internet and try again.") : isBn ? "লাইক করতে সাইন ইন করুন।" : "Sign in to like posts.");
+    }
   };
 
   const handleAuthorPress = (author: { name: string; initials: string }) => {
@@ -245,16 +301,41 @@ export default function PostDetailScreen() {
     );
   };
 
-  const handleSendComment = () => {
-    if (!newComment.trim()) return;
+  const myName = me?.name || (isBn ? "আমি" : "Me");
+
+  const handleSendComment = async () => {
+    if (!newComment.trim() || sending) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    if (shared) {
+      const token = getToken();
+      if (!token) {
+        Alert.alert(isBn ? "সাইন ইন করুন" : "Sign in", isBn ? "মন্তব্য করতে সাইন ইন করুন।" : "Sign in to comment.");
+        return;
+      }
+      // The server keeps one level of comments; a reply starts with @name.
+      const text = replyingTo ? `@${replyingTo.authorName} ${newComment.trim()}` : newComment.trim();
+      setSending(true);
+      try {
+        const saved = await createServerComment(token, post.id, text);
+        setComments((prev) => [...prev, toComment(saved)]);
+        setNewComment("");
+        setReplyingTo(null);
+        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+      } catch {
+        Alert.alert(isBn ? "মন্তব্য যায়নি" : "Comment not sent", isBn ? "ইন্টারনেট দেখে আবার চেষ্টা করুন।" : "Check your internet and try again.");
+      } finally {
+        setSending(false);
+      }
+      return;
+    }
 
     if (replyingTo) {
       const reply: Reply = {
         id: Date.now().toString(),
         parentReplyId: replyingTo.replyId,
-        author: { name: "John Doe", initials: "JD" },
+        author: { name: myName, initials: initialsOf(myName) },
         content: newComment.trim(),
         createdAt: "Just now",
         likes: 0,
@@ -283,7 +364,7 @@ export default function PostDetailScreen() {
     } else {
       const comment: Comment = {
         id: Date.now().toString(),
-        author: { name: "John Doe", initials: "JD" },
+        author: { name: myName, initials: initialsOf(myName) },
         content: newComment.trim(),
         likes: 0,
         isLiked: false,
@@ -429,7 +510,8 @@ export default function PostDetailScreen() {
     </View>
   );
 
-  const displayedLikedUsers = LIKED_USERS.slice(0, Math.min(likesCount, 5));
+  // No made-up likers: only the count is shown.
+  const displayedLikedUsers: LikedUser[] = [];
 
   const renderHeader = () => (
     <View style={[styles.postContainer, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -445,6 +527,7 @@ export default function PostDetailScreen() {
             avatarColor={post.author.avatarColor}
             size="medium" 
             isWelfareMember={post.author.isWelfareMember}
+            badge={post.author.badge}
           />
           <View style={styles.authorInfo}>
             <ThemedText style={[styles.authorName, { color: theme.text }]}>

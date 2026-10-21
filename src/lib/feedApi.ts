@@ -10,6 +10,8 @@ export interface FeedPost {
     avatarId?: string;
     avatarColor?: string;
     isWelfareMember?: boolean;
+    /** Profile badge: farming category, or the role picked at sign-up. */
+    badge?: string;
   };
   content: string;
   image?: string;
@@ -60,32 +62,102 @@ export async function resolveServerCommunityId(local?: { id: string; slug?: stri
   return (list.find((c) => c.slug === wanted) ?? list.find((c) => c.slug === "farmer") ?? list[0])?.id ?? null;
 }
 
-export async function fetchServerPosts(communityId: string, bn: boolean): Promise<FeedPost[]> {
-  const res = await fetch(`${getApiUrl()}/api/posts?communityId=${encodeURIComponent(communityId)}`);
-  if (!res.ok) throw new Error(`posts ${res.status}`);
-  const rows: {
+interface ServerPostRow {
+  id: string;
+  content: string | null;
+  media: string[] | null;
+  createdAt: string;
+  commentCount?: number | string | null;
+  likeCount?: number | string | null;
+  likedByMe?: boolean | null;
+  author: {
     id: string;
-    content: string | null;
-    media: string[] | null;
-    createdAt: string;
-    author: { id: string; name: string | null; avatar: string | null } | null;
-  }[] = await res.json();
-  return rows.map((r) => {
-    const name = r.author?.name || (bn ? "সদস্য" : "Member");
-    return {
-      id: r.id,
-      author: { id: r.author?.id, name, avatar: r.author?.avatar || "", initials: initialsOf(name) },
-      content: r.content || "",
-      image: r.media?.[0],
-      likes: 0,
-      comments: 0,
-      views: 0,
-      isLiked: false,
-      isSaved: false,
-      createdAt: timeAgo(r.createdAt, bn),
-      shared: true,
-    };
+    name: string | null;
+    avatar: string | null;
+    profileRole?: string | null;
+    farmingCategory?: string | null;
+  } | null;
+}
+
+function authHeaders(token?: string | null): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function postFromRow(r: ServerPostRow, bn: boolean): FeedPost {
+  const name = r.author?.name || (bn ? "সদস্য" : "Member");
+  const badge = r.author?.profileRole === "expert" ? "expert" : r.author?.farmingCategory || r.author?.profileRole || undefined;
+  return {
+    id: r.id,
+    author: { id: r.author?.id, name, avatar: r.author?.avatar || "", initials: initialsOf(name), badge },
+    content: r.content || "",
+    image: r.media?.[0],
+    likes: Number(r.likeCount || 0),
+    comments: Number(r.commentCount || 0),
+    views: 0,
+    isLiked: !!r.likedByMe,
+    isSaved: false,
+    createdAt: timeAgo(r.createdAt, bn),
+    shared: true,
+  };
+}
+
+export async function fetchServerPosts(communityId: string, bn: boolean, token?: string | null): Promise<FeedPost[]> {
+  const res = await fetch(`${getApiUrl()}/api/posts?communityId=${encodeURIComponent(communityId)}`, {
+    headers: authHeaders(token),
   });
+  if (!res.ok) throw new Error(`posts ${res.status}`);
+  const rows: ServerPostRow[] = await res.json();
+  return rows.map((r) => postFromRow(r, bn));
+}
+
+/** One shared post, e.g. to open it from a like/comment notification. */
+export async function fetchServerPost(postId: string, bn: boolean, token?: string | null): Promise<FeedPost> {
+  const res = await fetch(`${getApiUrl()}/api/posts/${encodeURIComponent(postId)}`, { headers: authHeaders(token) });
+  if (!res.ok) throw new Error(`post ${res.status}`);
+  return postFromRow(await res.json(), bn);
+}
+
+/** Like or unlike a shared post. The author gets a notification for a new like. */
+export async function likeServerPost(token: string, postId: string, liked: boolean): Promise<{ liked: boolean; likes: number }> {
+  const res = await fetch(`${getApiUrl()}/api/posts/${encodeURIComponent(postId)}/like`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify({ liked }),
+  });
+  if (!res.ok) throw new Error(`like ${res.status}`);
+  return res.json();
+}
+
+export interface ServerComment {
+  id: string;
+  postId: string;
+  userId: string;
+  userName: string;
+  avatar: string | null;
+  body: string;
+  createdAt: string;
+}
+
+export async function fetchServerComments(postId: string): Promise<ServerComment[]> {
+  const res = await fetch(`${getApiUrl()}/api/posts/${encodeURIComponent(postId)}/comments`);
+  if (!res.ok) throw new Error(`comments ${res.status}`);
+  return res.json();
+}
+
+/** Adds a comment in your name. The post's author gets a notification. */
+export async function createServerComment(token: string, postId: string, body: string): Promise<ServerComment> {
+  const res = await fetch(`${getApiUrl()}/api/posts/${encodeURIComponent(postId)}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify({ body }),
+  });
+  if (!res.ok) throw new Error(`comment ${res.status}`);
+  return res.json();
+}
+
+/** True for posts that live on the server (ids are UUIDs). */
+export function isSharedPostId(id: string): boolean {
+  return UUID.test(id);
 }
 
 export async function createServerPost(token: string, communityId: string, content: string, media: string[]) {

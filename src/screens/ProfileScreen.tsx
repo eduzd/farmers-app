@@ -26,6 +26,7 @@ import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
+import { badgeKeyFor } from "@/constants/profileBadges";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -225,6 +226,7 @@ export default function ProfileScreen() {
             avatarColor={user?.avatarColor}
             size="large"
             isWelfareMember={isWelfareMember}
+            badge={badgeKeyFor(user)}
           />
         </Pressable>
         <ThemedText type="h3" style={styles.profileName}>

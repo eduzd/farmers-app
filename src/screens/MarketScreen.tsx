@@ -656,6 +656,7 @@ export default function MarketScreen() {
           data={CATEGORIES}
           keyExtractor={(item) => item.id}
           showsHorizontalScrollIndicator={false}
+          style={styles.chipRowList}
           contentContainerStyle={styles.categoriesContainer}
           renderItem={({ item }) => (
             <Pressable
@@ -695,7 +696,8 @@ export default function MarketScreen() {
           data={SORTS as any}
           keyExtractor={(item: any) => item.id}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.categoriesContainer, { paddingTop: 0 }]}
+          style={styles.chipRowList}
+          contentContainerStyle={[styles.categoriesContainer, styles.sortRow]}
           renderItem={({ item }: any) => {
             const active = sortBy === item.id;
             return (
@@ -1038,21 +1040,33 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_400Regular",
     textAlignVertical: "center",
   },
+  // Two chip rows (categories, then sort) with clear space between and around them.
+  chipRowList: {
+    flexGrow: 0,
+  },
   categoriesContainer: {
     paddingTop: Spacing.lg,
-    gap: Spacing.sm,
+    paddingBottom: Spacing.xs,
+    paddingRight: Spacing.sm,
+    gap: 10,
+    alignItems: "center",
+  },
+  sortRow: {
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
   },
   categoryChip: {
     flexDirection: "row",
     alignItems: "center",
+    minHeight: 36,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    marginRight: Spacing.sm,
+    paddingVertical: 7,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    gap: Spacing.xs,
+    gap: 6,
   },
   categoryText: {
+    lineHeight: 18,
     fontSize: 13,
     fontWeight: "500",
     fontFamily: "PlusJakartaSans_500Medium",
