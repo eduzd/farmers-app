@@ -8,7 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { PROFILE_BADGES } from "@/constants/profileBadges";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -86,13 +87,16 @@ export default function OnboardingRoleScreen() {
                 <View
                   style={[
                     styles.roleIcon,
-                    { backgroundColor: selectedRole === role.id ? theme.primary : theme.backgroundDefault },
+                    {
+                      backgroundColor: selectedRole === role.id ? PROFILE_BADGES[role.id].color : PROFILE_BADGES[role.id].color + "1F",
+                      borderRadius: PROFILE_BADGES[role.id].shape === "square" ? 12 : 24,
+                    },
                   ]}
                 >
-                  <Feather
-                    name={role.icon}
+                  <MaterialCommunityIcons
+                    name={PROFILE_BADGES[role.id].icon}
                     size={24}
-                    color={selectedRole === role.id ? theme.white : theme.text}
+                    color={selectedRole === role.id ? theme.white : PROFILE_BADGES[role.id].color}
                   />
                 </View>
                 <View style={styles.roleContent}>

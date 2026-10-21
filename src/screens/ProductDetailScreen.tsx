@@ -19,7 +19,7 @@ import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPad
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -360,15 +360,20 @@ export default function ProductDetailScreen() {
             <View style={styles.ratingPriceRow}>
               <View style={styles.ratingContainer}>
                 <View style={styles.starsContainer}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Feather
-                      key={star}
-                      name="star"
-                      size={14}
-                      color={star <= Math.round(reviews.count ? reviews.average : product.rating || 0) ? "#F5B700" : "#E0E0E0"}
-                      style={{ marginRight: 2 }}
-                    />
-                  ))}
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    // Whole, half or empty star, so 4.9 shows five stars and 4.5 shows four and a half.
+                    const r = Math.round((reviews.count ? reviews.average : Number(product.rating) || 0) * 2) / 2;
+                    const name = r >= star ? "star" : r >= star - 0.5 ? "star-half-full" : "star-outline";
+                    return (
+                      <MaterialCommunityIcons
+                        key={star}
+                        name={name}
+                        size={16}
+                        color={r >= star - 0.5 ? "#F5B700" : "#D0D0D0"}
+                        style={{ marginRight: 1 }}
+                      />
+                    );
+                  })}
                 </View>
                 <ThemedText style={[styles.ratingText, { color: theme.text }]}>
                   {reviews.count ? reviews.average.toFixed(1) : product.rating ? Number(product.rating).toFixed(1) : tr("নতুন")}
@@ -665,7 +670,12 @@ export default function ProductDetailScreen() {
                 <Feather name="plus" size={16} color={theme.text} />
               </Pressable>
             </View>
-            <ThemedText style={[styles.footerTotalPrice, { color: theme.text }]}>
+            <ThemedText
+              style={[styles.footerTotalPrice, { color: theme.text }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
               {product.currency}{Math.round(unitPrice * quantity).toLocaleString("en-IN")}
             </ThemedText>
           </View>
@@ -1095,17 +1105,26 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
   },
+  // The bottom bar must fit any phone width: the quantity box and total take the space
+  // that is left, and the cart and checkout buttons never shrink or slide off the edge.
   footerContent: {
+    width: "100%",
+    maxWidth: 640,
+    alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    gap: 10,
   },
   footerLeft: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   quantitySelector: {
+    flexShrink: 0,
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
@@ -1113,25 +1132,30 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   qtyBtn: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 38,
     alignItems: "center",
     justifyContent: "center",
   },
   qtyText: {
+    // A fixed width: on the web a text box is ~20 characters wide by default, which pushed
+    // the checkout button past the screen edge. Four digits fit.
+    width: 44,
     fontSize: 16,
     fontWeight: "600",
-    minWidth: 32,
     textAlign: "center",
   },
   footerTotalPrice: {
-    fontSize: 20,
+    flexShrink: 1,
+    minWidth: 0,
+    fontSize: 19,
     fontWeight: "700",
   },
   footerRight: {
+    flexShrink: 0,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 8,
   },
   cartBtn: {
     width: 48,
@@ -1143,7 +1167,8 @@ const styles = StyleSheet.create({
   },
   buyBtn: {
     height: 48,
-    paddingHorizontal: 28,
+    minWidth: 84,
+    paddingHorizontal: 18,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",

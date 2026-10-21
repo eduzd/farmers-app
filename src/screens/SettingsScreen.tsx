@@ -15,7 +15,8 @@ import { CustomSwitch } from "@/components/CustomSwitch";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { PROFILE_BADGES } from "@/constants/profileBadges";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
@@ -697,6 +698,11 @@ export default function SettingsScreen() {
                       ]}
                       onPress={() => setEditCategory(editCategory === cat.id ? "" : cat.id)}
                     >
+                      <MaterialCommunityIcons
+                        name={PROFILE_BADGES[cat.id].icon}
+                        size={16}
+                        color={editCategory === cat.id ? theme.white : PROFILE_BADGES[cat.id].color}
+                      />
                       <ThemedText
                         style={[
                           styles.editCategoryLabel,
@@ -998,6 +1004,9 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
   },
   editCategoryChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,

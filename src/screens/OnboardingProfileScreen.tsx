@@ -13,7 +13,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { PROFILE_BADGES } from "@/constants/profileBadges";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
@@ -31,15 +32,15 @@ import { tr, useTr } from "@/lib/tr";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const FARMING_CATEGORIES = [
-  { id: "crops", label: "Crops Farming", icon: "sun" },
-  { id: "vegetables", label: "Vegetables", icon: "box" },
-  { id: "fruits", label: "Fruits", icon: "sun" },
-  { id: "dairy", label: "Dairy Farming", icon: "droplet" },
-  { id: "poultry", label: "Poultry", icon: "sun" },
-  { id: "fish", label: "Fish Farming", icon: "anchor" },
-  { id: "livestock", label: "Livestock", icon: "sun" },
-  { id: "organic", label: "Organic Farming", icon: "sun" },
-  { id: "mixed", label: "Mixed Farming", icon: "grid" },
+  { id: "crops", label: "Crops Farming" },
+  { id: "vegetables", label: "Vegetables" },
+  { id: "fruits", label: "Fruits" },
+  { id: "dairy", label: "Dairy Farming" },
+  { id: "poultry", label: "Poultry" },
+  { id: "fish", label: "Fish Farming" },
+  { id: "livestock", label: "Livestock" },
+  { id: "organic", label: "Organic Farming" },
+  { id: "mixed", label: "Mixed Farming" },
 ];
 
 export default function OnboardingProfileScreen() {
@@ -306,6 +307,11 @@ export default function OnboardingProfileScreen() {
                     ]}
                     onPress={() => handleCategorySelect(category.id)}
                   >
+                    <MaterialCommunityIcons
+                      name={PROFILE_BADGES[category.id].icon}
+                      size={16}
+                      color={selectedCategory === category.id ? theme.white : PROFILE_BADGES[category.id].color}
+                    />
                     <ThemedText
                       style={[
                         styles.categoryLabel,
@@ -514,6 +520,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
   },
   categoryChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,

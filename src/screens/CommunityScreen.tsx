@@ -76,10 +76,10 @@ export default function CommunityScreen() {
   const isBn = language === "bn";
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 640);
-  // Featured cards are narrower than the screen so the next card peeks in from the side;
-  // the active card sits in the middle.
-  const carouselCardWidth = Math.round(Math.min((contentWidth - Spacing.lg * 2) * 0.84, 420));
-  const carouselSidePad = Math.max(Spacing.lg, Math.round((contentWidth - carouselCardWidth) / 2));
+  // Featured cards: the original full-width card shape (one card fills the row), still
+  // moving to the next card by itself (auto-play below).
+  const carouselCardWidth = contentWidth - Spacing.lg * 2;
+  const carouselSidePad = Spacing.lg;
   const carouselStep = carouselCardWidth + Spacing.md;
   const isFocused = useIsFocused();
   const myBadge = badgeKeyFor(user);
@@ -337,8 +337,6 @@ export default function CommunityScreen() {
     if (raised !== headerRaised) setHeaderRaised(raised);
   };
 
-  const firstName = (user?.name || "").split(" ")[0];
-
   // Pinned header: the greeting, search and notifications stay at the top while the page scrolls.
   const renderPinnedHeader = () => (
     <View
@@ -353,13 +351,29 @@ export default function CommunityScreen() {
     >
       <View style={styles.pinnedHeaderInner}>
           <View style={styles.greetingRow}>
-            <View style={{ flex: 1 }}>
-              <ThemedText type="small" muted>
+            {/* The signed-in person's avatar (photo, or their initial) in place of their name. */}
+            <Pressable
+              testID="home-header-avatar"
+              onPress={() => (navigation as any).navigate("Profile")}
+              accessibilityRole="button"
+              accessibilityLabel={isBn ? "আমার প্রোফাইল" : "My profile"}
+              hitSlop={6}
+            >
+              <UserAvatar
+                name={user?.name || (isBn ? "অতিথি" : "Guest")}
+                avatar={user?.avatar}
+                avatarId={user?.avatarId}
+                avatarColor={user?.avatarColor}
+                badge={myBadge}
+                size={44}
+              />
+            </Pressable>
+            <View style={{ flex: 1, marginLeft: Spacing.md }}>
+              <ThemedText type="small" muted numberOfLines={1}>
                 {greeting(isBn)}
-                {firstName ? "," : ""}
               </ThemedText>
-              <ThemedText type="h2" numberOfLines={1}>
-                {firstName || (isBn ? "কৃষক বন্ধু" : "Farmer friend")}
+              <ThemedText type="h4" numberOfLines={1}>
+                {isBn ? "কৃষক বন্ধু" : "Farmers"}
               </ThemedText>
             </View>
             <IconButton icon="search" accessibilityLabel={isBn ? "খুঁজুন" : "Search"} onPress={() => navigation.navigate("UserSearch")} />
@@ -771,23 +785,23 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   featureCard: {
-    height: 128,
+    height: 156,
     borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
     overflow: "hidden",
   },
   featureDecor: {
     position: "absolute",
-    right: -36,
-    top: -36,
-    width: 132,
-    height: 132,
-    borderRadius: 66,
+    right: -40,
+    top: -40,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
     backgroundColor: "rgba(255,255,255,0.12)",
   },
   featureIcon: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.2)",
     alignItems: "center",

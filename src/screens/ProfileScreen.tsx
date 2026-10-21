@@ -22,12 +22,12 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { tr } from "@/lib/tr";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
-import { badgeKeyFor } from "@/constants/profileBadges";
+import { badgeKeyFor, PROFILE_BADGES } from "@/constants/profileBadges";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -255,16 +255,25 @@ export default function ProfileScreen() {
           </Pressable>
         ) : null}
         <View style={styles.badgeContainer}>
-          <View style={[styles.sectorBadge, { backgroundColor: theme.primary + "20" }]}>
-            <Feather 
-              name={user?.farmingCategory === "fish" ? "droplet" : user?.role === "expert" ? "award" : "user"} 
-              size={14} 
-              color={theme.primary} 
-            />
-            <ThemedText style={[styles.sectorBadgeText, { color: theme.primary }]}>
-              {getSectorLabel()}
-            </ThemedText>
-          </View>
+          {(() => {
+            // Same icon, colour and shape as the badge on the avatar, so each category looks different.
+            const b = PROFILE_BADGES[badgeKeyFor(user) || "farmer"];
+            return (
+              <View
+                testID="profile-category-badge"
+                style={[
+                  styles.sectorBadge,
+                  { backgroundColor: b.color + "1F", borderColor: b.color + "55", borderWidth: 1 },
+                  b.shape === "square" ? { borderRadius: 8 } : null,
+                ]}
+              >
+                <MaterialCommunityIcons name={b.icon} size={15} color={b.color} />
+                <ThemedText style={[styles.sectorBadgeText, { color: b.color }]}>
+                  {language === "bn" ? b.labelBn : b.label}
+                </ThemedText>
+              </View>
+            );
+          })()}
           {user?.verified ? (
             <View style={[styles.verifiedBadge, { backgroundColor: "#1DA1F2" }]}>
               <Feather name="check" size={12} color="#FFFFFF" />

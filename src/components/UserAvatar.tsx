@@ -7,7 +7,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Shadows } from "@/constants/theme";
 import { NotionFace, AVATAR_OPTIONS } from "@/components/AvatarPicker";
-import { Feather } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { PROFILE_BADGES } from "@/constants/profileBadges";
 
 interface UserAvatarProps {
@@ -150,7 +150,7 @@ export function UserAvatar({
             {
               width: profileBadgeSize,
               height: profileBadgeSize,
-              borderRadius: profileBadgeSize / 2,
+              borderRadius: badgeInfo.shape === "square" ? Math.round(profileBadgeSize * 0.3) : profileBadgeSize / 2,
               backgroundColor: badgeInfo.color,
               borderColor: theme.backgroundDefault,
               borderWidth: Math.max(1.5, Math.round(profileBadgeSize * 0.12)),
@@ -159,7 +159,7 @@ export function UserAvatar({
             },
           ]}
         >
-          <Feather name={badgeInfo.icon} size={Math.round(profileBadgeSize * 0.52)} color="#FFFFFF" />
+          <MaterialCommunityIcons name={badgeInfo.icon} size={Math.round(profileBadgeSize * 0.6)} color="#FFFFFF" />
         </View>
       ) : null}
       {isWelfareMember ? (
