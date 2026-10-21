@@ -1,0 +1,1388 @@
+import React from "react";
+import { ActivityIndicator, View, StyleSheet } from "react-native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { NavigatorScreenParams } from "@react-navigation/native";
+
+import { useAuthStore, MembershipApplication } from "@/lib/authStore";
+import { useTheme } from "@/hooks/useTheme";
+import { ScreenErrorBoundary } from "@/components/ScreenErrorBoundary";
+import LandingScreen from "@/screens/LandingScreen";
+import LoginScreen from "@/screens/LoginScreen";
+import SignupScreen from "@/screens/SignupScreen";
+import OnboardingRoleScreen from "@/screens/OnboardingRoleScreen";
+import OnboardingProfileScreen from "@/screens/OnboardingProfileScreen";
+import SupportScreen from "@/screens/SupportScreen";
+import PostDetailScreen from "@/screens/PostDetailScreen";
+import ChatScreen from "@/screens/ChatScreen";
+import RfqScreen from "@/screens/RfqScreen";
+import SettingsScreen from "@/screens/SettingsScreen";
+import ApplicationDetailScreen from "@/screens/ApplicationDetailScreen";
+import ApplicationsListScreen from "@/screens/ApplicationsListScreen";
+import ProductDetailScreen from "@/screens/ProductDetailScreen";
+import CartScreen from "@/screens/CartScreen";
+import CheckoutScreen from "@/screens/CheckoutScreen";
+import OrdersScreen from "@/screens/OrdersScreen";
+import OrderDetailScreen from "@/screens/OrderDetailScreen";
+import ToolsScreen from "@/screens/ToolsScreen";
+import DiseaseDetectorScreen from "@/screens/DiseaseDetectorScreen";
+import AIAssistantScreen from "@/screens/AIAssistantScreen";
+import VoiceCallScreen from "@/screens/VoiceCallScreen";
+import WeatherScreen from "@/screens/WeatherScreen";
+import FarmNotesScreen from "@/screens/FarmNotesScreen";
+import LandConverterScreen from "@/screens/LandConverterScreen";
+import FertilizerCalculatorScreen from "@/screens/FertilizerCalculatorScreen";
+import CropCalendarScreen from "@/screens/CropCalendarScreen";
+import ProfitCalculatorScreen from "@/screens/ProfitCalculatorScreen";
+import FeedCalculatorToolScreen from "@/screens/FeedCalculatorScreen";
+import ExpertsScreen from "@/screens/ExpertsScreen";
+import UserProfileScreen from "@/screens/UserProfileScreen";
+import LikesListScreen from "@/screens/LikesListScreen";
+import FollowersScreen from "@/screens/FollowersScreen";
+import FollowingScreen from "@/screens/FollowingScreen";
+import { PublicUser } from "@/lib/storage";
+import {
+  CalculateHomeScreen,
+  BepariCalculatorScreen,
+  AratCalculatorScreen,
+  FeedCalculatorScreen,
+  LedgerScreen,
+  LedgerEntryScreen,
+  HistoryScreen,
+  MonthlySummaryScreen,
+  CalculateSettingsScreen,
+  RecordDetailScreen,
+} from "@/screens/calculate";
+import MainTabNavigator, { MainTabParamList } from "@/navigation/MainTabNavigator";
+import CompanyTabNavigator from "@/navigation/CompanyTabNavigator";
+import StoreViewScreen from "@/screens/StoreViewScreen";
+import ShopsHomeScreen from "@/screens/ShopsHomeScreen";
+import SellerOnboardingScreen from "@/screens/SellerOnboardingScreen";
+import AddressManagementScreen from "@/screens/AddressManagementScreen";
+import PollsScreen from "@/screens/PollsScreen";
+import GroupsScreen from "@/screens/GroupsScreen";
+import GroupDetailScreen from "@/screens/GroupDetailScreen";
+import WishlistScreen from "@/screens/WishlistScreen";
+import FlashSaleScreen from "@/screens/FlashSaleScreen";
+import BadgesScreen from "@/screens/BadgesScreen";
+import ExpertQAScreen from "@/screens/ExpertQAScreen";
+import WalletScreen from "@/screens/WalletScreen";
+import MarketPriceScreen from "@/screens/MarketPriceScreen";
+import ProductCompareScreen from "@/screens/ProductCompareScreen";
+import AuctionScreen from "@/screens/AuctionScreen";
+import BulkOrderScreen from "@/screens/BulkOrderScreen";
+import DailyTipsScreen from "@/screens/DailyTipsScreen";
+import NearbyFarmersScreen from "@/screens/NearbyFarmersScreen";
+import DeliveryTrackingScreen from "@/screens/DeliveryTrackingScreen";
+import VideoCoursesScreen from "@/screens/VideoCoursesScreen";
+import CertificationScreen from "@/screens/CertificationScreen";
+import InventoryScreen from "@/screens/InventoryScreen";
+import LoanCalculatorScreen from "@/screens/LoanCalculatorScreen";
+import EquipmentRentalScreen from "@/screens/EquipmentRentalScreen";
+import GovernmentSchemesScreen from "@/screens/GovernmentSchemesScreen";
+import SuccessStoriesScreen from "@/screens/SuccessStoriesScreen";
+import PodcastsScreen from "@/screens/PodcastsScreen";
+import EventsCalendarScreen from "@/screens/EventsCalendarScreen";
+import SoilTestingScreen from "@/screens/SoilTestingScreen";
+import TransportScreen from "@/screens/TransportScreen";
+import EmergencyServicesScreen from "@/screens/EmergencyServicesScreen";
+import InsuranceCalculatorScreen from "@/screens/InsuranceCalculatorScreen";
+import LaborHiringScreen from "@/screens/LaborHiringScreen";
+import ColdStorageScreen from "@/screens/ColdStorageScreen";
+import CooperativeScreen from "@/screens/CooperativeScreen";
+import WelfareAssociationScreen from "@/screens/WelfareAssociationScreen";
+import InternationalFishSummitScreen from "@/screens/InternationalFishSummitScreen";
+import SeedFinderScreen from "@/screens/SeedFinderScreen";
+import FarmDiaryScreen from "@/screens/FarmDiaryScreen";
+import VoiceRoomsScreen from "@/screens/VoiceRoomsScreen";
+import VoiceRoomScreen from "@/screens/VoiceRoomScreen";
+import StoriesScreen from "@/screens/StoriesScreen";
+import NotificationsScreen from "@/screens/NotificationsScreen";
+import LeaderboardScreen from "@/screens/LeaderboardScreen";
+import UserSearchScreen from "@/screens/UserSearchScreen";
+import AnnouncementsScreen from "@/screens/AnnouncementsScreen";
+import RewardsScreen from "@/screens/RewardsScreen";
+import LiveStreamScreen from "@/screens/LiveStreamScreen";
+import TrendingScreen from "@/screens/TrendingScreen";
+import ChallengesScreen from "@/screens/ChallengesScreen";
+import SavedPostsScreen from "@/screens/SavedPostsScreen";
+import MyPostsScreen from "@/screens/MyPostsScreen";
+import FeaturedFarmersScreen from "@/screens/FeaturedFarmersScreen";
+import KnowledgeWikiScreen from "@/screens/KnowledgeWikiScreen";
+import MentorshipScreen from "@/screens/MentorshipScreen";
+import CommunityStatsScreen from "@/screens/CommunityStatsScreen";
+import DailyCheckInScreen from "@/screens/DailyCheckInScreen";
+import FarmToursScreen from "@/screens/FarmToursScreen";
+import SkillExchangeScreen from "@/screens/SkillExchangeScreen";
+import HelpCenterScreen from "@/screens/HelpCenterScreen";
+import CropEncyclopediaScreen from "@/screens/CropEncyclopediaScreen";
+import ActivityFeedScreen from "@/screens/ActivityFeedScreen";
+import ServicesScreen from "@/screens/ServicesScreen";
+import QRScannerScreen from "@/screens/QRScannerScreen";
+import FarmAnalyticsScreen from "@/screens/FarmAnalyticsScreen";
+import VeterinaryScreen from "@/screens/VeterinaryScreen";
+import ContractFarmingScreen from "@/screens/ContractFarmingScreen";
+import AgriNewsScreen from "@/screens/AgriNewsScreen";
+import PriceAlertScreen from "@/screens/PriceAlertScreen";
+import RecipeFinderScreen from "@/screens/RecipeFinderScreen";
+import WarehouseScreen from "@/screens/WarehouseScreen";
+import QualityTestingScreen from "@/screens/QualityTestingScreen";
+import MedicalServicesScreen from "@/screens/MedicalServicesScreen";
+import LandServicesScreen from "@/screens/LandServicesScreen";
+import WasteManagementScreen from "@/screens/WasteManagementScreen";
+import WaterServicesScreen from "@/screens/WaterServicesScreen";
+import ElectricityServicesScreen from "@/screens/ElectricityServicesScreen";
+import AdminDashboardScreen from "@/screens/AdminDashboardScreen";
+import SellerAppScreen from "@/screens/seller/SellerAppScreen";
+import { getAppVariant } from "@/lib/appVariant";
+import SmartFarmingScreen from "@/screens/SmartFarmingScreen";
+import WeatherForecastScreen from "@/screens/WeatherForecastScreen";
+import MarketPricesScreen from "@/screens/MarketPricesScreen";
+import FarmInventoryScreen from "@/screens/FarmInventoryScreen";
+import LivestockTrackerScreen from "@/screens/LivestockTrackerScreen";
+import ProductTraceabilityScreen from "@/screens/ProductTraceabilityScreen";
+import FishEncyclopediaScreen, { Fish } from "@/screens/FishEncyclopediaScreen";
+import FishDetailScreen from "@/screens/FishDetailScreen";
+import { useScreenOptions } from "@/hooks/useScreenOptions";
+import { Product } from "@/screens/MarketScreen";
+
+interface PostAuthor {
+  name: string;
+  avatar?: string;
+  initials: string;
+  avatarId?: string;
+  avatarColor?: string;
+  isWelfareMember?: boolean;
+}
+
+interface Post {
+  id: string;
+  author: PostAuthor;
+  content: string;
+  image?: string;
+  likes: number;
+  comments: number;
+  views: number;
+  isLiked: boolean;
+  createdAt: string;
+}
+
+export type RootStackParamList = {
+  Landing: undefined;
+  Login: undefined;
+  Signup: undefined;
+  OnboardingRole: undefined;
+  OnboardingProfile: undefined;
+  Support: undefined;
+  Main: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList>;
+  PostDetail: { postId: string; post: Post };
+  Chat: { conversationId: string; userName: string; userInitials: string; isWelfareMember?: boolean };
+  Rfq: undefined;
+  Settings: undefined;
+  ProductDetail: { product: Product };
+  Cart: undefined;
+  Checkout: undefined;
+  Orders: undefined;
+  OrderDetail: { orderId: string };
+  Tools: undefined;
+  DiseaseDetector: undefined;
+  AIAssistant: undefined;
+  VoiceCall: undefined;
+  Weather: undefined;
+  FarmNotes: undefined;
+  LandConverter: undefined;
+  FertilizerCalculator: undefined;
+  CropCalendar: undefined;
+  ProfitCalculator: undefined;
+  FeedCalculator: undefined;
+  Experts: undefined;
+  UserProfile: { user: PublicUser };
+  LikesList: { postId: string; likesCount: number };
+  Followers: { userId: string; userName: string };
+  Following: { userId: string; userName: string };
+  Calculate: undefined;
+  CalculateBepari: undefined;
+  CalculateArat: undefined;
+  CalculateFeed: undefined;
+  CalculateLedger: undefined;
+  CalculateLedgerEntry: { id: string | null };
+  CalculateHistory: undefined;
+  CalculateMonthlySummary: undefined;
+  CalculateSettings: undefined;
+  CalculateRecordDetail: { id: string };
+  CompanyDashboard: undefined;
+  StoreView: { companyId: string };
+  ShopsHome: undefined;
+  SellerOnboarding: undefined;
+  AddressManagement: undefined;
+  Polls: undefined;
+  Groups: undefined;
+  GroupDetail: { group: any };
+  Wishlist: undefined;
+  FlashSale: undefined;
+  Badges: undefined;
+  ExpertQA: undefined;
+  Wallet: undefined;
+  MarketPrice: undefined;
+  ProductCompare: undefined;
+  Auction: undefined;
+  BulkOrder: undefined;
+  DailyTips: undefined;
+  NearbyFarmers: undefined;
+  DeliveryTracking: undefined;
+  VideoCourses: undefined;
+  Certification: undefined;
+  Inventory: undefined;
+  LoanCalculator: undefined;
+  EquipmentRental: undefined;
+  GovernmentSchemes: undefined;
+  SuccessStories: undefined;
+  Podcasts: undefined;
+  EventsCalendar: undefined;
+  SoilTesting: undefined;
+  Transport: undefined;
+  EmergencyServices: undefined;
+  InsuranceCalculator: undefined;
+  LaborHiring: undefined;
+  ColdStorage: undefined;
+  Cooperative: undefined;
+  WelfareAssociation: undefined;
+  InternationalFishSummit: undefined;
+  ApplicationsList: undefined;
+  ApplicationDetail: { application: MembershipApplication };
+  SeedFinder: undefined;
+  FarmDiary: undefined;
+  VoiceRooms: undefined;
+  VoiceRoom: { roomId: string; room?: any; isHost?: boolean };
+  Stories: undefined;
+  Notifications: undefined;
+  Leaderboard: undefined;
+  UserSearch: undefined;
+  Announcements: undefined;
+  Rewards: undefined;
+  LiveStream: undefined;
+  Trending: undefined;
+  Challenges: undefined;
+  SavedPosts: undefined;
+  MyPosts: undefined;
+  FeaturedFarmers: undefined;
+  KnowledgeWiki: undefined;
+  Mentorship: undefined;
+  CommunityStats: undefined;
+  DailyCheckIn: undefined;
+  FarmTours: undefined;
+  SkillExchange: undefined;
+  HelpCenter: undefined;
+  CropEncyclopedia: undefined;
+  ActivityFeed: undefined;
+  Services: undefined;
+  QRScanner: undefined;
+  FarmAnalytics: undefined;
+  Veterinary: undefined;
+  ContractFarming: undefined;
+  AgriNews: undefined;
+  PriceAlert: undefined;
+  RecipeFinder: undefined;
+  Warehouse: undefined;
+  QualityTesting: undefined;
+  MedicalServices: undefined;
+  LandServices: undefined;
+  WasteManagement: undefined;
+  WaterServices: undefined;
+  ElectricityServices: undefined;
+  AdminDashboard: undefined;
+  AdminApp: undefined;
+  SellerApp: undefined;
+  SmartFarming: undefined;
+  WeatherForecast: undefined;
+  MarketPrices: undefined;
+  FarmInventory: undefined;
+  LivestockTracker: undefined;
+  ProductTraceability: undefined;
+  FishEncyclopedia: undefined;
+  FishDetail: { fish: Fish };
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
+export default function RootStackNavigator() {
+  const screenOptions = useScreenOptions();
+  const { isAuthenticated, isLoading, onboardingComplete } = useAuthStore();
+  const variant = getAppVariant();
+  const { theme } = useTheme();
+
+  if (isLoading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <Stack.Navigator
+      screenOptions={screenOptions}
+      screenLayout={({ children, route, navigation }) => (
+        <ScreenErrorBoundary
+          screenName={route.name}
+          onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+        >
+          {children}
+        </ScreenErrorBoundary>
+      )}
+    >
+      {!isAuthenticated ? (
+        <>
+          <Stack.Screen
+            name="Landing"
+            component={LandingScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Signup"
+            component={SignupScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Support"
+            component={SupportScreen}
+            options={{
+              headerTitle: "",
+              headerBackTitle: "Back",
+            }}
+          />
+        </>
+      ) : !onboardingComplete && variant === "main" ? (
+        <>
+          <Stack.Screen
+            name="OnboardingRole"
+            component={OnboardingRoleScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="OnboardingProfile"
+            component={OnboardingProfileScreen}
+            options={{ headerShown: false }}
+          />
+        </>
+      ) : (
+        <>
+          {variant === "seller" ? (
+            <Stack.Screen name="SellerApp" component={SellerAppScreen} options={{ headerShown: false, title: "Seller Hub" }} />
+          ) : null}
+          {variant === "admin" ? (
+            <Stack.Screen name="AdminApp" component={AdminDashboardScreen} options={{ headerShown: false, title: "Farmers Admin" }} />
+          ) : null}
+          <Stack.Screen
+            name="Main"
+            component={MainTabNavigator}
+            options={{ headerShown: false }}
+          />
+          {variant !== "seller" ? (
+            <Stack.Screen name="SellerApp" component={SellerAppScreen} options={{ headerShown: false, title: "Seller Hub" }} />
+          ) : null}
+          <Stack.Screen
+            name="PostDetail"
+            component={PostDetailScreen}
+            options={{
+              headerTitle: "Post",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Chat"
+            component={ChatScreen}
+            options={({ route }) => ({
+              headerTitle: route.params.userName,
+              headerBackTitle: "Back",
+              headerTransparent: false,
+            })}
+          />
+          <Stack.Screen
+            name="Rfq"
+            component={RfqScreen}
+            options={{
+              headerTitle: "RFQ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Settings"
+            component={SettingsScreen}
+            options={{
+              headerTitle: "Settings",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ProductDetail"
+            component={ProductDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Cart"
+            component={CartScreen}
+            options={{
+              headerTitle: "My Cart",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Checkout"
+            component={CheckoutScreen}
+            options={{
+              headerTitle: "Checkout",
+              headerBackTitle: "Cart",
+              headerTransparent: false,
+            }}
+          />
+          <Stack.Screen
+            name="Orders"
+            component={OrdersScreen}
+            options={{
+              headerTitle: "My Orders",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="OrderDetail"
+            component={OrderDetailScreen}
+            options={{
+              headerTitle: "Order Details",
+              headerBackTitle: "Orders",
+            }}
+          />
+          <Stack.Screen
+            name="Tools"
+            component={ToolsScreen}
+            options={{
+              headerTitle: "Tools",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="DiseaseDetector"
+            component={DiseaseDetectorScreen}
+            options={{
+              headerTitle: "Disease Detector",
+              headerBackTitle: "Tools",
+            }}
+          />
+          <Stack.Screen
+            name="AIAssistant"
+            component={AIAssistantScreen}
+            options={{
+              headerTitle: "AI কৃষি সহায়ক",
+              headerBackTitle: "Tools",
+            }}
+          />
+          <Stack.Screen
+            name="VoiceCall"
+            component={VoiceCallScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Weather"
+            component={WeatherScreen}
+            options={{
+              headerTitle: "আবহাওয়া",
+              headerBackTitle: "Tools",
+            }}
+          />
+          <Stack.Screen
+            name="FarmNotes"
+            component={FarmNotesScreen}
+            options={{
+              headerTitle: "ফার্ম নোটস",
+              headerBackTitle: "Tools",
+            }}
+          />
+          <Stack.Screen
+            name="LandConverter"
+            component={LandConverterScreen}
+            options={{
+              headerTitle: "জমি পরিমাপ",
+              headerBackTitle: "Tools",
+            }}
+          />
+          <Stack.Screen
+            name="FertilizerCalculator"
+            component={FertilizerCalculatorScreen}
+            options={{
+              headerTitle: "সার হিসাব",
+              headerBackTitle: "Tools",
+            }}
+          />
+          <Stack.Screen
+            name="CropCalendar"
+            component={CropCalendarScreen}
+            options={{
+              headerTitle: "ফসল ক্যালেন্ডার",
+              headerBackTitle: "Tools",
+            }}
+          />
+          <Stack.Screen
+            name="ProfitCalculator"
+            component={ProfitCalculatorScreen}
+            options={{
+              headerTitle: "লাভ-ক্ষতি হিসাব",
+              headerBackTitle: "Tools",
+            }}
+          />
+          <Stack.Screen
+            name="FeedCalculator"
+            component={FeedCalculatorToolScreen}
+            options={{
+              headerTitle: "খাদ্য হিসাব",
+              headerBackTitle: "Tools",
+            }}
+          />
+          <Stack.Screen
+            name="Experts"
+            component={ExpertsScreen}
+            options={{
+              headerTitle: "Experts",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="UserProfile"
+            component={UserProfileScreen}
+            options={({ route }) => ({
+              headerTitle: route.params.user.name,
+              headerBackTitle: "Back",
+            })}
+          />
+          <Stack.Screen
+            name="LikesList"
+            component={LikesListScreen}
+            options={{
+              headerTitle: "লাইক করেছেন",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Followers"
+            component={FollowersScreen}
+            options={{
+              headerTitle: "ফলোয়ার্স",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Following"
+            component={FollowingScreen}
+            options={{
+              headerTitle: "ফলোয়িং",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Calculate"
+            component={CalculateHomeScreen}
+            options={{
+              headerTitle: "ক্যালকুলেট",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateBepari"
+            component={BepariCalculatorScreen}
+            options={{
+              headerTitle: "ব্যাপারী ক্যালকুলেটর",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateArat"
+            component={AratCalculatorScreen}
+            options={{
+              headerTitle: "আড়ত ক্যালকুলেটর",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateFeed"
+            component={FeedCalculatorScreen}
+            options={{
+              headerTitle: "খাদ্য ক্যালকুলেটর",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateLedger"
+            component={LedgerScreen}
+            options={{
+              headerTitle: "খাতা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateLedgerEntry"
+            component={LedgerEntryScreen}
+            options={{
+              headerTitle: "হিসাব এন্ট্রি",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateHistory"
+            component={HistoryScreen}
+            options={{
+              headerTitle: "ইতিহাস",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateMonthlySummary"
+            component={MonthlySummaryScreen}
+            options={{
+              headerTitle: "মাসিক সারাংশ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateSettings"
+            component={CalculateSettingsScreen}
+            options={{
+              headerTitle: "সেটিংস",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateRecordDetail"
+            component={RecordDetailScreen}
+            options={{
+              headerTitle: "হিসাব বিবরণ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CompanyDashboard"
+            component={CompanyTabNavigator}
+            options={{
+              headerTitle: "ভেন্ডর ড্যাশবোর্ড",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="AdminDashboard"
+            component={AdminDashboardScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="SmartFarming"
+            component={SmartFarmingScreen}
+            options={{
+              headerTitle: "স্মার্ট ফার্মিং",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="WeatherForecast"
+            component={WeatherForecastScreen}
+            options={{
+              headerTitle: "আবহাওয়া পূর্বাভাস",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="MarketPrices"
+            component={MarketPricesScreen}
+            options={{
+              headerTitle: "বাজার দর",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="FarmInventory"
+            component={FarmInventoryScreen}
+            options={{
+              headerTitle: "ইনভেন্টরি",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="LivestockTracker"
+            component={LivestockTrackerScreen}
+            options={{
+              headerTitle: "পশু ট্র্যাকার",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ProductTraceability"
+            component={ProductTraceabilityScreen}
+            options={{
+              headerTitle: "পণ্য ট্রেসেবিলিটি",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="StoreView"
+            component={StoreViewScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="ShopsHome"
+            component={ShopsHomeScreen}
+            options={{
+              headerTitle: "দোকান সমূহ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="SellerOnboarding"
+            component={SellerOnboardingScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="AddressManagement"
+            component={AddressManagementScreen}
+            options={{
+              headerTitle: "ঠিকানা ম্যানেজমেন্ট",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Polls"
+            component={PollsScreen}
+            options={{
+              headerTitle: "পোল ও সার্ভে",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Groups"
+            component={GroupsScreen}
+            options={{
+              headerTitle: "গ্রুপ ও ফোরাম",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="GroupDetail"
+            component={GroupDetailScreen}
+            options={({ route }) => ({
+              headerTitle: route.params.group.name,
+              headerBackTitle: "Back",
+            })}
+          />
+          <Stack.Screen
+            name="Wishlist"
+            component={WishlistScreen}
+            options={{
+              headerTitle: "উইশলিস্ট",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="FlashSale"
+            component={FlashSaleScreen}
+            options={{
+              headerTitle: "ফ্ল্যাশ সেল",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Badges"
+            component={BadgesScreen}
+            options={{
+              headerTitle: "অ্যাচিভমেন্ট ব্যাজ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ExpertQA"
+            component={ExpertQAScreen}
+            options={{
+              headerTitle: "এক্সপার্ট Q&A",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Wallet"
+            component={WalletScreen}
+            options={{
+              headerTitle: "ওয়ালেট",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="MarketPrice"
+            component={MarketPriceScreen}
+            options={{
+              headerTitle: "বাজার দর",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ProductCompare"
+            component={ProductCompareScreen}
+            options={{
+              headerTitle: "পণ্য তুলনা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Auction"
+            component={AuctionScreen}
+            options={{
+              headerTitle: "নিলাম",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="BulkOrder"
+            component={BulkOrderScreen}
+            options={{
+              headerTitle: "বাল্ক অর্ডার",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="DailyTips"
+            component={DailyTipsScreen}
+            options={{
+              headerTitle: "দৈনিক টিপস",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="NearbyFarmers"
+            component={NearbyFarmersScreen}
+            options={{
+              headerTitle: "কাছের কৃষক ও দোকান",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="DeliveryTracking"
+            component={DeliveryTrackingScreen}
+            options={{
+              headerTitle: "ডেলিভারি ট্র্যাকিং",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="VideoCourses"
+            component={VideoCoursesScreen}
+            options={{
+              headerTitle: "ভিডিও কোর্স",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Certification"
+            component={CertificationScreen}
+            options={{
+              headerTitle: "সার্টিফিকেশন",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Inventory"
+            component={InventoryScreen}
+            options={{
+              headerTitle: "ইনভেন্টরি ম্যানেজমেন্ট",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="LoanCalculator"
+            component={LoanCalculatorScreen}
+            options={{
+              headerTitle: "ঋণ ক্যালকুলেটর",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="EquipmentRental"
+            component={EquipmentRentalScreen}
+            options={{
+              headerTitle: "যন্ত্রপাতি ভাড়া",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="GovernmentSchemes"
+            component={GovernmentSchemesScreen}
+            options={{
+              headerTitle: "সরকারি প্রকল্প",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="SuccessStories"
+            component={SuccessStoriesScreen}
+            options={{
+              headerTitle: "সফলতার গল্প",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Podcasts"
+            component={PodcastsScreen}
+            options={{
+              headerTitle: "পডকাস্ট",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="EventsCalendar"
+            component={EventsCalendarScreen}
+            options={{
+              headerTitle: "ইভেন্ট ক্যালেন্ডার",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="SoilTesting"
+            component={SoilTestingScreen}
+            options={{
+              headerTitle: "মাটি পরীক্ষা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Transport"
+            component={TransportScreen}
+            options={{
+              headerTitle: "পরিবহন সেবা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="EmergencyServices"
+            component={EmergencyServicesScreen}
+            options={{
+              headerTitle: "জরুরি সেবা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="InsuranceCalculator"
+            component={InsuranceCalculatorScreen}
+            options={{
+              headerTitle: "বীমা ক্যালকুলেটর",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="LaborHiring"
+            component={LaborHiringScreen}
+            options={{
+              headerTitle: "শ্রমিক নিয়োগ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ColdStorage"
+            component={ColdStorageScreen}
+            options={{
+              headerTitle: "হিমাগার",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Cooperative"
+            component={CooperativeScreen}
+            options={{
+              headerTitle: "সমবায় সমিতি",
+            }}
+          />
+          <Stack.Screen
+            name="WelfareAssociation"
+            component={WelfareAssociationScreen}
+            options={{
+              headerTitle: "মৎস্য কল্যাণ সমিতি",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="InternationalFishSummit"
+            component={InternationalFishSummitScreen}
+            options={{
+              headerTitle: "ইন্টারন্যাশনাল মৎস্য সামিট",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ApplicationsList"
+            component={ApplicationsListScreen}
+            options={{
+              headerTitle: "আবেদনসমূহ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ApplicationDetail"
+            component={ApplicationDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="SeedFinder"
+            component={SeedFinderScreen}
+            options={{
+              headerTitle: "বীজ খুঁজুন",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="FarmDiary"
+            component={FarmDiaryScreen}
+            options={{
+              headerTitle: "খামার ডায়েরি",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="VoiceRooms"
+            component={VoiceRoomsScreen}
+            options={{
+              headerTitle: "ভয়েস রুম",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="VoiceRoom"
+            component={VoiceRoomScreen}
+            options={{
+              headerTitle: "লাইভ রুম",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Stories"
+            component={StoriesScreen}
+            options={{
+              headerTitle: "স্টোরি",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={{
+              headerTitle: "নোটিফিকেশন",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Leaderboard"
+            component={LeaderboardScreen}
+            options={{
+              headerTitle: "লিডারবোর্ড",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="UserSearch"
+            component={UserSearchScreen}
+            options={{
+              headerTitle: "ব্যবহারকারী খুঁজুন",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Announcements"
+            component={AnnouncementsScreen}
+            options={{
+              headerTitle: "ঘোষণা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Rewards"
+            component={RewardsScreen}
+            options={{
+              headerTitle: "রিওয়ার্ড",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="LiveStream"
+            component={LiveStreamScreen}
+            options={{
+              headerTitle: "লাইভ স্ট্রিম",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Trending"
+            component={TrendingScreen}
+            options={{
+              headerTitle: "ট্রেন্ডিং",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Challenges"
+            component={ChallengesScreen}
+            options={{
+              headerTitle: "চ্যালেঞ্জ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="SavedPosts"
+            component={SavedPostsScreen}
+            options={{
+              headerTitle: "সেভ করা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="MyPosts"
+            component={MyPostsScreen}
+            options={{
+              headerTitle: "আমার পোস্ট",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="FeaturedFarmers"
+            component={FeaturedFarmersScreen}
+            options={{
+              headerTitle: "ফিচার্ড কৃষক",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="KnowledgeWiki"
+            component={KnowledgeWikiScreen}
+            options={{
+              headerTitle: "জ্ঞানভাণ্ডার",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Mentorship"
+            component={MentorshipScreen}
+            options={{
+              headerTitle: "মেন্টরশিপ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CommunityStats"
+            component={CommunityStatsScreen}
+            options={{
+              headerTitle: "কমিউনিটি স্ট্যাটস",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="DailyCheckIn"
+            component={DailyCheckInScreen}
+            options={{
+              headerTitle: "দৈনিক চেক-ইন",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="FarmTours"
+            component={FarmToursScreen}
+            options={{
+              headerTitle: "ফার্ম ট্যুর",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="SkillExchange"
+            component={SkillExchangeScreen}
+            options={{
+              headerTitle: "দক্ষতা বিনিময়",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="HelpCenter"
+            component={HelpCenterScreen}
+            options={{
+              headerTitle: "সাহায্য কেন্দ্র",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CropEncyclopedia"
+            component={CropEncyclopediaScreen}
+            options={{
+              headerTitle: "ফসল বিশ্বকোষ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ActivityFeed"
+            component={ActivityFeedScreen}
+            options={{
+              headerTitle: "অ্যাক্টিভিটি",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Services"
+            component={ServicesScreen}
+            options={{
+              headerTitle: "সেবা সমূহ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="QRScanner"
+            component={QRScannerScreen}
+            options={{
+              headerTitle: "QR স্ক্যানার",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="FarmAnalytics"
+            component={FarmAnalyticsScreen}
+            options={{
+              headerTitle: "ফার্ম অ্যানালিটিক্স",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Veterinary"
+            component={VeterinaryScreen}
+            options={{
+              headerTitle: "পশু চিকিৎসা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ContractFarming"
+            component={ContractFarmingScreen}
+            options={{
+              headerTitle: "চুক্তিভিত্তিক চাষ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="AgriNews"
+            component={AgriNewsScreen}
+            options={{
+              headerTitle: "কৃষি সংবাদ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="PriceAlert"
+            component={PriceAlertScreen}
+            options={{
+              headerTitle: "মূল্য সতর্কতা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="RecipeFinder"
+            component={RecipeFinderScreen}
+            options={{
+              headerTitle: "রেসিপি খুঁজুন",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="Warehouse"
+            component={WarehouseScreen}
+            options={{
+              headerTitle: "গুদাম খুঁজুন",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="QualityTesting"
+            component={QualityTestingScreen}
+            options={{
+              headerTitle: "গুণমান পরীক্ষা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="MedicalServices"
+            component={MedicalServicesScreen}
+            options={{
+              headerTitle: "স্বাস্থ্য সেবা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="LandServices"
+            component={LandServicesScreen}
+            options={{
+              headerTitle: "ভূমি সেবা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="WasteManagement"
+            component={WasteManagementScreen}
+            options={{
+              headerTitle: "বর্জ্য ব্যবস্থাপনা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="WaterServices"
+            component={WaterServicesScreen}
+            options={{
+              headerTitle: "পানি সেবা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ElectricityServices"
+            component={ElectricityServicesScreen}
+            options={{
+              headerTitle: "বিদ্যুৎ সেবা",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="FishEncyclopedia"
+            component={FishEncyclopediaScreen}
+            options={{
+              headerTitle: "মাছ চাষ",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="FishDetail"
+            component={FishDetailScreen}
+            options={{
+              headerTitle: "মাছের বিবরণ",
+              headerBackTitle: "Back",
+            }}
+          />
+        </>
+      )}
+    </Stack.Navigator>
+  );
+}
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});

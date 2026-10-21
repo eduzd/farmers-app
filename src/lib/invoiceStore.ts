@@ -1,0 +1,143 @@
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+export interface InvoiceItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  total: number;
+}
+
+export interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  orderId: string;
+  sellerId: string;
+  sellerName: string;
+  sellerAddress: string;
+  sellerPhone: string;
+  sellerEmail?: string;
+  buyerId: string;
+  buyerName: string;
+  buyerAddress: string;
+  buyerPhone: string;
+  items: InvoiceItem[];
+  subtotal: number;
+  discount: number;
+  discountPercent: number;
+  tax: number;
+  taxPercent: number;
+  shippingCost: number;
+  total: number;
+  currency: string;
+  notes?: string;
+  paymentStatus: "paid" | "unpaid" | "partial";
+  createdAt: number;
+  dueDate?: number;
+}
+
+interface InvoiceState {
+  invoices: Invoice[];
+  
+  createInvoice: (invoice: Omit<Invoice, "id" | "invoiceNumber" | "createdAt">) => Invoice;
+  getInvoice: (invoiceId: string) => Invoice | undefined;
+  getInvoicesByOrder: (orderId: string) => Invoice[];
+  getInvoicesBySeller: (sellerId: string) => Invoice[];
+  getInvoicesByBuyer: (buyerId: string) => Invoice[];
+  updatePaymentStatus: (invoiceId: string, status: Invoice["paymentStatus"]) => void;
+  generateInvoiceNumber: () => string;
+}
+
+const generateInvoiceNumber = (): string => {
+  const date = new Date();
+  const year = date.getFullYear().toString().slice(-2);
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+  return `INV-${year}${month}-${random}`;
+};
+
+const MOCK_INVOICES: Invoice[] = [
+  {
+    id: "inv1",
+    invoiceNumber: "INV-2601-0001",
+    orderId: "o1",
+    sellerId: "seller1",
+    sellerName: "সবুজ ফসল",
+    sellerAddress: "১২৩, গ্রিন ভিলেজ, গাজীপুর",
+    sellerPhone: "০১৭১২-১১১১১১",
+    sellerEmail: "info@sobujfosol.com",
+    buyerId: "buyer1",
+    buyerName: "করিম সাহেব",
+    buyerAddress: "৪৫৬, শান্তিনগর, ঢাকা",
+    buyerPhone: "০১৮১২-২২২২২২",
+    items: [
+      { id: "i1", name: "জৈব টমেটো", quantity: 10, unit: "কেজি", unitPrice: 80, total: 800 },
+      { id: "i2", name: "জৈব গাজর", quantity: 5, unit: "কেজি", unitPrice: 60, total: 300 },
+    ],
+    subtotal: 1100,
+    discount: 110,
+    discountPercent: 10,
+    tax: 0,
+    taxPercent: 0,
+    shippingCost: 50,
+    total: 1040,
+    currency: "৳",
+    notes: "ধন্যবাদ আপনার ক্রয়ের জন্য!",
+    paymentStatus: "paid",
+    createdAt: Date.now() - 7 * 24 * 3600000,
+  },
+];
+
+export const useInvoiceStore = create<InvoiceState>()(
+  persist(
+    (set, get) => ({
+      invoices: MOCK_INVOICES,
+
+      createInvoice: (invoice) => {
+        const newInvoice: Invoice = {
+          id: Date.now().toString(),
+          invoiceNumber: generateInvoiceNumber(),
+          ...invoice,
+          createdAt: Date.now(),
+        };
+        set((state) => ({
+          invoices: [newInvoice, ...state.invoices],
+        }));
+        return newInvoice;
+      },
+
+      getInvoice: (invoiceId) => {
+        return get().invoices.find((i) => i.id === invoiceId);
+      },
+
+      getInvoicesByOrder: (orderId) => {
+        return get().invoices.filter((i) => i.orderId === orderId);
+      },
+
+      getInvoicesBySeller: (sellerId) => {
+        return get().invoices.filter((i) => i.sellerId === sellerId);
+      },
+
+      getInvoicesByBuyer: (buyerId) => {
+        return get().invoices.filter((i) => i.buyerId === buyerId);
+      },
+
+      updatePaymentStatus: (invoiceId, status) => {
+        set((state) => ({
+          invoices: state.invoices.map((i) =>
+            i.id === invoiceId ? { ...i, paymentStatus: status } : i
+          ),
+        }));
+      },
+
+      generateInvoiceNumber: () => generateInvoiceNumber(),
+    }),
+    {
+      name: "invoice-storage",
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);

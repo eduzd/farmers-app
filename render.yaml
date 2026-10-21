@@ -1,0 +1,35 @@
+# Render Blueprint: one free web service (API + web app) and one free Postgres database.
+# Both in Singapore, the closest Render region to Bangladesh.
+services:
+  - type: web
+    name: farmers
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci --include=dev && npm run server:build
+    startCommand: npm run server:prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: farmers-db
+          property: connectionString
+      - key: ADMIN_EMAIL
+        value: admin@farmers.app
+      - key: BKASH_SANDBOX
+        value: "true"
+      - key: GOOGLE_API_KEY
+        sync: false
+
+databases:
+  - name: farmers-db
+    plan: free
+    region: singapore
+    databaseName: farmers
+    user: farmers

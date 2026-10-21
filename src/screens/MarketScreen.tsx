@@ -1,0 +1,1281 @@
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  TextInput,
+  ActivityIndicator,
+  RefreshControl,
+  Dimensions,
+  ScrollView,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
+
+import { ThemedText } from "@/components/ThemedText";
+import { useTheme } from "@/hooks/useTheme";
+import { useFavoritesStore } from "@/lib/favoritesStore";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { useCartStore } from "@/lib/cartStore";
+import { useI18n } from "@/lib/i18n";
+import { MarketplaceProduct, getAllMarketplaceProducts, getAllCompanies, Company } from "@/lib/storage";
+import { initializeSeedData } from "@/lib/seedData";
+import { fetchCatalog, createCatalogItem, updateCatalogItem, deleteCatalogItem, myUserId } from "@/lib/catalog";
+import { CatalogFormModal, FormField } from "@/components/CatalogFormModal";
+import { useAuthStore } from "@/lib/authStore";
+import { useCommunityStore, CommunityType } from "@/lib/communityStore";
+import { getProductsByCommunity, CommunityProduct } from "@/lib/communityData";
+
+import { tr, useTr } from "@/lib/tr";
+import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
+import { DIVISIONS, divisionOf, divisionLabel } from "@/lib/bdLocations";
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const CARD_WIDTH = (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md) / 2;
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+const CATEGORIES = [
+  { id: "all", labelBn: "সব", labelEn: "All", icon: "grid" },
+  { id: "vegetables", labelBn: "সবজি", labelEn: "Vegetables", icon: "feather" },
+  { id: "fruits", labelBn: "ফল", labelEn: "Fruits", icon: "sun" },
+  { id: "grains", labelBn: "শস্য", labelEn: "Grains", icon: "layers" },
+  { id: "livestock", labelBn: "গবাদি পশু", labelEn: "Livestock", icon: "github" },
+  { id: "seeds", labelBn: "বীজ", labelEn: "Seeds", icon: "sun" },
+  { id: "fertilizer", labelBn: "সার", labelEn: "Fertilizer", icon: "droplet" },
+  { id: "equipment", labelBn: "যন্ত্রপাতি", labelEn: "Equipment", icon: "tool" },
+  { id: "feed", labelBn: "খাদ্য", labelEn: "Feed", icon: "package" },
+  { id: "medicine", labelBn: "ওষুধ", labelEn: "Medicine", icon: "heart" },
+  { id: "organic", labelBn: "অর্গানিক", labelEn: "Organic", icon: "zap" },
+  { id: "dairy", labelBn: "দুগ্ধ", labelEn: "Dairy", icon: "coffee" },
+  { id: "fish", labelBn: "মাছ", labelEn: "Fish", icon: "anchor" },
+  { id: "other", labelBn: "অন্যান্য", labelEn: "Other", icon: "grid" },
+];
+
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  unit: string;
+  seller: string;
+  sellerId?: string;
+  location: string;
+  rating: number;
+  image: string;
+  description?: string;
+  quantity: number;
+  category: string;
+  companyId?: string;
+  company?: {
+    name: string;
+    initials: string;
+    verified: boolean;
+    rating: number;
+    location: string;
+  };
+}
+
+const DEMO_PRODUCTS: Product[] = [
+  {
+    id: "demo_1",
+    name: "জৈব টমেটো",
+    price: 80,
+    currency: "৳",
+    unit: "কেজি",
+    seller: "সবুজ ফসল",
+    location: "গাজীপুর, বাংলাদেশ",
+    rating: 4.8,
+    image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400",
+    description: "কীটনাশকমুক্ত তাজা জৈব টমেটো। সালাদ এবং রান্নার জন্য উপযুক্ত।",
+    quantity: 500,
+    category: "vegetables",
+  },
+  {
+    id: "demo_2",
+    name: "তাজা স্ট্রবেরি",
+    price: 350,
+    currency: "৳",
+    unit: "কেজি",
+    seller: "বেরি ফার্মস",
+    location: "রাজশাহী, বাংলাদেশ",
+    rating: 4.9,
+    image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400",
+    description: "মিষ্টি এবং রসালো স্ট্রবেরি সরাসরি আমাদের খামার থেকে।",
+    quantity: 200,
+    category: "fruits",
+  },
+  {
+    id: "demo_3",
+    name: "জৈব গম",
+    price: 45,
+    currency: "৳",
+    unit: "কেজি",
+    seller: "সোনালী ফসল",
+    location: "দিনাজপুর, বাংলাদেশ",
+    rating: 4.7,
+    image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400",
+    description: "বেকিং এবং রান্নার জন্য প্রিমিয়াম মানের জৈব গম।",
+    quantity: 1000,
+    category: "grains",
+  },
+  {
+    id: "demo_4",
+    name: "দেশি মুরগির ডিম",
+    price: 180,
+    currency: "৳",
+    unit: "হালি",
+    seller: "মুক্ত মুরগি খামার",
+    location: "ময়মনসিংহ, বাংলাদেশ",
+    rating: 5.0,
+    image: "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400",
+    description: "স্বাস্থ্যকর দেশি মুরগির ফ্রি-রেঞ্জ ডিম।",
+    quantity: 100,
+    category: "dairy",
+  },
+  {
+    id: "demo_5",
+    name: "জৈব গাজর",
+    price: 60,
+    currency: "৳",
+    unit: "কেজি",
+    seller: "মূল ও কাণ্ড",
+    location: "বগুড়া, বাংলাদেশ",
+    rating: 4.6,
+    image: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400",
+    description: "খাস্তা জৈব গাজর স্ন্যাকিং এবং রান্নার জন্য উপযুক্ত।",
+    quantity: 300,
+    category: "vegetables",
+  },
+  {
+    id: "demo_6",
+    name: "তাজা আপেল",
+    price: 220,
+    currency: "৳",
+    unit: "কেজি",
+    seller: "বাগান উপত্যকা",
+    location: "সিলেট, বাংলাদেশ",
+    rating: 4.8,
+    image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400",
+    description: "আমাদের পারিবারিক বাগান থেকে সুস্বাদু আপেল।",
+    quantity: 400,
+    category: "fruits",
+  },
+];
+
+export default function MarketScreen() {
+  const tr = useTr();
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
+  const navigation = useNavigation<NavigationProp>();
+  const { theme } = useTheme();
+  const { t, language } = useI18n();
+  const { getItemCount } = useCartStore();
+  const activeCommunity = useCommunityStore((state) => state.activeCommunity);
+  const isBn = language === "bn";
+
+  const communityType = (activeCommunity?.type || "agriculture") as CommunityType;
+
+  const [products, setProducts] = useState<Product[]>(DEMO_PRODUCTS);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const cartCount = getItemCount();
+  const loggedIn = useAuthStore((st) => st.isAuthenticated && !!st.token);
+  const isSuperAdmin = useAuthStore((st) => st.isSuperAdmin);
+  const authUser = useAuthStore((st) => st.user);
+  const [sellForm, setSellForm] = useState<{ open: boolean; item: any | null }>({ open: false, item: null });
+  const SELL_FIELDS: FormField[] = [
+    { key: "name", label: t("market.form.name"), required: true },
+    { key: "price", label: t("market.form.price"), numeric: true, required: true },
+    { key: "unit", label: t("market.form.unit"), placeholder: tr("kg / maund / piece / dozen / litre") },
+    { key: "quantity", label: tr("Stock available"), numeric: true },
+    { key: "minOrder", label: tr("Minimum order"), numeric: true, placeholder: "1" },
+    { key: "location", label: t("market.form.location") },
+    { key: "category", label: t("market.form.category"), placeholder: "vegetables / fruits / grains / fish / livestock / seeds" },
+    { key: "image", label: t("market.form.image"), placeholder: "https://...", image: true },
+    { key: "description", label: t("market.form.description"), multiline: true },
+  ];
+  const saveListing = async (v: Record<string, any>) => {
+    const data = {
+      currency: "৳",
+      rating: 0,
+      seller: (authUser as any)?.name || (authUser as any)?.username || "Seller",
+      sellerId: (authUser as any)?.id,
+      category: "vegetables",
+      ...v,
+      image: v.image || "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400",
+    };
+    if (sellForm.item) await updateCatalogItem("listings", sellForm.item.id, data);
+    else await createCatalogItem("listings", data);
+    setSellForm({ open: false, item: null });
+    loadProducts();
+  };
+
+  useEffect(() => {
+    loadProducts();
+  }, [communityType]);
+
+  const loadProducts = async () => {
+    try {
+      const loadedCompanies = await getAllCompanies();
+      if (loadedCompanies.length === 0) {
+        await initializeSeedData();
+        const newCompanies = await getAllCompanies();
+        setCompanies(newCompanies);
+      } else {
+        setCompanies(loadedCompanies);
+      }
+
+      // Listings made with the Sell form may leave out rating, seller, location or currency.
+      const serverListings: Product[] = (await fetchCatalog<Product>("listings").catch(() => [] as Product[])).map((p: any) => ({
+        ...p,
+        price: Number(p.price) || 0,
+        rating: Number(p.rating) || 0,
+        currency: p.currency || "৳",
+        seller: p.seller || p.ownerName || "Farmer",
+        location: p.location || "",
+        image: p.image || "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400",
+      }));
+      const marketplaceProducts = await getAllMarketplaceProducts();
+      
+      const formattedProducts: Product[] = marketplaceProducts.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        currency: p.currency,
+        unit: p.unit,
+        seller: p.company.name,
+        sellerId: p.companyId,
+        location: p.company.location,
+        rating: p.rating || p.company.rating,
+        image: (p.images && p.images.length > 0 ? p.images[0] : null) || "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400",
+        description: p.description,
+        quantity: p.quantity,
+        category: p.category,
+        companyId: p.companyId,
+        company: p.company,
+      }));
+
+      const communityProducts = getProductsByCommunity(communityType);
+      const mappedCommunityProducts: Product[] = communityProducts.map((cp) => ({
+        id: cp.id,
+        name: cp.name,
+        price: cp.price,
+        currency: cp.currency,
+        unit: cp.unit,
+        seller: cp.seller,
+        location: cp.location,
+        rating: cp.rating,
+        image: cp.image,
+        description: cp.description,
+        quantity: cp.quantity,
+        category: cp.category,
+      }));
+
+      const allProducts = [...serverListings, ...mappedCommunityProducts, ...formattedProducts];
+      
+      if (allProducts.length > 0) {
+        setProducts(allProducts);
+      } else {
+        setProducts(DEMO_PRODUCTS);
+      }
+    } catch (error) {
+      console.error("Error loading products:", error);
+      const communityProducts = getProductsByCommunity(communityType);
+      if (communityProducts.length > 0) {
+        setProducts(communityProducts.map((cp) => ({
+          id: cp.id,
+          name: cp.name,
+          price: cp.price,
+          currency: cp.currency,
+          unit: cp.unit,
+          seller: cp.seller,
+          location: cp.location,
+          rating: cp.rating,
+          image: cp.image,
+          description: cp.description,
+          quantity: cp.quantity,
+          category: cp.category,
+        })));
+      } else {
+        setProducts(DEMO_PRODUCTS);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    useFavoritesStore.getState().load();
+    await loadProducts();
+    setIsRefreshing(false);
+  };
+
+  const [sortBy, setSortBy] = useState<"newest" | "nearby" | "price_asc" | "price_desc" | "rating" | "saved">("newest");
+  const [showFilters, setShowFilters] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [division, setDivision] = useState<string | null>(null);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const recentItems = useRecentlyViewedStore((st) => st.items);
+  useEffect(() => {
+    useRecentlyViewedStore.getState().load();
+  }, []);
+  const myDivision = useMemo(() => {
+    const u: any = authUser || {};
+    const a = (u.addresses || []).find((x: any) => x.isDefault) || (u.addresses || [])[0];
+    return divisionOf([a?.district, a?.city, u.location, u.district, u.division].filter(Boolean).join(" ")) || "Dhaka";
+  }, [authUser]);
+  const activeFilterCount = (minPrice ? 1 : 0) + (maxPrice ? 1 : 0) + (division ? 1 : 0) + (inStockOnly ? 1 : 0);
+  const clearFilters = () => {
+    setMinPrice("");
+    setMaxPrice("");
+    setDivision(null);
+    setInStockOnly(false);
+    setSelectedCategory("all");
+    setSearchQuery("");
+    setSortBy("newest");
+  };
+  const favItems = useFavoritesStore((st) => st.items);
+  const favIds = useMemo(() => new Set(favItems.map((f) => f.itemId)), [favItems]);
+  useEffect(() => {
+    useFavoritesStore.getState().load();
+  }, []);
+  const SORTS = [
+    { id: "newest", icon: "clock", label: tr("Newest") },
+    { id: "nearby", icon: "navigation", label: tr("Nearby") },
+    { id: "price_asc", icon: "arrow-up", label: tr("Price: low to high") },
+    { id: "price_desc", icon: "arrow-down", label: tr("Price: high to low") },
+    { id: "rating", icon: "star", label: tr("Top rated") },
+    { id: "saved", icon: "heart", label: tr("Saved") },
+  ] as const;
+
+  const filteredProducts = useMemo(() => {
+    let result = products;
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query) ||
+          p.seller.toLowerCase().includes(query) ||
+          p.description?.toLowerCase().includes(query)
+      );
+    }
+
+    if (selectedCategory !== "all") {
+      result = result.filter((p) => p.category?.toLowerCase() === selectedCategory);
+    }
+
+    const lo = parseFloat(minPrice);
+    const hi = parseFloat(maxPrice);
+    if (!Number.isNaN(lo)) result = result.filter((p) => p.price >= lo);
+    if (!Number.isNaN(hi)) result = result.filter((p) => p.price <= hi);
+    if (division) result = result.filter((p) => divisionOf(p.location) === division);
+    if (inStockOnly) result = result.filter((p) => p.quantity === undefined || p.quantity === null || Number(p.quantity) > 0);
+    if (sortBy === "nearby") {
+      const rank = (p: Product) => (divisionOf(p.location) === myDivision ? 0 : 1);
+      result = [...result].sort((a, b) => rank(a) - rank(b));
+    }
+    if (sortBy === "saved") result = result.filter((p) => favIds.has(String(p.id)));
+    if (sortBy === "price_asc") result = [...result].sort((a, b) => a.price - b.price);
+    if (sortBy === "price_desc") result = [...result].sort((a, b) => b.price - a.price);
+    if (sortBy === "rating") result = [...result].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+
+    return result;
+  }, [products, searchQuery, selectedCategory, sortBy, favIds, minPrice, maxPrice, division, inStockOnly, myDivision]);
+
+  const handleProductPress = useCallback((product: Product) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.navigate("ProductDetail", { product });
+  }, [navigation]);
+
+  const handleCompanyPress = useCallback((companyId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.navigate("StoreView", { companyId });
+  }, [navigation]);
+
+  const handleCategoryPress = useCallback((categoryId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedCategory(categoryId);
+  }, []);
+
+  const handleCartPress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.navigate("Cart");
+  }, [navigation]);
+
+  const handleSeeAllShops = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    navigation.navigate("ShopsHome");
+  }, [navigation]);
+
+  const renderProduct = useCallback(({ item }: { item: Product }) => (
+    <Pressable
+      style={({ pressed }) => [
+        styles.productCard,
+        { 
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+        },
+        pressed && styles.productPressed,
+      ]}
+      onPress={() => handleProductPress(item)}
+      onLongPress={() => {
+        const it: any = item;
+        if (it.ownerId && (isSuperAdmin || it.ownerId === myUserId())) setSellForm({ open: true, item: it });
+      }}
+    >
+      <View style={styles.imageWrapper}>
+        <Image
+          source={{ uri: item.image }}
+          style={styles.productImage}
+          contentFit="cover"
+          transition={200}
+        />
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.05)"]}
+          style={styles.imageGradient}
+        />
+        <View style={styles.ratingBadge}>
+          <Feather name="star" size={10} color="#FFFFFF" />
+          <ThemedText style={styles.ratingBadgeText}>{Number(item.rating || 0).toFixed(1)}</ThemedText>
+        </View>
+        {item.quantity !== undefined && item.quantity !== null && Number(item.quantity) <= 0 ? (
+          <View style={[styles.stockBadge, { backgroundColor: "#DC2626" }]}>
+            <ThemedText style={styles.stockBadgeText}>{tr("Out of stock")}</ThemedText>
+          </View>
+        ) : item.quantity !== undefined && item.quantity !== null && Number(item.quantity) > 0 && Number(item.quantity) < 10 ? (
+          <View style={[styles.stockBadge, { backgroundColor: "#EA8A0C" }]}>
+            <ThemedText style={styles.stockBadgeText}>{tr("Only")} {item.quantity} {tr("left")}</ThemedText>
+          </View>
+        ) : null}
+        {item.company?.verified ? (
+          <View style={styles.verifiedBadge}>
+            <Feather name="check" size={10} color="#FFFFFF" />
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.productInfo}>
+        <ThemedText style={[styles.productName, { color: theme.text }]} numberOfLines={2}>
+          {item.name}
+        </ThemedText>
+        <View style={styles.priceRow}>
+          <ThemedText type="h4" style={[styles.productPrice, { color: theme.primary }]}>
+            {item.currency}{item.price}
+          </ThemedText>
+          <ThemedText style={[styles.unitText, { color: theme.textSecondary }]}>
+            /{item.unit}
+          </ThemedText>
+        </View>
+        <Pressable
+          style={styles.sellerRow}
+          onPress={(e) => {
+            e.stopPropagation();
+            if (item.companyId) {
+              handleCompanyPress(item.companyId);
+            }
+          }}
+        >
+          <LinearGradient
+            colors={[theme.primary, theme.primary + "CC"]}
+            style={styles.sellerAvatar}
+          >
+            <ThemedText style={styles.sellerInitials}>
+              {item.company?.initials || item.seller.substring(0, 2).toUpperCase()}
+            </ThemedText>
+          </LinearGradient>
+          <View style={styles.sellerInfo}>
+            <ThemedText style={[styles.productSeller, { color: theme.text }]} numberOfLines={1}>
+              {item.seller}
+            </ThemedText>
+            <View style={styles.locationContainer}>
+              <Feather name="map-pin" size={9} color={theme.textSecondary} />
+              <ThemedText style={[styles.locationText, { color: theme.textSecondary }]} numberOfLines={1}>
+                {item.location.split(",")[0]}
+              </ThemedText>
+            </View>
+          </View>
+        </Pressable>
+      </View>
+    </Pressable>
+  ), [theme, handleProductPress, handleCompanyPress, tr]);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <ThemedText style={[styles.loadingText, { color: theme.textSecondary }]}>
+          {isBn ? "পণ্য লোড হচ্ছে..." : "Loading products..."}
+        </ThemedText>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+      <View
+        style={[
+          styles.searchSection,
+          {
+            paddingTop: Spacing.md,
+            backgroundColor: theme.backgroundRoot,
+          },
+        ]}
+      >
+        <View style={styles.marketHeader}>
+          <ThemedText type="h4" style={{ color: theme.text, flex: 1 }}>
+            {isBn ? "মার্কেট" : "Market"}
+          </ThemedText>
+          {loggedIn ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("market.sell")}
+              style={[styles.sellButton, { backgroundColor: theme.primary }]}
+              onPress={() => setSellForm({ open: true, item: null })}
+            >
+              <Feather name="plus" size={16} color="#FFFFFF" />
+              <ThemedText style={{ color: "#FFFFFF", fontWeight: "600", fontSize: 14 }}>{t("market.sell")}</ThemedText>
+            </Pressable>
+          ) : null}
+          <Pressable 
+            accessibilityLabel={tr("Cart")}
+            style={[styles.cartHeaderButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+            onPress={handleCartPress}
+          >
+            <Feather name="shopping-cart" size={20} color={theme.text} />
+            {cartCount > 0 ? (
+              <View style={[styles.cartBadge, { backgroundColor: theme.primary }]}>
+                <ThemedText style={styles.cartBadgeText}>
+                  {cartCount > 9 ? "9+" : cartCount}
+                </ThemedText>
+              </View>
+            ) : null}
+          </Pressable>
+        </View>
+        <View
+          style={[
+            styles.searchContainer,
+            { backgroundColor: theme.white, borderColor: theme.cardBorder },
+          ]}
+        >
+          <Feather name="search" size={18} color={theme.iconSecondary || theme.textSecondary} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.text }]}
+            placeholder={isBn ? "পণ্য অনুসন্ধান করুন..." : "Search products..."}
+            placeholderTextColor={theme.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 ? (
+            <Pressable onPress={() => setSearchQuery("")} accessibilityLabel={tr("Clear search")}>
+              <Feather name="x" size={18} color={theme.textSecondary} />
+            </Pressable>
+          ) : null}
+          <Pressable
+            onPress={() => setShowFilters((v) => !v)}
+            accessibilityLabel={tr("Filters")}
+            style={[styles.filterButton, { backgroundColor: showFilters || activeFilterCount ? theme.primary : theme.backgroundRoot }]}
+          >
+            <Feather name="sliders" size={16} color={showFilters || activeFilterCount ? "#FFFFFF" : theme.text} />
+            {activeFilterCount ? <ThemedText style={styles.filterCount}>{activeFilterCount}</ThemedText> : null}
+          </Pressable>
+        </View>
+        {showFilters ? (
+          <View style={[styles.filterPanel, { backgroundColor: theme.white, borderColor: theme.cardBorder }]}>
+            <ThemedText style={[styles.filterLabel, { color: theme.text }]}>{tr("Price range (৳)")}</ThemedText>
+            <View style={styles.priceRow2}>
+              <TextInput
+                style={[styles.priceInput, { color: theme.text, borderColor: theme.inputBorder || theme.cardBorder, backgroundColor: theme.backgroundRoot }]}
+                placeholder={tr("Min")}
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="numeric"
+                value={minPrice}
+                onChangeText={(v) => setMinPrice(v.replace(/[^0-9.]/g, ""))}
+              />
+              <ThemedText style={{ color: theme.textSecondary }}>–</ThemedText>
+              <TextInput
+                style={[styles.priceInput, { color: theme.text, borderColor: theme.inputBorder || theme.cardBorder, backgroundColor: theme.backgroundRoot }]}
+                placeholder={tr("Max")}
+                placeholderTextColor={theme.textSecondary}
+                keyboardType="numeric"
+                value={maxPrice}
+                onChangeText={(v) => setMaxPrice(v.replace(/[^0-9.]/g, ""))}
+              />
+            </View>
+            <ThemedText style={[styles.filterLabel, { color: theme.text }]}>{tr("Division")}</ThemedText>
+            <View style={styles.chipWrap}>
+              {[{ id: "", bn: "সব" }, ...DIVISIONS].map((d) => {
+                const active = (division || "") === d.id;
+                return (
+                  <Pressable
+                    key={d.id || "all"}
+                    onPress={() => setDivision(d.id || null)}
+                    style={[styles.smallChip, { backgroundColor: active ? theme.primary : theme.card, borderColor: active ? theme.primary : theme.cardBorder }]}
+                  >
+                    <ThemedText style={[styles.smallChipText, { color: active ? "#FFFFFF" : theme.text }]}>
+                      {d.id ? divisionLabel(d.id, isBn) : tr("All")}
+                    </ThemedText>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <View style={styles.filterFooter}>
+              <Pressable
+                onPress={() => setInStockOnly((v) => !v)}
+                style={[styles.smallChip, { backgroundColor: inStockOnly ? theme.primary : theme.card, borderColor: inStockOnly ? theme.primary : theme.cardBorder }]}
+              >
+                <Feather name={inStockOnly ? "check-square" : "square"} size={13} color={inStockOnly ? "#FFFFFF" : theme.text} />
+                <ThemedText style={[styles.smallChipText, { color: inStockOnly ? "#FFFFFF" : theme.text }]}>{tr("In stock only")}</ThemedText>
+              </Pressable>
+              <Pressable onPress={clearFilters} style={styles.clearBtn}>
+                <ThemedText style={{ color: theme.primary, fontWeight: "600", fontSize: 13 }}>{tr("Clear all")}</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        <FlatList
+          horizontal
+          data={CATEGORIES}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContainer}
+          renderItem={({ item }) => (
+            <Pressable
+              style={[
+                styles.categoryChip,
+                {
+                  backgroundColor:
+                    selectedCategory === item.id
+                      ? theme.primary
+                      : theme.card,
+                  borderColor: selectedCategory === item.id ? theme.primary : theme.cardBorder,
+                },
+              ]}
+              onPress={() => handleCategoryPress(item.id)}
+            >
+              <Feather 
+                name={item.icon as any} 
+                size={14} 
+                color={selectedCategory === item.id ? "#FFFFFF" : theme.text} 
+              />
+              <ThemedText
+                style={[
+                  styles.categoryText,
+                  {
+                    color:
+                      selectedCategory === item.id ? "#FFFFFF" : theme.text,
+                  },
+                ]}
+              >
+                {isBn ? item.labelBn : item.labelEn}
+              </ThemedText>
+            </Pressable>
+          )}
+        />
+        <FlatList
+          horizontal
+          data={SORTS as any}
+          keyExtractor={(item: any) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={[styles.categoriesContainer, { paddingTop: 0 }]}
+          renderItem={({ item }: any) => {
+            const active = sortBy === item.id;
+            return (
+              <Pressable
+                style={[styles.categoryChip, { backgroundColor: active ? theme.primarySoft || theme.card : theme.card, borderColor: active ? theme.primary : theme.cardBorder }]}
+                onPress={() => setSortBy(item.id)}
+                accessibilityLabel={item.label}
+              >
+                <Feather name={item.icon} size={13} color={active ? theme.primary : theme.textSecondary} />
+                <ThemedText style={[styles.categoryText, { color: active ? theme.primary : theme.textSecondary }]}>{item.label}</ThemedText>
+              </Pressable>
+            );
+          }}
+        />
+      </View>
+
+      <FlatList
+        data={filteredProducts}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.productRow}
+        contentContainerStyle={[
+          styles.productsContainer,
+          { paddingBottom: tabBarHeight + Spacing.xl },
+        ]}
+        scrollIndicatorInsets={{ bottom: insets.bottom }}
+        renderItem={renderProduct}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={[theme.primary]}
+            tintColor={theme.primary}
+          />
+        }
+        ListHeaderComponent={
+          <View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickFeaturesRow}
+            >
+              <Pressable
+                style={[styles.quickFeatureBtn, { backgroundColor: "#DC2626" }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  navigation.navigate("FlashSale" as any);
+                }}
+              >
+                <Feather name="zap" size={18} color="#FFFFFF" />
+                <ThemedText style={styles.quickFeatureText}>{isBn ? "ফ্ল্যাশ সেল" : "Flash Sale"}</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.quickFeatureBtn, { backgroundColor: theme.primary }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  navigation.navigate("Auction" as any);
+                }}
+              >
+                <Feather name="activity" size={18} color="#FFFFFF" />
+                <ThemedText style={styles.quickFeatureText}>{isBn ? "নিলাম" : "Auction"}</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.quickFeatureBtn, { backgroundColor: "#EA8A0C" }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  navigation.navigate("BulkOrder" as any);
+                }}
+              >
+                <Feather name="package" size={18} color="#FFFFFF" />
+                <ThemedText style={styles.quickFeatureText}>{isBn ? "বাল্ক অর্ডার" : "Bulk Order"}</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.quickFeatureBtn, { backgroundColor: "#7C3AED" }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  navigation.navigate("MarketPrice" as any);
+                }}
+              >
+                <Feather name="trending-up" size={18} color="#FFFFFF" />
+                <ThemedText style={styles.quickFeatureText}>{isBn ? "বাজার দর" : "Market Price"}</ThemedText>
+              </Pressable>
+              <Pressable
+                style={[styles.quickFeatureBtn, { backgroundColor: "#2563EB" }]}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  navigation.navigate("ProductCompare" as any);
+                }}
+              >
+                <Feather name="columns" size={18} color="#FFFFFF" />
+                <ThemedText style={styles.quickFeatureText}>{isBn ? "তুলনা" : "Compare"}</ThemedText>
+              </Pressable>
+            </ScrollView>
+
+            {recentItems.length > 0 && !searchQuery ? (
+              <View style={styles.recentSection}>
+                <View style={styles.sectionHeader}>
+                  <ThemedText type="h4" style={{ color: theme.text }}>{tr("Recently viewed")}</ThemedText>
+                  <Pressable onPress={() => useRecentlyViewedStore.getState().clear()} style={styles.seeAllButton}>
+                    <ThemedText style={[styles.seeAllText, { color: theme.primary }]}>{tr("Clear")}</ThemedText>
+                  </Pressable>
+                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.sm }}>
+                  {recentItems.map((p: any) => (
+                    <Pressable
+                      key={`recent-${p.id}`}
+                      onPress={() => handleProductPress(p)}
+                      style={[styles.recentCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                    >
+                      <Image source={{ uri: p.image }} style={styles.recentImage} contentFit="cover" />
+                      <ThemedText style={[styles.recentName, { color: theme.text }]} numberOfLines={1}>{p.name}</ThemedText>
+                      <ThemedText style={[styles.recentPrice, { color: theme.primary }]} numberOfLines={1}>
+                        {p.currency || "৳"}{p.price}{p.unit ? `/${p.unit}` : ""}
+                      </ThemedText>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            ) : null}
+
+            <View style={styles.resultRow}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>
+                {filteredProducts.length} {tr("products found")}
+              </ThemedText>
+              {activeFilterCount || selectedCategory !== "all" || searchQuery || sortBy !== "newest" ? (
+                <Pressable onPress={clearFilters} accessibilityLabel={tr("Clear all")}>
+                  <ThemedText style={{ color: theme.primary, fontSize: 13, fontWeight: "600" }}>{tr("Clear all")}</ThemedText>
+                </Pressable>
+              ) : null}
+            </View>
+
+            {companies.length > 0 ? (
+            <View style={styles.shopsSection}>
+              <View style={styles.sectionHeader}>
+                <ThemedText type="h4" style={{ color: theme.text }}>
+                  {isBn ? "দোকান সমূহ" : "Shops"}
+                </ThemedText>
+                <Pressable onPress={handleSeeAllShops} style={styles.seeAllButton}>
+                  <ThemedText style={[styles.seeAllText, { color: theme.primary }]}>
+                    {isBn ? "সব দেখুন" : "See All"}
+                  </ThemedText>
+                  <Feather name="chevron-right" size={16} color={theme.primary} />
+                </Pressable>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.shopsContainer}
+              >
+                {companies.slice(0, 5).map((company) => (
+                  <Pressable
+                    key={company.id}
+                    style={[styles.shopCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                    onPress={() => handleCompanyPress(company.id)}
+                  >
+                    <LinearGradient
+                      colors={[theme.primary, theme.primary + "CC"]}
+                      style={styles.shopAvatar}
+                    >
+                      <ThemedText style={styles.shopInitials}>
+                        {company.initials}
+                      </ThemedText>
+                    </LinearGradient>
+                    <ThemedText style={[styles.shopName, { color: theme.text }]} numberOfLines={1}>
+                      {company.name}
+                    </ThemedText>
+                    {company.verified ? (
+                      <View style={[styles.verifiedTag, { backgroundColor: theme.primary + "15" }]}>
+                        <Feather name="check-circle" size={10} color={theme.primary} />
+                        <ThemedText style={[styles.verifiedTagText, { color: theme.primary }]}>
+                          {isBn ? "যাচাইকৃত" : "Verified"}
+                        </ThemedText>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <View style={styles.productsSectionHeader}>
+                <ThemedText type="h4" style={{ color: theme.text }}>
+                  {isBn ? "পণ্যসমূহ" : "Products"}
+                </ThemedText>
+              </View>
+            </View>
+          ) : null}
+          </View>
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Feather name="package" size={48} color={theme.textSecondary} />
+            <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
+              {isBn ? "কোনো পণ্য পাওয়া যায়নি" : "No products found"}
+            </ThemedText>
+          </View>
+        }
+      />
+
+      <CatalogFormModal
+        visible={sellForm.open}
+        title={sellForm.item ? t("market.editListing") : t("market.sell")}
+        fields={SELL_FIELDS}
+        initial={sellForm.item}
+        submitLabel={t("common.save")}
+        onClose={() => setSellForm({ open: false, item: null })}
+        onSubmit={saveListing}
+        deleteLabel={t("common.delete")}
+        onDelete={
+          sellForm.item
+            ? async () => {
+                try {
+                  await deleteCatalogItem("listings", sellForm.item!.id);
+                } catch {}
+                setSellForm({ open: false, item: null });
+                loadProducts();
+              }
+            : undefined
+        }
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  sellButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    height: 36,
+    paddingHorizontal: 12,
+    borderRadius: 18,
+    marginRight: 8,
+  },
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.md,
+  },
+  loadingText: {
+    fontSize: 14,
+  },
+  filterButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+  },
+  filterCount: { color: "#FFFFFF", fontSize: 10, fontWeight: "700", marginLeft: 1 },
+  filterPanel: {
+    marginTop: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    gap: Spacing.sm,
+  },
+  filterLabel: { fontSize: 13, fontWeight: "600" },
+  priceRow2: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
+  priceInput: { flex: 1, minWidth: 0, height: 40, borderWidth: 1, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, fontSize: 14 },
+  chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.xs },
+  smallChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  smallChipText: { fontSize: 12, fontWeight: "500" },
+  filterFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: Spacing.sm },
+  clearBtn: { paddingVertical: 6, paddingHorizontal: Spacing.sm },
+  stockBadge: {
+    position: "absolute",
+    left: Spacing.sm,
+    bottom: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.full,
+    maxWidth: "90%",
+  },
+  stockBadgeText: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
+  recentSection: { marginBottom: Spacing.md },
+  recentCard: { width: 112, borderRadius: BorderRadius.md, borderWidth: 1, overflow: "hidden", paddingBottom: Spacing.xs },
+  recentImage: { width: "100%", height: 72 },
+  recentName: { fontSize: 12, fontWeight: "600", paddingHorizontal: 6, marginTop: 4 },
+  recentPrice: { fontSize: 12, fontWeight: "700", paddingHorizontal: 6 },
+  resultRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: Spacing.sm },
+  searchSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  marketHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  cartHeaderButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  cartBadge: {
+    position: "absolute",
+    top: 4,
+    right: 4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  cartBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    height: 50,
+    borderRadius: BorderRadius["2xl"],
+    borderWidth: 1,
+    gap: Spacing.sm,
+    ...Shadows.small,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: "PlusJakartaSans_400Regular",
+    textAlignVertical: "center",
+  },
+  categoriesContainer: {
+    paddingTop: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  categoryChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    marginRight: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    gap: Spacing.xs,
+  },
+  categoryText: {
+    fontSize: 13,
+    fontWeight: "500",
+    fontFamily: "PlusJakartaSans_500Medium",
+  },
+  productsContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+  },
+  productRow: {
+    justifyContent: "space-between",
+    marginBottom: Spacing.lg,
+  },
+  productCard: {
+    width: CARD_WIDTH,
+    borderRadius: BorderRadius["2xl"],
+    overflow: "hidden",
+    borderWidth: 1,
+    ...Shadows.medium,
+  },
+  productPressed: {
+    opacity: 0.95,
+    transform: [{ scale: 0.98 }],
+  },
+  imageWrapper: {
+    position: "relative",
+    overflow: "hidden",
+  },
+  productImage: {
+    width: "100%",
+    height: 130,
+  },
+  imageGradient: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 40,
+  },
+  ratingBadge: {
+    position: "absolute",
+    top: Spacing.sm,
+    right: Spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.full,
+    gap: 3,
+  },
+  ratingBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  verifiedBadge: {
+    position: "absolute",
+    top: Spacing.sm,
+    left: Spacing.sm,
+    backgroundColor: "#1DA1F2",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  productInfo: {
+    padding: Spacing.md,
+    paddingTop: Spacing.sm,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: "600",
+    fontFamily: "PlusJakartaSans_600SemiBold",
+    marginBottom: Spacing.xs,
+    lineHeight: 20,
+  },
+  priceRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: Spacing.md,
+  },
+  productPrice: {
+    fontSize: 17,
+    fontWeight: "700",
+  },
+  unitText: {
+    fontSize: 12,
+    marginLeft: 2,
+  },
+  sellerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  sellerAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sellerInitials: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  sellerInfo: {
+    flex: 1,
+  },
+  productSeller: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  locationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    marginTop: 2,
+  },
+  locationText: {
+    fontSize: 10,
+    flex: 1,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 100,
+    gap: Spacing.md,
+  },
+  emptyText: {
+    fontSize: 14,
+  },
+  quickFeaturesRow: {
+    flexDirection: "row",
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  quickFeatureBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    gap: Spacing.xs,
+    ...Shadows.small,
+  },
+  quickFeatureText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+    fontFamily: "PlusJakartaSans_600SemiBold",
+  },
+  cartFab: {
+    position: "absolute",
+    right: Spacing.lg,
+    bottom: 100,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.large,
+  },
+  shopsSection: {
+    marginBottom: Spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+  },
+  seeAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  seeAllText: {
+    fontSize: 14,
+    fontWeight: "600",
+    fontFamily: "PlusJakartaSans_600SemiBold",
+  },
+  shopsContainer: {
+    gap: Spacing.md,
+    paddingRight: Spacing.lg,
+  },
+  shopCard: {
+    width: 100,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  shopAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shopInitials: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  shopName: {
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  verifiedTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.full,
+  },
+  verifiedTagText: {
+    fontSize: 9,
+    fontWeight: "600",
+  },
+  productsSectionHeader: {
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+});

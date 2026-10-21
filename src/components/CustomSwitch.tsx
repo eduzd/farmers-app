@@ -1,0 +1,91 @@
+import React from "react";
+import { Pressable, View, StyleSheet, ViewStyle } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  interpolateColor,
+} from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
+
+interface CustomSwitchProps {
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+  disabled?: boolean;
+  style?: ViewStyle;
+}
+
+const TRACK_WIDTH = 44;
+const TRACK_HEIGHT = 26;
+const THUMB_SIZE = 22;
+const THUMB_MARGIN = 2;
+
+export function CustomSwitch({
+  value,
+  onValueChange,
+  disabled = false,
+  style,
+}: CustomSwitchProps) {
+  const progress = useSharedValue(value ? 1 : 0);
+
+  React.useEffect(() => {
+    progress.value = withSpring(value ? 1 : 0, {
+      damping: 15,
+      stiffness: 120,
+    });
+  }, [value]);
+
+  const trackAnimatedStyle = useAnimatedStyle(() => {
+    const backgroundColor = interpolateColor(
+      progress.value,
+      [0, 1],
+      ["#D4E8D6", "#00897B"]
+    );
+    return { backgroundColor };
+  });
+
+  const thumbAnimatedStyle = useAnimatedStyle(() => {
+    const translateX = progress.value * (TRACK_WIDTH - THUMB_SIZE - THUMB_MARGIN * 2);
+    return {
+      transform: [{ translateX }],
+    };
+  });
+
+  const handlePress = () => {
+    if (disabled) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onValueChange(!value);
+  };
+
+  return (
+    <Pressable onPress={handlePress} disabled={disabled} style={style}>
+      <Animated.View style={[styles.track, trackAnimatedStyle, disabled && styles.disabled]}>
+        <Animated.View style={[styles.thumb, thumbAnimatedStyle]} />
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  track: {
+    width: TRACK_WIDTH,
+    height: TRACK_HEIGHT,
+    borderRadius: TRACK_HEIGHT / 2,
+    justifyContent: "center",
+    paddingHorizontal: THUMB_MARGIN,
+  },
+  thumb: {
+    width: THUMB_SIZE,
+    height: THUMB_SIZE,
+    borderRadius: THUMB_SIZE / 2,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+});

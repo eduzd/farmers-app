@@ -1,0 +1,117 @@
+# Farmers app – fix & responsive pass (progress log)
+
+Started 2026-10-20. Small steps, logged as they land.
+
+## Done
+- [x] `window.__nav` (navigation ref) exposed on web so Playwright can open every screen directly.
+- [x] scripts/audit.py: opens all ~127 screens at any viewport sizes, reports crashes, console/page errors,
+      failed /api calls, horizontal overflow, clipped text and overlapping text. scripts/probe.py prints element rects.
+- [x] Baseline audit at 390x844 (before): only crashes were from test params; no overflow found.
+- [x] Per-screen error boundary (ScreenErrorBoundary via Stack `screenLayout`): one broken screen shows
+      "Go back / Try again" instead of killing the whole app.
+- [x] Web responsive frame (src/lib/webFrame.ts): on tablets/desktop the app is a centred column (max 640px),
+      Dimensions/useWindowDimensions clamped so card grids sized from screen width don't stretch or overflow.
+- [x] Alert.alert was a silent no-op on web (122 calls in 48 screens: validation, confirms, "saved").
+      WebAlertHost replaces it with an in-app dialog supporting any buttons.
+- [x] Server: /api/ai-status; ai-chat & analyze-disease return `offline` + `notice` when GOOGLE_API_KEY missing;
+      AI screen shows a notice banner; disease screen uses getApiUrl (was relative to old Replit domain env).
+- [x] Server: bKash callback URL now uses PUBLIC_URL or the request host (was REPLIT_DEV_DOMAIN/localhost);
+      added /payment-success, /payment-failed, /payment-cancelled pages; bKash sandbox create-payment verified working.
+- [x] Server: GET /api/calc-records without userId no longer returns every user's records; unknown /api routes return JSON 404.
+
+- [x] Returning users no longer get sent back to onboarding on every login (login now marks onboarding done, keeps role/username).
+- [x] Saved Bangla/English choice is restored on app start (loadLanguage was never called).
+- [x] RN Modals constrained to the app column on wide screens (CSS in webFrame.ts).
+- [x] Full audit 360x640 / 430x932 / 768x1024 / 1280x800: no crashes, no page errors, no horizontal overflow,
+      no clipped text, nothing hidden at the bottom of lists. Only floating + buttons (FABs) sit over list rows mid-scroll (by design).
+- [x] scripts/flows.py: signup -> onboarding -> logout -> login, Bepari calc, AI (notice + reply), weather, web alert, Bangla persist: 10/10 pass.
+
+- [x] Dead buttons fixed: product Share (Web Share / copy link), product Call seller (tel: or offer to message),
+      company review menu (report), invoice PDF (print / Save as PDF via expo-print; share PDF on phones).
+- [x] Admin: ADMIN_EMAIL in .env makes that account super admin; adminAuth no longer shadows the super-admin
+      /users route; new Content moderation tab (GET/DELETE /api/admin/posts). Flows: all 8 admin tabs open.
+- [x] Chat: Enter sends on web (Shift+Enter = new line) in chat, AI and comments; sample chat now reads in the right order, prices in ৳.
+- [x] Real person-to-person messages: server/dmRoutes.ts (/api/dm/threads, /api/dm/:userId/messages, table auto-created,
+      live push over /ws/chat), Chat screen uses it for real accounts (polls every 4s), Chats list shows real threads above samples.
+- [x] Market -> product -> Buy -> Checkout -> Place order works (flows2.py).
+
+- [x] Final audit after all changes at 360x640, 390x844, 430x932, 768x1024 (and 1280x800 earlier): no crashes,
+      no page errors, no failed API calls, no overflow, clipping, or content hidden at the bottom.
+- [x] Final flows: flows.py 10/10, flows2.py 12/12, live chat between two accounts verified both ways.
+- [x] Before/after screenshots: /home/sprite/farmers-desktop-before-after.png, /home/sprite/farmers-phone-after.png.
+
+## Pass 3 (2026-10-20)
+- [x] Chats list and RFQ: floating buttons replaced by inline header buttons (New message pencil next to the filter chips,
+      + New request next to the RFQ tabs), so nothing sits over list text any more. Audit at 360x640/1280x800: 0 flagged.
+- [x] scripts/audit.py logs in as admin@farmers.app and audits all 8 AdminDashboard tabs at every size.
+- [x] Market: removed the duplicate floating cart button (header cart with badge stays) - it covered product cards.
+- [x] Server catalog (server/catalogRoutes.ts, table catalog_items, seeded from the old samples in server/catalogSeed.ts):
+      GET/POST/PUT/DELETE /api/catalog/{experts|events|listings}, POST /api/catalog/events/:id/register.
+      Owner or super admin can edit/delete.
+- [x] Experts screen loads from the server; "Add expert" form; pencil to edit/delete (owner/admin).
+- [x] Events screen loads from the server; "Add event" form; Register is saved on the server (spotsLeft goes down).
+- [x] Market: "Sell" button opens a listing form; listings come from the server and show first; long-press own listing to edit/delete.
+- [x] Checkout also records the order on the server (POST /api/shop-orders); currency now ৳.
+- [x] Admin Analytics: real 14-day bar charts (new users, posts, orders, products) from GET /api/admin/analytics.
+      Admin Reports: real app report (totals, order value, users by role, recent orders).
+- [x] Language: live toggle fixed app-wide - with the React Compiler on, t() was memoised and screens didn't change
+      until reload. useI18n now gives a new t per language. New tr()/useTr() (src/lib/tr.ts + src/lib/trDict.ts,
+      ~210 phrases) wraps hard-coded text on cart, orders, order detail, product, chat, checkout, notifications,
+      user profile, RFQ, weather, feed calculator and all offline calculator/ledger screens. Calculator screens now
+      follow the app language (were fixed to Bangla); calculator settings language buttons also switch the app.
+      scripts/i18n_wrap.py does the wrapping for more screens.
+- [x] scripts/flows3.py: experts/events/sell/admin analytics/language toggle flows (9/9 pass).
+- [x] Polls, Expert Q&A, Farm Diary, Price Alerts: floating + buttons moved into the header (useHeaderAddButton),
+      the audit flagged them covering list text.
+- [x] Price Alerts: the + button did nothing - now opens a "new alert" form; the bell on a popular product pre-fills it;
+      alerts are saved on the device.
+- [x] Nearby Farmers: Message opened a "coming soon" alert - now opens an SMS to the farmer's number.
+- [x] Full audit (127 screens + 8 admin tabs, 5 sizes): only the 4 FAB screens were flagged; after the fix a re-audit of
+      the changed screens at all 5 sizes shows 0 flagged. flows.py 10/10, flows2.py 10/10 (updated to accept the
+      English "Buy" and checkout placeholders), tsc clean.
+- Note: flows3 registers the admin for one seeded event per run (registrations stay on the event).
+- Not checked: the audit runs in English only; Bangla text is longer and wasn't audited for clipping.
+
+## Not done / known limits
+- About 100 screens have hard-coded Bangla or English text, so the language switch only changes screens built on i18n.
+- Admin Reports and Analytics charts are still placeholders (no reporting feature exists to feed them).
+- Voice/video calls need a TURN server to work across networks; not tested.
+- Sample data stays in places with no server source (sample chats, some market listings, experts, events).
+
+## Still blocked (needs keys)
+- AI help: GOOGLE_API_KEY in .env (UI shows notice, answers fall back to tips)
+- bKash live: BKASH_USERNAME/PASSWORD/APP_KEY/APP_SECRET + BKASH_SANDBOX=false (sandbox works now)
+
+## Pass 4 (2026-10-20, "same design, all functionality + more features")
+- [x] server/featureRoutes.ts (tables auto-created): notifications, favorites, item reviews + seller rating, follows,
+      order tracking (status + history, seller_ids resolved from listing owners, buyer/seller views, allowed transitions),
+      wallet from real orders/sales, image uploads (/api/uploads -> /uploads/*), community lists polls/questions/rfqs/diary
+      (seeded from old samples; vote, upvote, answers, RFQ bids, private diary with reminders -> notifications),
+      server price alerts with /check. New order / status change / review / follow / answer / quote / DM / reminder /
+      price alert all create in-app notifications. scripts/api_features.py: 43/43 pass.
+- [x] Client: src/lib/api.ts, favoritesStore, community.ts, share.ts. Notifications screen = server (15s poll, tap opens order/chat/RFQ/Q&A/diary/alerts).
+      Orders: "My orders | Selling" tabs, seller status buttons, status history, buyer cancel (pending only), checkout sends id+address.
+      Wishlist = favorites store (server/guest device), add-to-cart works, bell creates server price alert.
+      Product detail: heart = favorites, ratings & reviews card + write review, follow seller, chat goes to real owner.
+      Polls, Expert Q&A (upvote, answers, share), RFQ (bids, close/reopen, details, my requests) = server.
+- [x] Farm diary = server (private, categories, reminders -> notifications, tap to delete). Wallet = real orders/sales; add/withdraw/send explain bKash keys needed. Followers/Following = server.
+- [x] Market: sort/filter chips (newest, price up/down, top rated, saved). Sell form: Upload photo (expo-image-picker -> /api/uploads).
+- [x] Price alerts = server for logged-in users; opening the screen checks today's prices and fires notifications.
+
+## Pass 5 (2026-10-20, "more Market features + richer checkout")
+- [x] server/checkoutRoutes.ts: GET /api/coupons, GET /api/checkout/options, POST /api/checkout/quote (server prices for
+      listings, stock check, delivery fee home ৳60 Dhaka / ৳120 elsewhere, free over ৳2000, express ৳150 Dhaka only, pickup free,
+      coupons KRISHI10 / NEW50 / FARMER100 / FREESHIP), saved addresses GET/POST/PUT default/DELETE /api/me/addresses.
+      POST /api/shop-orders with `checkout` -> server totals, 409 when over stock, takes stock off listings, saves checkout jsonb.
+- [x] Market client: Vegetables/Fruits/Grains/Livestock categories, Filters panel (price range, division, in stock), Nearby sort (my division first), result count + Clear all, Recently viewed strip, stock badges (Out of stock / Only N left), sell form stock + minimum order + unit hint. Product detail: related products, quantity starts at min order and stops at stock, out-of-stock disables buy, real stock/sold specs. tsc clean, web export rebuilt.
+- [x] Checkout client: saved addresses from the server (+ picker), new address with division chips, district, upazila,
+      village/road, "save this address"; delivery method cards (home / express Dhaka-only / pickup) with fees and a free-delivery hint;
+      delivery day (next 3 days) + time slot; promo code box with tap-to-apply coupon chips and error text; Cash on Delivery, bKash
+      shown as needing merchant keys; order notes; summary (items, subtotal, delivery, discount, total) from /api/checkout/quote;
+      confirmation with order id, delivery slot, Track order / Continue shopping. Order detail shows delivery method, slot, notes and
+      the price breakdown. Cart shows ৳ and "delivery fee at checkout" (was a $5 flat fee).
+- [x] Fixes found while testing: Market and Product detail crashed on Sell-form listings without rating/seller (now defaulted);
+      flows2 updated for the new checkout; flows4 rfq step now closes the "Bid sent" dialog.
+- [x] Checks: tsc clean; audit.py Market/Cart/Checkout/ProductDetail/Orders/OrderDetail at 5 sizes 0 flagged; flows2 + flows4 16/16 +
+      api_features pass; scripts/shots5.py places a real order through the UI (KRISHI10, COD) with no page errors; stock went down.
+- Leftovers: admin account has a saved address and a few test orders from shots5; test listing deleted.

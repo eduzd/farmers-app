@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Farmers Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #10b981;
+      --primary-dark: #059669;
+      --primary-light: #d1fae5;
+      --secondary: #3b82f6;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --success: #22c55e;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --radius: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-subtitle {
+      font-size: 0.875rem;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+
+    .logout-btn {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .main {
+      flex: 1;
+      padding: 16px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .nav-tab {
+      background: var(--card);
+      border: 2px solid var(--border);
+      padding: 12px 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.875rem;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .nav-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .nav-tab:hover:not(.active) {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    @media (min-width: 768px) {
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, var(--primary-light) 0%, #ecfdf5 100%);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-card.secondary {
+      background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+    }
+
+    .stat-card.warning {
+      background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+    }
+
+    .stat-card.danger {
+      background: linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    .stat-card.secondary .stat-value {
+      color: #1d4ed8;
+    }
+
+    .stat-card.warning .stat-value {
+      color: #d97706;
+    }
+
+    .stat-card.danger .stat-value {
+      color: #dc2626;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 0.875rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .btn {
+      padding: 14px 24px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.875rem;
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .api-key-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .api-key-item {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 16px;
+      border: 2px solid var(--border);
+    }
+
+    .api-key-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .api-key-name {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .api-key-purpose {
+      font-size: 0.75rem;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .api-key-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .api-key-stat {
+      text-align: center;
+      background: white;
+      padding: 8px;
+      border-radius: 8px;
+    }
+
+    .api-key-stat-value {
+      font-weight: 700;
+      font-size: 1.125rem;
+      color: var(--primary-dark);
+    }
+
+    .api-key-stat-label {
+      font-size: 0.625rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .api-key-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-active {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    .status-inactive {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .user-list {
+      overflow-x: auto;
+    }
+
+    .user-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 500px;
+    }
+
+    .user-table th,
+    .user-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .user-table th {
+      background: var(--bg);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .login-logo-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 40px;
+    }
+
+    .login-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .login-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-top: 4px;
+    }
+
+    .error-msg {
+      background: #fee2e2;
+      color: #dc2626;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+
+    .success-msg {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin-bottom: 16px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .progress-fill.warning {
+      background: var(--warning);
+    }
+
+    .progress-fill.danger {
+      background: var(--danger);
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app">
+    <div id="login-view" class="login-container">
+      <div class="login-card">
+        <div class="login-logo">
+          <div class="login-logo-icon">🌾</div>
+          <h1 class="login-title">Farmers Admin</h1>
+          <p class="login-subtitle">অ্যাডমিন প্যানেলে স্বাগতম</p>
+        </div>
+        <div id="login-error" class="error-msg hidden"></div>
+        <div id="setup-form" class="hidden">
+          <div class="success-msg">প্রথম অ্যাডমিন তৈরি করুন</div>
+          <form onsubmit="handleSetup(event)">
+            <div class="form-group">
+              <label class="form-label">ইউজারনেম</label>
+              <input type="text" id="setup-username" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">পাসওয়ার্ড</label>
+              <input type="password" id="setup-password" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">নাম</label>
+              <input type="text" id="setup-name" class="form-input">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">অ্যাডমিন তৈরি করুন</button>
+          </form>
+        </div>
+        <form id="login-form" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label class="form-label">ইউজারনেম</label>
+            <input type="text" id="username" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">পাসওয়ার্ড</label>
+            <input type="password" id="password" class="form-input" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">লগইন</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="dashboard-view" class="hidden">
+      <header class="header">
+        <h1>🌾 Farmers Admin</h1>
+        <p class="header-subtitle">অ্যাপ কন্ট্রোল প্যানেল</p>
+        <button class="logout-btn" onclick="handleLogout()">লগআউট</button>
+      </header>
+
+      <main class="main">
+        <div class="nav-tabs">
+          <button class="nav-tab active" onclick="showTab('dashboard')">ড্যাশবোর্ড</button>
+          <button class="nav-tab" onclick="showTab('api-keys')">API Keys</button>
+          <button class="nav-tab" onclick="showTab('users')">ইউজার</button>
+          <button class="nav-tab" onclick="showTab('settings')">সেটিংস</button>
+        </div>
+
+        <div id="tab-dashboard">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value" id="stat-users">0</div>
+              <div class="stat-label">মোট ইউজার</div>
+            </div>
+            <div class="stat-card secondary">
+              <div class="stat-value" id="stat-api-keys">0</div>
+              <div class="stat-label">API Keys</div>
+            </div>
+            <div class="stat-card warning">
+              <div class="stat-value" id="stat-today-calls">0</div>
+              <div class="stat-label">আজকের কল</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="stat-success-rate">100%</div>
+              <div class="stat-label">সাফল্যের হার</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">API Key স্ট্যাটাস</h3>
+            <div id="api-key-status-list" class="api-key-list">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-api-keys" class="hidden">
+          <div class="card">
+            <h3 class="card-title">
+              API Keys ম্যানেজমেন্ট
+              <button class="btn btn-primary btn-sm" onclick="showAddApiKeyModal()">+ নতুন Key</button>
+            </h3>
+            <div id="api-keys-list" class="api-key-list">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-users" class="hidden">
+          <div class="card">
+            <h3 class="card-title">ইউজার ম্যানেজমেন্ট</h3>
+            <div class="user-list">
+              <table class="user-table">
+                <thead>
+                  <tr>
+                    <th>ইউজারনেম</th>
+                    <th>নাম</th>
+                    <th>রোল</th>
+                    <th>ভেরিফাইড</th>
+                    <th>অ্যাকশন</th>
+                  </tr>
+                </thead>
+                <tbody id="users-table-body">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-settings" class="hidden">
+          <div class="card">
+            <h3 class="card-title">অ্যাপ সেটিংস</h3>
+            <div class="form-group">
+              <label class="form-label">AI মডেল</label>
+              <select id="setting-ai-model" class="form-input">
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash (দ্রুত)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro (উন্নত)</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">দৈনিক API লিমিট (প্রতি কী)</label>
+              <input type="number" id="setting-daily-limit" class="form-input" value="1000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">মাসিক API লিমিট (প্রতি কী)</label>
+              <input type="number" id="setting-monthly-limit" class="form-input" value="30000">
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">সেভ করুন</button>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div id="add-api-key-modal" class="modal-overlay hidden">
+      <div class="modal">
+        <h3 class="modal-title">নতুন API Key যোগ করুন</h3>
+        <form onsubmit="handleAddApiKey(event)">
+          <div class="form-group">
+            <label class="form-label">নাম</label>
+            <input type="text" id="api-key-name" class="form-input" placeholder="যেমন: Google API 1" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">API Key</label>
+            <input type="text" id="api-key-value" class="form-input" placeholder="AIza..." required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">কাজের ধরন</label>
+            <select id="api-key-purpose" class="form-input">
+              <option value="general">সাধারণ (সব কাজে)</option>
+              <option value="chat">শুধু চ্যাট</option>
+              <option value="disease">শুধু রোগ সনাক্তকরণ</option>
+              <option value="weather">শুধু আবহাওয়া</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">প্রায়োরিটি (ছোট = আগে ব্যবহার)</label>
+            <input type="number" id="api-key-priority" class="form-input" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">দৈনিক লিমিট</label>
+            <input type="number" id="api-key-daily-limit" class="form-input" value="1000">
+          </div>
+          <div class="form-group">
+            <label class="form-label">মাসিক লিমিট</label>
+            <input type="number" id="api-key-monthly-limit" class="form-input" value="30000">
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="hideAddApiKeyModal()">বাতিল</button>
+            <button type="submit" class="btn btn-primary">যোগ করুন</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/api/admin';
+    let authToken = localStorage.getItem('adminToken');
+
+    async function api(endpoint, options = {}) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers: { ...headers, ...options.headers }
+      });
+      
+      if (response.status === 401) {
+        authToken = null;
+        localStorage.removeItem('adminToken');
+        showLoginView();
+        throw new Error('Unauthorized');
+      }
+      
+      return response.json();
+    }
+
+    async function checkSetup() {
+      try {
+        const result = await api('/check-setup');
+        if (result.needsSetup) {
+          document.getElementById('login-form').classList.add('hidden');
+          document.getElementById('setup-form').classList.remove('hidden');
+        }
+      } catch (e) {
+        console.error('Setup check failed:', e);
+      }
+    }
+
+    async function handleSetup(e) {
+      e.preventDefault();
+      const username = document.getElementById('setup-username').value;
+      const password = document.getElementById('setup-password').value;
+      const name = document.getElementById('setup-name').value;
+
+      try {
+        const result = await api('/setup', {
+          method: 'POST',
+          body: JSON.stringify({ username, password, name })
+        });
+
+        if (result.success) {
+          document.getElementById('setup-form').classList.add('hidden');
+          document.getElementById('login-form').classList.remove('hidden');
+          alert('অ্যাডমিন তৈরি হয়েছে! এখন লগইন করুন।');
+        }
+      } catch (e) {
+        showError('সেটআপ ব্যর্থ হয়েছে');
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showError('ইউজারনেম এবং পাসওয়ার্ড দিন');
+        return;
+      }
+
+      try {
+        document.getElementById('login-error').classList.add('hidden');
+        const result = await api('/login', {
+          method: 'POST',
+          body: JSON.stringify({ username, password })
+        });
+
+        if (result.token) {
+          authToken = result.token;
+          localStorage.setItem('adminToken', authToken);
+          showDashboardView();
+          loadDashboard();
+        } else {
+          showError(result.error || 'ভুল ইউজারনেম বা পাসওয়ার্ড');
+        }
+      } catch (e) {
+        console.error('Login error:', e);
+        showError('লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।');
+      }
+    }
+
+    function handleLogout() {
+      authToken = null;
+      localStorage.removeItem('adminToken');
+      showLoginView();
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('login-error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function showLoginView() {
+      document.getElementById('login-view').classList.remove('hidden');
+      document.getElementById('dashboard-view').classList.add('hidden');
+    }
+
+    function showDashboardView() {
+      document.getElementById('login-view').classList.add('hidden');
+      document.getElementById('dashboard-view').classList.remove('hidden');
+    }
+
+    function showTab(tabName) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.add('hidden'));
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+      if (tabName === 'dashboard') loadDashboard();
+      if (tabName === 'api-keys') loadApiKeys();
+      if (tabName === 'users') loadUsers();
+    }
+
+    async function loadDashboard() {
+      try {
+        const data = await api('/dashboard');
+        
+        document.getElementById('stat-users').textContent = data.stats.totalUsers;
+        document.getElementById('stat-api-keys').textContent = data.stats.totalApiKeys;
+        document.getElementById('stat-today-calls').textContent = data.stats.todayApiCalls;
+        document.getElementById('stat-success-rate').textContent = data.stats.todaySuccessRate + '%';
+
+        renderApiKeyStatus(data.apiKeyStats);
+      } catch (e) {
+        console.error('Dashboard load failed:', e);
+      }
+    }
+
+    function renderApiKeyStatus(keys) {
+      const container = document.getElementById('api-key-status-list');
+      
+      if (!keys || keys.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">কোনো API Key নেই</p>';
+        return;
+      }
+
+      container.innerHTML = keys.map(key => {
+        const dailyPercent = (key.dailyUsage / key.dailyLimit) * 100;
+        const progressClass = dailyPercent > 80 ? 'danger' : dailyPercent > 50 ? 'warning' : '';
+        
+        return `
+          <div class="api-key-item">
+            <div class="api-key-header">
+              <div>
+                <div class="api-key-name">${key.name}</div>
+                <span class="status-badge ${key.isActive ? 'status-active' : 'status-inactive'}">
+                  ${key.isActive ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
+                </span>
+              </div>
+              <span class="api-key-purpose">${key.purpose}</span>
+            </div>
+            <div class="api-key-stats">
+              <div class="api-key-stat">
+                <div class="api-key-stat-value">${key.dailyUsage}</div>
+                <div class="api-key-stat-label">আজকে</div>
+              </div>
+              <div class="api-key-stat">
+                <div class="api-key-stat-value">${key.monthlyUsage}</div>
+                <div class="api-key-stat-label">এই মাসে</div>
+              </div>
+              <div class="api-key-stat">
+                <div class="api-key-stat-value">${key.errorCount}</div>
+                <div class="api-key-stat-label">এরর</div>
+              </div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill ${progressClass}" style="width: ${Math.min(dailyPercent, 100)}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadApiKeys() {
+      try {
+        const keys = await api('/api-keys');
+        renderApiKeysList(keys);
+      } catch (e) {
+        console.error('API keys load failed:', e);
+      }
+    }
+
+    function renderApiKeysList(keys) {
+      const container = document.getElementById('api-keys-list');
+      
+      if (!keys || keys.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">কোনো API Key নেই। নতুন যোগ করুন।</p>';
+        return;
+      }
+
+      container.innerHTML = keys.map(key => `
+        <div class="api-key-item">
+          <div class="api-key-header">
+            <div>
+              <div class="api-key-name">${key.name}</div>
+              <span class="status-badge ${key.isActive ? 'status-active' : 'status-inactive'}">
+                ${key.isActive ? 'সক্রিয়' : 'নিষ্ক্রিয়'}
+              </span>
+            </div>
+            <span class="api-key-purpose">${key.purpose}</span>
+          </div>
+          <div class="api-key-stats">
+            <div class="api-key-stat">
+              <div class="api-key-stat-value">${key.dailyUsage}/${key.dailyLimit}</div>
+              <div class="api-key-stat-label">দৈনিক</div>
+            </div>
+            <div class="api-key-stat">
+              <div class="api-key-stat-value">${key.monthlyUsage}/${key.monthlyLimit}</div>
+              <div class="api-key-stat-label">মাসিক</div>
+            </div>
+            <div class="api-key-stat">
+              <div class="api-key-stat-value">${key.priority}</div>
+              <div class="api-key-stat-label">প্রায়োরিটি</div>
+            </div>
+          </div>
+          <div class="api-key-actions">
+            <button class="btn btn-sm ${key.isActive ? 'btn-danger' : 'btn-primary'}" onclick="toggleApiKey('${key.id}', ${!key.isActive})">
+              ${key.isActive ? 'নিষ্ক্রিয় করুন' : 'সক্রিয় করুন'}
+            </button>
+            <button class="btn btn-sm btn-secondary" onclick="resetApiKeyUsage('${key.id}')">রিসেট</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteApiKey('${key.id}')">মুছুন</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function showAddApiKeyModal() {
+      document.getElementById('add-api-key-modal').classList.remove('hidden');
+    }
+
+    function hideAddApiKeyModal() {
+      document.getElementById('add-api-key-modal').classList.add('hidden');
+    }
+
+    async function handleAddApiKey(e) {
+      e.preventDefault();
+      
+      const data = {
+        name: document.getElementById('api-key-name').value,
+        apiKey: document.getElementById('api-key-value').value,
+        purpose: document.getElementById('api-key-purpose').value,
+        priority: parseInt(document.getElementById('api-key-priority').value),
+        dailyLimit: parseInt(document.getElementById('api-key-daily-limit').value),
+        monthlyLimit: parseInt(document.getElementById('api-key-monthly-limit').value),
+      };
+
+      try {
+        await api('/api-keys', {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+        
+        hideAddApiKeyModal();
+        loadApiKeys();
+        loadDashboard();
+        e.target.reset();
+      } catch (e) {
+        alert('API Key যোগ করা যায়নি');
+      }
+    }
+
+    async function toggleApiKey(id, isActive) {
+      try {
+        await api(`/api-keys/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ isActive })
+        });
+        loadApiKeys();
+      } catch (e) {
+        alert('আপডেট ব্যর্থ');
+      }
+    }
+
+    async function resetApiKeyUsage(id) {
+      if (!confirm('ইউসেজ রিসেট করতে চান?')) return;
+      
+      try {
+        await api(`/api-keys/${id}/reset-usage`, {
+          method: 'POST',
+          body: JSON.stringify({ type: 'daily' })
+        });
+        loadApiKeys();
+        loadDashboard();
+      } catch (e) {
+        alert('রিসেট ব্যর্থ');
+      }
+    }
+
+    async function deleteApiKey(id) {
+      if (!confirm('এই API Key মুছে ফেলতে চান?')) return;
+      
+      try {
+        await api(`/api-keys/${id}`, { method: 'DELETE' });
+        loadApiKeys();
+        loadDashboard();
+      } catch (e) {
+        alert('মুছতে ব্যর্থ');
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const data = await api('/users');
+        renderUsers(data.users);
+      } catch (e) {
+        console.error('Users load failed:', e);
+      }
+    }
+
+    function renderUsers(users) {
+      const tbody = document.getElementById('users-table-body');
+      
+      if (!users || users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">কোনো ইউজার নেই</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = users.map(user => `
+        <tr>
+          <td>${user.username}</td>
+          <td>${user.name || '-'}</td>
+          <td>
+            <select onchange="updateUserRole('${user.id}', this.value)" style="padding: 4px; border-radius: 4px;">
+              <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+              <option value="vendor" ${user.role === 'vendor' ? 'selected' : ''}>Vendor</option>
+              <option value="expert" ${user.role === 'expert' ? 'selected' : ''}>Expert</option>
+            </select>
+          </td>
+          <td>
+            <span class="status-badge ${user.verified ? 'status-active' : 'status-inactive'}">
+              ${user.verified ? 'হ্যাঁ' : 'না'}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm ${user.verified ? 'btn-danger' : 'btn-primary'}" onclick="toggleUserVerification('${user.id}', ${!user.verified})">
+              ${user.verified ? 'আনভেরিফাই' : 'ভেরিফাই'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function updateUserRole(id, role) {
+      try {
+        await api(`/users/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ role })
+        });
+      } catch (e) {
+        alert('আপডেট ব্যর্থ');
+        loadUsers();
+      }
+    }
+
+    async function toggleUserVerification(id, verified) {
+      try {
+        await api(`/users/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ verified })
+        });
+        loadUsers();
+      } catch (e) {
+        alert('আপডেট ব্যর্থ');
+      }
+    }
+
+    async function saveSettings() {
+      alert('সেটিংস সেভ হয়েছে');
+    }
+
+    async function init() {
+      await checkSetup();
+      
+      if (authToken) {
+        try {
+          await api('/me');
+          showDashboardView();
+          loadDashboard();
+        } catch (e) {
+          showLoginView();
+        }
+      } else {
+        showLoginView();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

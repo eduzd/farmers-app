@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "Farmers",
+    "slug": "farmers",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "farmers",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.farmers.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#389466",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      },
+      "edgeToEdgeEnabled": false,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.farmers.app",
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#389466",
+          "dark": {
+            "backgroundColor": "#1a472a"
+          }
+        }
+      ],
+      "expo-web-browser",
+      "expo-audio",
+      "expo-asset"
+    ],
+    "experiments": {
+      "reactCompiler": true
+    }
+  }
+}
