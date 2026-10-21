@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import { navigateWhenReady } from "@/lib/navigationRef";
+import { useAuthStore } from "@/lib/authStore";
+import { fetchServerPost } from "@/lib/feedApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
@@ -169,6 +171,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const name = String(data.userName || "Farmer");
         const initials = name.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "F";
         navigateWhenReady("Chat", { conversationId: String(data.userId), userName: name, userInitials: initials });
+      } else if ((data.type === "like" || data.type === "comment") && data.postId) {
+        // A like or comment on your post opens that post.
+        const token = useAuthStore.getState().getToken();
+        fetchServerPost(String(data.postId), false, token)
+          .then((post) => navigateWhenReady("PostDetail", { postId: post.id, post }))
+          .catch(() => navigateWhenReady("Notifications", undefined));
       }
     };
     responseListener.current = Notifications.addNotificationResponseReceivedListener(openFromPush);

@@ -146,7 +146,10 @@ import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { Product } from "@/screens/MarketScreen";
 
 interface PostAuthor {
+  id?: string;
   name: string;
+  /** Profile badge (farming category or role). */
+  badge?: string;
   avatar?: string;
   initials: string;
   avatarId?: string;
@@ -164,6 +167,8 @@ interface Post {
   views: number;
   isLiked: boolean;
   createdAt: string;
+  /** Lives on the server: likes and comments are shared and notify the author. */
+  shared?: boolean;
 }
 
 export type RootStackParamList = {

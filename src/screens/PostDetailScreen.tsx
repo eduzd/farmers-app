@@ -25,8 +25,17 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 import { tr, useTr } from "@/lib/tr";
-import { getApiUrl } from "@/lib/query-client";
 import { useAuthStore } from "@/lib/authStore";
+import { useI18n } from "@/lib/i18n";
+import {
+  createServerComment,
+  fetchServerComments,
+  initialsOf,
+  isSharedPostId,
+  likeServerPost,
+  timeAgo,
+  ServerComment,
+} from "@/lib/feedApi";
 type PostDetailRouteProp = RouteProp<RootStackParamList, "PostDetail">;
 
 interface Reply {
@@ -71,39 +80,8 @@ interface LikedUser {
   color: string;
 }
 
+
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
-// Comments come from the server; there is no sample data here.
-function timeAgo(iso?: string | null): string {
-  if (!iso) return tr("এইমাত্র");
-  const t = new Date(iso).getTime();
-  if (!Number.isFinite(t)) return "";
-  const m = Math.max(0, Math.round((Date.now() - t) / 60000));
-  if (m < 1) return tr("এইমাত্র");
-  if (m < 60) return `${m}m`;
-  const h = Math.round(m / 60);
-  if (h < 24) return `${h}h`;
-  const d = Math.round(h / 24);
-  if (d < 7) return `${d}d`;
-  return new Date(t).toLocaleDateString();
-}
-
-function initialsOf(name: string): string {
-  return (name || "?").split(/\s+/).filter(Boolean).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?";
-}
-
-function commentFromServer(c: any): Comment {
-  const name = c?.userName || "Member";
-  return {
-    id: String(c?.id),
-    author: { name, initials: initialsOf(name), avatar: c?.avatar || undefined },
-    content: String(c?.body || ""),
-    likes: 0,
-    isLiked: false,
-    createdAt: timeAgo(c?.createdAt),
-    replies: [],
-  };
-}
 
 export default function PostDetailScreen() {
   const tr = useTr();
@@ -116,26 +94,37 @@ export default function PostDetailScreen() {
   const { post } = route.params;
 
   const flatListRef = useRef<FlatList>(null);
+  // Shared posts: real comments from the server (the author is notified of each new one).
+  const shared = !!post.shared || isSharedPostId(post.id);
+  const getToken = useAuthStore((s) => s.getToken);
+  const me = useAuthStore((s) => s.user);
+  const { language } = useI18n();
+  const isBn = language === "bn";
   const [comments, setComments] = useState<Comment[]>([]);
-  const [commentsLoading, setCommentsLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const token = useAuthStore((s) => s.token);
+  const toComment = (c: ServerComment): Comment => ({
+    id: c.id,
+    author: { name: c.userName, initials: initialsOf(c.userName), avatar: c.avatar || undefined },
+    content: c.body,
+    likes: 0,
+    isLiked: false,
+    createdAt: c.createdAt ? timeAgo(c.createdAt, isBn) : "",
+    replies: [],
+  });
 
-  // Real comments for this post from the server.
   useEffect(() => {
+    if (!shared) return;
     let alive = true;
-    (async () => {
-      try {
-        const res = await fetch(new URL(`/api/posts/${encodeURIComponent(String(post.id))}/comments`, getApiUrl()).toString());
-        if (res.ok) {
-          const list = await res.json();
-          if (alive && Array.isArray(list)) setComments(list.map(commentFromServer));
-        }
-      } catch {}
-      if (alive) setCommentsLoading(false);
-    })();
-    return () => { alive = false; };
-  }, [post.id]);
+    fetchServerComments(post.id)
+      .then((list) => {
+        if (alive) setComments(list.map(toComment));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.id, shared]);
   const [newComment, setNewComment] = useState("");
   const [isLiked, setIsLiked] = useState(post.isLiked);
   const [likesCount, setLikesCount] = useState(post.likes);
@@ -202,10 +191,24 @@ export default function PostDetailScreen() {
     });
   };
 
-  const handleLike = () => {
+  const handleLike = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsLiked(!isLiked);
-    setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
+    const before = { isLiked, likesCount };
+    const liked = !isLiked;
+    setIsLiked(liked);
+    setLikesCount((prev) => Math.max(0, prev + (liked ? 1 : -1)));
+    if (!shared) return;
+    const token = getToken();
+    try {
+      if (!token) throw new Error("signed out");
+      const out = await likeServerPost(token, post.id, liked);
+      setIsLiked(out.liked);
+      setLikesCount(out.likes);
+    } catch {
+      setIsLiked(before.isLiked);
+      setLikesCount(before.likesCount);
+      Alert.alert(isBn ? "লাইক হয়নি" : "Couldn't like", token ? (isBn ? "আবার চেষ্টা করুন।" : "Check your internet and try again.") : isBn ? "লাইক করতে সাইন ইন করুন।" : "Sign in to like posts.");
+    }
   };
 
   const handleAuthorPress = (author: { name: string; initials: string }) => {
@@ -240,36 +243,85 @@ export default function PostDetailScreen() {
     );
   };
 
+  const myName = me?.name || (isBn ? "আমি" : "Me");
+
   const handleSendComment = async () => {
-    const text = newComment.trim();
-    if (!text || sending) return;
-    if (!token) {
-      Alert.alert(tr("সাইন ইন করুন"), tr("মন্তব্য করতে আগে সাইন ইন করুন।"));
+    if (!newComment.trim() || sending) return;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    if (shared) {
+      const token = getToken();
+      if (!token) {
+        Alert.alert(isBn ? "সাইন ইন করুন" : "Sign in", isBn ? "মন্তব্য করতে সাইন ইন করুন।" : "Sign in to comment.");
+        return;
+      }
+      // The server keeps one level of comments; a reply starts with @name.
+      const text = replyingTo ? `@${replyingTo.authorName} ${newComment.trim()}` : newComment.trim();
+      setSending(true);
+      try {
+        const saved = await createServerComment(token, post.id, text);
+        setComments((prev) => [...prev, toComment(saved)]);
+        setNewComment("");
+        setReplyingTo(null);
+        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+      } catch {
+        Alert.alert(isBn ? "মন্তব্য যায়নি" : "Comment not sent", isBn ? "ইন্টারনেট দেখে আবার চেষ্টা করুন।" : "Check your internet and try again.");
+      } finally {
+        setSending(false);
+      }
       return;
     }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Replies are saved as a comment that starts with @name.
-    const body = replyingTo ? `@${replyingTo.authorName} ${text}` : text;
-    setSending(true);
-    try {
-      const res = await fetch(new URL(`/api/posts/${encodeURIComponent(String(post.id))}/comments`, getApiUrl()).toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ body }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || tr("মন্তব্য পাঠানো যায়নি"));
-      setComments((prev) => [...prev, commentFromServer(data)]);
-      setNewComment("");
+
+    if (replyingTo) {
+      const reply: Reply = {
+        id: Date.now().toString(),
+        parentReplyId: replyingTo.replyId,
+        author: { name: myName, initials: initialsOf(myName) },
+        content: newComment.trim(),
+        createdAt: "Just now",
+        likes: 0,
+        isLiked: false,
+        replies: [],
+      };
+
+      if (replyingTo.replyPath && replyingTo.replyPath.length > 0) {
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment.id === replyingTo.commentId
+              ? { ...comment, replies: addNestedReply(comment.replies, replyingTo.replyPath!, reply) }
+              : comment
+          )
+        );
+      } else {
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment.id === replyingTo.commentId
+              ? { ...comment, replies: [...comment.replies, reply] }
+              : comment
+          )
+        );
+      }
       setReplyingTo(null);
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    } catch (e: any) {
-      Alert.alert(tr("মন্তব্য পাঠানো যায়নি"), e?.message || tr("আবার চেষ্টা করুন"));
-    } finally {
-      setSending(false);
+    } else {
+      const comment: Comment = {
+        id: Date.now().toString(),
+        author: { name: myName, initials: initialsOf(myName) },
+        content: newComment.trim(),
+        likes: 0,
+        isLiked: false,
+        createdAt: "Just now",
+        replies: [],
+      };
+
+      setComments((prev) => [...prev, comment]);
     }
+    
+    setNewComment("");
+    
+    setTimeout(() => {
+      flatListRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
   const renderReply = (reply: Reply, commentId: string, depth: number = 0, parentPath: string[] = []) => {
@@ -400,6 +452,8 @@ export default function PostDetailScreen() {
     </View>
   );
 
+  // No made-up likers: only the count is shown.
+  const displayedLikedUsers: LikedUser[] = [];
 
   const renderHeader = () => (
     <View style={[styles.postContainer, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -415,6 +469,7 @@ export default function PostDetailScreen() {
             avatarColor={post.author.avatarColor}
             size="medium" 
             isWelfareMember={post.author.isWelfareMember}
+            badge={post.author.badge}
           />
           <View style={styles.authorInfo}>
             <ThemedText style={[styles.authorName, { color: theme.text }]}>
@@ -502,6 +557,19 @@ export default function PostDetailScreen() {
           style={styles.likedBySection}
           onPress={() => navigation.navigate("LikesList", { postId: post.id, likesCount })}
         >
+          <View style={styles.likedAvatarsRow}>
+            {displayedLikedUsers.map((user, index) => (
+              <View
+                key={user.id}
+                style={[
+                  styles.likedAvatar,
+                  { backgroundColor: user.color, marginLeft: index === 0 ? 0 : -10, zIndex: displayedLikedUsers.length - index },
+                ]}
+              >
+                <ThemedText style={styles.likedAvatarText}>{user.initials}</ThemedText>
+              </View>
+            ))}
+          </View>
           <ThemedText style={[styles.likedByText, { color: theme.textSecondary }]}>
             {likesCount} জন লাইক করেছেন
           </ThemedText>
@@ -525,11 +593,6 @@ export default function PostDetailScreen() {
         keyExtractor={(item) => item.id}
         renderItem={renderComment}
         ListHeaderComponent={renderHeader}
-        ListEmptyComponent={
-          <ThemedText style={{ color: theme.textSecondary, textAlign: "center", paddingVertical: Spacing.xl }}>
-            {commentsLoading ? tr("লোড হচ্ছে…") : tr("এখনো কোনো মন্তব্য নেই। প্রথম মন্তব্যটি করুন।")}
-          </ThemedText>
-        }
         contentContainerStyle={[
           styles.listContent,
           { paddingTop: Spacing.md },
@@ -582,7 +645,7 @@ export default function PostDetailScreen() {
               { backgroundColor: newComment.trim() ? theme.primary : theme.backgroundSecondary },
             ]}
             onPress={handleSendComment}
-            disabled={!newComment.trim() || sending}
+            disabled={!newComment.trim()}
           >
             <Feather name="send" size={18} color={newComment.trim() ? theme.white : theme.textSecondary} />
           </Pressable>
@@ -819,13 +882,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
   },
-  // No line above the comment box.
-  inputWrapper: {},
+  inputWrapper: {
+    borderTopWidth: 0,
+  },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
+    borderTopWidth: 1,
     gap: Spacing.sm,
   },
   commentInputWrapper: {

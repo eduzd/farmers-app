@@ -7,6 +7,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Shadows } from "@/constants/theme";
 import { NotionFace, AVATAR_OPTIONS } from "@/components/AvatarPicker";
+import { Feather } from "@expo/vector-icons";
+import { PROFILE_BADGES } from "@/constants/profileBadges";
 
 interface UserAvatarProps {
   /** Shown when there is no photo/avatar. Derived from `name` if omitted. */
@@ -18,6 +20,8 @@ interface UserAvatarProps {
   avatar?: string;
   avatarId?: string;
   avatarColor?: string;
+  /** Profile badge key (farming category or role), shown on the bottom-left. */
+  badge?: string;
   style?: ViewStyle;
 }
 
@@ -75,6 +79,7 @@ export function UserAvatar({
   avatar,
   avatarId,
   avatarColor,
+  badge,
   style 
 }: UserAvatarProps) {
   const { theme } = useTheme();
@@ -94,6 +99,8 @@ export function UserAvatar({
   const backgroundColor = avatarColor || theme.primary;
   
   const notionAvatar = avatarId ? AVATAR_OPTIONS.find(a => a.id === avatarId) : null;
+  const badgeInfo = badge ? PROFILE_BADGES[badge] : undefined;
+  const profileBadgeSize = Math.max(14, Math.round(sizeConfig.avatar * 0.36));
 
   return (
     <View style={[styles.container, style]}>
@@ -134,8 +141,29 @@ export function UserAvatar({
           </ThemedText>
         </View>
       )}
+      {badgeInfo ? (
+        <View
+          accessibilityLabel={badgeInfo.label}
+          style={[
+            styles.badgeContainer,
+            styles.profileBadge,
+            {
+              width: profileBadgeSize,
+              height: profileBadgeSize,
+              borderRadius: profileBadgeSize / 2,
+              backgroundColor: badgeInfo.color,
+              borderColor: theme.backgroundDefault,
+              borderWidth: Math.max(1.5, Math.round(profileBadgeSize * 0.12)),
+              bottom: -2,
+              left: -2,
+            },
+          ]}
+        >
+          <Feather name={badgeInfo.icon} size={Math.round(profileBadgeSize * 0.52)} color="#FFFFFF" />
+        </View>
+      ) : null}
       {isWelfareMember ? (
-        <View style={styles.badgeContainer}>
+        <View style={[styles.badgeContainer, badgeInfo ? styles.welfareRight : null]}>
           <VerifiedBadge size={sizeConfig.badge} color="#00A86B" />
         </View>
       ) : null}
@@ -157,6 +185,14 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "600",
     fontFamily: "PlusJakartaSans_600SemiBold",
+  },
+  profileBadge: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  welfareRight: {
+    left: undefined,
+    right: -4,
   },
   badgeContainer: {
     position: "absolute",

@@ -110,6 +110,62 @@ const SUMMIT_NUMBER_KEY = "summit_member_number";
 const APPLICATIONS_KEY = "membership_applications";
 
 /** Trade a verified Firebase ID token for the app's own session token. */
+const BADGE_ROLES = ["farmer", "buyer", "company", "expert"];
+
+/** Saves the role and farming category (the avatar badge) on the server so other people see it. */
+function pushProfileBadge(token: string | null, u: User | null) {
+  if (!token || !u) return;
+  fetch(`${getApiUrl()}/api/me/profile`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      role: BADGE_ROLES.includes(u.role) ? u.role : null,
+      farmingCategory: u.farmingCategory || null,
+    }),
+  }).catch(() => {});
+}
+
+/** Saves the name and phone on the server (people can see who they're talking to and call them). */
+function pushNamePhone(token: string | null, updates: Partial<User>) {
+  if (!token || (updates.name === undefined && updates.phone === undefined)) return;
+  const body: Record<string, string> = {};
+  if (updates.name) body.name = updates.name;
+  if (updates.phone !== undefined) body.phone = updates.phone || "";
+  fetch(`${getApiUrl()}/api/me/profile`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  }).catch(() => {});
+}
+
+/**
+ * After sign-in: bring back the badge saved on the server (a fresh sign-in rebuilds the
+ * user from the server), or, for an account set up before badges were saved, send the
+ * one this phone has.
+ */
+async function syncProfileBadge(token: string) {
+  try {
+    const res = await fetch(`${getApiUrl()}/api/me/profile`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return;
+    const p: { role?: string | null; farmingCategory?: string | null } = await res.json();
+    const { user } = useAuthStore.getState();
+    if (!user) return;
+    if (p.role || p.farmingCategory) {
+      const merged: User = {
+        ...user,
+        role: (p.role && BADGE_ROLES.includes(p.role) ? p.role : user.role) as User["role"],
+        farmingCategory: p.farmingCategory || user.farmingCategory,
+      };
+      await saveUser(merged);
+      useAuthStore.setState({ user: merged });
+    } else if (user.farmingCategory || BADGE_ROLES.includes(user.role)) {
+      pushProfileBadge(token, user);
+    }
+  } catch {
+    // offline: try again next sign-in
+  }
+}
+
 async function exchangeFirebaseToken(
   step: FirebaseStep,
   nameHint: string | undefined,
@@ -177,6 +233,7 @@ async function exchangeFirebaseToken(
   firebaseSignOut();
 
   void syncPushTokenAfterSignIn(token);
+  void syncProfileBadge(token);
 
   return { success: true };
 }
@@ -267,6 +324,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       // Register this phone for push notifications
       void syncPushTokenAfterSignIn(token);
+      void syncProfileBadge(token);
 
       return { success: true };
     } catch (error: any) {
@@ -475,6 +533,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       void syncPushTokenAfterSignIn(token);
+      void syncProfileBadge(token);
       return { success: true };
     } catch (error: any) {
       console.error("Google login error:", error);
@@ -588,6 +647,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const updatedUser = { ...user, role };
     await saveUser(updatedUser);
     set({ user: updatedUser });
+    pushProfileBadge(get().token, updatedUser);
   },
 
   updateProfile: async (updates: Partial<User>) => {
@@ -597,6 +657,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const updatedUser = { ...user, ...updates };
     await saveUser(updatedUser);
     set({ user: updatedUser });
+    if (updates.role !== undefined || updates.farmingCategory !== undefined) {
+      pushProfileBadge(get().token, updatedUser);
+    }
+    pushNamePhone(get().token, updates);
   },
 
   loadUser: async () => {
@@ -647,6 +711,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               applications,
             });
             void syncPushTokenAfterSignIn(token);
+            void syncProfileBadge(token);
             return;
           }
         } catch (e) {

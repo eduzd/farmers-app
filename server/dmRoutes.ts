@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { config } from "./config";
 import { notify, publicUser } from "./featureRoutes";
+import { ensureProfileColumns, PROFILE_ROLES, FARMING_CATEGORIES } from "./profileColumns";
 
 /**
  * Person-to-person direct messages.
@@ -192,10 +193,23 @@ export function registerDmRoutes(app: Express, push: Pusher) {
   }
 
   /**
-   * PUT /api/me/profile { name?, phone? }: the app's profile screen saved these on the
+   * PUT /api/me/profile { name?, phone?, role?, farmingCategory? }: the app's profile screen saved these on the
    * phone only, so nobody could ever call a farmer. Phone accepts any reasonable number
    * (digits, spaces, +, -); an empty string removes it.
    */
+  app.get("/api/me/profile", auth, async (req, res) => {
+    try {
+      await ensureProfileColumns();
+      const me = (req as any).dmUserId as string;
+      const u = await first(sql`SELECT name, phone, profile_role, farming_category FROM users WHERE id = ${me} LIMIT 1`);
+      if (!u) return res.status(404).json({ error: "Account not found" });
+      res.json({ name: u.name ?? null, phone: u.phone ?? null, role: u.profile_role ?? null, farmingCategory: u.farming_category ?? null });
+    } catch (e: any) {
+      console.error("[dm] get profile error:", e?.message || e);
+      res.status(500).json({ error: "Couldn't load your profile" });
+    }
+  });
+
   app.put("/api/me/profile", auth, async (req, res) => {
     try {
       const me = (req as any).dmUserId as string;
@@ -220,6 +234,16 @@ export function registerDmRoutes(app: Express, push: Pusher) {
         if (n) name = n;
       }
       await db.execute(sql`UPDATE users SET name = ${name}, phone = ${phone} WHERE id = ${me}`);
+      // Profile badge: the role and farming category picked when the account was set up.
+      await ensureProfileColumns();
+      if (b.role !== undefined) {
+        const r = String(b.role ?? "");
+        await db.execute(sql`UPDATE users SET profile_role = ${PROFILE_ROLES.includes(r) ? r : null} WHERE id = ${me}`);
+      }
+      if (b.farmingCategory !== undefined) {
+        const c = String(b.farmingCategory ?? "");
+        await db.execute(sql`UPDATE users SET farming_category = ${FARMING_CATEGORIES.includes(c) ? c : null} WHERE id = ${me}`);
+      }
       res.json({ success: true, name, phone });
     } catch (e: any) {
       console.error("[dm] profile error:", e?.message || e);

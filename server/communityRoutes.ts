@@ -22,6 +22,7 @@ import {
 } from "@shared/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { notify } from "./featureRoutes";
+import { ensureProfileColumns } from "./profileColumns";
 
 const router = Router();
 const JWT_SECRET = config.jwtSecret;
@@ -61,6 +62,17 @@ function requireAuth(req: Request, res: Response, next: NextFunction) {
     next();
   } catch (error) {
     return res.status(401).json({ error: "Invalid token" });
+  }
+}
+
+/** The signed-in user's id when a valid token was sent, else null (for public reads). */
+function optionalUserId(req: Request): string | null {
+  const h = req.headers.authorization;
+  if (!h || !h.startsWith("Bearer ")) return null;
+  try {
+    return (jwt.verify(h.split(" ")[1], JWT_SECRET) as JwtPayload).userId || null;
+  } catch {
+    return null;
   }
 }
 
@@ -459,6 +471,28 @@ router.post("/communities/:id/leave", requireAuth, async (req: Request, res: Res
 // POSTS (Community scoped)
 // ============================================
 
+// Posts with real like and comment counts, and the author's profile badge.
+function postSelect(uid: string | null) {
+  return {
+    id: posts.id,
+    content: posts.content,
+    media: posts.media,
+    createdAt: posts.createdAt,
+    commentCount: sql<number>`(SELECT count(*)::int FROM post_comments pc WHERE pc.post_id = ${posts.id})`,
+    likeCount: sql<number>`(SELECT count(*)::int FROM post_likes pl WHERE pl.post_id = ${posts.id})`,
+    likedByMe: uid
+      ? sql<boolean>`EXISTS (SELECT 1 FROM post_likes pl2 WHERE pl2.post_id = ${posts.id} AND pl2.user_id = ${uid})`
+      : sql<boolean>`false`,
+    author: {
+      id: users.id,
+      name: users.name,
+      avatar: users.avatar,
+      profileRole: sql<string | null>`${users}.profile_role`,
+      farmingCategory: sql<string | null>`${users}.farming_category`,
+    },
+  };
+}
+
 router.get("/posts", async (req: Request, res: Response) => {
   if (!db) return res.status(500).json({ error: "Database not available" });
 
@@ -467,20 +501,11 @@ router.get("/posts", async (req: Request, res: Response) => {
     if (!communityId) {
       return res.status(400).json({ error: "communityId required" });
     }
+    await ensureProfileColumns();
+    const uid = optionalUserId(req);
 
     const result = await db
-      .select({
-        id: posts.id,
-        content: posts.content,
-        media: posts.media,
-        createdAt: posts.createdAt,
-        commentCount: sql<number>`(SELECT count(*)::int FROM post_comments pc WHERE pc.post_id = ${posts.id})`,
-        author: {
-          id: users.id,
-          name: users.name,
-          avatar: users.avatar,
-        },
-      })
+      .select(postSelect(uid))
       .from(posts)
       .leftJoin(users, eq(posts.authorId, users.id))
       .where(eq(posts.communityId, communityId as string))
@@ -491,6 +516,63 @@ router.get("/posts", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Get posts error:", error);
     res.status(500).json({ error: "Failed to get posts" });
+  }
+});
+
+// One post (opening a like/comment notification).
+router.get("/posts/:id", async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    await ensureProfileColumns();
+    const result = await db
+      .select(postSelect(optionalUserId(req)))
+      .from(posts)
+      .leftJoin(users, eq(posts.authorId, users.id))
+      .where(eq(posts.id, req.params.id))
+      .limit(1);
+    if (!result[0]) return res.status(404).json({ error: "This post was removed" });
+    res.json(result[0]);
+  } catch (error) {
+    console.error("Get post error:", error);
+    res.status(500).json({ error: "Failed to get post" });
+  }
+});
+
+// POST /api/posts/:id/like { liked: boolean }  (signed in). The author gets a notification
+// the first time someone likes their post (not for their own likes, and at most once an hour
+// per person per post, so like/unlike tapping doesn't spam them).
+const recentLikeNotices = new Map<string, number>();
+router.post("/posts/:id/like", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    await ensureProfileColumns();
+    const uid = req.user!.userId;
+    const post = rowsOf(await db.execute(sql`SELECT id, author_id, content FROM posts WHERE id = ${req.params.id} LIMIT 1`))[0];
+    if (!post) return res.status(404).json({ error: "This post was removed" });
+    const liked = req.body?.liked !== false;
+    if (liked) {
+      const ins = rowsOf(
+        await db.execute(sql`INSERT INTO post_likes (post_id, user_id) VALUES (${post.id}, ${uid})
+          ON CONFLICT DO NOTHING RETURNING post_id`),
+      );
+      const key = `${post.id}:${uid}`;
+      const last = recentLikeNotices.get(key) || 0;
+      if (ins.length && post.author_id && post.author_id !== uid && Date.now() - last > 60 * 60 * 1000) {
+        recentLikeNotices.set(key, Date.now());
+        if (recentLikeNotices.size > 5000) recentLikeNotices.clear();
+        const u = rowsOf(await db.execute(sql`SELECT name, username FROM users WHERE id = ${uid} LIMIT 1`))[0] || {};
+        const who = u.name || u.username || "Someone";
+        const snippet = String(post.content || "").trim().slice(0, 140) || "Your post";
+        void notify(post.author_id, "like", `${who} liked your post`, snippet, { postId: post.id });
+      }
+    } else {
+      await db.execute(sql`DELETE FROM post_likes WHERE post_id = ${post.id} AND user_id = ${uid}`);
+    }
+    const c = rowsOf(await db.execute(sql`SELECT count(*)::int AS n FROM post_likes WHERE post_id = ${post.id}`))[0];
+    res.json({ liked, likes: Number(c?.n || 0) });
+  } catch (error) {
+    console.error("Like post error:", error);
+    res.status(500).json({ error: "Couldn't save your like" });
   }
 });
 

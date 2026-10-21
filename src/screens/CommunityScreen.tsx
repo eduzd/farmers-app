@@ -10,6 +10,7 @@ import {
   ScrollView,
   Platform,
   Share,
+  Alert,
   useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
@@ -19,7 +20,7 @@ import Animated from "react-native-reanimated";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -31,10 +32,10 @@ import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
 import { Card, Button, IconButton, SectionHeader, EmptyState, PostSkeleton } from "@/components/ui";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, FontFamily, Palette } from "@/constants/theme";
+import { Spacing, BorderRadius, FontFamily, Palette, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useCommunityStore, CommunityType } from "@/lib/communityStore";
-import { getPostsByCommunity } from "@/lib/communityData";
+import { badgeKeyFor } from "@/constants/profileBadges";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 import { tr, useTr } from "@/lib/tr";
@@ -42,6 +43,7 @@ import {
   FeedPost,
   createServerPost,
   fetchServerPosts,
+  likeServerPost,
   initialsOf,
   resolveServerCommunityId,
 } from "@/lib/feedApi";
@@ -74,28 +76,18 @@ export default function CommunityScreen() {
   const isBn = language === "bn";
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 640);
-  const carouselCardWidth = contentWidth - Spacing.lg * 2;
+  // Featured cards are narrower than the screen so the next card peeks in from the side;
+  // the active card sits in the middle.
+  const carouselCardWidth = Math.round(Math.min((contentWidth - Spacing.lg * 2) * 0.84, 420));
+  const carouselSidePad = Math.max(Spacing.lg, Math.round((contentWidth - carouselCardWidth) / 2));
+  const carouselStep = carouselCardWidth + Spacing.md;
+  const isFocused = useIsFocused();
+  const myBadge = badgeKeyFor(user);
 
   const communityType = (activeCommunity?.type || "agriculture") as CommunityType;
 
-  const seedPosts = useCallback(
-    (): Post[] =>
-      getPostsByCommunity(communityType).map((p) => ({
-        id: p.id,
-        author: p.author,
-        content: p.content,
-        image: p.image,
-        likes: p.likes,
-        comments: p.comments,
-        views: p.views,
-        isLiked: p.isLiked,
-        isSaved: false,
-        createdAt: p.createdAt,
-      })),
-    [communityType],
-  );
-
-  const [localPosts, setLocalPosts] = useState<Post[]>(seedPosts);
+  // Only posts made on this phone while the server could not be reached. No demo posts.
+  const [localPosts, setLocalPosts] = useState<Post[]>([]);
   const [serverPosts, setServerPosts] = useState<Post[]>([]);
   const [serverCommunityId, setServerCommunityId] = useState<string | null>(null);
   const [online, setOnline] = useState<boolean | null>(null);
@@ -107,29 +99,35 @@ export default function CommunityScreen() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [slide, setSlide] = useState(0);
   const carouselRef = useRef<ScrollView>(null);
+  const slideRef = useRef(0);
+  const lastCarouselTouch = useRef(0);
+  // Hairline under the pinned header once the page has scrolled under it.
+  const [headerRaised, setHeaderRaised] = useState(false);
+  // Quick actions: one row of four, the rest behind the expand button.
+  const [quickExpanded, setQuickExpanded] = useState(false);
 
   const loadFeed = useCallback(async () => {
     try {
       const id = serverCommunityId ?? (await resolveServerCommunityId(activeCommunity));
       if (!id) throw new Error("no community");
       setServerCommunityId(id);
-      setServerPosts(await fetchServerPosts(id, isBn));
+      setServerPosts(await fetchServerPosts(id, isBn, getToken()));
       setOnline(true);
     } catch {
       setOnline(false);
     } finally {
       setLoading(false);
     }
-  }, [activeCommunity, serverCommunityId, isBn]);
+  }, [activeCommunity, serverCommunityId, isBn, getToken]);
 
   useEffect(() => {
     loadCommunities();
   }, []);
 
   useEffect(() => {
-    setLocalPosts(seedPosts());
+    setLocalPosts([]);
     setServerCommunityId(null);
-  }, [seedPosts]);
+  }, [communityType]);
 
   useEffect(() => {
     loadFeed();
@@ -149,9 +147,28 @@ export default function CommunityScreen() {
     setServerPosts((prev) => prev.map((p) => (p.id === postId ? fn(p) : p)));
   };
 
-  const handleLike = (postId: string) => {
+  const handleLike = async (postId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    updatePost(postId, (p) => ({ ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }));
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+    const liked = !post.isLiked;
+    updatePost(postId, (p) => ({ ...p, isLiked: liked, likes: Math.max(0, p.likes + (liked ? 1 : -1)) }));
+    if (!post.shared) return;
+    const token = getToken();
+    try {
+      if (!token) throw new Error("signed out");
+      const out = await likeServerPost(token, postId, liked);
+      updatePost(postId, (p) => ({ ...p, isLiked: out.liked, likes: out.likes }));
+    } catch {
+      // Undo: the like didn't reach the server.
+      updatePost(postId, (p) => ({ ...p, isLiked: post.isLiked, likes: post.likes }));
+      Alert.alert(
+        isBn ? "লাইক হয়নি" : "Couldn't like",
+        token
+          ? isBn ? "ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।" : "Check your internet and try again."
+          : isBn ? "লাইক করতে সাইন ইন করুন।" : "Sign in to like posts.",
+      );
+    }
   };
 
   const handleSave = (postId: string) => {
@@ -291,44 +308,88 @@ export default function CommunityScreen() {
   ];
 
   const onCarouselScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const i = Math.round(e.nativeEvent.contentOffset.x / (carouselCardWidth + Spacing.md));
+    const i = Math.max(0, Math.min(featured.length - 1, Math.round(e.nativeEvent.contentOffset.x / carouselStep)));
+    slideRef.current = i;
     if (i !== slide) setSlide(i);
+  };
+
+  const onCarouselTouch = () => {
+    lastCarouselTouch.current = Date.now();
+  };
+
+  // Auto-play: next card every 4 seconds, looping back to the first. Waits a few seconds
+  // after the user swipes, and stops while the Home tab isn't on screen.
+  const featuredCount = featured.length;
+  useEffect(() => {
+    if (!isFocused || featuredCount < 2) return;
+    const timer = setInterval(() => {
+      if (Date.now() - lastCarouselTouch.current < 5000) return;
+      const next = (slideRef.current + 1) % featuredCount;
+      slideRef.current = next;
+      setSlide(next);
+      carouselRef.current?.scrollTo({ x: next * carouselStep, animated: true });
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [isFocused, featuredCount, carouselStep]);
+
+  const onListScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const raised = e.nativeEvent.contentOffset.y > 4;
+    if (raised !== headerRaised) setHeaderRaised(raised);
   };
 
   const firstName = (user?.name || "").split(" ")[0];
 
+  // Pinned header: the greeting, search and notifications stay at the top while the page scrolls.
+  const renderPinnedHeader = () => (
+    <View
+      style={[
+        styles.pinnedHeader,
+        {
+          paddingTop: insets.top + Spacing.md,
+          backgroundColor: theme.backgroundRoot,
+          borderBottomColor: headerRaised ? theme.divider : "transparent",
+        },
+      ]}
+    >
+      <View style={styles.pinnedHeaderInner}>
+          <View style={styles.greetingRow}>
+            <View style={{ flex: 1 }}>
+              <ThemedText type="small" muted>
+                {greeting(isBn)}
+                {firstName ? "," : ""}
+              </ThemedText>
+              <ThemedText type="h2" numberOfLines={1}>
+                {firstName || (isBn ? "কৃষক বন্ধু" : "Farmer friend")}
+              </ThemedText>
+            </View>
+            <IconButton icon="search" accessibilityLabel={isBn ? "খুঁজুন" : "Search"} onPress={() => navigation.navigate("UserSearch")} />
+            <IconButton
+              icon="bell"
+              accessibilityLabel={isBn ? "নোটিফিকেশন" : "Notifications"}
+              onPress={() => navigation.navigate("Notifications")}
+              style={{ marginLeft: Spacing.sm }}
+            />
+          </View>
+      </View>
+    </View>
+  );
+
   const renderHeader = () => (
     <View>
-      {/* Greeting */}
-      <View style={styles.greetingRow}>
-        <View style={{ flex: 1 }}>
-          <ThemedText type="small" muted>
-            {greeting(isBn)}
-            {firstName ? "," : ""}
-          </ThemedText>
-          <ThemedText type="h2" numberOfLines={1}>
-            {firstName || (isBn ? "কৃষক বন্ধু" : "Farmer friend")}
-          </ThemedText>
-        </View>
-        <IconButton icon="search" accessibilityLabel={isBn ? "খুঁজুন" : "Search"} onPress={() => navigation.navigate("UserSearch")} />
-        <IconButton
-          icon="bell"
-          accessibilityLabel={isBn ? "নোটিফিকেশন" : "Notifications"}
-          onPress={() => navigation.navigate("Notifications")}
-          style={{ marginLeft: Spacing.sm }}
-        />
-      </View>
-
       {/* Featured carousel */}
       <ScrollView
         ref={carouselRef}
         horizontal
         showsHorizontalScrollIndicator={false}
-        snapToInterval={carouselCardWidth + Spacing.md}
+        snapToInterval={carouselStep}
         decelerationRate="fast"
+        disableIntervalMomentum
         onScroll={onCarouselScroll}
+        onScrollBeginDrag={onCarouselTouch}
+        onScrollEndDrag={onCarouselTouch}
+        onTouchStart={onCarouselTouch}
         scrollEventThrottle={32}
-        contentContainerStyle={{ paddingHorizontal: Spacing.lg, gap: Spacing.md }}
+        contentContainerStyle={{ paddingHorizontal: carouselSidePad, gap: Spacing.md }}
       >
         {featured.map((f) => (
           <Pressable
@@ -378,7 +439,7 @@ export default function CommunityScreen() {
           onAction={() => navigation.navigate("Tools")}
         />
         <Card padded={false} style={styles.quickGrid}>
-          {quickActions.map((a) => (
+          {(quickExpanded ? quickActions : quickActions.slice(0, 4)).map((a) => (
             <Pressable
               key={a.key}
               onPress={() => {
@@ -397,19 +458,25 @@ export default function CommunityScreen() {
               </ThemedText>
             </Pressable>
           ))}
-        </Card>
-      </View>
-
-      {/* Composer */}
-      <View style={styles.section}>
-        <Card onPress={() => setShowCreatePost(true)} style={styles.composer}>
-          <UserAvatar name={user?.name || "?"} size={40} />
-          <ThemedText muted style={{ flex: 1 }}>
-            {isBn ? "আপনার খামারের খবর শেয়ার করুন..." : "Share news from your farm..."}
-          </ThemedText>
-          <View style={[styles.composerIcon, { backgroundColor: theme.primarySoft }]}>
-            <Feather name="image" size={18} color={theme.primary} />
-          </View>
+          {quickActions.length > 4 ? (
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setQuickExpanded((v) => !v);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={
+                quickExpanded ? (isBn ? "কম দেখান" : "Show fewer tools") : isBn ? "আরও টুলস দেখান" : "Show more tools"
+              }
+              hitSlop={6}
+              style={({ pressed }) => [styles.quickToggle, { borderTopColor: theme.divider, opacity: pressed ? 0.6 : 1 }]}
+            >
+              <ThemedText type="caption" style={{ color: theme.primary, fontFamily: FontFamily.semibold }}>
+                {quickExpanded ? (isBn ? "কম দেখান" : "Show less") : isBn ? "আরও টুলস" : "More tools"}
+              </ThemedText>
+              <Feather name={quickExpanded ? "chevron-up" : "chevron-down"} size={16} color={theme.primary} />
+            </Pressable>
+          ) : null}
         </Card>
       </View>
 
@@ -439,8 +506,10 @@ export default function CommunityScreen() {
         <Pressable onPress={() => handleAuthorPress(item.author)} style={styles.authorInfo} accessibilityRole="button">
           <UserAvatar
             name={item.author.name}
+            avatar={item.author.avatar || undefined}
             avatarId={item.author.avatarId}
             avatarColor={item.author.avatarColor}
+            badge={item.author.badge}
             size={42}
           />
           <View style={{ flex: 1 }}>
@@ -519,25 +588,37 @@ export default function CommunityScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }}>
+      {renderPinnedHeader()}
       <FlatList
+        style={{ flex: 1 }}
         data={loading ? [] : posts}
         keyExtractor={(item) => item.id}
         renderItem={renderPost}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={renderHeader()}
+        onScroll={onListScroll}
+        scrollEventThrottle={32}
         ListEmptyComponent={
           loading ? null : (
             <EmptyState
               icon="feather"
-              title={isBn ? "এখনও কোনো পোস্ট নেই" : "No posts yet"}
-              message={isBn ? "প্রথম পোস্টটি আপনিই করুন" : "Be the first to share something"}
+              title={
+                online === false
+                  ? isBn ? "সার্ভারে পৌঁছানো যাচ্ছে না" : "Can't reach the server"
+                  : isBn ? "এখনও কোনো পোস্ট নেই" : "No posts yet"
+              }
+              message={
+                online === false
+                  ? isBn ? "নিচে টেনে আবার চেষ্টা করুন" : "Pull down to try again"
+                  : isBn ? "প্রথম পোস্টটি আপনিই করুন" : "Be the first to share something"
+              }
               actionLabel={isBn ? "পোস্ট করুন" : "Create post"}
               onAction={() => setShowCreatePost(true)}
             />
           )
         }
         contentContainerStyle={{
-          paddingTop: insets.top + Spacing.md,
-          paddingBottom: tabBarHeight + Spacing["3xl"],
+          paddingTop: Spacing.sm,
+          paddingBottom: tabBarHeight + Spacing["3xl"] + 56,
           width: "100%",
           maxWidth: 640,
           alignSelf: "center",
@@ -548,6 +629,27 @@ export default function CommunityScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
+
+      {/* Floating button: create a post */}
+      <Pressable
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          setShowCreatePost(true);
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={isBn ? "পোস্ট করুন" : "Create post"}
+        style={({ pressed }) => [
+          styles.fab,
+          {
+            backgroundColor: theme.primary,
+            bottom: tabBarHeight + Spacing.lg,
+            right: Math.max(Spacing.lg, (width - 640) / 2 + Spacing.lg),
+            transform: [{ scale: pressed ? 0.94 : 1 }],
+          },
+        ]}
+      >
+        <Feather name="edit-3" size={22} color="#FFFFFF" />
+      </Pressable>
 
       <Modal visible={showCreatePost} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowCreatePost(false)}>
         <KeyboardAvoidingView
@@ -569,7 +671,7 @@ export default function CommunityScreen() {
           </View>
           <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
             <View style={styles.composerAuthor}>
-              <UserAvatar name={user?.name || "?"} size={44} />
+              <UserAvatar name={user?.name || "?"} avatar={user?.avatar} badge={myBadge} size={44} />
               <View>
                 <ThemedText style={styles.authorName}>{user?.name || (isBn ? "আপনি" : "You")}</ThemedText>
                 <ThemedText type="caption" muted>
@@ -634,30 +736,58 @@ function PostAction({
 }
 
 const styles = StyleSheet.create({
+  pinnedHeader: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    zIndex: 2,
+  },
+  pinnedHeaderInner: {
+    width: "100%",
+    maxWidth: 640,
+    alignSelf: "center",
+  },
   greetingRow: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  fab: {
+    position: "absolute",
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    ...Shadows.large,
+  },
+  quickToggle: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: Spacing.sm,
+    marginTop: Spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   featureCard: {
-    height: 156,
+    height: 128,
     borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
     overflow: "hidden",
   },
   featureDecor: {
     position: "absolute",
-    right: -40,
-    top: -40,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    right: -36,
+    top: -36,
+    width: 132,
+    height: 132,
+    borderRadius: 66,
     backgroundColor: "rgba(255,255,255,0.12)",
   },
   featureIcon: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: 12,
     backgroundColor: "rgba(255,255,255,0.2)",
     alignItems: "center",
