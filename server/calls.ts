@@ -305,25 +305,47 @@ function authUser(req: Request, res: Response, next: NextFunction) {
 
 let cfCache: { at: number; servers: any[] } | null = null;
 
+async function cfPost(path: string, keyId: string, token: string): Promise<any[]> {
+  const r = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${keyId}/credentials/${path}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ ttl: 12 * 3600 }),
+  });
+  if (!r.ok) {
+    console.warn("[calls] Cloudflare TURN credentials failed:", r.status);
+    return [];
+  }
+  const j: any = await r.json().catch(() => null);
+  const ice = j?.iceServers;
+  return Array.isArray(ice) ? ice : ice ? [ice] : [];
+}
+
+/** Cloudflare TURN (free for the first 1,000 GB a month). Port 53 addresses are dropped:
+ *  many phones and networks block them and they only slow the connection down. */
 async function cloudflareTurn(): Promise<any[]> {
-  const keyId = process.env.CLOUDFLARE_TURN_KEY_ID;
-  const token = process.env.CLOUDFLARE_TURN_API_TOKEN;
+  const keyId = (process.env.CLOUDFLARE_TURN_KEY_ID || "").trim();
+  const token = (process.env.CLOUDFLARE_TURN_API_TOKEN || "").trim();
   if (!keyId || !token) return [];
   if (cfCache && Date.now() - cfCache.at < 6 * 3600 * 1000) return cfCache.servers;
   try {
-    const r = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${keyId}/credentials/generate`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ ttl: 12 * 3600 }),
-    });
-    const j: any = await r.json().catch(() => null);
-    const ice = j?.iceServers;
-    const servers = Array.isArray(ice) ? ice : ice ? [ice] : [];
+    let servers = await cfPost("generate-ice-servers", keyId, token);
+    if (!servers.length) servers = await cfPost("generate", keyId, token);
+    servers = servers
+      .map((s: any) => ({ ...s, urls: [].concat(s.urls || s.url || []).filter((u: string) => !/:53(\?|$)/.test(u)) }))
+      .filter((s: any) => s.urls.length && s.urls.some((u: string) => /^turns?:/.test(u)));
     if (servers.length) cfCache = { at: Date.now(), servers };
     return servers;
-  } catch {
+  } catch (e: any) {
+    console.warn("[calls] Cloudflare TURN credentials failed:", e?.message || e);
     return [];
   }
+}
+
+/** Which relay is set up (no secrets), for /api/health. */
+export function turnStatus(): string {
+  if (process.env.CLOUDFLARE_TURN_KEY_ID && process.env.CLOUDFLARE_TURN_API_TOKEN) return "cloudflare";
+  if (process.env.TURN_URLS && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) return "custom";
+  return "none";
 }
 
 export async function iceServers(): Promise<{ iceServers: any[]; turn: boolean }> {

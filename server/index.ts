@@ -1,4 +1,5 @@
 import { registerCatalogRoutes } from "./catalogRoutes";
+import { turnStatus } from "./calls";
 import { registerFeatureRoutes } from "./featureRoutes";
 import { registerPushRoutes } from "./push";
 import { registerCheckoutRoutes } from "./checkoutRoutes";
@@ -126,6 +127,7 @@ function setupErrorHandler(app: express.Application) {
       ok: true,
       time: new Date().toISOString(),
       version: (process.env.RENDER_GIT_COMMIT || "local").slice(0, 7),
+      callRelay: turnStatus(),
     });
   });
 
