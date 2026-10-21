@@ -57,3 +57,5 @@ scripts/__pycache__/
 
 # Local test scripts hold test logins: keep them off GitHub
 scripts/
+.vercel
+dist-vercel/
