@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from "react";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
+import { navigateWhenReady } from "@/lib/navigationRef";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
 
@@ -158,12 +160,31 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(
-      (response: Notifications.NotificationResponse) => {
-        const data = response.notification.request.content.data;
-        console.log("Notification tapped:", data);
+    // Tapping a push opens the right screen: a message opens that chat.
+    const openFromPush = (response: Notifications.NotificationResponse | null) => {
+      const data = (response?.notification.request.content.data || {}) as Record<string, any>;
+      const nid = response?.notification.request.identifier;
+      if (nid) AsyncStorage.setItem("farmers:lastPushOpened", nid).catch(() => {});
+      if (data.type === "message" && data.userId) {
+        const name = String(data.userName || "Farmer");
+        const initials = name.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "F";
+        navigateWhenReady("Chat", { conversationId: String(data.userId), userName: name, userInitials: initials });
       }
-    );
+    };
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(openFromPush);
+    if (Platform.OS !== "web") {
+      // Cold start from a tap. Remember which one was handled so it doesn't reopen on every launch.
+      Notifications.getLastNotificationResponseAsync()
+        .then(async (r) => {
+          const id = r?.notification.request.identifier;
+          if (!id) return;
+          const last = await AsyncStorage.getItem("farmers:lastPushOpened").catch(() => null);
+          if (last === id) return;
+          await AsyncStorage.setItem("farmers:lastPushOpened", id).catch(() => {});
+          openFromPush(r);
+        })
+        .catch(() => {});
+    }
 
     return () => {
       if (notificationListener.current) {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { MAX_APP_WIDTH, isWebFrame } from "@/lib/webFrame";
-import { NavigationContainer, DefaultTheme, DarkTheme, createNavigationContainerRef } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme, DarkTheme } from "@react-navigation/native";
 import { Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -41,7 +41,8 @@ import { SyncProvider } from "@/offline/providers/SyncProvider";
 
 SplashScreen.preventAutoHideAsync();
 
-export const navigationRef = createNavigationContainerRef<any>();
+import { navigationRef } from "@/lib/navigationRef";
+export { navigationRef };
 if (Platform.OS === "web" && typeof window !== "undefined") {
   // Exposed for automated UI testing (Playwright) and debugging on web.
   (window as any).__nav = navigationRef;

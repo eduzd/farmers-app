@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from "react";
 import { getWsUrl } from "@/lib/query-client";
-import { Platform, Alert } from "react-native";
+import { Platform, Alert, AppState } from "react-native";
+import { useAuthStore } from "@/lib/authStore";
+import { emitLiveDm } from "@/lib/dmApi";
 import { VoiceCallScreen } from "@/components/VoiceCallScreen";
 
 interface CallState {
@@ -131,29 +133,53 @@ export function VoiceCallProvider({ children, userId, userName }: VoiceCallProvi
   }, [cleanup]);
 
   useEffect(() => {
-    const wsUrl = `${getWsUrl()}/ws/chat`;
+    // Live socket: new direct messages appear at once (chats also poll, so this is a bonus),
+    // and call signalling. It signs in with the account token, and reconnects when the
+    // phone changes network or the server restarts.
+    let stopped = false;
+    let retry: ReturnType<typeof setTimeout> | null = null;
+    let keepAlive: ReturnType<typeof setInterval> | null = null;
+    let attempts = 0;
+    let ws: WebSocket;
 
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      setIsConnected(true);
-      ws.send(JSON.stringify({ type: "auth", userId, conversationIds: [] }));
+    const connect = () => {
+      if (stopped) return;
+      const token = useAuthStore.getState().getToken();
+      if (!token) return;
+      ws = new WebSocket(`${getWsUrl()}/ws/chat`);
+      wsRef.current = ws;
+      ws.onopen = () => {
+        attempts = 0;
+        setIsConnected(true);
+        ws.send(JSON.stringify({ type: "auth", token }));
+        if (keepAlive) clearInterval(keepAlive);
+        keepAlive = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "ping" }));
+        }, 25000);
+      };
+      ws.onclose = () => {
+        setIsConnected(false);
+        if (keepAlive) clearInterval(keepAlive);
+        keepAlive = null;
+        if (stopped) return;
+        attempts += 1;
+        retry = setTimeout(connect, Math.min(30000, 1000 * 2 ** Math.min(attempts, 5)));
+      };
+      ws.onerror = () => {
+        setIsConnected(false);
+      };
+      ws.onmessage = (event) => handleMessage(event);
     };
 
-    ws.onclose = () => {
-      setIsConnected(false);
-    };
-
-    ws.onerror = () => {
-      setIsConnected(false);
-    };
-
-    ws.onmessage = async (event) => {
+    const handleMessage = async (event: MessageEvent) => {
       try {
         const message = JSON.parse(event.data);
 
         switch (message.type) {
+          case "dm":
+            if (message.data) emitLiveDm(message.data);
+            break;
+
           case "incoming_call":
             setCallState({
               callId: message.callId,
@@ -245,8 +271,24 @@ export function VoiceCallProvider({ children, userId, userName }: VoiceCallProvi
       }
     };
 
+    connect();
+    const appSub = AppState.addEventListener("change", (st) => {
+      // Back in front: reconnect straight away instead of waiting for the back-off.
+      if (st === "active" && (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED)) {
+        if (retry) clearTimeout(retry);
+        attempts = 0;
+        connect();
+      }
+    });
+
     return () => {
-      ws.close();
+      stopped = true;
+      appSub.remove();
+      if (retry) clearTimeout(retry);
+      if (keepAlive) clearInterval(keepAlive);
+      try {
+        wsRef.current?.close();
+      } catch {}
       cleanup();
     };
   }, [userId, cleanup, startDurationTimer, createPeerConnection]);

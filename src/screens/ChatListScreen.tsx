@@ -109,8 +109,9 @@ export default function ChatListScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "unread" | "online">("all");
 
-  // Real conversations with other accounts come from the server; the built-in
-  // sample chats stay below them so the screen is never empty for new users.
+  // Real conversations come from the server. The built-in sample chats are only shown
+  // to people who aren't signed in: mixed in with real ones they looked like real
+  // people, but nothing sent to them ever went anywhere.
   const getToken = useAuthStore((st) => st.getToken);
   const [liveConversations, setLiveConversations] = useState<ChatConversation[]>([]);
   useFocusEffect(
@@ -142,7 +143,7 @@ export default function ChatListScreen() {
       };
     }, [getToken, isBn])
   );
-  const allConversations = [...liveConversations, ...CONVERSATIONS];
+  const allConversations = getToken() ? liveConversations : CONVERSATIONS;
 
   const filteredConversations = allConversations.filter((conv) => {
     if (filter === "unread" && conv.unreadCount === 0) return false;

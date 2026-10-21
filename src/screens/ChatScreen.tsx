@@ -11,6 +11,9 @@ import {
   NativeSyntheticEvent,
   TextInputContentSizeChangeEventData,
   ActionSheetIOS,
+  ActivityIndicator,
+  AppState,
+  Linking,
 } from "react-native";
 import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import Animated from "react-native-reanimated";
@@ -22,29 +25,27 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 
-let useAudioRecorder: any;
-let AudioModule: any;
-let RecordingPresets: any;
-
-if (Platform.OS !== "web") {
-  const expoAudio = require("expo-audio");
-  useAudioRecorder = expoAudio.useAudioRecorder;
-  AudioModule = expoAudio.AudioModule;
-  RecordingPresets = expoAudio.RecordingPresets;
-}
-
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
-import { useVoiceCallContext } from "@/contexts/VoiceCallContext";
+import * as Clipboard from "expo-clipboard";
 import { useAuthStore } from "@/lib/authStore";
-import { getApiUrl } from "@/lib/query-client";
+import {
+  fetchMessages,
+  sendText,
+  sendVoice,
+  fetchContact,
+  newClientId,
+  onLiveDm,
+  rememberLocalVoice,
+  type DmMessage,
+} from "@/lib/dmApi";
+import { useVoiceRecorder, type FinishedRecording } from "@/hooks/useVoiceRecorder";
+import { VoiceMessagePlayer, formatVoiceTime } from "@/components/VoiceMessagePlayer";
 
 import { tr, useTr } from "@/lib/tr";
-// Real accounts have long server ids; the built-in sample chats use short ids.
-const isRealUserId = (id?: string) => !!id && /^[0-9a-zA-Z_-]{16,}$/.test(id);
 
 type ChatRouteProp = RouteProp<RootStackParamList, "Chat">;
 
@@ -55,22 +56,17 @@ interface Message {
   time: string;
   type: "text" | "voice" | "image";
   duration?: number;
-  audioUri?: string;
+  durationMs?: number;
+  mediaId?: string | null;
+  localUri?: string; // my own recording, before/after upload
   imageUri?: string;
   replyTo?: { id: string; text: string; isMe: boolean };
   reactions?: string[];
   seen?: boolean;
+  createdAt?: string; // server time; missing while my message is still sending
+  clientId?: string;
+  status?: "sending" | "sent" | "failed";
 }
-
-const INITIAL_MESSAGES: Message[] = [
-  { id: "1", text: "Hi! I saw your post about organic tomatoes.", isMe: false, time: "10:30 AM", type: "text", seen: true },
-  { id: "2", text: "Hello! Yes, they're freshly harvested.", isMe: true, time: "10:32 AM", type: "text", seen: true },
-  { id: "3", text: "What's the price per kg?", isMe: false, time: "10:33 AM", type: "text", seen: true },
-  { id: "4", text: "It's ৳120 per kg. We offer discounts for bulk orders!", isMe: true, time: "10:35 AM", type: "text", seen: true },
-  { id: "5", text: "That sounds great! How much for 50kg?", isMe: false, time: "10:36 AM", type: "text", seen: true },
-  { id: "6", text: "For 50kg, I can offer ৳110 per kg. Total would be ৳5,500.", isMe: true, time: "10:38 AM", type: "text", seen: true },
-  { id: "7", text: "Perfect! Can you deliver to my location?", isMe: false, time: "10:40 AM", type: "text", seen: true },
-];
 
 const REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 
@@ -86,77 +82,128 @@ export default function ChatScreen() {
   const flatListRef = useRef<FlatList>(null);
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
   
-  const voiceCallContext = useVoiceCallContext();
-
-  const [messages, setMessages] = useState<Message[]>(() => [...INITIAL_MESSAGES].reverse()); // newest first for the inverted list
-  // (replaced with real messages from the server for live chats, see isLive)
-  const [inputText, setInputText] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-  const [showReactionPicker, setShowReactionPicker] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
-  const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
-  const [showMediaMenu, setShowMediaMenu] = useState(false);
-  const recordingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const recordingDurationRef = useRef<number>(0);
-  const lastTapRef = useRef<{ id: string; time: number } | null>(null);
-  const audioPlayerRef = useRef<any>(null);
-  const webMediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const webAudioChunksRef = useRef<Blob[]>([]);
-  
-  const audioRecorder = useAudioRecorder ? useAudioRecorder(RecordingPresets?.HIGH_QUALITY) : null;
-
   const userName = route.params.userName;
   const userInitials = route.params.userInitials;
   const conversationId = route.params.conversationId;
   const isWelfareMember = route.params.isWelfareMember;
   const authUser = useAuthStore((st) => st.user);
   const getToken = useAuthStore((st) => st.getToken);
-  // Live chat with a real account: messages go through the server (/api/dm).
-  const isLive = !!authUser && isRealUserId(conversationId) && conversationId !== authUser.id && !!getToken();
-  const lastServerAt = useRef<string | null>(null);
+  const signedIn = !!authUser && !!getToken();
 
-  const toMessage = (m: any): Message => ({
+  // "checking": asking the server whether this person has an account.
+  // "live": real chat, messages go through the server (/api/dm).
+  // "noAccount": a sample person; nothing can be sent. "guest": not signed in.
+  const [mode, setMode] = useState<"checking" | "live" | "noAccount" | "guest">(() =>
+    !signedIn ? "guest" : conversationId === authUser?.id ? "noAccount" : "checking"
+  );
+  const isLive = mode === "live";
+  const [otherId, setOtherId] = useState<string>(conversationId);
+  const [loadError, setLoadError] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]); // newest first for the inverted list
+  const [inputText, setInputText] = useState("");
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [showMediaMenu, setShowMediaMenu] = useState(false);
+  const [calling, setCalling] = useState(false);
+  const lastTapRef = useRef<{ id: string; time: number } | null>(null);
+  const lastServerAt = useRef<string | null>(null);
+  const seenUntil = useRef<string | null>(null);
+  const fetching = useRef(false);
+  const otherIdRef = useRef(conversationId);
+  otherIdRef.current = otherId;
+
+  const clock = (iso?: string | null) =>
+    (iso ? new Date(iso) : new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const toMessage = (m: DmMessage): Message => ({
     id: m.id,
-    text: m.content,
-    isMe: !!m.isMe,
-    time: new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    type: "text",
+    text: m.kind === "voice" ? "" : m.content,
+    isMe: m.isMe,
+    time: clock(m.createdAt),
+    type: m.kind === "voice" ? "voice" : "text",
+    mediaId: m.mediaId,
+    durationMs: m.durationMs ?? undefined,
+    createdAt: m.createdAt,
     seen: !!m.readAt,
+    status: "sent",
   });
 
-  const fetchLive = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-    const since = lastServerAt.current ? `?since=${encodeURIComponent(lastServerAt.current)}` : "";
-    try {
-      const r = await fetch(`${getApiUrl()}/api/dm/${conversationId}/messages${since}`, {
-        headers: { Authorization: `Bearer ${token}` },
+  /** Merge server messages into the list (newest first), replacing my pending copies. */
+  const mergeServer = useCallback((incoming: DmMessage[]) => {
+    if (!incoming.length) return;
+    setMessages((prev) => {
+      const byId = new Map(prev.map((m) => [m.id, m]));
+      for (const m of incoming) {
+        const old = byId.get(m.id);
+        const next = toMessage(m);
+        // keep the local recording so my own voice message plays without a download
+        if (old?.localUri) next.localUri = old.localUri;
+        byId.set(m.id, old ? { ...old, ...next, reactions: old.reactions } : next);
+      }
+      return [...byId.values()].sort((a, b) => {
+        const ta = a.createdAt || "9999", tb = b.createdAt || "9999"; // unsent ones stay at the bottom
+        return ta < tb ? 1 : ta > tb ? -1 : a.id < b.id ? 1 : -1;
       });
-      if (!r.ok) return;
-      const list: any[] = await r.json();
-      if (list.length) lastServerAt.current = list[list.length - 1].createdAt;
-      setMessages((prev) => {
-        const base = since ? prev : [];
-        const known = new Set(base.map((m) => m.id));
-        const fresh = list.filter((m) => !known.has(m.id)).map(toMessage).reverse();
-        return fresh.length || !since ? [...fresh, ...base] : prev;
-      });
-    } catch {}
-  }, [conversationId, getToken]);
+    });
+  }, []);
 
+  const applySeen = useCallback((until: string | null) => {
+    if (!until || until === seenUntil.current) return;
+    seenUntil.current = until;
+    setMessages((prev) => prev.map((m) => (m.isMe && m.createdAt && m.createdAt <= until && !m.seen ? { ...m, seen: true } : m)));
+  }, []);
+
+  const fetchLive = useCallback(async () => {
+    if (mode === "guest" || mode === "noAccount" || fetching.current) return;
+    fetching.current = true;
+    try {
+      const page = await fetchMessages(otherIdRef.current, lastServerAt.current);
+      setLoadError(false);
+      if (!page.hasAccount || !page.otherId) {
+        setMode("noAccount");
+        return;
+      }
+      if (page.otherId !== otherIdRef.current) setOtherId(page.otherId);
+      setMode("live");
+      // Only messages that came from the server move the "since" marker, so a message
+      // the other person sent while mine was in flight is never skipped.
+      const newest = page.messages[page.messages.length - 1];
+      if (newest) lastServerAt.current = newest.createdAt;
+      mergeServer(page.messages);
+      applySeen(page.seenUntil);
+    } catch (e: any) {
+      setLoadError(true);
+      if (e?.status === 401) setMode("guest");
+    } finally {
+      fetching.current = false;
+    }
+  }, [mode, mergeServer, applySeen]);
+
+  // Poll every 4 s while the chat is open and the app is in front; the live socket
+  // (when connected) makes new messages appear at once.
   useEffect(() => {
-    if (!isLive) return;
-    setMessages([]);
-    lastServerAt.current = null;
+    if (mode === "guest" || mode === "noAccount") return;
     fetchLive();
-    const t = setInterval(fetchLive, 4000);
-    return () => clearInterval(t);
-  }, [isLive, fetchLive]);
-  const lastSeen = "Active 2m ago";
-  const isOnline = true;
+    let appActive = AppState.currentState === "active";
+    const t = setInterval(() => {
+      if (appActive) fetchLive();
+    }, 4000);
+    const sub = AppState.addEventListener("change", (s) => {
+      appActive = s === "active";
+      if (appActive) fetchLive();
+    });
+    const off = onLiveDm((m) => {
+      const o = otherIdRef.current;
+      if (m.senderId === o || m.recipientId === o) fetchLive();
+    });
+    return () => {
+      clearInterval(t);
+      sub.remove();
+      off();
+    };
+  }, [mode, fetchLive]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -164,323 +211,150 @@ export default function ChatScreen() {
     });
   }, [navigation]);
 
-  useEffect(() => {
-    return () => {
-      if (recordingIntervalRef.current) {
-        clearInterval(recordingIntervalRef.current);
-      }
-      if (audioPlayerRef.current) {
-        audioPlayerRef.current.remove();
-      }
-    };
-  }, []);
-
   const handleViewProfile = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert(tr("Profile"), `Viewing ${userName}'s profile`);
   };
 
-  const handleVoiceCall = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (voiceCallContext) {
-      voiceCallContext.initiateCall(conversationId, userName);
-    } else {
-      Alert.alert(tr("Voice Call"), tr("Voice calling is being set up. Please try again in a moment."));
-    }
-  };
-
-
-  const sendLive = async (text: string) => {
-    const tempId = `tmp-${Date.now()}`;
-    const temp: Message = {
-      id: tempId,
-      text,
-      isMe: true,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      type: "text",
-      seen: false,
-    };
-    setMessages((prev) => [temp, ...prev]);
-    setInputText("");
-    setReplyingTo(null);
+  const dial = async (phone: string) => {
+    const number = phone.replace(/[^\d+]/g, "");
+    const url = `tel:${number}`;
     try {
-      const r = await fetch(`${getApiUrl()}/api/dm/${conversationId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ content: text }),
-      });
-      const data = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(data?.error || "Couldn't send the message");
-      lastServerAt.current = data.createdAt;
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? toMessage(data) : m)));
-    } catch (e: any) {
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      setInputText(text);
-      Alert.alert(tr("Not sent"), e?.message || "Check your connection and try again.");
+      if (Platform.OS !== "web" && !(await Linking.canOpenURL(url))) throw new Error("no dialer");
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert(tr("Call"), `${userName}: ${phone}`, [{ text: "OK" }]);
     }
   };
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (isLive) {
-      sendLive(inputText.trim());
+  // The Call button opens the phone's dialer with the other person's number
+  // (normal phone call from your SIM). The number comes from their shop, or from their
+  // profile once you have dealt with each other (they messaged you, or you have an order).
+  const handleVoiceCall = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (mode === "guest") {
+      Alert.alert(tr("Call"), tr("Please sign in to call or message people."));
       return;
     }
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText.trim(),
-      isMe: true,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      type: "text",
-      seen: false,
-      replyTo: replyingTo ? { id: replyingTo.id, text: replyingTo.text, isMe: replyingTo.isMe } : undefined,
-    };
-
-    setMessages((prev) => [newMessage, ...prev]);
-    setInputText("");
-    setReplyingTo(null);
-
-    setTimeout(() => {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === newMessage.id ? { ...m, seen: true } : m))
-      );
-    }, 1000);
-
-    setTimeout(() => {
-      const reply: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "Thanks for your message! I'll get back to you soon.",
-        isMe: false,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        type: "text",
-        seen: true,
-      };
-      setMessages((prev) => [reply, ...prev]);
-    }, 1500);
+    if (mode === "noAccount") {
+      Alert.alert(tr("Call"), `${userName} isn't on Farmers yet, so there's no number to call.`);
+      return;
+    }
+    if (calling) return;
+    setCalling(true);
+    try {
+      const c = await fetchContact(otherIdRef.current);
+      if (c.phone) {
+        Alert.alert(
+          `${tr("Call")} ${c.name || userName}?`,
+          `${c.phone}\n${c.phoneSource === "store" ? tr("Shop number") : tr("Phone number")} · ${tr("normal call charges from your SIM")}`,
+          [
+            { text: tr("Cancel"), style: "cancel" },
+            { text: tr("Call"), onPress: () => dial(c.phone!) },
+          ]
+        );
+      } else {
+        Alert.alert(
+          tr("No phone number"),
+          `${c.name || userName} hasn't shared a phone number with you yet. Send a message or a voice message instead.`
+        );
+      }
+    } catch (e: any) {
+      Alert.alert(tr("Call"), e?.code === "OFFLINE" ? tr("No connection. Check your internet and try again.") : e?.message || tr("Couldn't get the phone number. Try again."));
+    } finally {
+      setCalling(false);
+    }
   };
 
-  const startRecording = async () => {
+  const markFailed = (id: string) =>
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status: "failed" } : m)));
+
+  /** Send (or re-send) one of my pending messages. The clientId makes retries safe. */
+  const deliver = async (msg: Message) => {
+    setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, status: "sending" } : m)));
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      
-      if (Platform.OS === "web") {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          const mediaRecorder = new MediaRecorder(stream);
-          webAudioChunksRef.current = [];
-          
-          mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-              webAudioChunksRef.current.push(event.data);
-            }
-          };
-          
-          webMediaRecorderRef.current = mediaRecorder;
-          mediaRecorder.start();
-          
-          setIsRecording(true);
-          setRecordingDuration(0);
-          recordingDurationRef.current = 0;
-          
-          recordingIntervalRef.current = setInterval(() => {
-            recordingDurationRef.current += 1;
-            setRecordingDuration(recordingDurationRef.current);
-          }, 1000);
-        } catch (err) {
-          console.error("Web recording error:", err);
-          Alert.alert(tr("অনুমতি প্রয়োজন"), tr("ভয়েস মেসেজ রেকর্ড করতে মাইক্রোফোন অ্যাক্সেস দিন।"));
-        }
-        return;
+      const sent =
+        msg.type === "voice"
+          ? await sendVoice(otherIdRef.current, msg.localUri!, msg.durationMs || 0, msg.clientId!)
+          : await sendText(otherIdRef.current, msg.text, msg.clientId!);
+      if (msg.type === "voice" && sent.mediaId && msg.localUri) rememberLocalVoice(sent.mediaId, msg.localUri);
+      // the server id is dm-<clientId>, the same id as the pending copy
+      mergeServer([sent]);
+    } catch (e: any) {
+      markFailed(msg.id);
+      if (e?.code === "NO_ACCOUNT") setMode("noAccount");
+      else if (e?.status && e.status !== 0 && e.status < 500 && e.code !== "OFFLINE") {
+        Alert.alert(tr("Message not sent"), e.message || tr("Please try again."));
       }
-      
-      if (!AudioModule) {
-        Alert.alert(tr("ত্রুটি"), tr("এই ডিভাইসে অডিও রেকর্ডিং সম্ভব নয়।"));
-        return;
-      }
-      
-      const status = await AudioModule.requestRecordingPermissionsAsync();
-      if (!status.granted) {
-        Alert.alert(tr("অনুমতি প্রয়োজন"), tr("ভয়েস মেসেজ রেকর্ড করতে মাইক্রোফোন অ্যাক্সেস দিন।"));
-        return;
-      }
-
-      setIsRecording(true);
-      setRecordingDuration(0);
-      recordingDurationRef.current = 0;
-
-      audioRecorder?.record();
-
-      recordingIntervalRef.current = setInterval(() => {
-        recordingDurationRef.current += 1;
-        setRecordingDuration(recordingDurationRef.current);
-      }, 1000);
-    } catch (error) {
-      console.error("Failed to start recording:", error);
-      Alert.alert(tr("ত্রুটি"), tr("রেকর্ডিং শুরু করা যায়নি। আবার চেষ্টা করুন।"));
     }
+  };
+
+  const queue = (draft: Omit<Message, "id" | "isMe" | "time" | "status" | "clientId">) => {
+    const clientId = newClientId();
+    const msg: Message = { ...draft, id: `dm-${clientId}`, clientId, isMe: true, time: clock(), status: "sending" } as Message;
+    setMessages((prev) => [msg, ...prev]);
+    deliver(msg);
+  };
+
+  const retry = (msg: Message) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Alert.alert(tr("Message not sent"), tr("Check your connection, then try again."), [
+      { text: tr("Delete"), style: "destructive", onPress: () => setMessages((p) => p.filter((m) => m.id !== msg.id)) },
+      { text: tr("Try again"), onPress: () => deliver(msg) },
+    ]);
+  };
+
+  const blockedReason = () =>
+    mode === "guest"
+      ? tr("Please sign in to send messages.")
+      : mode === "noAccount"
+        ? `${userName} isn't on Farmers yet, so they can't get messages.`
+        : tr("Connecting… try again in a moment.");
+
+  const handleSend = () => {
+    const text = inputText.trim();
+    if (!text) return;
+    if (!isLive) {
+      Alert.alert(tr("Message not sent"), blockedReason());
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setInputText("");
+    const replyTo = replyingTo ? { id: replyingTo.id, text: replyingTo.text || tr("Voice message"), isMe: replyingTo.isMe } : undefined;
+    setReplyingTo(null);
+    queue({ text, type: "text", seen: false, replyTo });
+  };
+
+  const sendRecording = (r: FinishedRecording | null) => {
+    if (!r) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    queue({ text: "", type: "voice", localUri: r.uri, durationMs: r.durationMs, seen: false });
+  };
+
+  const voice = useVoiceRecorder(sendRecording); // auto-sends when the 2-minute limit is reached
+  const isRecording = voice.isRecording;
+
+  const startRecording = async () => {
+    if (!isLive) {
+      Alert.alert(tr("Voice message"), blockedReason());
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    await voice.start();
   };
 
   const stopRecording = async () => {
-    const finalDuration = recordingDurationRef.current;
-    
-    if (recordingIntervalRef.current) {
-      clearInterval(recordingIntervalRef.current);
-      recordingIntervalRef.current = null;
-    }
-
-    try {
-      if (Platform.OS === "web") {
-        const mediaRecorder = webMediaRecorderRef.current;
-        if (mediaRecorder && mediaRecorder.state !== "inactive") {
-          return new Promise<void>((resolve) => {
-            mediaRecorder.onstop = () => {
-              const audioBlob = new Blob(webAudioChunksRef.current, { type: "audio/webm" });
-              const audioUrl = URL.createObjectURL(audioBlob);
-              
-              if (finalDuration > 0) {
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                
-                const voiceMessage: Message = {
-                  id: Date.now().toString(),
-                  text: "",
-                  isMe: true,
-                  time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                  type: "voice",
-                  duration: finalDuration,
-                  audioUri: audioUrl,
-                  seen: false,
-                };
-                
-                setMessages((prev) => [voiceMessage, ...prev]);
-              }
-              
-              mediaRecorder.stream.getTracks().forEach(track => track.stop());
-              webMediaRecorderRef.current = null;
-              webAudioChunksRef.current = [];
-              setIsRecording(false);
-              setRecordingDuration(0);
-              recordingDurationRef.current = 0;
-              resolve();
-            };
-            mediaRecorder.stop();
-          });
-        }
-        setIsRecording(false);
-        setRecordingDuration(0);
-        recordingDurationRef.current = 0;
-        return;
-      }
-      
-      await audioRecorder?.stop();
-      const uri = audioRecorder?.uri;
-
-      if (finalDuration > 0 && uri) {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-        const voiceMessage: Message = {
-          id: Date.now().toString(),
-          text: "",
-          isMe: true,
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "voice",
-          duration: finalDuration,
-          audioUri: uri,
-          seen: false,
-        };
-
-        setMessages((prev) => [voiceMessage, ...prev]);
-      } else if (finalDuration > 0) {
-        const voiceMessage: Message = {
-          id: Date.now().toString(),
-          text: "",
-          isMe: true,
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          type: "voice",
-          duration: finalDuration,
-          audioUri: "recorded-audio",
-          seen: false,
-        };
-
-        setMessages((prev) => [voiceMessage, ...prev]);
-      }
-    } catch (error) {
-      console.error("Failed to stop recording:", error);
-    }
-
-    setIsRecording(false);
-    setRecordingDuration(0);
-    recordingDurationRef.current = 0;
-  };
-
-  const playVoiceMessage = async (message: Message) => {
-    if (!message.audioUri) {
-      Alert.alert(tr("Info"), tr("Audio not available"));
+    const r = await voice.stop();
+    if (!r) {
+      Alert.alert(tr("Voice message"), tr("Hold on a little longer: the recording was too short."));
       return;
     }
+    sendRecording(r);
+  };
 
-    try {
-      if (playingMessageId === message.id) {
-        if (Platform.OS === "web") {
-          if (audioPlayerRef.current instanceof Audio) {
-            audioPlayerRef.current.pause();
-            audioPlayerRef.current = null;
-          }
-        } else if (audioPlayerRef.current) {
-          await audioPlayerRef.current.remove();
-          audioPlayerRef.current = null;
-        }
-        setPlayingMessageId(null);
-        return;
-      }
-
-      if (Platform.OS === "web") {
-        if (audioPlayerRef.current instanceof Audio) {
-          audioPlayerRef.current.pause();
-        }
-        
-        const audio = new Audio(message.audioUri);
-        audioPlayerRef.current = audio;
-        setPlayingMessageId(message.id);
-        
-        audio.onended = () => {
-          setPlayingMessageId(null);
-          audioPlayerRef.current = null;
-        };
-        
-        audio.play();
-        return;
-      }
-
-      if (audioPlayerRef.current) {
-        await audioPlayerRef.current.remove();
-      }
-
-      if (!AudioModule) {
-        Alert.alert(tr("Error"), tr("Audio playback is not available on this platform."));
-        return;
-      }
-
-      const player = AudioModule.createPlayer(message.audioUri);
-      audioPlayerRef.current = player;
-      setPlayingMessageId(message.id);
-
-      player.play();
-
-      player.addListener("playbackStatusUpdate", (status: any) => {
-        if (status.didJustFinish) {
-          setPlayingMessageId(null);
-          player.remove();
-          audioPlayerRef.current = null;
-        }
-      });
-    } catch (error) {
-      console.error("Failed to play audio:", error);
-      Alert.alert(tr("Error"), tr("Could not play audio"));
-      setPlayingMessageId(null);
-    }
+  const cancelRecording = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    voice.cancel();
   };
 
   const formatDuration = (seconds: number) => {
@@ -538,7 +412,8 @@ export default function ChatScreen() {
 
   const handleCopy = () => {
     if (!selectedMessage) return;
-    Alert.alert(tr("Copied"), tr("Message copied to clipboard"));
+    Clipboard.setStringAsync(selectedMessage.text || "").catch(() => {});
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setShowReactionPicker(false);
     setSelectedMessage(null);
   };
@@ -627,27 +502,33 @@ export default function ChatScreen() {
     }
   };
 
-  const sendImageMessage = (imageUri: string) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
-    const imageMessage: Message = {
-      id: Date.now().toString(),
-      text: "",
-      isMe: true,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      type: "image",
-      imageUri: imageUri,
-      seen: false,
-    };
-
-    setMessages((prev) => [imageMessage, ...prev]);
+  // Photos aren't uploaded to the server yet, so the other person would never see them.
+  // Say so instead of showing a photo that only exists on this phone.
+  const sendImageMessage = (_imageUri: string) => {
     setShowMediaMenu(false);
+    Alert.alert(tr("Photos"), tr("Sending photos in chat is coming soon. For now, send a text or a voice message."));
+  };
 
-    setTimeout(() => {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === imageMessage.id ? { ...m, seen: true } : m))
+  const renderStatus = (item: Message, isLastInGroup: boolean) => {
+    if (!item.isMe) return null;
+    if (item.status === "failed") {
+      return (
+        <Pressable onPress={() => retry(item)} hitSlop={8} accessibilityRole="button">
+          <ThemedText style={[styles.seenStatus, { color: theme.error || "#D32F2F" }]}>
+            {tr("Not sent · Tap to retry")}
+          </ThemedText>
+        </Pressable>
       );
-    }, 1000);
+    }
+    if (item.status === "sending") {
+      return <ThemedText style={[styles.seenStatus, { color: theme.textSecondary }]}>{tr("Sending…")}</ThemedText>;
+    }
+    if (!isLastInGroup) return null;
+    return (
+      <ThemedText style={[styles.seenStatus, { color: theme.textSecondary }]}>
+        {item.seen ? tr("Seen") : tr("Sent")}
+      </ThemedText>
+    );
   };
 
   const renderMessage = ({ item, index }: { item: Message; index: number }) => {
@@ -677,42 +558,23 @@ export default function ChatScreen() {
             ) : null}
             <View style={[styles.messageContainer, item.isMe ? styles.myMessage : styles.theirMessage]}>
               <View style={[styles.bubbleWrapper, item.reactions && item.reactions.length > 0 && styles.bubbleWithReaction]}>
-                <Pressable
+                <View
                   style={[
                     styles.voiceMessageBubble,
                     item.isMe ? { backgroundColor: theme.primary } : { backgroundColor: theme.surface },
-                    playingMessageId === item.id && styles.playingVoiceMessage,
                   ]}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    playVoiceMessage(item);
-                  }}
-                  onLongPress={() => handleLongPress(item)}
-                  delayLongPress={300}
                 >
-                  <Feather 
-                    name={playingMessageId === item.id ? "pause-circle" : "play-circle"} 
-                    size={28} 
-                    color={item.isMe ? theme.white : theme.primary} 
+                  <VoiceMessagePlayer
+                    mediaId={item.mediaId}
+                    localUri={item.localUri}
+                    durationMs={item.durationMs ?? (item.duration ? item.duration * 1000 : null)}
+                    isMe={item.isMe}
+                    tint={item.isMe ? theme.white : theme.primary}
+                    trackColor={item.isMe ? "rgba(255,255,255,0.35)" : theme.primary + "30"}
+                    textColor={item.isMe ? theme.white : theme.textSecondary}
+                    onLongPress={() => handleLongPress(item)}
                   />
-                  <View style={styles.voiceWaveform}>
-                    {[...Array(12)].map((_, i) => (
-                      <View
-                        key={i}
-                        style={[
-                          styles.waveformBar,
-                          {
-                            height: 8 + Math.random() * 12,
-                            backgroundColor: item.isMe ? "rgba(255,255,255,0.6)" : theme.primary + "60",
-                          },
-                        ]}
-                      />
-                    ))}
-                  </View>
-                  <ThemedText style={[styles.voiceDuration, { color: item.isMe ? theme.white : theme.textSecondary }]}>
-                    {formatDuration(item.duration || 0)}
-                  </ThemedText>
-                </Pressable>
+                </View>
                 {item.reactions && item.reactions.length > 0 ? (
                   <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight]}>
                     {item.reactions.map((r, i) => (
@@ -727,11 +589,7 @@ export default function ChatScreen() {
                     {item.time}
                   </ThemedText>
                 ) : null}
-                {item.isMe && isLastInGroup ? (
-                  <ThemedText style={[styles.seenStatus, { color: theme.textSecondary }]}>
-                    {item.seen ? "Seen" : "Sent"}
-                  </ThemedText>
-                ) : null}
+                {renderStatus(item, isLastInGroup)}
               </View>
             </View>
           </View>
@@ -782,11 +640,7 @@ export default function ChatScreen() {
                     {item.time}
                   </ThemedText>
                 ) : null}
-                {item.isMe && isLastInGroup ? (
-                  <ThemedText style={[styles.seenStatus, { color: theme.textSecondary }]}>
-                    {item.seen ? "Seen" : "Sent"}
-                  </ThemedText>
-                ) : null}
+                {renderStatus(item, isLastInGroup)}
               </View>
             </View>
           </View>
@@ -850,11 +704,7 @@ export default function ChatScreen() {
                   {item.time}
                 </ThemedText>
               ) : null}
-              {item.isMe && isLastInGroup ? (
-                <ThemedText style={[styles.seenStatus, { color: theme.textSecondary }]}>
-                  {item.seen ? "Seen" : "Sent"}
-                </ThemedText>
-              ) : null}
+              {renderStatus(item, isLastInGroup)}
             </View>
           </View>
         </View>
@@ -869,7 +719,7 @@ export default function ChatScreen() {
       </View>
       <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>{userName}</ThemedText>
       <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
-        {tr("Start a conversation")}
+        {mode === "checking" ? tr("Loading messages…") : mode === "live" ? tr("Start a conversation") : banner}
       </ThemedText>
     </View>
   );
@@ -882,6 +732,17 @@ export default function ChatScreen() {
   // Keyboard closed: sit just above the phone's navigation bar. Keyboard open:
   // sit right on top of the keyboard (KeyboardAvoidingScreen lifts the bar).
   const composerPadding = useKeyboardAwareBottomPadding(Spacing.sm);
+
+  const headerStatus =
+    mode === "live" ? tr("On Farmers") : mode === "checking" ? tr("Connecting…") : mode === "guest" ? tr("Sign in to chat") : tr("Not on Farmers yet");
+  const banner =
+    mode === "guest"
+      ? tr("Sign in to send and receive messages.")
+      : mode === "noAccount"
+        ? `${userName} isn't on Farmers yet, so they can't get messages.`
+        : loadError
+          ? tr("Can't reach the server. Messages will update when you're back online. Tap to retry.")
+          : null;
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -898,20 +759,22 @@ export default function ChatScreen() {
             <View style={[styles.headerAvatar, { backgroundColor: theme.primary }]}>
               <ThemedText style={styles.headerAvatarText}>{userInitials}</ThemedText>
             </View>
-            {isOnline ? (
-              <View style={[styles.onlineIndicator, { borderColor: theme.backgroundRoot }]} />
-            ) : null}
           </View>
           <View style={styles.headerInfo}>
             <ThemedText style={[styles.headerName, { color: theme.text }]}>{userName}</ThemedText>
-            <ThemedText style={[styles.headerStatus, { color: isOnline ? "#16A34A" : theme.textSecondary }]}>
-              {isOnline ? "Active now" : lastSeen}
+            <ThemedText style={[styles.headerStatus, { color: theme.textSecondary }]} numberOfLines={1}>
+              {headerStatus}
             </ThemedText>
           </View>
         </Pressable>
         <View style={styles.headerRightContainer}>
-          <Pressable style={styles.headerButton} onPress={handleVoiceCall}>
-            <Feather name="phone" size={22} color={theme.text} />
+          <Pressable
+            style={styles.headerButton}
+            onPress={handleVoiceCall}
+            accessibilityRole="button"
+            accessibilityLabel={`Call ${userName}`}
+          >
+            {calling ? <ActivityIndicator size="small" color={theme.text} /> : <Feather name="phone" size={22} color={theme.text} />}
           </Pressable>
           <Pressable style={styles.headerButton} onPress={() => setShowOptionsMenu(true)}>
             <Feather name="more-vertical" size={22} color={theme.text} />
@@ -937,6 +800,15 @@ export default function ChatScreen() {
       />
 
       <Animated.View style={[styles.bottomBar, { backgroundColor: theme.white }, composerPadding]}>
+        {banner ? (
+          <Pressable
+            onPress={mode === "live" || mode === "checking" ? fetchLive : undefined}
+            style={[styles.chatBanner, { backgroundColor: theme.surface, borderTopColor: theme.divider }]}
+          >
+            <Feather name={mode === "live" || mode === "checking" ? "wifi-off" : "info"} size={14} color={theme.textSecondary} />
+            <ThemedText style={[styles.chatBannerText, { color: theme.textSecondary }]}>{banner}</ThemedText>
+          </Pressable>
+        ) : null}
         {replyingTo ? (
           <View style={[styles.replyBar, { backgroundColor: theme.surface, borderTopColor: theme.divider }]}>
             <View style={styles.replyBarContent}>
@@ -967,12 +839,29 @@ export default function ChatScreen() {
         >
         {isRecording ? (
           <View style={styles.recordingContainer}>
+            <Pressable
+              style={styles.iconButton}
+              onPress={cancelRecording}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel voice message"
+            >
+              <Feather name="trash-2" size={22} color={theme.error} />
+            </Pressable>
             <View style={[styles.recordingIndicator, { backgroundColor: "#DC2626" }]} />
             <ThemedText style={[styles.recordingText, { color: theme.text }]}>
-              Recording... {formatDuration(recordingDuration)}
+              {formatVoiceTime(voice.durationMs)}
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>
+                {voice.durationMs > 100000 ? `  ${tr("max")} 2:00` : `  ${tr("Recording…")}`}
+              </ThemedText>
             </ThemedText>
-            <Pressable style={[styles.stopButton, { backgroundColor: "#DC2626" }]} onPress={stopRecording}>
-              <MaterialCommunityIcons name="stop" size={18} color={theme.white} />
+            <Pressable
+              style={[styles.iconButton, styles.sendButton, { backgroundColor: theme.primary }]}
+              onPress={stopRecording}
+              accessibilityRole="button"
+              accessibilityLabel="Send voice message"
+            >
+              <MaterialCommunityIcons name="send" size={20} color={theme.white} />
             </Pressable>
           </View>
         ) : (
@@ -1005,6 +894,8 @@ export default function ChatScreen() {
               <Pressable
                 style={[styles.iconButton, styles.sendButton, { backgroundColor: theme.primary }]}
                 onPress={handleSend}
+                accessibilityRole="button"
+                accessibilityLabel="Send message"
               >
                 <MaterialCommunityIcons name="send" size={20} color={theme.white} />
               </Pressable>
@@ -1012,6 +903,8 @@ export default function ChatScreen() {
               <Pressable
                 style={[styles.iconButton, styles.micButton, { backgroundColor: theme.primary }]}
                 onPress={startRecording}
+                accessibilityRole="button"
+                accessibilityLabel="Record voice message"
               >
                 <MaterialCommunityIcons name="microphone" size={22} color={theme.white} />
               </Pressable>
@@ -1082,12 +975,13 @@ export default function ChatScreen() {
                 <Feather name="copy" size={22} color={theme.text} />
                 <ThemedText style={[styles.menuItemText, { color: theme.text }]}>{tr("Copy")}</ThemedText>
               </Pressable>
-              {selectedMessage?.isMe ? (
+              {/* Unsend only removed it from this phone, so it's only offered for messages that never went out. */}
+              {selectedMessage?.isMe && (!isLive || selectedMessage.status === "failed") ? (
                 <Pressable style={styles.menuItem} onPress={handleUnsend}>
                   <Feather name="trash-2" size={22} color={theme.error} />
                   <ThemedText style={[styles.menuItemText, { color: theme.error }]}>{tr("Unsend")}</ThemedText>
                 </Pressable>
-              ) : (
+              ) : selectedMessage?.isMe ? null : (
                 <Pressable style={styles.menuItem}>
                   <Feather name="alert-circle" size={22} color={theme.error} />
                   <ThemedText style={[styles.menuItemText, { color: theme.error }]}>{tr("Report")}</ThemedText>
@@ -1439,6 +1333,19 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: "500",
+  },
+  chatBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+    marginBottom: 6,
+    borderRadius: BorderRadius.md,
+  },
+  chatBannerText: {
+    flex: 1,
+    fontSize: 12,
   },
   stopButton: {
     width: 36,

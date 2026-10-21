@@ -109,27 +109,42 @@ interface ActiveCall {
   startedAt: Date;
 }
 
-const chatClients = new Map<string, ChatClient>();
+// One person can be connected from several phones/tabs at once.
+const chatClients = new Map<string, Set<ChatClient>>();
 const activeCalls = new Map<string, ActiveCall>();
 
-function sendToUser(userId: string, message: any) {
-  const client = chatClients.get(userId);
-  if (client && client.ws.readyState === WebSocket.OPEN) {
-    client.ws.send(JSON.stringify(message));
-    return true;
-  }
-  return false;
+function addChatClient(userId: string, client: ChatClient) {
+  let set = chatClients.get(userId);
+  if (!set) chatClients.set(userId, (set = new Set()));
+  set.add(client);
 }
 
-function broadcastToConversation(conversationId: string, message: ChatMessage, excludeUserId?: string) {
-  chatClients.forEach((client) => {
-    if (client.conversationIds.has(conversationId) && client.userId !== excludeUserId) {
-      if (client.ws.readyState === WebSocket.OPEN) {
-        client.ws.send(JSON.stringify({ type: "message", data: message }));
-      }
-    }
-  });
+function removeChatClient(userId: string, client: ChatClient) {
+  const set = chatClients.get(userId);
+  if (!set) return;
+  set.delete(client);
+  if (!set.size) chatClients.delete(userId);
 }
+
+function userOnline(userId: string) {
+  const set = chatClients.get(userId);
+  return !!set && [...set].some((c) => c.ws.readyState === WebSocket.OPEN);
+}
+
+function sendToUser(userId: string, message: any) {
+  const set = chatClients.get(userId);
+  if (!set) return false;
+  let sent = false;
+  const text = JSON.stringify(message);
+  for (const c of set) {
+    if (c.ws.readyState === WebSocket.OPEN) {
+      c.ws.send(text);
+      sent = true;
+    }
+  }
+  return sent;
+}
+
 
 const farmingResponses = [
   "For healthy crop growth, ensure proper spacing between plants and maintain consistent watering schedules.",
@@ -1221,187 +1236,113 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
 
   const wss = new WebSocketServer({ server: httpServer, path: "/ws/chat" });
 
+  // Keep idle sockets alive through Render's proxy and drop dead ones.
+  const heartbeat = setInterval(() => {
+    wss.clients.forEach((ws: any) => {
+      if (ws.isAlive === false) return ws.terminate();
+      ws.isAlive = false;
+      try { ws.ping(); } catch {}
+    });
+  }, 30000);
+  wss.on("close", () => clearInterval(heartbeat));
+
   wss.on("connection", (ws: WebSocket) => {
     let clientId: string | null = null;
+    let client: ChatClient | null = null;
+    (ws as any).isAlive = true;
+    ws.on("pong", () => { (ws as any).isAlive = true; });
+    const reply = (m: any) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(m)); };
+    // Only forward call signalling between the two people on that call.
+    const callPeer = (callId: string): string | null => {
+      const call = activeCalls.get(callId);
+      if (!call || !clientId) return null;
+      if (call.callerId === clientId) return call.calleeId;
+      if (call.calleeId === clientId) return call.callerId;
+      return null;
+    };
 
     ws.on("message", (data: Buffer) => {
       try {
         const message = JSON.parse(data.toString());
 
+        if (message.type === "ping") return reply({ type: "pong" });
+
+        if (message.type === "auth") {
+          // The socket belongs to whoever owns the sign-in token. A bare userId is not
+          // accepted any more: anyone could have claimed someone else's id and read their messages.
+          let uid: string | null = null;
+          try {
+            const decoded = jwt.verify(String(message.token || ""), config.jwtSecret) as any;
+            uid = decoded?.userId ? String(decoded.userId) : null;
+          } catch {
+            uid = null;
+          }
+          if (!uid) return reply({ type: "auth_failed", reason: "invalid_token" });
+          if (client && clientId) removeChatClient(clientId, client);
+          clientId = uid;
+          client = { ws, userId: uid, conversationIds: new Set() };
+          addChatClient(uid, client);
+          return reply({ type: "auth_success", userId: uid });
+        }
+
+        if (!clientId) return reply({ type: "error", reason: "not_authenticated" });
+
         switch (message.type) {
-          case "auth":
-            clientId = message.userId;
-            if (clientId) {
-              chatClients.set(clientId, {
-                ws,
-                userId: clientId,
-                conversationIds: new Set(message.conversationIds || []),
-              });
-              ws.send(JSON.stringify({ type: "auth_success", userId: clientId }));
+          case "call_initiate": {
+            const calleeId = String(message.calleeId || "");
+            if (!calleeId || calleeId === clientId) return reply({ type: "call_failed", reason: "invalid_user" });
+            const callId = `call-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+            activeCalls.set(callId, { callId, callerId: clientId, calleeId, status: "ringing", startedAt: new Date() });
+            const sent = sendToUser(calleeId, {
+              type: "incoming_call",
+              callId,
+              callerId: clientId,
+              callerName: String(message.callerName || "").slice(0, 80),
+            });
+            if (sent) reply({ type: "call_ringing", callId, calleeId });
+            else {
+              activeCalls.delete(callId);
+              reply({ type: "call_failed", reason: "user_offline" });
             }
             break;
+          }
 
-          case "join_conversation":
-            if (clientId && chatClients.has(clientId)) {
-              const client = chatClients.get(clientId);
-              if (client) {
-                client.conversationIds.add(message.conversationId);
-              }
+          case "call_accept": {
+            const call = activeCalls.get(message.callId);
+            if (call && call.calleeId === clientId) {
+              call.status = "connected";
+              sendToUser(call.callerId, { type: "call_accepted", callId: message.callId });
             }
             break;
-
-          case "leave_conversation":
-            if (clientId && chatClients.has(clientId)) {
-              const client = chatClients.get(clientId);
-              if (client) {
-                client.conversationIds.delete(message.conversationId);
-              }
-            }
-            break;
-
-          case "send_message":
-            const chatMessage: ChatMessage = {
-              id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              conversationId: message.conversationId,
-              senderId: message.senderId,
-              senderType: message.senderType,
-              content: message.content,
-              messageType: message.messageType || "text",
-              createdAt: new Date().toISOString(),
-            };
-
-            broadcastToConversation(chatMessage.conversationId, chatMessage);
-            ws.send(JSON.stringify({ type: "message_sent", data: chatMessage }));
-            break;
-
-          case "typing":
-            if (clientId) {
-              chatClients.forEach((client) => {
-                if (
-                  client.conversationIds.has(message.conversationId) &&
-                  client.userId !== clientId
-                ) {
-                  if (client.ws.readyState === WebSocket.OPEN) {
-                    client.ws.send(
-                      JSON.stringify({
-                        type: "typing",
-                        conversationId: message.conversationId,
-                        userId: clientId,
-                        isTyping: message.isTyping,
-                      })
-                    );
-                  }
-                }
-              });
-            }
-            break;
-
-          case "ping":
-            ws.send(JSON.stringify({ type: "pong" }));
-            break;
-
-          case "call_initiate":
-            if (clientId) {
-              const callId = `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-              const calleeId = message.calleeId;
-              
-              const call: ActiveCall = {
-                callId,
-                callerId: clientId,
-                calleeId,
-                status: "ringing",
-                startedAt: new Date(),
-              };
-              activeCalls.set(callId, call);
-
-              const sent = sendToUser(calleeId, {
-                type: "incoming_call",
-                callId,
-                callerId: clientId,
-                callerName: message.callerName,
-              });
-
-              if (sent) {
-                ws.send(JSON.stringify({ type: "call_ringing", callId, calleeId }));
-              } else {
-                activeCalls.delete(callId);
-                ws.send(JSON.stringify({ type: "call_failed", reason: "user_offline" }));
-              }
-            }
-            break;
-
-          case "call_accept":
-            if (clientId) {
-              const call = activeCalls.get(message.callId);
-              if (call && call.calleeId === clientId) {
-                call.status = "connected";
-                sendToUser(call.callerId, {
-                  type: "call_accepted",
-                  callId: message.callId,
-                });
-              }
-            }
-            break;
+          }
 
           case "call_reject":
-            if (clientId) {
-              const call = activeCalls.get(message.callId);
-              if (call) {
-                const otherUserId = call.callerId === clientId ? call.calleeId : call.callerId;
-                sendToUser(otherUserId, {
-                  type: "call_rejected",
-                  callId: message.callId,
-                });
-                activeCalls.delete(message.callId);
-              }
+          case "call_end": {
+            const peer = callPeer(message.callId);
+            if (peer) {
+              sendToUser(peer, { type: message.type === "call_reject" ? "call_rejected" : "call_ended", callId: message.callId });
+              activeCalls.delete(message.callId);
             }
             break;
-
-          case "call_end":
-            if (clientId) {
-              const call = activeCalls.get(message.callId);
-              if (call) {
-                const otherUserId = call.callerId === clientId ? call.calleeId : call.callerId;
-                sendToUser(otherUserId, {
-                  type: "call_ended",
-                  callId: message.callId,
-                });
-                activeCalls.delete(message.callId);
-              }
-            }
-            break;
+          }
 
           case "webrtc_offer":
-            if (clientId) {
-              sendToUser(message.targetUserId, {
-                type: "webrtc_offer",
-                callId: message.callId,
-                offer: message.offer,
-                fromUserId: clientId,
-              });
-            }
-            break;
-
           case "webrtc_answer":
-            if (clientId) {
-              sendToUser(message.targetUserId, {
-                type: "webrtc_answer",
-                callId: message.callId,
-                answer: message.answer,
-                fromUserId: clientId,
-              });
-            }
+          case "webrtc_ice_candidate": {
+            const peer = callPeer(message.callId);
+            if (!peer || peer !== message.targetUserId) break;
+            const payload: any = { type: message.type, callId: message.callId, fromUserId: clientId };
+            if (message.type === "webrtc_offer") payload.offer = message.offer;
+            if (message.type === "webrtc_answer") payload.answer = message.answer;
+            if (message.type === "webrtc_ice_candidate") payload.candidate = message.candidate;
+            sendToUser(peer, payload);
             break;
+          }
 
-          case "webrtc_ice_candidate":
-            if (clientId) {
-              sendToUser(message.targetUserId, {
-                type: "webrtc_ice_candidate",
-                callId: message.callId,
-                candidate: message.candidate,
-                fromUserId: clientId,
-              });
-            }
+          default:
+            // join_conversation / send_message / typing from the old unused chat hook are
+            // no longer relayed: direct messages go through the /api/dm routes, which check
+            // who is in the conversation.
             break;
         }
       } catch (error) {
@@ -1409,17 +1350,25 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
       }
     });
 
-    ws.on("close", () => {
+    const cleanup = () => {
+      if (clientId && client) removeChatClient(clientId, client);
       if (clientId) {
-        chatClients.delete(clientId);
+        // A caller who disappears ends their call for the other person.
+        for (const [id, call] of activeCalls) {
+          if (call.callerId === clientId || call.calleeId === clientId) {
+            if (userOnline(clientId)) continue;
+            const peer = call.callerId === clientId ? call.calleeId : call.callerId;
+            sendToUser(peer, { type: "call_ended", callId: id });
+            activeCalls.delete(id);
+          }
+        }
       }
-    });
-
+      client = null;
+    };
+    ws.on("close", cleanup);
     ws.on("error", (error) => {
-      console.error("WebSocket error:", error);
-      if (clientId) {
-        chatClients.delete(clientId);
-      }
+      console.error("WebSocket error:", (error as any)?.message || error);
+      cleanup();
     });
   });
 

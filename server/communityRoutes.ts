@@ -20,7 +20,8 @@ import {
   chatThreads,
   chatMembers,
 } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { notify } from "./featureRoutes";
 
 const router = Router();
 const JWT_SECRET = config.jwtSecret;
@@ -473,6 +474,7 @@ router.get("/posts", async (req: Request, res: Response) => {
         content: posts.content,
         media: posts.media,
         createdAt: posts.createdAt,
+        commentCount: sql<number>`(SELECT count(*)::int FROM post_comments pc WHERE pc.post_id = ${posts.id})`,
         author: {
           id: users.id,
           name: users.name,
@@ -513,6 +515,56 @@ router.post("/posts", requireAuth, async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Create post error:", error);
     res.status(500).json({ error: "Failed to create post" });
+  }
+});
+
+// Comments on shared posts.
+//  GET  /api/posts/:id/comments   oldest first
+//  POST /api/posts/:id/comments   { body }   (signed in; the comment is in your name)
+const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows || []);
+const isoOf = (v: any) => {
+  if (!v) return null;
+  if (v instanceof Date) return v.toISOString();
+  const s = String(v);
+  return new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? s : s.replace(" ", "T") + "Z").toISOString();
+};
+function commentOut(c: any) {
+  const name = c.name || c.username || "Member";
+  return { id: c.id, postId: c.post_id, userId: c.user_id, userName: name, avatar: c.avatar || null, body: c.body || "", createdAt: isoOf(c.created_at) };
+}
+
+router.get("/posts/:id/comments", async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    const r = rowsOf(await db.execute(sql`SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, u.name, u.username, u.avatar
+      FROM post_comments c LEFT JOIN users u ON u.id = c.user_id
+      WHERE c.post_id = ${req.params.id} ORDER BY c.created_at ASC LIMIT 500`));
+    res.json(r.map(commentOut));
+  } catch (error) {
+    console.error("Get comments error:", error);
+    res.status(500).json({ error: "Failed to get comments" });
+  }
+});
+
+router.post("/posts/:id/comments", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    const body = String(req.body?.body ?? "").trim().slice(0, 2000);
+    if (!body) return res.status(400).json({ error: "Comment is empty" });
+    const uid = req.user!.userId;
+    const post = rowsOf(await db.execute(sql`SELECT id, author_id FROM posts WHERE id = ${req.params.id} LIMIT 1`))[0];
+    if (!post) return res.status(404).json({ error: "This post was removed" });
+    const ins = rowsOf(await db.execute(sql`INSERT INTO post_comments (post_id, user_id, body) VALUES (${post.id}, ${uid}, ${body})
+      RETURNING id, post_id, user_id, body, created_at`))[0];
+    const u = rowsOf(await db.execute(sql`SELECT name, username, avatar FROM users WHERE id = ${uid} LIMIT 1`))[0] || {};
+    const out = commentOut({ ...ins, ...u });
+    if (post.author_id && post.author_id !== uid) {
+      void notify(post.author_id, "comment", `${out.userName} commented on your post`, body.slice(0, 140), { postId: post.id });
+    }
+    res.status(201).json(out);
+  } catch (error) {
+    console.error("Create comment error:", error);
+    res.status(500).json({ error: "Failed to add comment" });
   }
 });
 
