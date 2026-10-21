@@ -240,3 +240,18 @@ export function emitLiveDm(m: DmMessage) {
     } catch {}
   });
 }
+
+/** Same for reactions: the socket's { type: "dm_reaction" } reaches the open chat at once. */
+type ReactionListener = (r: DmReaction) => void;
+const reactionListeners = new Set<ReactionListener>();
+export function onLiveReaction(fn: ReactionListener): () => void {
+  reactionListeners.add(fn);
+  return () => reactionListeners.delete(fn);
+}
+export function emitLiveReaction(r: DmReaction) {
+  reactionListeners.forEach((fn) => {
+    try {
+      fn(r);
+    } catch {}
+  });
+}

@@ -13,7 +13,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import { Alert, AppState, Platform, Vibration } from "react-native";
 import { getApiUrl, getWsUrl } from "@/lib/query-client";
 import { useAuthStore } from "@/lib/authStore";
-import { emitLiveDm } from "@/lib/dmApi";
+import { emitLiveDm, emitLiveReaction } from "@/lib/dmApi";
 import { rtcSupported, createPeer, getMicrophone, attachRemoteStream, detachRemoteStream, callAudio } from "@/lib/calls/rtc";
 import { CallOverlay } from "@/components/CallOverlay";
 
@@ -353,6 +353,10 @@ export function VoiceCallProvider({ children, userId }: Props) {
       switch (message?.type) {
         case "dm":
           if (message.data) emitLiveDm(message.data);
+          return;
+
+        case "dm_reaction":
+          if (message.data?.messageId) emitLiveReaction(message.data);
           return;
 
         case "call_ringing": {

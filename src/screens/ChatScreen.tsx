@@ -44,6 +44,8 @@ import {
   fetchContact,
   newClientId,
   onLiveDm,
+  onLiveReaction,
+  type DmReaction,
   rememberLocalVoice,
   type DmMessage,
 } from "@/lib/dmApi";
@@ -411,17 +413,27 @@ export default function ChatScreen() {
 
   const myUserId = authUser?.id ? String(authUser.id) : "me";
 
+  // My reactions that are still being saved: messageId -> what I picked (null = removed).
+  // A refresh that lands before the save finishes must not wipe them off the screen.
+  const pendingReactions = useRef<Map<string, { emoji: string; super: boolean } | null>>(new Map());
+
+  /** Put one reaction (from the server, the socket or me) into the map. */
+  const applyReaction = useCallback((r: DmReaction) => {
+    setReactionMap((prev) => {
+      const forMsg = { ...(prev[r.messageId] || {}) };
+      if (r.emoji) forMsg[r.userId] = { emoji: r.emoji, super: !!r.super };
+      else delete forMsg[r.userId];
+      return { ...prev, [r.messageId]: forMsg };
+    });
+  }, []);
+
   /** Apply my reaction locally at once, then save it so the other person sees it too. */
   const reactTo = useCallback(
     (message: Message, emoji: string, isSuper: boolean) => {
       const current = reactionMap[message.id]?.[myUserId];
       const removing = !isSuper && current?.emoji === emoji && !current.super;
-      setReactionMap((prev) => {
-        const forMsg = { ...(prev[message.id] || {}) };
-        if (removing) delete forMsg[myUserId];
-        else forMsg[myUserId] = { emoji, super: isSuper };
-        return { ...prev, [message.id]: forMsg };
-      });
+      const mine = removing ? null : { emoji, super: isSuper };
+      applyReaction({ messageId: message.id, userId: myUserId, emoji: mine?.emoji ?? null, super: !!mine?.super });
       if (isSuper) {
         setSuperBurst(emoji);
         burstAnim.setValue(0);
@@ -433,11 +445,25 @@ export default function ChatScreen() {
       }
       // Only messages already on the server can carry a shared reaction.
       if (mode === "live" && message.status === "sent") {
+        pendingReactions.current.set(message.id, mine);
         const call = removing ? clearReaction(message.id) : saveReaction(message.id, emoji, isSuper);
-        call.catch(() => {});
+        call
+          .then((saved) => {
+            if (pendingReactions.current.get(message.id) === mine) pendingReactions.current.delete(message.id);
+            // Skip if I already picked something newer for this message.
+            if (saved && saved.messageId && !pendingReactions.current.has(message.id)) {
+              applyReaction({ ...saved, userId: myUserId });
+            }
+          })
+          .catch(() => {
+            // Not saved: put back what I had before, and say so.
+            if (pendingReactions.current.get(message.id) === mine) pendingReactions.current.delete(message.id);
+            applyReaction({ messageId: message.id, userId: myUserId, emoji: current?.emoji ?? null, super: !!current?.super });
+            Alert.alert(tr("Reaction"), tr("Couldn't save your reaction. Check your internet and try again."));
+          });
       }
     },
-    [reactionMap, myUserId, mode, burstAnim],
+    [reactionMap, myUserId, mode, burstAnim, applyReaction],
   );
 
   const handleDoubleTap = useCallback((message: Message) => {
@@ -475,25 +501,45 @@ export default function ChatScreen() {
     if (mode !== "live" || !serverIdsKey) return;
     let alive = true;
     const load = () => {
-      fetchReactions(serverIdsKey.split(","))
+      const ids = serverIdsKey.split(",");
+      fetchReactions(ids)
         .then((list) => {
           if (!alive) return;
-          const next: Record<string, Record<string, { emoji: string; super: boolean }>> = {};
-          for (const r of list) {
-            if (!r.emoji) continue;
-            (next[r.messageId] ||= {})[r.userId] = { emoji: r.emoji, super: r.super };
-          }
-          setReactionMap(next);
+          const asked = new Set(ids);
+          setReactionMap((prev) => {
+            // Keep reactions on messages the server wasn't asked about (e.g. not sent yet).
+            const next: Record<string, Record<string, { emoji: string; super: boolean }>> = {};
+            for (const [id, v] of Object.entries(prev)) if (!asked.has(id)) next[id] = v;
+            for (const r of list) {
+              if (!r.emoji) continue;
+              (next[r.messageId] ||= {})[r.userId] = { emoji: r.emoji, super: !!r.super };
+            }
+            // My reactions still being saved win over what the server had a moment ago.
+            pendingReactions.current.forEach((mine, id) => {
+              const forMsg = { ...(next[id] || {}) };
+              if (mine) forMsg[myUserId] = mine;
+              else delete forMsg[myUserId];
+              next[id] = forMsg;
+            });
+            return next;
+          });
         })
         .catch(() => {});
     };
     load();
     const t = setInterval(load, 5000);
+    // The other person's reaction shows at once over the live connection.
+    const off = onLiveReaction((r) => {
+      if (!alive || !r?.messageId || !serverIdsKey.split(",").includes(r.messageId)) return;
+      if (String(r.userId) === myUserId && pendingReactions.current.has(r.messageId)) return;
+      applyReaction({ ...r, userId: String(r.userId) });
+    });
     return () => {
       alive = false;
       clearInterval(t);
+      off();
     };
-  }, [mode, serverIdsKey]);
+  }, [mode, serverIdsKey, myUserId, applyReaction]);
 
   const shownMessages = useMemo(
     () =>
@@ -681,7 +727,7 @@ export default function ChatScreen() {
                 {item.reactions && item.reactions.length > 0 ? (
                   <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                     {item.reactions.map((r, i) => (
-                      <ThemedText key={i} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
+                      <ThemedText key={i} allowFontScaling={false} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                     ))}
                   </View>
                 ) : null}
@@ -732,7 +778,7 @@ export default function ChatScreen() {
                 {item.reactions && item.reactions.length > 0 ? (
                   <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                     {item.reactions.map((r, i) => (
-                      <ThemedText key={i} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
+                      <ThemedText key={i} allowFontScaling={false} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                     ))}
                   </View>
                 ) : null}
@@ -796,7 +842,7 @@ export default function ChatScreen() {
               {item.reactions && item.reactions.length > 0 ? (
                 <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                   {item.reactions.map((r, i) => (
-                    <ThemedText key={i} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
+                    <ThemedText key={i} allowFontScaling={false} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                   ))}
                 </View>
               ) : null}
@@ -1068,7 +1114,9 @@ export default function ChatScreen() {
                     accessibilityHint="Hold for a super reaction"
                     testID={`reaction-${reaction}`}
                   >
-                    <Text style={styles.reactionItemText} allowFontScaling={false}>{reaction}</Text>
+                    <Text style={styles.reactionItemText} allowFontScaling={false} numberOfLines={1}>
+                      {reaction}
+                    </Text>
                   </Pressable>
                 ))}
               </View>
@@ -1298,7 +1346,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   bubbleWithReaction: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   myMessage: {
     alignSelf: "flex-end",
@@ -1360,14 +1408,16 @@ const styles = StyleSheet.create({
   },
   reactionsContainer: {
     position: "absolute",
-    bottom: -8,
+    bottom: -10,
     left: 6,
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
-    borderRadius: 11,
-    minWidth: 22,
-    height: 22,
-    paddingHorizontal: 3,
+    borderRadius: 12,
+    minWidth: 24,
+    minHeight: 24,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    gap: 1,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -1382,19 +1432,21 @@ const styles = StyleSheet.create({
     right: 6,
   },
   reactionEmoji: {
-    fontSize: 12,
-    lineHeight: 16,
-    includeFontPadding: false,
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: "center",
+    textAlignVertical: "center",
+    includeFontPadding: true,
   },
   reactionsSuper: {
-    height: 30,
-    minWidth: 30,
-    borderRadius: 15,
-    bottom: -12,
+    minHeight: 32,
+    minWidth: 32,
+    borderRadius: 16,
+    bottom: -14,
   },
   reactionEmojiSuper: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 19,
+    lineHeight: 28,
   },
   voiceMessageBubble: {
     flexDirection: "row",
@@ -1537,8 +1589,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   instagramReactionContainer: {
-    width: "72%",
-    maxWidth: 280,
+    width: "62%",
+    minWidth: 236,
+    maxWidth: 250,
     alignItems: "center",
   },
   reactionBarWrapper: {
@@ -1548,31 +1601,35 @@ const styles = StyleSheet.create({
   reactionBar: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 3,
     borderRadius: BorderRadius.full,
-    gap: 2,
+    gap: 0,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
   },
+  // 6 x 38 + padding = 236 wide: narrow, but each emoji gets more room than its glyph
+  // (Android cuts emoji off when the line box is shorter than the font's own height).
   reactionItem: {
-    width: 40,
-    height: 44,
+    width: 38,
+    height: 42,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 22,
+    borderRadius: 21,
   },
   reactionItemPressed: {
-    transform: [{ scale: 1.25 }],
+    transform: [{ scale: 1.2 }],
   },
   reactionItemText: {
-    fontSize: 26,
-    lineHeight: 34,
+    width: 38,
+    fontSize: 24,
+    lineHeight: 36,
     textAlign: "center",
-    includeFontPadding: false,
+    textAlignVertical: "center",
+    includeFontPadding: true,
   },
   superBurstWrap: {
     ...StyleSheet.absoluteFillObject,
@@ -1584,11 +1641,6 @@ const styles = StyleSheet.create({
     lineHeight: 130,
     textAlign: "center",
     includeFontPadding: false,
-  },
-  reactionHint: {
-    fontSize: 12,
-    marginTop: Spacing.sm,
-    textAlign: "center",
   },
   messageActionsMenu: {
     width: "100%",
