@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { SaveCalcButton } from "@/components/SaveCalcButton";
 import {
   View,
   StyleSheet,
@@ -230,6 +231,19 @@ export default function InsuranceCalculatorScreen() {
               </ThemedText>
             </View>
           </View>
+          <SaveCalcButton
+            recordType="INSURANCE"
+            title={`${selectedType.name} - ৳${result.coverage.toLocaleString()}`}
+            inputs={{ type: selectedType.id, landArea, assetValue }}
+            summary={[
+              { label: 'বীমার ধরন', value: selectedType.name },
+              { label: 'কভারেজ', value: `৳${result.coverage.toLocaleString()}` },
+              { label: 'বার্ষিক প্রিমিয়াম', value: `৳${result.annualPremium.toLocaleString()}` },
+              { label: 'সরকারি ভর্তুকি', value: `৳${result.govtSubsidy.toLocaleString()}` },
+              { label: 'আপনার পরিশোধযোগ্য', value: `৳${result.farmerPayable.toLocaleString()}` },
+              { label: 'সর্বোচ্চ দাবি', value: `৳${result.maxClaim.toLocaleString()}` },
+            ]}
+          />
         </Animated.View>
       ) : null}
 

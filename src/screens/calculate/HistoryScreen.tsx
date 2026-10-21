@@ -30,6 +30,11 @@ const recordTypeLabels: Record<RecordType, { bn: string; icon: keyof typeof Feat
   BEPARI: { bn: 'ব্যাপারী', icon: 'dollar-sign' },
   ARAT: { bn: 'আড়ত', icon: 'percent' },
   FEED: { bn: 'খাদ্য', icon: 'box' },
+  FERTILIZER: { bn: 'সার', icon: 'droplet' },
+  PROFIT: { bn: 'লাভ-ক্ষতি', icon: 'trending-up' },
+  FEED_TOOL: { bn: 'পশু খাদ্য', icon: 'package' },
+  LOAN: { bn: 'ঋণ', icon: 'credit-card' },
+  INSURANCE: { bn: 'বীমা', icon: 'shield' },
 };
 
 export function HistoryScreen() {
@@ -49,6 +54,11 @@ export function HistoryScreen() {
     { key: 'BEPARI', label: 'ব্যাপারী' },
     { key: 'ARAT', label: 'আড়ত' },
     { key: 'FEED', label: 'খাদ্য' },
+    { key: 'FERTILIZER', label: 'সার' },
+    { key: 'PROFIT', label: 'লাভ-ক্ষতি' },
+    { key: 'FEED_TOOL', label: 'পশু খাদ্য' },
+    { key: 'LOAN', label: 'ঋণ' },
+    { key: 'INSURANCE', label: 'বীমা' },
   ];
 
   const loadRecords = useCallback(async () => {

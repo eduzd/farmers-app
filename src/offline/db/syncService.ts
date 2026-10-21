@@ -4,16 +4,6 @@ import { Platform } from 'react-native';
 import * as Network from 'expo-network';
 import { useAuthStore } from '@/lib/authStore';
 
-/** The signed-in user's token; the server takes the account from it. Null when signed out. */
-function authToken(): string | null {
-  try {
-    const st = useAuthStore.getState();
-    return st.isAuthenticated && st.token ? st.token : null;
-  } catch {
-    return null;
-  }
-}
-
 export type SyncStatus = 'pending' | 'synced' | 'error';
 
 interface LocalCalcRecord {
@@ -31,6 +21,7 @@ interface LocalCalcRecord {
   sync_status: SyncStatus;
   server_id: string | null;
   last_synced_at: number | null;
+  owner_user_id?: string | null;
 }
 
 interface ServerCalcRecord {
@@ -68,41 +59,56 @@ async function isNetworkAvailable(): Promise<boolean> {
       return typeof navigator !== 'undefined' && navigator.onLine;
     }
     const networkState = await Network.getNetworkStateAsync();
-    return (networkState.isConnected && networkState.isInternetReachable) ?? false;
+    return !!networkState.isConnected && networkState.isInternetReachable !== false;
   } catch {
     return false;
   }
 }
 
+/** The signed-in account and its token, or null when signed out. */
+function currentSession(): { userId: string; token: string } | null {
+  try {
+    const st = useAuthStore.getState();
+    if (st.isAuthenticated && st.token && st.user?.id) return { userId: String(st.user.id), token: st.token };
+  } catch {}
+  return null;
+}
+
 export async function getPendingRecordsCount(): Promise<number> {
   const database = await getDatabase();
   if (!database) return 0;
-  
+  const session = currentSession();
+  if (!session) return 0;
   const result = await database.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM calc_records WHERE sync_status = 'pending'"
+    "SELECT COUNT(*) as count FROM calc_records WHERE sync_status = 'pending' AND (owner_user_id IS NULL OR owner_user_id = ?)",
+    [session.userId]
   );
   return result?.count ?? 0;
 }
 
-export async function getUnsyncedRecords(): Promise<LocalCalcRecord[]> {
+/** Records waiting to go to this account: its own, plus ones saved on this phone while nobody was signed in. */
+export async function getUnsyncedRecords(userId: string): Promise<LocalCalcRecord[]> {
   const database = await getDatabase();
   if (!database) return [];
-  
   return database.getAllAsync<LocalCalcRecord>(
-    "SELECT * FROM calc_records WHERE sync_status = 'pending' ORDER BY created_at ASC"
+    "SELECT * FROM calc_records WHERE sync_status = 'pending' AND (owner_user_id IS NULL OR owner_user_id = ?) ORDER BY created_at ASC",
+    [userId]
   );
 }
 
 export async function markRecordAsSynced(
-  localId: string, 
-  serverId: string
+  localId: string,
+  serverId: string,
+  updatedAt?: number,
+  ownerUserId?: string
 ): Promise<void> {
   const database = await getDatabase();
   if (!database) return;
   
+  // If the record was edited while it was uploading, it stays pending and goes up again next time.
   await database.runAsync(
-    "UPDATE calc_records SET sync_status = 'synced', server_id = ?, last_synced_at = ? WHERE id = ?",
-    [serverId, Date.now(), localId]
+    "UPDATE calc_records SET sync_status = 'synced', server_id = ?, last_synced_at = ?, owner_user_id = COALESCE(owner_user_id, ?) WHERE id = ? AND (? IS NULL OR updated_at = ?)",
+    [serverId, Date.now(), ownerUserId ?? null, localId, updatedAt ?? null, updatedAt ?? null]
   );
 }
 
@@ -125,51 +131,48 @@ export async function retryFailedRecords(): Promise<void> {
   );
 }
 
-export async function syncRecordsToServer(userId?: string): Promise<{ success: boolean; synced: number; errors: number }> {
+/**
+ * Uploads this account's pending records. Each record is sent with its local id and the server
+ * updates the same row if it already has it, so retries after a dropped connection never make duplicates.
+ * The account comes from the sign-in token. Nothing about the records is logged.
+ */
+export async function syncRecordsToServer(_userId?: string): Promise<{ success: boolean; synced: number; errors: number }> {
   if (isSyncing) {
     return { success: false, synced: 0, errors: 0 };
   }
-
-  // Signed out: records stay saved on the phone and sync after sign-in.
-  const token = authToken();
-  if (!token) {
+  const session = currentSession();
+  if (!session) {
     return { success: false, synced: 0, errors: 0 };
   }
-  
   const isOnline = await isNetworkAvailable();
   if (!isOnline) {
-    console.log('No network connection, skipping sync');
     return { success: false, synced: 0, errors: 0 };
   }
-  
+
   isSyncing = true;
   notifySyncListeners('syncing');
-  
+
   let syncedCount = 0;
   let errorCount = 0;
-  
+
   try {
-    const unsyncedRecords = await getUnsyncedRecords();
-    
+    const unsyncedRecords = await getUnsyncedRecords(session.userId);
     if (unsyncedRecords.length === 0) {
       notifySyncListeners('success');
       return { success: true, synced: 0, errors: 0 };
     }
-    
-    console.log(`Syncing ${unsyncedRecords.length} records to server...`);
-    
+
+    const url = new URL('/api/calc-records/sync', getApiUrl()).toString();
     for (const record of unsyncedRecords) {
       try {
-        const apiUrl = getApiUrl();
-        const response = await fetch(new URL('/api/calc-records/sync', apiUrl).toString(), {
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${session.token}`,
           },
           body: JSON.stringify({
             localId: record.id,
-            userId: userId,
             recordType: record.record_type,
             createdAt: record.created_at,
             updatedAt: record.updated_at,
@@ -182,31 +185,34 @@ export async function syncRecordsToServer(userId?: string): Promise<{ success: b
             archived: record.archived === 1,
           }),
         });
-        
+
         if (response.ok) {
           const result = await response.json();
-          await markRecordAsSynced(record.id, result.id);
+          await markRecordAsSynced(record.id, result.id, record.updated_at, session.userId);
           syncedCount++;
         } else if (response.status === 401 || response.status === 403) {
-          // Sign-in expired or refused: keep records pending and stop until the user signs in again.
+          // Signed out or token expired: keep everything pending and stop until the user signs in again.
           errorCount++;
           break;
-        } else {
-          console.error('Failed to sync record:', record.id, response.status);
+        } else if (response.status >= 400 && response.status < 500) {
+          // The server refused this record; it stays on the phone, marked so it is not resent in a loop.
           await markRecordAsError(record.id);
           errorCount++;
+        } else {
+          // Server asleep or failing: keep it pending and try again on the next sync.
+          errorCount++;
+          break;
         }
-      } catch (error) {
-        console.error('Error syncing record:', record.id, error);
-        await markRecordAsError(record.id);
+      } catch {
+        // Connection dropped: keep it pending.
         errorCount++;
+        break;
       }
     }
-    
+
     notifySyncListeners(errorCount === 0 ? 'success' : 'error');
     return { success: errorCount === 0, synced: syncedCount, errors: errorCount };
-  } catch (error) {
-    console.error('Sync failed:', error);
+  } catch {
     notifySyncListeners('error');
     return { success: false, synced: syncedCount, errors: errorCount };
   } finally {
@@ -214,26 +220,18 @@ export async function syncRecordsToServer(userId?: string): Promise<{ success: b
   }
 }
 
-export async function fetchRecordsFromServer(userId: string): Promise<ServerCalcRecord[]> {
-  const token = authToken();
-  if (!token) return [];
+export async function fetchRecordsFromServer(_userId?: string): Promise<ServerCalcRecord[]> {
+  const session = currentSession();
+  if (!session) return [];
   const isOnline = await isNetworkAvailable();
-  if (!isOnline) {
-    return [];
-  }
-  
+  if (!isOnline) return [];
   try {
-    const apiUrl = getApiUrl();
-    const response = await fetch(new URL('/api/calc-records', apiUrl).toString(), {
-      headers: { Authorization: `Bearer ${token}` },
+    const response = await fetch(new URL('/api/calc-records', getApiUrl()).toString(), {
+      headers: { Authorization: `Bearer ${session.token}` },
     });
-    
-    if (response.ok) {
-      return await response.json();
-    }
+    if (response.ok) return await response.json();
     return [];
-  } catch (error) {
-    console.error('Failed to fetch records from server:', error);
+  } catch {
     return [];
   }
 }
@@ -258,8 +256,8 @@ export async function syncFromServer(userId: string): Promise<number> {
     
     if (!existingByServerId && !existingByLocalId) {
       await database.runAsync(
-        `INSERT INTO calc_records (id, record_type, created_at, updated_at, language, title, inputs_json, outputs_json, notes, tags_json, archived, sync_status, server_id, last_synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?)`,
+        `INSERT INTO calc_records (id, record_type, created_at, updated_at, language, title, inputs_json, outputs_json, notes, tags_json, archived, sync_status, server_id, last_synced_at, owner_user_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'synced', ?, ?, ?)`,
         [
           serverRecord.localId || serverRecord.id,
           serverRecord.recordType,
@@ -274,6 +272,7 @@ export async function syncFromServer(userId: string): Promise<number> {
           serverRecord.archived ? 1 : 0,
           serverRecord.id,
           Date.now(),
+          userId,
         ]
       );
       importedCount++;
@@ -283,8 +282,9 @@ export async function syncFromServer(userId: string): Promise<number> {
   return importedCount;
 }
 
-export async function fullSync(userId?: string): Promise<{ uploaded: number; downloaded: number; errors: number }> {
-  const uploadResult = await syncRecordsToServer(userId);
+export async function fullSync(_userId?: string): Promise<{ uploaded: number; downloaded: number; errors: number }> {
+  const uploadResult = await syncRecordsToServer();
+  const userId = currentSession()?.userId;
   
   let downloadedCount = 0;
   if (userId) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -417,6 +417,40 @@ export default function MarketScreen() {
     navigation.navigate("Cart");
   }, [navigation]);
 
+  // One title only: the app header shows "Marketplace"; Sell and Cart sit on the right of it.
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.marketHeaderActions}>
+          {loggedIn ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("market.sell")}
+              style={[styles.sellButton, { backgroundColor: theme.primary }]}
+              onPress={() => setSellForm({ open: true, item: null })}
+            >
+              <Feather name="plus" size={16} color="#FFFFFF" />
+              <ThemedText style={{ color: "#FFFFFF", fontWeight: "600", fontSize: 14 }}>{t("market.sell")}</ThemedText>
+            </Pressable>
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={tr("Cart")}
+            style={[styles.cartHeaderButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+            onPress={handleCartPress}
+          >
+            <Feather name="shopping-cart" size={20} color={theme.text} />
+            {cartCount > 0 ? (
+              <View style={[styles.cartBadge, { backgroundColor: theme.primary }]}>
+                <ThemedText style={styles.cartBadgeText}>{cartCount > 9 ? "9+" : cartCount}</ThemedText>
+              </View>
+            ) : null}
+          </Pressable>
+        </View>
+      ),
+    });
+  }, [navigation, loggedIn, theme, cartCount, language, handleCartPress, t, tr]);
+
   const handleSeeAllShops = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     navigation.navigate("ShopsHome");
@@ -535,36 +569,6 @@ export default function MarketScreen() {
           },
         ]}
       >
-        <View style={styles.marketHeader}>
-          <ThemedText type="h4" style={{ color: theme.text, flex: 1 }}>
-            {isBn ? "মার্কেট" : "Market"}
-          </ThemedText>
-          {loggedIn ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t("market.sell")}
-              style={[styles.sellButton, { backgroundColor: theme.primary }]}
-              onPress={() => setSellForm({ open: true, item: null })}
-            >
-              <Feather name="plus" size={16} color="#FFFFFF" />
-              <ThemedText style={{ color: "#FFFFFF", fontWeight: "600", fontSize: 14 }}>{t("market.sell")}</ThemedText>
-            </Pressable>
-          ) : null}
-          <Pressable 
-            accessibilityLabel={tr("Cart")}
-            style={[styles.cartHeaderButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
-            onPress={handleCartPress}
-          >
-            <Feather name="shopping-cart" size={20} color={theme.text} />
-            {cartCount > 0 ? (
-              <View style={[styles.cartBadge, { backgroundColor: theme.primary }]}>
-                <ThemedText style={styles.cartBadgeText}>
-                  {cartCount > 9 ? "9+" : cartCount}
-                </ThemedText>
-              </View>
-            ) : null}
-          </Pressable>
-        </View>
         <View
           style={[
             styles.searchContainer,
@@ -988,10 +992,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.md,
   },
-  marketHeader: {
+  marketHeaderActions: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+    marginRight: Spacing.lg,
   },
   cartHeaderButton: {
     width: 44,

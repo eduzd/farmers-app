@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { SaveCalcButton } from '@/components/SaveCalcButton';
 import { View, Text, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -459,6 +460,17 @@ export default function FeedCalculatorScreen() {
               </View>
             ) : null}
           </View>
+          <SaveCalcButton
+            recordType="FEED_TOOL"
+            title={`${animal?.name ?? ''} - ${quantity}`}
+            inputs={{ animal: selectedAnimal, quantity, avgWeight, days }}
+            summary={[
+              { label: 'দৈনিক খাদ্য', value: `${results.dailyFeed.toFixed(1)} কেজি` },
+              { label: `মোট খাদ্য (${days} দিন)`, value: `${results.totalFeed.toFixed(0)} কেজি` },
+              { label: 'ব্যাগ (২৫ কেজি)', value: `${results.feedBags} ব্যাগ` },
+              ...(results.fcr > 0 ? [{ label: 'FCR', value: String(results.fcr) }] : []),
+            ]}
+          />
         </View>
       ) : null}
     </ScrollView>

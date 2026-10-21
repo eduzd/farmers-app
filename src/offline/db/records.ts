@@ -1,7 +1,8 @@
 import { getDatabase } from './database';
 import { v4 as uuidv4 } from 'uuid';
+import { useAuthStore } from '@/lib/authStore';
 
-export type RecordType = 'BEPARI' | 'ARAT' | 'FEED';
+export type RecordType = 'BEPARI' | 'ARAT' | 'FEED' | 'FERTILIZER' | 'PROFIT' | 'FEED_TOOL' | 'LOAN' | 'INSURANCE';
 
 export type SyncStatus = 'pending' | 'synced' | 'error';
 
@@ -32,6 +33,16 @@ export interface CalcRecordVersion {
   notes?: string;
 }
 
+/** The signed-in account, or null when signed out (the record then stays on this phone until someone signs in). */
+function currentUserId(): string | null {
+  try {
+    const st = useAuthStore.getState();
+    return st.isAuthenticated && st.user?.id ? String(st.user.id) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function saveCalcRecord(
   recordType: RecordType,
   inputs: any,
@@ -45,7 +56,7 @@ export async function saveCalcRecord(
   } = {}
 ): Promise<string> {
   const database = await getDatabase();
-  if (!database) return options.id || uuidv4();
+  if (!database) throw new Error('Calculator storage is not available on this device');
   
   const now = Date.now();
   const id = options.id || uuidv4();
@@ -90,8 +101,8 @@ export async function saveCalcRecord(
     );
   } else {
     await database.runAsync(
-      `INSERT INTO calc_records (id, record_type, created_at, updated_at, language, title, inputs_json, outputs_json, notes, tags_json, archived, sync_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'pending')`,
+      `INSERT INTO calc_records (id, record_type, created_at, updated_at, language, title, inputs_json, outputs_json, notes, tags_json, archived, sync_status, owner_user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 'pending', ?)`,
       [
         id,
         recordType,
@@ -102,7 +113,8 @@ export async function saveCalcRecord(
         JSON.stringify(inputs),
         JSON.stringify(outputs),
         options.notes || null,
-        options.tags ? JSON.stringify(options.tags) : null
+        options.tags ? JSON.stringify(options.tags) : null,
+        currentUserId(),
       ]
     );
   }
@@ -124,8 +136,13 @@ export async function getCalcRecords(
   const database = await getDatabase();
   if (!database) return [];
   
-  let query = 'SELECT * FROM calc_records WHERE 1=1';
-  const params: any[] = [];
+  // Show only the signed-in account's records (plus ones saved here while signed out),
+  // so another account on the same phone never sees them.
+  const owner = currentUserId();
+  let query = owner
+    ? 'SELECT * FROM calc_records WHERE (owner_user_id IS NULL OR owner_user_id = ?)'
+    : 'SELECT * FROM calc_records WHERE owner_user_id IS NULL';
+  const params: any[] = owner ? [owner] : [];
 
   if (filters.recordType) {
     query += ' AND record_type = ?';

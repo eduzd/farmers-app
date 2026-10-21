@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import * as Network from 'expo-network';
 import { syncRecordsToServer, getPendingRecordsCount, addSyncListener, fullSync } from '@/offline/db/syncService';
-import { getUser } from '@/lib/storage';
+import { useAuthStore } from '@/lib/authStore';
 
 type SyncState = 'idle' | 'syncing' | 'success' | 'error' | 'offline';
 
@@ -45,7 +45,7 @@ export function SyncProvider({ children }: SyncProviderProps) {
         return;
       }
       const state = await Network.getNetworkStateAsync();
-      setIsOnline((state.isConnected && state.isInternetReachable) ?? false);
+      setIsOnline(!!state.isConnected && state.isInternetReachable !== false);
     } catch {
       setIsOnline(false);
     }
@@ -63,8 +63,7 @@ export function SyncProvider({ children }: SyncProviderProps) {
     setSyncState('syncing');
 
     try {
-      const user = await getUser();
-      const result = await syncRecordsToServer(user?.id);
+      const result = await syncRecordsToServer();
       
       if (result.success) {
         setSyncState('success');
@@ -77,7 +76,6 @@ export function SyncProvider({ children }: SyncProviderProps) {
       
       await updatePendingCount();
     } catch (error) {
-      console.error('Sync failed:', error);
       setSyncState('error');
     } finally {
       syncInProgress.current = false;
@@ -170,6 +168,28 @@ export function SyncProvider({ children }: SyncProviderProps) {
       };
     }
   }, [updatePendingCount, pendingCount, triggerSync]);
+
+  // Phones: sync as soon as the connection comes back, and right after signing in.
+  const authToken = useAuthStore((st) => st.token);
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    let wasOnline = true;
+    const sub = Network.addNetworkStateListener((state) => {
+      const online = !!state.isConnected && state.isInternetReachable !== false;
+      setIsOnline(online);
+      if (online && !wasOnline) {
+        updatePendingCount().then(() => triggerSync());
+      }
+      wasOnline = online;
+    });
+    return () => sub.remove();
+  }, [updatePendingCount, triggerSync]);
+
+  useEffect(() => {
+    if (!authToken) return;
+    updatePendingCount().then(() => triggerSync());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authToken]);
 
   return (
     <SyncContext.Provider

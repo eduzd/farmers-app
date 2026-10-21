@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { SaveCalcButton } from '@/components/SaveCalcButton';
 import { View, Text, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -338,6 +339,12 @@ export default function FertilizerCalculatorScreen() {
               এই পরিমাণ একটি আনুমানিক হিসাব। মাটি পরীক্ষা করে সঠিক পরিমাণ নির্ধারণ করুন।
             </Text>
           </View>
+          <SaveCalcButton
+            recordType="FERTILIZER"
+            title={`${CROPS.find((c) => c.id === selectedCrop)?.name ?? ''} - ${landSize} ${landUnit === 'bigha' ? 'বিঘা' : 'একর'}`}
+            inputs={{ crop: selectedCrop, landSize, landUnit }}
+            summary={results.map((r) => ({ label: r.name, value: `${r.amount.toFixed(1)} কেজি` }))}
+          />
         </View>
       ) : null}
     </ScrollView>

@@ -37,6 +37,11 @@ const recordTypeLabels = {
   BEPARI: { bn: 'ব্যাপারী ক্যালকুলেটর', en: 'Bepari Calculator' },
   ARAT: { bn: 'আড়ত ক্যালকুলেটর', en: 'Arat Calculator' },
   FEED: { bn: 'খাদ্য ক্যালকুলেটর', en: 'Feed Calculator' },
+  FERTILIZER: { bn: 'সার ক্যালকুলেটর', en: 'Fertilizer Calculator' },
+  PROFIT: { bn: 'লাভ-ক্ষতি ক্যালকুলেটর', en: 'Profit Calculator' },
+  FEED_TOOL: { bn: 'পশু খাদ্য ক্যালকুলেটর', en: 'Animal Feed Calculator' },
+  LOAN: { bn: 'ঋণ ক্যালকুলেটর', en: 'Loan Calculator' },
+  INSURANCE: { bn: 'বীমা ক্যালকুলেটর', en: 'Insurance Calculator' },
 };
 
 export function RecordDetailScreen() {
@@ -144,6 +149,11 @@ export function RecordDetailScreen() {
         </div>
         <div class="total">মোট বস্তা: ${outputs.total_bags}</div>
       `;
+    } else if (Array.isArray(outputs.summary)) {
+      const esc = (v: unknown) => String(v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string));
+      htmlContent += `<div class="section">` +
+        outputs.summary.map((row: any) => `<div class="row"><span class="label">${esc(row.label)}</span><span class="value">${esc(row.value)}</span></div>`).join('') +
+        `</div>`;
     }
 
     htmlContent += `
@@ -229,6 +239,12 @@ export function RecordDetailScreen() {
               ) : null}
             </ResultCard>
           </>
+        ) : Array.isArray(outputs.summary) ? (
+          <ResultCard title="সারাংশ">
+            {outputs.summary.map((row: { label: string; value: string }, i: number) => (
+              <ResultRow key={`${row.label}-${i}`} label={tr(String(row.label))} value={String(row.value)} />
+            ))}
+          </ResultCard>
         ) : null}
 
         {record.notes ? (

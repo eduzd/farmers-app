@@ -1,5 +1,9 @@
 /** English -> Bangla phrases for tr() (src/lib/tr.ts). Bangla text is translated back with the reverse map. */
 export const BN_OF_EN: Record<string, string> = {
+  "Could not save. Please try again.": "সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।",
+  "Save on phone": "ফোনে সংরক্ষণ করুন",
+  "Saved on phone": "ফোনে সংরক্ষিত",
+  "Works without internet. Syncs to your account when you are online.": "ইন্টারনেট ছাড়াও কাজ করে। অনলাইনে এলে আপনার অ্যাকাউন্টে সিঙ্ক হবে।",
   "Your cart is empty": "আপনার কার্ট খালি",
   "Add products from the marketplace to get started": "শুরু করতে বাজার থেকে পণ্য যোগ করুন",
   "Browse Products": "পণ্য দেখুন",

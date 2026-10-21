@@ -34,14 +34,73 @@ export async function getDatabase(): Promise<CalcDatabase | null> {
   }
   
   if (!db) {
-    const sqlite = await loadSQLite();
-    if (sqlite) {
-      const nativeDb = (await sqlite.openDatabaseAsync('calculate.db')) as unknown as CalcDatabase;
-      await runMigrations(nativeDb);
-      db = nativeDb;
+    if (!opening) {
+      opening = openEncryptedNativeDb().finally(() => {
+        opening = null;
+      });
     }
+    db = await opening;
   }
   return db;
+}
+
+let opening: Promise<CalcDatabase | null> | null = null;
+
+const PLAIN_DB = 'calculate.db';
+const SECURE_DB = 'calculate-secure.db';
+
+/**
+ * Opens the calculator database encrypted with SQLCipher. The key comes from the phone's secure store
+ * (see secureKey.ts). A plain database from an older version is copied into the encrypted one once and
+ * then deleted, so nothing is lost and nothing stays unencrypted.
+ */
+async function openEncryptedNativeDb(): Promise<CalcDatabase | null> {
+  const sqlite = await loadSQLite();
+  if (!sqlite) return null;
+  const { getCalcDbKey } = await import('./secureKey');
+  const key = await getCalcDbKey();
+  const keyPragma = key ? `PRAGMA key = "x'${key}'";` : '';
+
+  const secure: any = await sqlite.openDatabaseAsync(SECURE_DB);
+  if (keyPragma) await secure.execAsync(keyPragma);
+  // Fails here if the key is wrong; the file is never deleted in that case.
+  const tables = await secure.getFirstAsync('SELECT COUNT(*) as n FROM sqlite_master');
+
+  if (key && (tables?.n ?? 0) === 0) {
+    await migratePlainDatabase(sqlite, secure);
+  }
+  await runMigrations(secure as CalcDatabase);
+  return secure as CalcDatabase;
+}
+
+async function migratePlainDatabase(sqlite: typeof import('expo-sqlite'), secure: any): Promise<void> {
+  let plain: any = null;
+  try {
+    plain = await sqlite.openDatabaseAsync(PLAIN_DB);
+    const t = await plain.getAllAsync("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'");
+    if (!t || t.length === 0) {
+      await plain.closeAsync();
+      plain = null;
+      await sqlite.deleteDatabaseAsync(PLAIN_DB).catch(() => {});
+      return;
+    }
+    await runMigrations(plain as CalcDatabase);
+    await runMigrations(secure as CalcDatabase);
+    const dir = (sqlite as any).defaultDatabaseDirectory as string | undefined;
+    const plainPath = dir ? `${dir.replace(/^file:\/\//, '').replace(/\/$/, '')}/${PLAIN_DB}` : PLAIN_DB;
+    await secure.execAsync(`ATTACH DATABASE '${plainPath.replace(/'/g, "''")}' AS plaindb KEY '';`);
+    for (const row of t as { name: string }[]) {
+      const name = row.name.replace(/"/g, '');
+      await secure.execAsync(`INSERT OR IGNORE INTO main."${name}" SELECT * FROM plaindb."${name}";`).catch(() => {});
+    }
+    await secure.execAsync('DETACH DATABASE plaindb;');
+    await plain.closeAsync();
+    plain = null;
+    await sqlite.deleteDatabaseAsync(PLAIN_DB).catch(() => {});
+  } catch {
+    // Leave the old file alone if anything goes wrong; it is tried again next launch.
+    try { await plain?.closeAsync(); } catch {}
+  }
 }
 
 export function isDbAvailable(): boolean {
@@ -146,6 +205,11 @@ async function runMigrations(database: CalcDatabase): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_ledger_archived ON ledger_transactions(archived);
     CREATE INDEX IF NOT EXISTS idx_payments_txn ON ledger_payments(transaction_id);
   `);
+  // v2: which account a record belongs to, so sync only ever uploads to that account.
+  const cols = await database.getAllAsync<{ name: string }>('PRAGMA table_info(calc_records)');
+  if (!cols.some((c) => c.name === 'owner_user_id')) {
+    await database.execAsync('ALTER TABLE calc_records ADD COLUMN owner_user_id TEXT;');
+  }
 }
 
 export async function getSetting(key: string): Promise<string | null> {

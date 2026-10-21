@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { SaveCalcButton } from "@/components/SaveCalcButton";
 import {
   View,
   StyleSheet,
@@ -224,6 +225,20 @@ export default function LoanCalculatorScreen() {
               </ThemedText>
             </View>
           </View>
+
+          <SaveCalcButton
+            recordType="LOAN"
+            title={`${selectedLoanType.name} - ৳${amount}`}
+            inputs={{ loanType: selectedLoanType.id, rate: selectedLoanType.rate, amount, tenure }}
+            summary={[
+              { label: 'ঋণের ধরন', value: `${selectedLoanType.name} (${selectedLoanType.rate}%)` },
+              { label: 'ঋণের পরিমাণ', value: `৳${amount}` },
+              { label: 'মেয়াদ (মাস)', value: String(tenure) },
+              { label: 'মাসিক কিস্তি', value: `৳${result.monthlyPayment.toLocaleString()}` },
+              { label: 'মোট সুদ', value: `৳${result.totalInterest.toLocaleString()}` },
+              { label: 'মোট পরিশোধ', value: `৳${result.totalPayment.toLocaleString()}` },
+            ]}
+          />
 
           <Pressable
             style={[styles.scheduleToggle, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}

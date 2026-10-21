@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { SaveCalcButton } from '@/components/SaveCalcButton';
 import { View, Text, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -355,6 +356,19 @@ export default function ProfitCalculatorScreen() {
               </View>
             ) : null}
           </View>
+          <SaveCalcButton
+            recordType="PROFIT"
+            title={`${results.isProfit ? 'লাভ' : 'ক্ষতি'} ${formatTaka(Math.abs(results.profit))}`}
+            inputs={{ costs, salesAmount, productionAmount, productionUnit }}
+            summary={[
+              { label: results.isProfit ? 'মোট লাভ' : 'মোট ক্ষতি', value: `${formatTaka(Math.abs(results.profit))} (${results.profitPercent.toFixed(1)}%)` },
+              { label: 'মোট খরচ', value: formatTaka(results.totalCost) },
+              { label: 'মোট বিক্রয়', value: formatTaka(results.sales) },
+              ...costs.filter((c) => parseFloat(c.amount) > 0).map((c) => ({ label: c.name, value: formatTaka(parseFloat(c.amount)) })),
+              ...(results.costPerUnit > 0 ? [{ label: `প্রতি ${productionUnit} খরচ`, value: formatTaka(results.costPerUnit) }] : []),
+              ...(results.pricePerUnit > 0 ? [{ label: `প্রতি ${productionUnit} বিক্রয়`, value: formatTaka(results.pricePerUnit) }] : []),
+            ]}
+          />
         </View>
       ) : null}
     </ScrollView>
