@@ -6,6 +6,33 @@ import { apiKeyManager } from "./services/apiKeyManager";
 import { db, dbReady } from "./db";
 import { apiUsageLogs, apiKeys, calcRecords } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
+import jwt from "jsonwebtoken";
+import { config } from "./config";
+import type { Request, Response } from "express";
+
+/**
+ * Calculator records belong to the signed-in user. The account is taken only from a
+ * valid Bearer token; a userId sent in the body or query is never trusted.
+ * Returns the user id, or sends 401 and returns null.
+ */
+function calcRecordsUser(req: Request, res: Response): string | null {
+  const h = req.headers.authorization;
+  if (h && h.startsWith("Bearer ")) {
+    try {
+      const uid = (jwt.verify(h.slice(7), config.jwtSecret) as any)?.userId;
+      if (typeof uid === "string" && uid) return uid;
+    } catch {
+      /* fall through to 401 */
+    }
+  }
+  res.status(401).json({ error: "Sign in required" });
+  return null;
+}
+
+/** A supplied userId that differs from the signed-in account is refused (403). */
+function spoofedUserId(supplied: unknown, authUserId: string): boolean {
+  return supplied !== undefined && supplied !== null && supplied !== "" && supplied !== authUserId;
+}
 
 async function loadApiKeysFromDB() {
   if (!db) return;
@@ -678,9 +705,12 @@ Note: For accurate diagnosis, please consult with local agricultural professiona
         return res.status(503).json({ error: "Database not available" });
       }
 
+      const authUserId = calcRecordsUser(req, res);
+      if (!authUserId) return;
+
       const {
         localId,
-        userId,
+        userId: suppliedUserId,
         deviceId,
         recordType,
         createdAt,
@@ -694,16 +724,22 @@ Note: For accurate diagnosis, please consult with local agricultural professiona
         archived,
       } = req.body;
 
+      if (spoofedUserId(suppliedUserId, authUserId)) {
+        return res.status(403).json({ error: "You can only sync your own records" });
+      }
+      const userId = authUserId;
+
       if (!recordType || !inputsJson || !outputsJson) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      const existingByLocalId = userId
+      // Only ever match records owned by the signed-in user.
+      const existingByLocalId = localId
         ? await db
             .select()
             .from(calcRecords)
-            .where(and(eq(calcRecords.localId, localId), eq(calcRecords.userId, userId)))
-        : await db.select().from(calcRecords).where(eq(calcRecords.localId, localId));
+            .where(and(eq(calcRecords.localId, String(localId)), eq(calcRecords.userId, userId)))
+        : [];
 
       if (existingByLocalId.length > 0) {
         const existing = existingByLocalId[0];
@@ -720,7 +756,7 @@ Note: For accurate diagnosis, please consult with local agricultural professiona
             archived: archived || false,
             updatedAt: new Date(),
           })
-          .where(eq(calcRecords.id, existing.id));
+          .where(and(eq(calcRecords.id, existing.id), eq(calcRecords.userId, userId)));
 
         return res.json({ id: existing.id, action: "updated" });
       }
@@ -728,8 +764,8 @@ Note: For accurate diagnosis, please consult with local agricultural professiona
       const result = await db
         .insert(calcRecords)
         .values({
-          localId,
-          userId: userId || null,
+          localId: localId ? String(localId) : null,
+          userId,
           deviceId: deviceId || null,
           recordType,
           language: language || "bn",
@@ -757,17 +793,20 @@ Note: For accurate diagnosis, please consult with local agricultural professiona
         return res.status(503).json({ error: "Database not available" });
       }
 
-      const { userId, recordType, limit = "100" } = req.query;
+      const authUserId = calcRecordsUser(req, res);
+      if (!authUserId) return;
 
-      let query = db.select().from(calcRecords);
-
-      if (!userId || typeof userId !== "string") {
-        // never return other users' records
-        return res.json([]);
+      const { userId: suppliedUserId, limit = "100" } = req.query;
+      if (spoofedUserId(suppliedUserId, authUserId)) {
+        return res.status(403).json({ error: "You can only read your own records" });
       }
-      query = query.where(eq(calcRecords.userId, userId)) as any;
 
-      const records = await query.limit(parseInt(limit as string));
+      const n = Math.min(Math.max(parseInt(String(limit), 10) || 100, 1), 500);
+      const records = await db
+        .select()
+        .from(calcRecords)
+        .where(eq(calcRecords.userId, authUserId))
+        .limit(n);
 
       res.json(records);
     } catch (error) {
@@ -782,9 +821,18 @@ Note: For accurate diagnosis, please consult with local agricultural professiona
         return res.status(503).json({ error: "Database not available" });
       }
 
-      const { id } = req.params;
-      await db.delete(calcRecords).where(eq(calcRecords.id, id));
+      const authUserId = calcRecordsUser(req, res);
+      if (!authUserId) return;
 
+      const { id } = req.params;
+      const deleted = await db
+        .delete(calcRecords)
+        .where(and(eq(calcRecords.id, id), eq(calcRecords.userId, authUserId)))
+        .returning({ id: calcRecords.id });
+
+      if (deleted.length === 0) {
+        return res.status(404).json({ error: "Record not found" });
+      }
       res.json({ success: true });
     } catch (error) {
       console.error("Delete calc record error:", error);

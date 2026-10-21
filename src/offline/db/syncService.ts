@@ -2,6 +2,17 @@ import { getDatabase } from './database';
 import { getApiUrl } from '@/lib/query-client';
 import { Platform } from 'react-native';
 import * as Network from 'expo-network';
+import { useAuthStore } from '@/lib/authStore';
+
+/** The signed-in user's token; the server takes the account from it. Null when signed out. */
+function authToken(): string | null {
+  try {
+    const st = useAuthStore.getState();
+    return st.isAuthenticated && st.token ? st.token : null;
+  } catch {
+    return null;
+  }
+}
 
 export type SyncStatus = 'pending' | 'synced' | 'error';
 
@@ -118,6 +129,12 @@ export async function syncRecordsToServer(userId?: string): Promise<{ success: b
   if (isSyncing) {
     return { success: false, synced: 0, errors: 0 };
   }
+
+  // Signed out: records stay saved on the phone and sync after sign-in.
+  const token = authToken();
+  if (!token) {
+    return { success: false, synced: 0, errors: 0 };
+  }
   
   const isOnline = await isNetworkAvailable();
   if (!isOnline) {
@@ -148,6 +165,7 @@ export async function syncRecordsToServer(userId?: string): Promise<{ success: b
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             localId: record.id,
@@ -169,6 +187,10 @@ export async function syncRecordsToServer(userId?: string): Promise<{ success: b
           const result = await response.json();
           await markRecordAsSynced(record.id, result.id);
           syncedCount++;
+        } else if (response.status === 401 || response.status === 403) {
+          // Sign-in expired or refused: keep records pending and stop until the user signs in again.
+          errorCount++;
+          break;
         } else {
           console.error('Failed to sync record:', record.id, response.status);
           await markRecordAsError(record.id);
@@ -193,6 +215,8 @@ export async function syncRecordsToServer(userId?: string): Promise<{ success: b
 }
 
 export async function fetchRecordsFromServer(userId: string): Promise<ServerCalcRecord[]> {
+  const token = authToken();
+  if (!token) return [];
   const isOnline = await isNetworkAvailable();
   if (!isOnline) {
     return [];
@@ -200,7 +224,9 @@ export async function fetchRecordsFromServer(userId: string): Promise<ServerCalc
   
   try {
     const apiUrl = getApiUrl();
-    const response = await fetch(new URL(`/api/calc-records?userId=${userId}`, apiUrl).toString());
+    const response = await fetch(new URL('/api/calc-records', apiUrl).toString(), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     
     if (response.ok) {
       return await response.json();
