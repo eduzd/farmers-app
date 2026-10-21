@@ -122,8 +122,18 @@ export function AdminOrdersTab() {
           {open === o.id ? (
             <View style={{ marginTop: 10 }}>
               {(o.items || []).map((it: any, i: number) => (
-                <Text key={i} style={[s.muted, { color: theme.text }]}>• {it.name || "Item"} × {it.quantity || 1} — {taka((it.price || 0) * (it.quantity || 1))}</Text>
+                <Text key={i} style={[s.muted, { color: theme.text }]}>• {it.name || "Item"}{it.options ? ` (${Object.entries(it.options).map(([k, v]) => `${k}: ${v}`).join(", ")})` : ""} × {it.quantity || 1} — {taka((it.price || 0) * (it.quantity || 1))}</Text>
               ))}
+              {o.checkout ? (
+                <View testID={`admin-order-contact-${o.id}`} style={{ marginTop: 6 }}>
+                  {o.checkout.contactPhone ? <Text style={[s.muted, { color: theme.text }]}>{L("Contact", "যোগাযোগ")}: {o.checkout.contactName} · {o.checkout.contactPhone}{o.checkout.altPhone ? ` / ${o.checkout.altPhone}` : ""}</Text> : null}
+                  <Text style={[s.muted, { color: theme.textSecondary }]}>
+                    {o.checkout.deliveryMethod === "pickup" ? L("Pick up from seller", "বিক্রেতার কাছ থেকে সংগ্রহ") : o.checkout.zone === "inside_dhaka" ? L("Inside Dhaka", "ঢাকার ভিতরে") : o.checkout.zone === "outside_dhaka" ? L("Outside Dhaka", "ঢাকার বাইরে") : o.checkout.division}
+                    {" · "}{o.checkout.deliveryMethod}{o.checkout.address ? ` · ${o.checkout.address}` : ""}{o.checkout.district ? `, ${o.checkout.district}` : ""}
+                  </Text>
+                  <Text style={[s.muted, { color: theme.textSecondary }]}>{L("Subtotal", "সাবটোটাল")} {taka(o.checkout.subtotal)} · {L("Delivery", "ডেলিভারি")} {taka(o.checkout.deliveryFee)}{o.checkout.discount ? ` · −${taka(o.checkout.discount)}` : ""}</Text>
+                </View>
+              ) : null}
               {o.address ? <Text style={[s.muted, { color: theme.textSecondary, marginTop: 6 }]}>{[o.address.fullName || o.address.name, o.address.address, o.address.city, o.address.phone].filter(Boolean).join(" · ")}</Text> : null}
               <Text style={[s.muted, { color: theme.textSecondary, marginTop: 6 }]}>{L("Payment", "পেমেন্ট")}: {(o.paymentMethod || "-").toUpperCase()} · {L("Buyer", "ক্রেতা")}: {o.buyerEmail || "-"}</Text>
               {o.adminNote ? <Text style={[s.muted, { color: theme.textSecondary }]}>{L("Note", "নোট")}: {o.adminNote}</Text> : null}
@@ -256,6 +266,102 @@ export function AdminNotifyTab() {
             }} />
         </View>
       </Box>
+    </ScrollView>
+  );
+}
+
+// ================= Marketplace panel on the overview =================
+/** Live marketplace numbers on the admin overview; each tile opens the tab that manages it. */
+export function AdminMarketplacePanel({ onOpen, onOpenSellerHub }: { onOpen: (tab: "orders" | "stores" | "listings" | "delivery") => void; onOpenSellerHub?: () => void }) {
+  const { theme } = useTheme();
+  const L = useL();
+  const { data } = useLoader<any>(() => apiGet("/api/admin/manage/summary"), []);
+  const pending = Number(data?.ordersByStatus?.pending || 0);
+  const tiles: { tab: "orders" | "stores" | "listings" | "delivery"; icon: any; color: string; label: string; value: string; sub: string }[] = [
+    { tab: "orders", icon: "shopping-bag", color: "#EA580C", label: L("Orders", "অর্ডার"), value: String(data?.orders ?? "–"), sub: pending ? L(`${pending} waiting`, `${pending}টি অপেক্ষায়`) : L("None waiting", "কোনো অপেক্ষা নেই") },
+    { tab: "stores", icon: "briefcase", color: "#2563EB", label: L("Sellers", "বিক্রেতা"), value: String(data?.stores ?? "–"), sub: data?.suspendedStores ? L(`${data.suspendedStores} suspended`, `${data.suspendedStores}টি স্থগিত`) : L("All active", "সব চালু") },
+    { tab: "listings", icon: "package", color: "#7C3AED", label: L("Listings", "লিস্টিং"), value: String(data?.listings ?? "–"), sub: data?.hiddenListings ? L(`${data.hiddenListings} hidden`, `${data.hiddenListings}টি লুকানো`) : L("All visible", "সব দৃশ্যমান") },
+    { tab: "delivery", icon: "truck", color: "#16A34A", label: L("Sales", "বিক্রি"), value: data ? taka(data.revenue) : "–", sub: L("Delivery charges", "ডেলিভারি চার্জ") },
+  ];
+  return (
+    <View testID="admin-marketplace-panel" style={{ marginBottom: 16 }}>
+      <View style={[s.rowTop, { marginBottom: 8, alignItems: "center" }]}>
+        <Text style={[s.title, { color: theme.text, flex: 1 }]}>{L("Marketplace", "মার্কেটপ্লেস")}</Text>
+        {onOpenSellerHub ? <SmallBtn testID="admin-open-seller-hub" label={L("Seller Hub", "সেলার হাব")} icon="external-link" color={theme.primary} onPress={onOpenSellerHub} /> : null}
+      </View>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+        {tiles.map((t) => (
+          <Pressable key={t.tab} testID={`mp-tile-${t.tab}`} onPress={() => onOpen(t.tab)}
+            style={({ pressed }) => [{ flexGrow: 1, flexBasis: 150, minWidth: 140, padding: 14, borderRadius: 14, borderWidth: 1, borderColor: theme.cardBorder, backgroundColor: theme.card, opacity: pressed ? 0.8 : 1 }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <View style={{ width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: t.color + "18" }}>
+                <Feather name={t.icon} size={15} color={t.color} />
+              </View>
+              <Text style={[s.muted, { color: theme.textSecondary, flex: 1 }]} numberOfLines={1}>{t.label}</Text>
+              <Feather name="chevron-right" size={14} color={theme.textSecondary} />
+            </View>
+            <Text style={{ fontSize: 20, fontWeight: "700", color: theme.text }} numberOfLines={1}>{t.value}</Text>
+            <Text style={[s.muted, { color: t.tab === "orders" && pending ? "#EA580C" : theme.textSecondary }]} numberOfLines={1}>{t.sub}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ================= Delivery charges =================
+export function AdminDeliveryTab() {
+  const { theme } = useTheme();
+  const L = useL();
+  const { data, loading, error, load } = useLoader<any>(() => apiGet("/api/admin/manage/delivery"), []);
+  const [f, setF] = useState<Record<string, string>>({});
+  const [express, setExpress] = useState(true);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (data) {
+      setF({ insideDhaka: String(data.insideDhaka), outsideDhaka: String(data.outsideDhaka), express: String(data.express), freeOver: String(data.freeOver) });
+      setExpress(data.expressEnabled !== false);
+    }
+  }, [data]);
+  const fields: [string, string, string][] = [
+    ["insideDhaka", L("Inside Dhaka (৳)", "ঢাকার ভিতরে (৳)"), L("Home delivery charge inside Dhaka", "ঢাকার ভিতরে হোম ডেলিভারি চার্জ")],
+    ["outsideDhaka", L("Outside Dhaka (৳)", "ঢাকার বাইরে (৳)"), L("Home delivery charge outside Dhaka", "ঢাকার বাইরে হোম ডেলিভারি চার্জ")],
+    ["express", L("Express, inside Dhaka (৳)", "এক্সপ্রেস, ঢাকার ভিতরে (৳)"), L("Next-day delivery charge", "পরের দিন ডেলিভারি চার্জ")],
+    ["freeOver", L("Free delivery over (৳)", "এর বেশি হলে ফ্রি ডেলিভারি (৳)"), L("0 turns free delivery off", "০ দিলে ফ্রি ডেলিভারি বন্ধ")],
+  ];
+  return (
+    <ScrollView style={s.fill} contentContainerStyle={s.pad}>
+      <State loading={loading} error={error} empty={false} emptyText="" />
+      {data ? (
+        <Box>
+          <Text style={[s.title, { color: theme.text }]}>{L("Delivery charges", "ডেলিভারি চার্জ")}</Text>
+          <Text style={[s.muted, { color: theme.textSecondary }]}>{L("Checkout uses these for every order. Set your own rates.", "চেকআউটে প্রতিটি অর্ডারে এগুলো ব্যবহার হয়। নিজের রেট দিন।")}</Text>
+          {fields.map(([k, label, hint]) => (
+            <View key={k}>
+              <Text style={[s.label, { color: theme.text }]}>{label}</Text>
+              <TextInput testID={`delivery-${k}`} value={f[k] ?? ""} onChangeText={(v) => setF({ ...f, [k]: v.replace(/[^0-9]/g, "") })} keyboardType="number-pad"
+                style={[s.input, { color: theme.text, borderColor: theme.cardBorder }]} placeholder={hint} placeholderTextColor={theme.textSecondary} />
+            </View>
+          ))}
+          <View style={[s.rowTop, { marginTop: 12 }]}>
+            <Text style={[s.muted, { color: theme.text, flex: 1 }]}>{L("Offer express delivery", "এক্সপ্রেস ডেলিভারি চালু")}</Text>
+            <Switch value={express} onValueChange={setExpress} testID="delivery-express-enabled" />
+          </View>
+          {msg ? <Text style={[s.muted, { color: theme.primary, marginTop: 8 }]}>{msg}</Text> : null}
+          <View style={{ marginTop: 12 }}>
+            <SmallBtn testID="delivery-save" label={busy ? L("Saving…", "সেভ হচ্ছে…") : L("Save charges", "চার্জ সেভ করুন")} icon="save" color={theme.primary} disabled={busy}
+              onPress={async () => {
+                try {
+                  setBusy(true);
+                  await apiPut("/api/admin/manage/delivery", { ...Object.fromEntries(Object.entries(f).map(([k, v]) => [k, Number(v || 0)])), expressEnabled: express });
+                  setMsg(L("Saved. Checkout uses the new charges now.", "সেভ হয়েছে। চেকআউটে নতুন চার্জ চালু।"));
+                  await load();
+                } catch (e: any) { setMsg(e?.message); } finally { setBusy(false); }
+              }} />
+          </View>
+        </Box>
+      ) : null}
     </ScrollView>
   );
 }

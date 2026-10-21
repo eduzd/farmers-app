@@ -13,8 +13,10 @@ import {
   useWindowDimensions,
   Platform,
   RefreshControl,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { apiGet, apiPost, apiPut, apiDelete, uploadImage, mediaUrl } from "@/lib/api";
@@ -28,10 +30,30 @@ type Store = {
   themeColor: string; phone: string; location: string; category: string; status: string; statusReason: string;
 };
 type Stats = { products: number; outOfStock: number; orders: number; byStatus: Record<string, number>; revenue: number };
-type Product = { id: string; name: string; price: number; unit?: string; quantity?: number; category?: string; description?: string; image?: string; active?: boolean; hidden?: boolean };
+type ProductOption = { name: string; choices: { label: string; extra: number }[] };
+type Product = { id: string; name: string; price: number; unit?: string; quantity?: number; minOrder?: number; options?: ProductOption[]; category?: string; description?: string; image?: string; active?: boolean; hidden?: boolean };
+type OptionDraft = { name: string; choices: string };
+const optionsToDraft = (o?: ProductOption[]): OptionDraft[] =>
+  (o || []).map((g) => ({ name: g.name, choices: g.choices.map((c) => (c.extra ? `${c.label} +${c.extra}` : c.label)).join(", ") }));
+/** "1 kg, 5 kg +350" -> [{label:"1 kg",extra:0},{label:"5 kg",extra:350}] */
+const draftToOptions = (d: OptionDraft[]): ProductOption[] =>
+  d
+    .map((g) => ({
+      name: g.name.trim(),
+      choices: g.choices
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean)
+        .map((c) => {
+          const m = c.match(/^(.*?)\s*\+\s*(\d+)\s*$/);
+          return m ? { label: m[1].trim(), extra: Number(m[2]) } : { label: c, extra: 0 };
+        }),
+    }))
+    .filter((g) => g.name && g.choices.length);
 type Order = {
   id: string; total: number; itemCount: number; paymentMethod: string; status: string; createdAt: string;
-  items: { name?: string; price?: number; quantity?: number }[];
+  items: { name?: string; price?: number; quantity?: number; options?: Record<string, string> }[];
+  checkout?: { contactName?: string; contactPhone?: string; altPhone?: string | null; zone?: string | null; deliveryMethod?: string; address?: string; district?: string; division?: string; deliveryDate?: string; timeSlot?: string; notes?: string; deliveryFee?: number } | null;
   shippingAddress?: { fullName?: string; name?: string; address?: string; city?: string; phone?: string } | null;
 };
 type Section = "dashboard" | "products" | "orders" | "store" | "account";
@@ -39,6 +61,10 @@ type Section = "dashboard" | "products" | "orders" | "store" | "account";
 const taka = (n: number) => `৳${Math.round(Number(n) || 0).toLocaleString("en-IN")}`;
 
 export default function SellerAppScreen() {
+  const navigation = useNavigation<any>();
+  // Opened from the Farmers app (Profile > Seller Hub, admin overview): offer a way back.
+  const canBack = getAppVariant() !== "seller" && navigation?.canGoBack?.();
+  const goBack = () => navigation.goBack();
   const { language } = useI18n();
   const L = (en: string, bn: string) => (language === "bn" ? bn : en);
   const { user, logout } = useAuthStore();
@@ -92,7 +118,7 @@ export default function SellerAppScreen() {
   }
 
   if (!store) {
-    return <CreateStore L={L} error={error} onCreated={() => { setLoading(true); load(); }} userName={user?.name || ""} onLogout={logout} />;
+    return <CreateStore L={L} error={error} onCreated={() => { setLoading(true); load(); }} userName={user?.name || ""} onLogout={logout} onBack={canBack ? goBack : undefined} />;
   }
 
   const suspended = store.status !== "active";
@@ -148,9 +174,20 @@ export default function SellerAppScreen() {
                 {n.badge ? <View style={st.badge}><Text style={st.badgeText}>{n.badge}</Text></View> : null}
               </Pressable>
             ))}
+            {canBack ? (
+              <Pressable testID="seller-back" onPress={goBack} style={[st.sideItem, { marginTop: "auto" }]}>
+                <Feather name="arrow-left" size={17} color={S.sidebarText} />
+                <Text style={st.sideLabel}>{L("Back to Farmers", "ফার্মার্সে ফিরুন")}</Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : (
           <View style={st.topbar}>
+            {canBack ? (
+              <Pressable testID="seller-back" onPress={goBack} hitSlop={10} accessibilityLabel={L("Back to Farmers", "ফার্মার্সে ফিরুন")}>
+                <Feather name="arrow-left" size={20} color={S.text} />
+              </Pressable>
+            ) : null}
             <View style={st.brandMarkSm}><Feather name="briefcase" size={14} color="#fff" /></View>
             <View style={{ flex: 1 }}>
               <Text style={st.topTitle}>{NAV.find((n) => n.id === section)?.label}</Text>
@@ -259,7 +296,7 @@ function ImageField({ label, value, onChange, L, testID, disabled }: { label: st
 }
 
 // ---------------- create store (seller sign-up) ----------------
-function CreateStore({ L, onCreated, error, userName, onLogout }: { L: any; onCreated: () => void; error: string | null; userName: string; onLogout: () => void }) {
+function CreateStore({ L, onCreated, error, userName, onLogout, onBack }: { L: any; onCreated: () => void; error: string | null; userName: string; onLogout: () => void; onBack?: () => void }) {
   const [f, setF] = useState({ name: "", category: "vegetables", location: "", phone: "", tagline: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(error);
@@ -268,6 +305,11 @@ function CreateStore({ L, onCreated, error, userName, onLogout }: { L: any; onCr
     <SafeAreaView style={[st.fill, { backgroundColor: S.bg }]}>
       <ScrollView contentContainerStyle={[st.content, { maxWidth: 560, width: "100%", alignSelf: "center" }]}>
         <View style={[st.brandRow, { marginBottom: 20 }]}>
+          {onBack ? (
+            <Pressable testID="seller-back" onPress={onBack} hitSlop={10} accessibilityLabel={L("Back to Farmers", "ফার্মার্সে ফিরুন")} style={{ marginRight: 4 }}>
+              <Feather name="arrow-left" size={20} color={S.text} />
+            </Pressable>
+          ) : null}
           <View style={st.brandMark}><Feather name="briefcase" size={16} color="#fff" /></View>
           <Text style={[st.brand, { color: S.text }]}>Seller Hub</Text>
         </View>
@@ -354,7 +396,7 @@ function Dashboard({ L, store, stats, orders, products, go, wide }: { L: any; st
 }
 
 // ---------------- products ----------------
-const emptyProduct = { name: "", price: "", unit: "kg", quantity: "", category: "vegetables", description: "", image: "" };
+const emptyProduct = { name: "", price: "", unit: "kg", quantity: "", minOrder: "1", category: "vegetables", description: "", image: "" };
 function Products({ L, products, disabled, reload, flash, wide }: { L: any; products: Product[]; disabled: boolean; reload: () => Promise<void>; flash: (m: string) => void; wide: boolean }) {
   const [editing, setEditing] = useState<Product | null | "new">(null);
   const [q, setQ] = useState("");
@@ -411,7 +453,8 @@ function Products({ L, products, disabled, reload, flash, wide }: { L: any; prod
 }
 
 function ProductForm({ L, product, onClose, onSaved }: { L: any; product: Product | null; onClose: () => void; onSaved: () => void }) {
-  const [f, setF] = useState(() => (product ? { name: product.name || "", price: String(product.price ?? ""), unit: product.unit || "kg", quantity: String(product.quantity ?? ""), category: product.category || "other", description: product.description || "", image: product.image || "" } : emptyProduct));
+  const [f, setF] = useState(() => (product ? { name: product.name || "", price: String(product.price ?? ""), unit: product.unit || "kg", quantity: String(product.quantity ?? ""), minOrder: String(product.minOrder ?? 1), category: product.category || "other", description: product.description || "", image: product.image || "" } : emptyProduct));
+  const [opts, setOpts] = useState<OptionDraft[]>(() => optionsToDraft(product?.options));
   const [active, setActive] = useState(product?.active !== false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -420,7 +463,7 @@ function ProductForm({ L, product, onClose, onSaved }: { L: any; product: Produc
     try {
       setBusy(true);
       setErr(null);
-      const body = { ...f, price: Number(f.price), quantity: Number(f.quantity || 0), active };
+      const body = { ...f, price: Number(f.price), quantity: Number(f.quantity || 0), minOrder: Math.max(1, Number(f.minOrder || 1)), options: draftToOptions(opts), active };
       if (product) await apiPut(`/api/seller/products/${product.id}`, body);
       else await apiPost("/api/seller/products", body);
       onSaved();
@@ -442,6 +485,17 @@ function ProductForm({ L, product, onClose, onSaved }: { L: any; product: Produc
               <View style={{ flex: 1 }}><Field label={L("Unit", "একক")} value={f.unit} onChange={set("unit")} placeholder="kg" /></View>
               <View style={{ flex: 1 }}><Field testID="product-qty" label={L("Stock", "স্টক")} value={f.quantity} onChange={set("quantity")} keyboard="numeric" placeholder="100" /></View>
             </View>
+            <Field testID="product-min-order" label={L("Minimum order", "সর্বনিম্ন অর্ডার")} value={f.minOrder} onChange={set("minOrder")} keyboard="numeric" placeholder="1" />
+            <Text style={st.label}>{L("Options buyers choose (size, weight, grade…)", "ক্রেতার পছন্দের অপশন (সাইজ, ওজন, গ্রেড…)")}</Text>
+            <Text style={st.rowSub}>{L("Separate choices with commas. Add +amount for a choice that costs more per unit, e.g. 1 kg, 5 kg +350", "কমা দিয়ে আলাদা করুন। বেশি দামের জন্য +টাকা লিখুন, যেমন 1 kg, 5 kg +350")}</Text>
+            {opts.map((g, i) => (
+              <View key={i} style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }}>
+                <View style={{ flex: 1 }}><Field testID={`option-name-${i}`} label={L("Option", "অপশন")} value={g.name} onChange={(v) => setOpts((o) => o.map((x, j) => (j === i ? { ...x, name: v } : x)))} placeholder={L("Weight", "ওজন")} /></View>
+                <View style={{ flex: 2 }}><Field testID={`option-choices-${i}`} label={L("Choices", "পছন্দ")} value={g.choices} onChange={(v) => setOpts((o) => o.map((x, j) => (j === i ? { ...x, choices: v } : x)))} placeholder="1 kg, 5 kg +350" /></View>
+                <Pressable onPress={() => setOpts((o) => o.filter((_, j) => j !== i))} hitSlop={8} style={{ paddingBottom: 14 }} testID={`option-remove-${i}`}><Feather name="trash-2" size={18} color={S.danger} /></Pressable>
+              </View>
+            ))}
+            {opts.length < 5 ? <View style={{ alignItems: "flex-start", marginTop: 6 }}><Btn small kind="ghost" icon="plus" testID="add-option" label={L("Add option", "অপশন যোগ করুন")} onPress={() => setOpts((o) => [...o, { name: "", choices: "" }])} /></View> : null}
             <Text style={st.label}>{L("Category", "ক্যাটাগরি")}</Text>
             <View style={st.chips}>
               {CATEGORIES.map((c) => (
@@ -504,7 +558,7 @@ function Orders({ L, orders, reload, flash }: { L: any; orders: Order[]; reload:
             </View>
             {(o.items || []).map((it, i) => (
               <View key={i} style={st.itemLine}>
-                <Text style={[st.td, { flex: 1 }]} numberOfLines={1}>{it.name || "Item"} × {it.quantity || 1}</Text>
+                <Text style={[st.td, { flex: 1 }]} numberOfLines={2}>{it.name || "Item"}{it.options ? ` (${Object.entries(it.options).map(([k, v]) => `${k}: ${v}`).join(", ")})` : ""} × {it.quantity || 1}</Text>
                 <Text style={st.td}>{taka((it.price || 0) * (it.quantity || 1))}</Text>
               </View>
             ))}
@@ -512,7 +566,27 @@ function Orders({ L, orders, reload, flash }: { L: any; orders: Order[]; reload:
               <Text style={[st.rowTitle, { flex: 1 }]}>{L("Total", "মোট")}</Text>
               <Text style={st.rowMoney}>{taka(o.total)}</Text>
             </View>
-            {a && (a.address || a.city) ? (
+            {o.checkout?.contactPhone ? (
+              <View style={{ marginTop: 8 }} testID={`seller-order-contact-${o.id}`}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <Text style={st.rowSub}><Feather name="user" size={12} color={S.muted} /> {o.checkout.contactName} · {o.checkout.contactPhone}{o.checkout.altPhone ? ` / ${o.checkout.altPhone}` : ""}</Text>
+                  <Pressable testID={`call-buyer-${o.id}`} onPress={() => Linking.openURL(`tel:${o.checkout?.contactPhone}`)} hitSlop={6}
+                    style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, backgroundColor: S.primary + "14" }}>
+                    <Feather name="phone-call" size={12} color={S.primary} />
+                    <Text style={{ color: S.primary, fontSize: 12, fontWeight: "600" }}>{L("Call buyer", "ক্রেতাকে কল")}</Text>
+                  </Pressable>
+                </View>
+                <Text style={st.rowSub}>
+                  <Feather name="truck" size={12} color={S.muted} />{" "}
+                  {o.checkout.deliveryMethod === "pickup" ? L("Buyer picks up", "ক্রেতা সংগ্রহ করবেন") : o.checkout.zone === "inside_dhaka" ? L("Inside Dhaka", "ঢাকার ভিতরে") : L("Outside Dhaka", "ঢাকার বাইরে")}
+                  {o.checkout.deliveryMethod === "express" ? ` · ${L("Express", "এক্সপ্রেস")}` : ""}
+                  {o.checkout.address ? ` · ${[o.checkout.address, o.checkout.district].filter(Boolean).join(", ")}` : ""}
+                  {o.checkout.deliveryDate ? ` · ${o.checkout.deliveryDate} ${o.checkout.timeSlot || ""}` : ""}
+                </Text>
+                {o.checkout.notes ? <Text style={st.rowSub}>{L("Note", "নোট")}: {o.checkout.notes}</Text> : null}
+              </View>
+            ) : null}
+            {!o.checkout?.contactPhone && a && (a.address || a.city) ? (
               <Text style={[st.rowSub, { marginTop: 6 }]}>
                 <Feather name="map-pin" size={12} color={S.muted} /> {a.fullName || a.name || ""} · {[a.address, a.city].filter(Boolean).join(", ")} {a.phone ? `· ${a.phone}` : ""}
               </Text>

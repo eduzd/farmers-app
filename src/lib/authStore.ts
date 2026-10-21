@@ -4,6 +4,16 @@ import { User, saveUser, getUser, clearUser, setOnboardingComplete, isOnboarding
 import { getApiUrl } from "./query-client";
 import { useCommunityStore } from "./communityStore";
 import { registerForPushNotificationsAsync, savePushTokenToServer } from "./notificationService";
+import {
+  FirebaseStep,
+  firebaseCheckVerified,
+  firebaseGoogleSignIn,
+  firebaseResendVerification,
+  firebaseSignIn,
+  firebaseSignOut,
+  firebaseSignUp,
+  isBadCredentials,
+} from "./firebaseSignIn";
 
 const TOKEN_KEY = "auth_token";
 
@@ -36,6 +46,16 @@ interface AuthConfig {
   googleClientId: string | null;
 }
 
+/** Result of a Firebase sign-in step. firebaseError is passed to
+ * firebaseErrorMessage() by the screen so it's shown in the right language. */
+export interface FirebaseAuthResult {
+  success: boolean;
+  error?: string;
+  firebaseError?: any;
+  needsVerification?: boolean;
+  email?: string;
+}
+
 interface SignupResult {
   success: boolean;
   error?: string;
@@ -63,6 +83,11 @@ interface AuthState {
   verifyOtp: (email: string, code: string, password: string, name: string, username: string, communityIds?: string[]) => Promise<{ success: boolean; error?: string }>;
   resendOtp: (email: string) => Promise<{ success: boolean; error?: string; code?: string }>;
   loginWithGoogle: (idToken: string, accessToken?: string) => Promise<{ success: boolean; error?: string }>;
+  signInWithEmail: (email: string, password: string) => Promise<FirebaseAuthResult>;
+  signUpWithEmail: (name: string, email: string, password: string) => Promise<FirebaseAuthResult>;
+  confirmEmailVerified: () => Promise<FirebaseAuthResult>;
+  resendVerificationEmail: () => Promise<FirebaseAuthResult>;
+  signInWithGoogle: () => Promise<FirebaseAuthResult>;
   loginAsGuest: () => Promise<boolean>;
   logout: () => Promise<void>;
   setUserRole: (role: User["role"]) => Promise<void>;
@@ -83,6 +108,82 @@ const WELFARE_NUMBER_KEY = "welfare_member_number";
 const SUMMIT_MEMBER_KEY = "summit_member";
 const SUMMIT_NUMBER_KEY = "summit_member_number";
 const APPLICATIONS_KEY = "membership_applications";
+
+/** Trade a verified Firebase ID token for the app's own session token. */
+async function exchangeFirebaseToken(
+  step: FirebaseStep,
+  nameHint: string | undefined,
+  set: (partial: Partial<AuthState>) => void,
+): Promise<FirebaseAuthResult> {
+  if (step.kind === "needs_verification") {
+    return { success: false, needsVerification: true, email: step.email };
+  }
+
+  const response = await fetch(`${getApiUrl()}/api/auth/firebase`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken: step.idToken, name: nameHint || step.name || undefined }),
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    if (data.code === "email_not_verified") {
+      return { success: false, needsVerification: true };
+    }
+    return { success: false, error: data.error || "Sign-in failed" };
+  }
+
+  const { token, user: apiUser, memberships, defaultCommunityId, isNewUser } = data;
+  await AsyncStorage.setItem(TOKEN_KEY, token);
+
+  const displayName: string = apiUser.name || apiUser.email.split("@")[0];
+  const user: User = {
+    id: apiUser.id,
+    email: apiUser.email,
+    name: displayName,
+    initials: displayName
+      .split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .substring(0, 2),
+    role: apiUser.role || "farmer",
+    username: apiUser.username,
+    verified: true,
+    country: "BD",
+    language: "en",
+    avatar: apiUser.avatar,
+    createdAt: apiUser.createdAt || new Date().toISOString(),
+  } as User;
+
+  await saveUser(user);
+  // New accounts go through role/profile onboarding; returning ones don't.
+  if (!isNewUser) await setOnboardingComplete();
+
+  useCommunityStore.getState().setMemberships(memberships || []);
+  if (defaultCommunityId) {
+    useCommunityStore.getState().setActiveCommunity(defaultCommunityId);
+  }
+
+  set({
+    user,
+    token,
+    isAuthenticated: true,
+    isSuperAdmin: apiUser.isSuperAdmin || false,
+    onboardingComplete: !isNewUser,
+  });
+
+  // The app session is all we need from here; drop the Firebase one.
+  firebaseSignOut();
+
+  registerForPushNotificationsAsync().then((pushToken) => {
+    if (pushToken && user.id) {
+      savePushTokenToServer(user.id, pushToken);
+    }
+  });
+
+  return { success: true };
+}
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -388,6 +489,69 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  signInWithEmail: async (email: string, password: string) => {
+    let step: FirebaseStep;
+    try {
+      step = await firebaseSignIn(email, password);
+    } catch (error: any) {
+      if (isBadCredentials(error)) {
+        // Accounts made before Firebase sign-in still use the old server login.
+        const legacy = await get().login(email, password);
+        if (legacy.success) return { success: true };
+      }
+      return { success: false, firebaseError: error };
+    }
+    try {
+      return await exchangeFirebaseToken(step, undefined, set);
+    } catch (error: any) {
+      return { success: false, error: error?.message || "Sign-in failed" };
+    }
+  },
+
+  signUpWithEmail: async (name: string, email: string, password: string) => {
+    try {
+      const step = await firebaseSignUp(name, email, password);
+      return step.kind === "needs_verification"
+        ? { success: false, needsVerification: true, email: step.email }
+        : await exchangeFirebaseToken(step, name, set);
+    } catch (error: any) {
+      return { success: false, firebaseError: error };
+    }
+  },
+
+  confirmEmailVerified: async () => {
+    try {
+      const step = await firebaseCheckVerified();
+      if (!step) return { success: false, error: "session_expired" };
+      return await exchangeFirebaseToken(step, undefined, set);
+    } catch (error: any) {
+      return { success: false, firebaseError: error };
+    }
+  },
+
+  resendVerificationEmail: async () => {
+    try {
+      const sent = await firebaseResendVerification();
+      return sent ? { success: true } : { success: false, error: "session_expired" };
+    } catch (error: any) {
+      return { success: false, firebaseError: error };
+    }
+  },
+
+  signInWithGoogle: async () => {
+    let step: FirebaseStep;
+    try {
+      step = await firebaseGoogleSignIn();
+    } catch (error: any) {
+      return { success: false, firebaseError: error };
+    }
+    try {
+      return await exchangeFirebaseToken(step, undefined, set);
+    } catch (error: any) {
+      return { success: false, error: error?.message || "Sign-in failed" };
+    }
+  },
+
   loginAsGuest: async () => {
     const user: User = {
       id: "guest-" + Date.now().toString(),
@@ -416,6 +580,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    await firebaseSignOut();
     await clearUser();
     await AsyncStorage.removeItem(TOKEN_KEY);
     useCommunityStore.getState().clearCommunityState();

@@ -6,7 +6,7 @@ import { db, dbReady } from "./db";
 import { config } from "./config";
 import { SEED_EXPERTS, SEED_EVENTS, SEED_LISTINGS } from "./catalogSeed";
 import { onOrderCreated, ensureFeatures } from "./featureRoutes";
-import { quoteOrder, takeStock, ensureCheckout } from "./checkoutRoutes";
+import { quoteOrder, takeStock, ensureCheckout, validateCheckout } from "./checkoutRoutes";
 
 /**
  * Server-backed catalog for content that used to be hard-coded in the app.
@@ -215,16 +215,28 @@ export function registerCatalogRoutes(app: Express) {
       let checkout: any = null;
       if (b.checkout && typeof b.checkout === "object") {
         // Pass 5 checkout: the server works out the totals and checks stock.
-        const q = await quoteOrder({ items: b.items, deliveryMethod: b.checkout.deliveryMethod, division: b.checkout.division, couponCode: b.checkout.couponCode });
+        const q = await quoteOrder({ items: b.items, deliveryMethod: b.checkout.deliveryMethod, division: b.checkout.division, zone: b.checkout.zone, couponCode: b.checkout.couponCode });
+        if (!q.lines.length) return res.status(400).json({ error: "Your cart is empty" });
+        if (q.itemErrors.length) return res.status(400).json({ error: q.itemErrors[0].error, itemErrors: q.itemErrors });
         if (q.stockErrors.length) {
           const e = q.stockErrors[0];
           return res.status(409).json({ error: `Only ${e.available} left of ${e.name}`, stockErrors: q.stockErrors });
         }
+        if (b.checkout.deliveryMethod === "express" && q.deliveryMethod !== "express") return res.status(400).json({ error: q.methodError || "Express delivery isn't available here" });
+        const v = validateCheckout(b.checkout, q.deliveryMethod);
+        if (v.error) return res.status(400).json({ error: v.error });
         total = q.total;
-        if (Array.isArray(b.items)) b.items = b.items.map((it: any, i: number) => ({ ...it, price: q.lines[i]?.price ?? it.price, name: it.name || q.lines[i]?.name }));
-        const s = (v: any, n = 300) => String(v ?? "").slice(0, n);
+        if (Array.isArray(b.items))
+          b.items = b.items.map((it: any, i: number) => ({
+            ...it, price: q.lines[i]?.price ?? it.price, name: q.lines[i]?.name || it.name, quantity: q.lines[i]?.quantity ?? it.quantity,
+            ...(q.lines[i]?.options ? { options: q.lines[i].options } : {}),
+          }));
+        b.itemCount = q.lines.reduce((n: number, l: any) => n + l.quantity, 0);
+        const s = (v: any, n = 300) => String(v ?? "").trim().slice(0, n);
         checkout = {
-          deliveryMethod: q.deliveryMethod, division: s(b.checkout.division, 40), district: s(b.checkout.district, 60), upazila: s(b.checkout.upazila, 60),
+          deliveryMethod: q.deliveryMethod, zone: q.deliveryMethod === "pickup" ? null : q.zone,
+          contactName: s(b.checkout.contactName, 100), contactPhone: v.contactPhone, altPhone: v.altPhone,
+          address: s(b.checkout.address, 300), division: s(b.checkout.division, 40), district: s(b.checkout.district, 60), upazila: s(b.checkout.upazila, 60),
           deliveryDate: s(b.checkout.deliveryDate, 20), timeSlot: s(b.checkout.timeSlot, 40), notes: s(b.checkout.notes, 500),
           subtotal: q.subtotal, deliveryFee: q.deliveryFee, discount: q.discount, coupon: q.coupon?.code || null, total: q.total,
         };
@@ -240,7 +252,7 @@ export function registerCatalogRoutes(app: Express) {
         await takeStock(Array.isArray(b.items) ? b.items : []);
       }
       await onOrderCreated(id, userFrom(req), Array.isArray(b.items) ? b.items : [], b.shippingAddress || null);
-      res.status(201).json({ success: true, id, total, checkout });
+      res.status(201).json({ success: true, id, total, checkout, items: Array.isArray(b.items) ? b.items : [] });
     } catch (e: any) {
       console.error("[shop-orders]", e?.message);
       res.status(500).json({ error: "Failed to record order" });

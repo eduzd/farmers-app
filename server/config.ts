@@ -35,6 +35,12 @@ export const config = {
   adminEmail: (process.env.ADMIN_EMAIL || "").trim(),
   adminPassword: process.env.ADMIN_PASSWORD || "",
   databaseUrl: process.env.DATABASE_URL || "",
+  /**
+   * Firebase project whose ID tokens the server accepts (public value).
+   * Set FIREBASE_PROJECT_ID="" to turn Firebase sign-in off and the old
+   * server-side signup back on.
+   */
+  firebaseProjectId: (process.env.FIREBASE_PROJECT_ID ?? "farms-31bf9").trim(),
   /** Extra allowed browser origins, comma separated. */
   corsOrigins: (process.env.CORS_ORIGINS || "")
     .split(",")

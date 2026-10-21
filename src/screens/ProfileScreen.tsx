@@ -341,6 +341,48 @@ export default function ProfileScreen() {
 
         <View style={[styles.divider, { backgroundColor: theme.inputBorder || theme.cardBorder }]} />
 
+        {/* Seller Hub: products, orders with buyer contact, store page */}
+        <Pressable
+          testID="profile-seller-hub"
+          style={({ pressed }) => [styles.menuItem, pressed && styles.menuPressed]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            navigation.navigate("SellerApp" as any);
+          }}
+        >
+          <View style={styles.menuLeft}>
+            <Feather name="briefcase" size={20} color={theme.iconDefault || theme.text} />
+            <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
+              {language === "bn" ? "সেলার হাব" : "Seller Hub"}
+            </ThemedText>
+          </View>
+          <Feather name="chevron-right" size={20} color={theme.iconSecondary || theme.textSecondary} />
+        </Pressable>
+
+        {isSuperAdmin ? (
+          <>
+            <View style={[styles.divider, { backgroundColor: theme.inputBorder || theme.cardBorder }]} />
+            <Pressable
+              testID="profile-admin-dashboard"
+              style={({ pressed }) => [styles.menuItem, pressed && styles.menuPressed]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                navigation.navigate("AdminDashboard");
+              }}
+            >
+              <View style={styles.menuLeft}>
+                <Feather name="shield" size={20} color={theme.iconDefault || theme.text} />
+                <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
+                  {language === "bn" ? "অ্যাডমিন ড্যাশবোর্ড" : "Admin dashboard"}
+                </ThemedText>
+              </View>
+              <Feather name="chevron-right" size={20} color={theme.iconSecondary || theme.textSecondary} />
+            </Pressable>
+          </>
+        ) : null}
+
+        <View style={[styles.divider, { backgroundColor: theme.inputBorder || theme.cardBorder }]} />
+
         {/* Delivery Address */}
         <Pressable
           style={({ pressed }) => [

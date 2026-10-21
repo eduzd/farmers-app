@@ -33,6 +33,7 @@ import {
   StatCardSkeleton,
   UserRowSkeleton,
 } from "@/components/admin";
+import { AdminOrdersTab, AdminStoresTab, AdminCatalogTab, AdminNotifyTab, AdminUserSheet, AdminDeliveryTab, AdminMarketplacePanel } from "@/components/admin/ManageTabs";
 
 type AdminTab =
   | "overview"
@@ -42,7 +43,12 @@ type AdminTab =
   | "announcements"
   | "settings"
   | "analytics"
-  | "logs";
+  | "logs"
+  | "orders"
+  | "stores"
+  | "listings"
+  | "notify"
+  | "delivery";
 
 interface DashboardStats {
   totalUsers: number;
@@ -98,6 +104,11 @@ interface AppSettings {
 const TABS: { id: AdminTab; label: string; labelBn: string; icon: keyof typeof Feather.glyphMap }[] = [
   { id: "overview", label: "Overview", labelBn: "ওভারভিউ", icon: "home" },
   { id: "users", label: "Users", labelBn: "ব্যবহারকারী", icon: "users" },
+  { id: "orders", label: "Orders", labelBn: "অর্ডার", icon: "shopping-bag" },
+  { id: "stores", label: "Sellers", labelBn: "বিক্রেতা", icon: "briefcase" },
+  { id: "listings", label: "Listings", labelBn: "লিস্টিং", icon: "package" },
+  { id: "delivery", label: "Delivery", labelBn: "ডেলিভারি", icon: "truck" },
+  { id: "notify", label: "Notify", labelBn: "নোটিফাই", icon: "send" },
   { id: "content", label: "Content", labelBn: "কনটেন্ট", icon: "file-text" },
   { id: "reports", label: "Reports", labelBn: "রিপোর্ট", icon: "flag" },
   { id: "announcements", label: "Announce", labelBn: "ঘোষণা", icon: "bell" },
@@ -113,6 +124,7 @@ export default function AdminDashboardScreen() {
   const navigation = useNavigation();
 
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [manageUserId, setManageUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   
@@ -472,6 +484,11 @@ export default function AdminDashboardScreen() {
         {language === "bn" ? "কন্ট্রোল টাওয়ার" : "Control Tower"}
       </ThemedText>
 
+      <AdminMarketplacePanel
+        onOpen={(tab) => setActiveTab(tab)}
+        onOpenSellerHub={() => (navigation as any).navigate("SellerApp")}
+      />
+
       <View style={styles.statsGrid}>
         {isLoading && !stats ? (
           <>
@@ -616,6 +633,13 @@ export default function AdminDashboardScreen() {
                   {item.email}
                 </ThemedText>
               </View>
+              <Pressable
+                testID={`manage-user-${item.id}`}
+                style={[styles.actionButton, { backgroundColor: theme.primary + "20", marginRight: 6 }]}
+                onPress={() => setManageUserId(item.id)}
+              >
+                <Feather name="sliders" size={16} color={theme.primary} />
+              </Pressable>
               {!item.isSuperAdmin && (
                 <Pressable
                   style={[styles.actionButton, { backgroundColor: item.status === "banned" ? "#16A34A20" : "#DC262620" }]}
@@ -1025,6 +1049,16 @@ export default function AdminDashboardScreen() {
         return renderAnalyticsTab();
       case "logs":
         return renderLogsTab();
+      case "orders":
+        return <AdminOrdersTab />;
+      case "stores":
+        return <AdminStoresTab />;
+      case "listings":
+        return <AdminCatalogTab />;
+      case "notify":
+        return <AdminNotifyTab />;
+      case "delivery":
+        return <AdminDeliveryTab />;
       default:
         return renderOverviewTab();
     }
@@ -1094,6 +1128,9 @@ export default function AdminDashboardScreen() {
       </ScrollView>
 
       {renderActiveTab()}
+      {manageUserId ? (
+        <AdminUserSheet userId={manageUserId} onClose={() => setManageUserId(null)} onChanged={async () => { const t = await getToken(); if (t) loadUsers(t); }} />
+      ) : null}
     </SafeAreaView>
   );
 }

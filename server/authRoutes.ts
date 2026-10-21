@@ -2,7 +2,8 @@ import { config } from "./config";
 import { Router, Request, Response } from "express";
 import { db } from "./db";
 import { users, verificationCodes, userOAuthProviders, appSettings, communityMembers, userSettings, communities } from "@shared/schema";
-import { eq, and, gt, desc } from "drizzle-orm";
+import { eq, and, gt, desc, sql } from "drizzle-orm";
+import { verifyFirebaseIdToken, FirebaseTokenError } from "./firebaseAuth";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -145,6 +146,9 @@ async function requireSuperAdmin(req: Request, res: Response, next: any) {
 
 // Signup - Step 1: Register and send OTP
 router.post("/signup", async (req, res) => {
+  if (config.firebaseProjectId) {
+    return res.status(410).json({ error: "Sign-up now uses Firebase. Please update the app.", code: "use_firebase" });
+  }
   if (!db) {
     return res.status(500).json({ error: "Database not available" });
   }
@@ -204,17 +208,16 @@ router.post("/signup", async (req, res) => {
       });
     }
 
-    // If verification not enabled, create user directly
-    // Check if this is admin email
-    const isAdminEmail = !!ADMIN_EMAIL && email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-    
+    // If verification not enabled, create user directly.
+    // Nobody proved they own this email, so it never becomes super admin here
+    // (otherwise anyone could sign up first with ADMIN_EMAIL).
     const [newUser] = await db.insert(users).values({
       email,
       username: username || email.split("@")[0],
       password: hashedPassword,
       name: name || email.split("@")[0],
       verified: false,
-      isSuperAdmin: isAdminEmail,
+      isSuperAdmin: false,
     }).returning();
 
     // Add to default community if communityIds provided
@@ -261,6 +264,9 @@ router.post("/signup", async (req, res) => {
 
 // Signup - Step 2: Verify OTP and complete registration
 router.post("/verify-otp", async (req, res) => {
+  if (config.firebaseProjectId) {
+    return res.status(410).json({ error: "Sign-up now uses Firebase. Please update the app.", code: "use_firebase" });
+  }
   if (!db) {
     return res.status(500).json({ error: "Database not available" });
   }
@@ -367,6 +373,9 @@ router.post("/verify-otp", async (req, res) => {
 
 // Resend OTP
 router.post("/resend-otp", async (req, res) => {
+  if (config.firebaseProjectId) {
+    return res.status(410).json({ error: "Sign-up now uses Firebase. Please update the app.", code: "use_firebase" });
+  }
   if (!db) {
     return res.status(500).json({ error: "Database not available" });
   }
@@ -519,6 +528,11 @@ router.post("/google", async (req, res) => {
       return res.status(401).json({ error: "Token not intended for this app" });
     }
 
+    // Only link or create accounts for emails Google has verified.
+    if (googleUser.email_verified !== true && googleUser.email_verified !== "true") {
+      return res.status(403).json({ error: "Google account email is not verified" });
+    }
+
     const { sub: googleId, email, name, picture } = googleUser;
 
     // Check if OAuth provider already linked
@@ -651,6 +665,192 @@ router.post("/google", async (req, res) => {
   }
 });
 
+// ========================================
+// FIREBASE SIGN-IN (email/password + Google)
+// ========================================
+// The app signs in with Firebase, then trades the Firebase ID token for the
+// app's own session token here. Every other route keeps using that session
+// token, so ownership checks (calculator records, orders, admin) don't change.
+//
+// Account rules:
+// - Only verified emails are accepted (Google emails come verified; email/
+//   password accounts must click Firebase's verification link first).
+// - A Firebase account is tied to one app account by its Firebase uid.
+// - The first time a verified email matches an existing app account, they are
+//   linked. If that old account never verified its email, its old password is
+//   replaced so whoever registered it without owning the email loses access.
+// - Admin rights are never granted to an existing account here; a new account
+//   is super admin only when its verified email is ADMIN_EMAIL.
+const FIREBASE_PROVIDER = "firebase";
+
+async function sessionPayload(user: typeof users.$inferSelect) {
+  const memberships = await db!
+    .select({
+      id: communities.id,
+      slug: communities.slug,
+      nameBn: communities.nameBn,
+      nameEn: communities.nameEn,
+      theme: communities.theme,
+      role: communityMembers.role,
+    })
+    .from(communityMembers)
+    .innerJoin(communities, eq(communityMembers.communityId, communities.id))
+    .where(eq(communityMembers.userId, user.id));
+
+  const [settings] = await db!
+    .select()
+    .from(userSettings)
+    .where(eq(userSettings.userId, user.id))
+    .limit(1);
+
+  const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: "30d" });
+
+  return {
+    success: true,
+    token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      avatar: user.avatar,
+      username: user.username,
+      isSuperAdmin: user.isSuperAdmin,
+    },
+    memberships,
+    defaultCommunityId: settings?.defaultCommunityId,
+  };
+}
+
+async function uniqueUsername(email: string): Promise<string> {
+  const base = (email.split("@")[0] || "user").toLowerCase().replace(/[^a-z0-9_.]/g, "").slice(0, 20) || "user";
+  const [taken] = await db!.select({ id: users.id }).from(users).where(eq(users.username, base)).limit(1);
+  if (!taken) return base;
+  return `${base}_${crypto.randomBytes(3).toString("hex")}`;
+}
+
+async function findUserByEmail(email: string) {
+  const [u] = await db!
+    .select()
+    .from(users)
+    .where(sql`lower(${users.email}) = ${email.toLowerCase()}`)
+    .limit(1);
+  return u;
+}
+
+router.post("/firebase", async (req, res) => {
+  if (!db) {
+    return res.status(500).json({ error: "Database not available" });
+  }
+  if (!config.firebaseProjectId) {
+    return res.status(400).json({ error: "Firebase sign-in is not enabled" });
+  }
+
+  let identity;
+  try {
+    identity = await verifyFirebaseIdToken(req.body?.idToken);
+  } catch (error: any) {
+    if (error instanceof FirebaseTokenError) {
+      return res.status(401).json({ error: error.message, code: "invalid_token" });
+    }
+    console.error("Firebase token check failed:", error);
+    return res.status(503).json({ error: "Couldn't check the sign-in right now. Please try again." });
+  }
+
+  if (!identity.email) {
+    return res.status(400).json({ error: "This sign-in has no email address", code: "no_email" });
+  }
+  if (!identity.emailVerified) {
+    return res.status(403).json({
+      error: "Please verify your email first. Check your inbox for the link.",
+      code: "email_not_verified",
+    });
+  }
+
+  const email = identity.email;
+  const displayName = typeof req.body?.name === "string" ? req.body.name.trim().slice(0, 80) : "";
+
+  try {
+    let isNewUser = false;
+    let user: typeof users.$inferSelect | undefined;
+
+    const [link] = await db
+      .select()
+      .from(userOAuthProviders)
+      .where(and(eq(userOAuthProviders.provider, FIREBASE_PROVIDER), eq(userOAuthProviders.providerId, identity.uid)))
+      .limit(1);
+
+    if (link) {
+      [user] = await db.select().from(users).where(eq(users.id, link.userId)).limit(1);
+    }
+
+    if (!user) {
+      const existing = await findUserByEmail(email);
+      if (existing) {
+        if (!existing.verified) {
+          // Nobody had proved they own this email. The verified owner takes it
+          // over and the old, unproven password stops working.
+          const freshPassword = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 10);
+          await db.update(users).set({ verified: true, password: freshPassword }).where(eq(users.id, existing.id));
+          existing.verified = true;
+        }
+        user = existing;
+      } else {
+        const isAdminEmail = !!ADMIN_EMAIL && email === ADMIN_EMAIL.toLowerCase();
+        const randomPassword = await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 10);
+        try {
+          [user] = await db
+            .insert(users)
+            .values({
+              email,
+              username: await uniqueUsername(email),
+              password: randomPassword,
+              name: displayName || identity.name || email.split("@")[0],
+              avatar: identity.picture,
+              verified: true,
+              isSuperAdmin: isAdminEmail,
+            })
+            .returning();
+          isNewUser = true;
+        } catch (e) {
+          // Two sign-ins racing for the same email: use the row that won.
+          user = await findUserByEmail(email);
+          if (!user) throw e;
+        }
+
+        if (isNewUser && user) {
+          const [defaultCommunity] = await db.select().from(communities).where(eq(communities.slug, "farmer")).limit(1);
+          if (defaultCommunity) {
+            await db.insert(communityMembers).values({ communityId: defaultCommunity.id, userId: user.id, role: "member" }).onConflictDoNothing();
+            await db.insert(userSettings).values({ userId: user.id, defaultCommunityId: defaultCommunity.id }).onConflictDoNothing();
+          }
+        }
+      }
+
+      if (!user) {
+        return res.status(500).json({ error: "Failed to create or find user" });
+      }
+
+      await db.insert(userOAuthProviders).values({
+        userId: user.id,
+        provider: FIREBASE_PROVIDER,
+        providerId: identity.uid,
+        email,
+        name: identity.name,
+        avatar: identity.picture,
+      });
+    }
+
+    if (!user) {
+      return res.status(500).json({ error: "Failed to create or find user" });
+    }
+
+    res.json({ ...(await sessionPayload(user)), isNewUser });
+  } catch (error: any) {
+    console.error("Firebase sign-in error:", error);
+    res.status(500).json({ error: "Sign-in failed. Please try again." });
+  }
+});
+
 // Get current user info
 router.get("/me", authenticateToken, async (req, res) => {
   if (!db) {
@@ -709,6 +909,7 @@ router.get("/config", async (req, res) => {
     const googleClientId = await getAuthSetting(AUTH_SETTINGS.GOOGLE_CLIENT_ID);
 
     res.json({
+      firebaseEnabled: !!config.firebaseProjectId,
       googleAuthEnabled: googleEnabled === "true" && !!googleClientId,
       emailVerificationEnabled: emailVerificationEnabled === "true",
       googleClientId: googleEnabled === "true" ? googleClientId : null,

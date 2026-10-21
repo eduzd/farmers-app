@@ -158,6 +158,12 @@ dbReady.then(seedCommunities);
 // Signup
 router.post("/auth/signup", async (req: Request, res: Response) => {
   if (!db) return res.status(500).json({ error: "Database not available" });
+  // New accounts are created through Firebase (verified email or Google),
+  // see POST /api/auth/firebase. This old route stays only for when Firebase
+  // is switched off with FIREBASE_PROJECT_ID="".
+  if (config.firebaseProjectId) {
+    return res.status(410).json({ error: "Sign-up now uses Firebase. Please update the app.", code: "use_firebase" });
+  }
 
   try {
     const { email, password, name, username, communityIds } = req.body;
@@ -175,9 +181,9 @@ router.post("/auth/signup", async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Check if this is admin email
-    const isAdminEmail = !!ADMIN_EMAIL && email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-    
+    // Nobody has proved they own this email, so it never becomes super admin
+    // here (otherwise anyone could sign up first with ADMIN_EMAIL). A new
+    // admin account comes from a verified Firebase sign-in instead.
     const newUser = await db
       .insert(users)
       .values({
@@ -185,7 +191,7 @@ router.post("/auth/signup", async (req: Request, res: Response) => {
         email,
         password: hashedPassword,
         name,
-        isSuperAdmin: isAdminEmail,
+        isSuperAdmin: false,
       })
       .returning();
 

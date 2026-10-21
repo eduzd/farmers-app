@@ -323,8 +323,13 @@ export default function OrderDetailScreen() {
               <ThemedText style={[styles.itemName, { color: theme.text }]}>
                 {item.name}
               </ThemedText>
+              {(item as any).options ? (
+                <ThemedText style={[styles.itemQuantity, { color: theme.textSecondary }]}>
+                  {Object.entries((item as any).options).map(([k, v]) => `${k}: ${v}`).join(" · ")}
+                </ThemedText>
+              ) : null}
               <ThemedText style={[styles.itemQuantity, { color: theme.textSecondary }]}>
-                Qty: {item.quantity}
+                {tr("Qty")}: {item.quantity}
               </ThemedText>
             </View>
             <ThemedText style={[styles.itemPrice, { color: theme.text }]}>
@@ -392,7 +397,13 @@ export default function OrderDetailScreen() {
             <View style={styles.addressText}>
               <ThemedText style={[styles.addressName, { color: theme.text }]}>
                 {tr(order.checkout.deliveryMethod === "pickup" ? "Pick up from seller" : order.checkout.deliveryMethod === "express" ? "Express delivery" : "Home delivery")}
+                {order.checkout.zone ? ` · ${tr(order.checkout.zone === "inside_dhaka" ? "Inside Dhaka" : "Outside Dhaka")}` : ""}
               </ThemedText>
+              {order.checkout.contactPhone ? (
+                <ThemedText testID="order-contact" style={[styles.addressLine, { color: theme.textSecondary }]}>
+                  {order.checkout.contactName} · {order.checkout.contactPhone}{order.checkout.altPhone ? ` / ${order.checkout.altPhone}` : ""}
+                </ThemedText>
+              ) : null}
               {order.checkout.deliveryDate ? (
                 <ThemedText style={[styles.addressLine, { color: theme.textSecondary }]}>
                   {order.checkout.deliveryDate}

@@ -11,6 +11,7 @@ import {
   Share,
   Linking,
   Alert,
+  TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -74,6 +75,21 @@ export default function ProductDetailScreen() {
   const minOrder = Math.max(1, Number((product as any).minOrder) || 1);
   const outOfStock = stock !== null && stock <= 0;
   const [quantity, setQuantity] = useState(minOrder);
+  const [qtyDraft, setQtyDraft] = useState<string | null>(null);
+  // Seller-defined options (size, weight, grade...). Each choice may add to the unit price.
+  const optionGroups: { name: string; choices: { label: string; extra: number }[] }[] = Array.isArray((product as any).options)
+    ? (product as any).options.filter((g: any) => g?.name && Array.isArray(g?.choices) && g.choices.length)
+    : [];
+  const [picked, setPicked] = useState<Record<string, string>>({});
+  const missingOption = optionGroups.find((g) => !picked[g.name]);
+  const unitPrice =
+    Number(product.price || 0) +
+    optionGroups.reduce((sum, g) => sum + (Number(g.choices.find((c) => c.label === picked[g.name])?.extra) || 0), 0);
+  const clampQty = (n: number) => {
+    let q = Math.max(minOrder, Math.floor(n) || minOrder);
+    if (stock !== null && stock > 0) q = Math.min(q, stock);
+    return q;
+  };
   const [related, setRelated] = useState<any[]>([]);
   useEffect(() => {
     useRecentlyViewedStore.getState().add(product);
@@ -119,11 +135,13 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (outOfStock) return;
+    if (missingOption) return Alert.alert(tr("Choose an option"), `${tr("Please choose")}: ${missingOption.name}`);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addItem({
       productId: product.id,
       name: product.name,
-      price: product.price,
+      price: unitPrice,
+      ...(optionGroups.length ? { options: picked } : {}),
       currency: product.currency,
       unit: product.unit,
       quantity,
@@ -134,11 +152,13 @@ export default function ProductDetailScreen() {
 
   const handleBuyNow = () => {
     if (outOfStock) return;
+    if (missingOption) return Alert.alert(tr("Choose an option"), `${tr("Please choose")}: ${missingOption.name}`);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     addItem({
       productId: product.id,
       name: product.name,
-      price: product.price,
+      price: unitPrice,
+      ...(optionGroups.length ? { options: picked } : {}),
       currency: product.currency,
       unit: product.unit,
       quantity,
@@ -556,6 +576,36 @@ export default function ProductDetailScreen() {
             </View>
           </View>
         </View>
+        {optionGroups.length > 0 ? (
+          <View style={styles.relatedSection} testID="product-options">
+            <ThemedText type="h4" style={{ color: theme.text, marginBottom: Spacing.sm }}>
+              {tr("Choose options")}
+            </ThemedText>
+            {optionGroups.map((g) => (
+              <View key={g.name} style={{ marginBottom: Spacing.sm }}>
+                <ThemedText style={{ color: theme.textSecondary, marginBottom: 6, fontSize: 13 }}>{g.name}</ThemedText>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {g.choices.map((c) => {
+                    const on = picked[g.name] === c.label;
+                    return (
+                      <Pressable
+                        key={c.label}
+                        testID={`option-${g.name}-${c.label}`}
+                        onPress={() => setPicked((p) => ({ ...p, [g.name]: c.label }))}
+                        style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18, borderWidth: 1.5, borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primary + "18" : "transparent" }}
+                      >
+                        <ThemedText style={{ color: on ? theme.primary : theme.text, fontSize: 13, fontWeight: on ? "700" : "500" }}>
+                          {c.label}{c.extra ? ` +${product.currency}${c.extra}` : ""}
+                        </ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         {related.length > 0 ? (
           <View style={styles.relatedSection}>
             <ThemedText type="h4" style={{ color: theme.text, marginBottom: Spacing.sm }}>
@@ -600,15 +650,22 @@ export default function ProductDetailScreen() {
               >
                 <Feather name="minus" size={16} color={quantity <= minOrder ? theme.textSecondary : theme.text} />
               </Pressable>
-              <ThemedText style={[styles.qtyText, { color: theme.text }]}>
-                {quantity}
-              </ThemedText>
+              <TextInput
+                testID="product-qty-input"
+                value={qtyDraft ?? String(quantity)}
+                onChangeText={(v) => setQtyDraft(v.replace(/[^0-9]/g, "").slice(0, 4))}
+                onBlur={() => { if (qtyDraft !== null) setQuantity(clampQty(Number(qtyDraft))); setQtyDraft(null); }}
+                onSubmitEditing={() => { if (qtyDraft !== null) setQuantity(clampQty(Number(qtyDraft))); setQtyDraft(null); }}
+                keyboardType="number-pad"
+                style={[styles.qtyText, { color: theme.text, paddingVertical: 4 }]}
+                accessibilityLabel={tr("Quantity")}
+              />
               <Pressable style={styles.qtyBtn} onPress={increaseQuantity}>
                 <Feather name="plus" size={16} color={theme.text} />
               </Pressable>
             </View>
             <ThemedText style={[styles.footerTotalPrice, { color: theme.text }]}>
-              {product.currency}{Math.round(Number(product.price || 0) * quantity).toLocaleString("en-IN")}
+              {product.currency}{Math.round(unitPrice * quantity).toLocaleString("en-IN")}
             </ThemedText>
           </View>
 
@@ -679,7 +736,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 120,
+    paddingBottom: 200,
   },
   imageSection: {
     position: "relative",

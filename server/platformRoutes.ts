@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { config } from "./config";
 import { notify, ensureFeatures } from "./featureRoutes";
+import { cleanOptions, cleanDeliveryConfig, deliveryConfig, ensureCheckout } from "./checkoutRoutes";
 
 /**
  * Three apps, one backend.
@@ -250,6 +251,12 @@ function productFields(body: any, partial: boolean) {
   } else if (!partial) o.quantity = 0;
   for (const k of ["unit", "category", "description", "image", "location"]) if (body?.[k] !== undefined) o[k] = str(body[k], k === "description" ? 2000 : 500);
   if (body?.active !== undefined) o.active = !!body.active;
+  if (body?.minOrder !== undefined) o.minOrder = Math.max(1, Math.floor(Number(body.minOrder) || 1));
+  if (body?.options !== undefined) {
+    if (!Array.isArray(body.options)) return err("Options must be a list");
+    o.options = cleanOptions(body.options);
+  }
+  if (o.minOrder && o.quantity !== undefined && o.quantity > 0 && o.minOrder > o.quantity) return err("Minimum order can't be more than the stock");
   return o;
 }
 
@@ -349,6 +356,8 @@ export function registerPlatformRoutes(app: Express) {
     const f = productFields(req.body, true);
     if (f.error) return res.status(400).json(f);
     const data = { ...(J(r[0].data) || {}), ...f };
+    if (Number(data.minOrder) > 1 && Number(data.quantity) > 0 && Number(data.minOrder) > Number(data.quantity))
+      return res.status(400).json({ error: "Minimum order can't be more than the stock" });
     await db.execute(sql`UPDATE catalog_items SET data = ${JSON.stringify(data)}::jsonb, updated_at = now() WHERE id = ${r[0].id} AND owner_id = ${uid}`);
     res.json(itemOut({ ...r[0], data, updated_at: new Date() }));
   }));
@@ -547,6 +556,7 @@ export function registerPlatformRoutes(app: Express) {
       address: J(o.address) || null,
       history: J(o.history) || [],
       adminNote: o.admin_note || "",
+      checkout: J(o.checkout) || null,
       createdAt: iso(o.created_at),
     }));
     res.json(q ? out.filter((o: any) => `${o.id} ${o.buyerName} ${o.buyerEmail}`.toLowerCase().includes(q)) : out);
@@ -575,6 +585,18 @@ export function registerPlatformRoutes(app: Express) {
     await db.execute(sql`DELETE FROM shop_orders WHERE id = ${req.params.id}`);
     await audit(req, "DELETE_ORDER", "order", req.params.id, "");
     res.json({ success: true });
+  }));
+
+  // Delivery charges (inside / outside Dhaka, express, free-delivery threshold)
+  app.get(`${A}/delivery`, requireAdmin, wrap(async (_req, res) => res.json(await deliveryConfig())));
+  app.put(`${A}/delivery`, requireAdmin, wrap(async (req, res) => {
+    await ensureCheckout();
+    const c = cleanDeliveryConfig(req.body);
+    if ("error" in c) return res.status(400).json(c);
+    await db.execute(sql`INSERT INTO app_settings (key, value) VALUES ('delivery_config', ${JSON.stringify(c)})
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`);
+    await audit(req, "UPDATE_DELIVERY", "settings", "delivery_config", c);
+    res.json(c);
   }));
 
   // Catalog + community moderation

@@ -5,6 +5,7 @@ import { apiGet, apiPut, isLoggedIn } from "@/lib/api";
 export type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
 
 export interface OrderItem {
+  options?: Record<string, string>;
   id: string;
   productId: string;
   name: string;
@@ -28,6 +29,11 @@ export interface Order {
   paymentMethod: "cod" | "card" | "bkash";
   checkout?: {
     deliveryMethod?: "home" | "express" | "pickup";
+    zone?: "inside_dhaka" | "outside_dhaka" | null;
+    contactName?: string;
+    contactPhone?: string | null;
+    altPhone?: string | null;
+    address?: string;
     division?: string;
     district?: string;
     upazila?: string;
@@ -63,6 +69,7 @@ function fromServer(o: any, role: "buyer" | "seller"): Order {
       price: Number(i.price || 0),
       quantity: Number(i.quantity || 1),
       image: i.image || "",
+      ...(i.options && typeof i.options === "object" ? { options: i.options } : {}),
     })),
     total: Number(o.total || 0),
     currency: "৳",

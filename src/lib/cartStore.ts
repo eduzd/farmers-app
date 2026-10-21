@@ -11,7 +11,12 @@ export interface CartItem {
   quantity: number;
   image: string;
   seller: string;
+  /** Chosen product options, e.g. { Size: "5 kg", Grade: "A" }. */
+  options?: Record<string, string>;
 }
+
+const optKey = (o?: Record<string, string>) =>
+  o ? Object.keys(o).sort().map((k) => `${k}=${o[k]}`).join("|") : "";
 
 interface CartState {
   items: CartItem[];
@@ -32,19 +37,20 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   addItem: async (item) => {
     const { items } = get();
-    const existingItem = items.find((i) => i.productId === item.productId);
+    const same = (i: CartItem) => i.productId === item.productId && optKey(i.options) === optKey(item.options);
+    const existingItem = items.find(same);
 
     let newItems: CartItem[];
     if (existingItem) {
       newItems = items.map((i) =>
-        i.productId === item.productId
+        same(i)
           ? { ...i, quantity: i.quantity + item.quantity }
           : i
       );
     } else {
       const newItem: CartItem = {
         ...item,
-        id: Date.now().toString(),
+        id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
       };
       newItems = [...items, newItem];
     }

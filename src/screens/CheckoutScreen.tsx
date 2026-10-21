@@ -23,6 +23,13 @@ import { useTr } from "@/lib/tr";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Method = "home" | "express" | "pickup";
 type Payment = "cod" | "bkash";
+type Zone = "inside_dhaka" | "outside_dhaka";
+
+/** Same rule as the server (normalizeBdPhone): 01XXXXXXXXX, optionally with +88 / 88. */
+export const bdPhone = (v: string) => {
+  const m = String(v || "").replace(/[\s\-()]/g, "").match(/^(?:\+?88)?(01[3-9]\d{8})$/);
+  return m ? m[1] : null;
+};
 
 interface Addr {
   id: string;
@@ -48,6 +55,9 @@ interface Quote {
   couponError: string | null;
   methodError: string | null;
   stockErrors: { productId: string; name: string; available: number }[];
+  itemErrors?: { productId: string; name: string; error: string }[];
+  zone?: Zone;
+  zones?: { id: Zone; fee: number }[];
   methods: { id: Method; label: string; days: string; fee: number | null; available: boolean }[];
   freeDeliveryOver: number;
 }
@@ -61,8 +71,8 @@ const SLOTS = [
 const METHOD_ICON: Record<Method, any> = { home: "truck", express: "zap", pickup: "map-pin" };
 
 /** Same rules as the server (server/checkoutRoutes.ts), used only when the quote can't be fetched. */
-function localQuote(subtotal: number, method: Method, division: string): Quote {
-  const dhaka = division === "Dhaka";
+function localQuote(subtotal: number, method: Method, zone: Zone): Quote {
+  const dhaka = zone === "inside_dhaka";
   const fee = (m: Method) => (m === "pickup" ? 0 : m === "express" ? (dhaka ? 150 : null) : subtotal >= 2000 ? 0 : dhaka ? 60 : 120);
   const f = fee(method) ?? (fee("home") as number);
   return {
@@ -75,6 +85,9 @@ function localQuote(subtotal: number, method: Method, division: string): Quote {
     couponError: null,
     methodError: null,
     stockErrors: [],
+    itemErrors: [],
+    zone,
+    zones: [{ id: "inside_dhaka", fee: 60 }, { id: "outside_dhaka", fee: 120 }],
     methods: [
       { id: "home", label: "Home delivery", days: "2-3 days", fee: fee("home"), available: true },
       { id: "express", label: "Express delivery", days: "Next day (Dhaka only)", fee: fee("express"), available: fee("express") !== null },
@@ -98,7 +111,7 @@ export default function CheckoutScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
-  const { items, getTotal, clearCart } = useCartStore();
+  const { items, getTotal, clearCart, updateQuantity, removeItem } = useCartStore();
   const { addOrder } = useOrdersStore();
   const { language } = useI18n();
   const isBn = language === "bn";
@@ -129,6 +142,27 @@ export default function CheckoutScreen() {
   const usingSaved = !useNew && !!selectedAddr;
   const division = (usingSaved ? selectedAddr?.division : form.division) || "Dhaka";
 
+  // ---------- delivery area (inside / outside Dhaka) ----------
+  const [zone, setZone] = useState<Zone>(division === "Dhaka" ? "inside_dhaka" : "outside_dhaka");
+  useEffect(() => {
+    setZone(division === "Dhaka" ? "inside_dhaka" : "outside_dhaka");
+  }, [division]);
+
+  // ---------- contact for this order ----------
+  const [contact, setContact] = useState({ name: "", phone: "", alt: "" });
+  const [contactTouched, setContactTouched] = useState(false);
+  useEffect(() => {
+    if (contactTouched) return;
+    const src = usingSaved && selectedAddr ? selectedAddr : form;
+    setContact((c) => ({ ...c, name: src.fullName || "", phone: src.phone || "" }));
+  }, [usingSaved, selectedId, form.fullName, form.phone, contactTouched]);
+  const editContact = (k: "name" | "phone" | "alt") => (v: string) => {
+    setContactTouched(true);
+    setContact((c) => ({ ...c, [k]: v }));
+  };
+  const phoneOk = !!bdPhone(contact.phone);
+  const altOk = !contact.alt.trim() || !!bdPhone(contact.alt);
+
   // ---------- delivery, coupon, payment ----------
   const [method, setMethod] = useState<Method>("home");
   const days = useMemo(() => nextDays(3), []);
@@ -139,7 +173,7 @@ export default function CheckoutScreen() {
   const [couponCode, setCouponCode] = useState("");
   const [coupons, setCoupons] = useState<{ code: string; description: string; minOrder: number }[]>([]);
   const [payment, setPayment] = useState<Payment>("cod");
-  const [quote, setQuote] = useState<Quote>(() => localQuote(getTotal(), "home", "Dhaka"));
+  const [quote, setQuote] = useState<Quote>(() => localQuote(getTotal(), "home", "inside_dhaka"));
   const [quoting, setQuoting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [placed, setPlaced] = useState<{ id: string; total: number } | null>(null);
@@ -148,14 +182,15 @@ export default function CheckoutScreen() {
     apiGet("/api/coupons").then(setCoupons).catch(() => {});
   }, []);
 
-  const itemsKey = items.map((i) => `${i.productId}:${i.quantity}:${i.price}`).join("|");
+  const itemsKey = items.map((i) => `${i.productId}:${i.quantity}:${i.price}:${JSON.stringify(i.options || {})}`).join("|");
   useEffect(() => {
     let live = true;
     setQuoting(true);
     apiPost<Quote>("/api/checkout/quote", {
-      items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
+      items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity, options: i.options })),
       deliveryMethod: method,
       division,
+      zone,
       couponCode,
     })
       .then((q) => {
@@ -163,12 +198,12 @@ export default function CheckoutScreen() {
         setQuote(q);
         if (q.deliveryMethod !== method) setMethod(q.deliveryMethod);
       })
-      .catch(() => live && setQuote(localQuote(getTotal(), method, division)))
+      .catch(() => live && setQuote(localQuote(getTotal(), method, zone)))
       .finally(() => live && setQuoting(false));
     return () => {
       live = false;
     };
-  }, [itemsKey, method, division, couponCode]);
+  }, [itemsKey, method, division, zone, couponCode]);
 
   const applyCoupon = (code: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -178,8 +213,11 @@ export default function CheckoutScreen() {
 
   const formValid = usingSaved
     ? true
-    : !!(form.fullName.trim() && form.phone.trim().length >= 6 && form.district.trim() && form.address.trim());
-  const canPlace = items.length > 0 && formValid && !isProcessing && quote.stockErrors.length === 0;
+    : !!((form.fullName.trim() || contact.name.trim()) && (form.phone.trim().length >= 6 || phoneOk) && form.district.trim() && form.address.trim());
+  const zoneOk = method === "pickup" || zone === "outside_dhaka" || division === "Dhaka";
+  const contactOk = !!contact.name.trim() && phoneOk && altOk;
+  const canPlace =
+    items.length > 0 && formValid && contactOk && zoneOk && !isProcessing && quote.stockErrors.length === 0 && !(quote.itemErrors || []).length;
 
   const shipping = () => {
     if (usingSaved && selectedAddr) {
@@ -213,6 +251,11 @@ export default function CheckoutScreen() {
     const ship = shipping();
     const checkout = {
       deliveryMethod: method,
+      zone,
+      contactName: contact.name.trim(),
+      contactPhone: bdPhone(contact.phone) || contact.phone.trim(),
+      altPhone: contact.alt.trim() ? bdPhone(contact.alt) || contact.alt.trim() : "",
+      address: ship.address,
       division: ship.division,
       district: ship.district,
       upazila: ship.upazila,
@@ -231,18 +274,24 @@ export default function CheckoutScreen() {
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
           id: orderId,
-          shippingAddress: { fullName: ship.fullName, address: ship.address, city: ship.city, phone: ship.phone },
+          shippingAddress: { fullName: checkout.contactName || ship.fullName, address: ship.address, city: ship.city, phone: checkout.contactPhone || ship.phone },
           total: quote.total,
           itemCount: items.reduce((n, i) => n + (i.quantity || 1), 0),
           paymentMethod: payment,
           checkout,
-          items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity, image: i.image, unit: i.unit })),
+          items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity, image: i.image, unit: i.unit, ...(i.options ? { options: i.options } : {}) })),
         }),
       });
       const data = await r.json().catch(() => null);
       if (r.status === 409) {
         setIsProcessing(false);
         Alert.alert(tr("Not enough stock"), data?.error || "");
+        return;
+      }
+      if (r.status >= 400 && r.status < 500) {
+        // The server checks phone, delivery area, quantities and options; don't keep a local copy of a rejected order.
+        setIsProcessing(false);
+        Alert.alert(tr("Please check your order"), tr(data?.error || "Something is missing"));
         return;
       }
       if (r.ok) {
@@ -257,8 +306,8 @@ export default function CheckoutScreen() {
     if (loggedIn && !usingSaved && saveAddress) {
       apiPost("/api/me/addresses", {
         label: "Home",
-        fullName: ship.fullName,
-        phone: ship.phone,
+        fullName: ship.fullName || contact.name.trim(),
+        phone: ship.phone || bdPhone(contact.phone) || contact.phone.trim(),
         division: ship.division,
         district: ship.district,
         upazila: ship.upazila,
@@ -269,11 +318,11 @@ export default function CheckoutScreen() {
     await addOrder({
       id: orderId,
       onServer: savedOnServer,
-      items: items.map((item) => ({ id: item.id, productId: item.productId, name: item.name, price: item.price, quantity: item.quantity, image: item.image })),
+      items: items.map((item) => ({ id: item.id, productId: item.productId, name: item.name, price: item.price, quantity: item.quantity, image: item.image, options: item.options })),
       total: finalTotal,
       currency: "৳",
       status: "pending",
-      shippingAddress: { fullName: ship.fullName, address: ship.address, city: ship.city, phone: ship.phone },
+      shippingAddress: { fullName: checkout.contactName || ship.fullName, address: ship.address, city: ship.city, phone: checkout.contactPhone || ship.phone },
       paymentMethod: payment,
       checkout: serverCheckout || { ...checkout, subtotal: quote.subtotal, deliveryFee: quote.deliveryFee, discount: quote.discount, coupon: quote.coupon?.code || null, total: finalTotal },
     } as any);
@@ -380,6 +429,66 @@ export default function CheckoutScreen() {
               </View>
             )}
           </View>
+
+          {/* Contact for this order */}
+          <View style={card} testID="checkout-contact">
+            <Header icon="phone" title={tr("Contact number")} />
+            <ThemedText style={{ color: theme.textSecondary, fontSize: 12, marginBottom: Spacing.sm }}>
+              {tr("The seller and delivery person will call this number.")}
+            </ThemedText>
+            <View style={styles.formRow}>
+              <View style={styles.formCol}>
+                <ThemedText style={[styles.label, { color: theme.text }]}>{tr("Receiver's name")}</ThemedText>
+                <TextInput testID="input-contact-name" style={input} value={contact.name} onChangeText={editContact("name")} placeholder={tr("Full name")} placeholderTextColor={theme.textSecondary} />
+              </View>
+              <View style={styles.formCol}>
+                <ThemedText style={[styles.label, { color: theme.text }]}>{tr("Mobile number")}</ThemedText>
+                <TextInput testID="input-contact-phone" style={[input, contact.phone && !phoneOk ? { borderColor: "#DC2626" } : null]} value={contact.phone} onChangeText={editContact("phone")} placeholder="01XXXXXXXXX" placeholderTextColor={theme.textSecondary} keyboardType="phone-pad" maxLength={16} />
+              </View>
+            </View>
+            {contact.phone && !phoneOk ? (
+              <ThemedText style={{ color: "#DC2626", fontSize: 12, marginBottom: Spacing.sm }}>{tr("Enter a Bangladeshi mobile number, like 01712345678")}</ThemedText>
+            ) : null}
+            <ThemedText style={[styles.label, { color: theme.text }]}>{tr("Second number (optional)")}</ThemedText>
+            <TextInput testID="input-contact-alt" style={[input, !altOk ? { borderColor: "#DC2626" } : null]} value={contact.alt} onChangeText={editContact("alt")} placeholder="01XXXXXXXXX" placeholderTextColor={theme.textSecondary} keyboardType="phone-pad" maxLength={16} />
+            {!altOk ? <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>{tr("Enter a Bangladeshi mobile number, like 01712345678")}</ThemedText> : null}
+          </View>
+
+          {/* Delivery area */}
+          {method !== "pickup" ? (
+            <View style={card} testID="checkout-zone">
+              <Header icon="map" title={tr("Delivery area")} />
+              <View style={styles.formRow}>
+                {(["inside_dhaka", "outside_dhaka"] as Zone[]).map((z) => {
+                  const active = zone === z;
+                  const disabled = z === "inside_dhaka" && division !== "Dhaka";
+                  const fee = (quote.zones || []).find((x) => x.id === z)?.fee;
+                  return (
+                    <Pressable
+                      key={z}
+                      testID={`zone-${z}`}
+                      disabled={disabled}
+                      onPress={() => setZone(z)}
+                      style={[styles.option, styles.formCol, { borderColor: active ? theme.primary : theme.inputBorder, backgroundColor: active ? `${theme.primary}10` : "transparent", opacity: disabled ? 0.5 : 1 }]}
+                    >
+                      <View style={[styles.radioOuter, { borderColor: active ? theme.primary : theme.textSecondary }]}>
+                        {active ? <View style={[styles.radioInner, { backgroundColor: theme.primary }]} /> : null}
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <ThemedText style={[styles.bold, { color: theme.text }]}>{z === "inside_dhaka" ? tr("Inside Dhaka") : tr("Outside Dhaka")}</ThemedText>
+                        <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>
+                          {fee === undefined ? "" : `${tr("Home delivery")} ${money(fee)}`}
+                        </ThemedText>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {division !== "Dhaka" ? (
+                <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>{tr("Inside Dhaka needs an address in Dhaka division.")}</ThemedText>
+              ) : null}
+            </View>
+          ) : null}
 
           {/* Delivery method */}
           <View style={card}>
@@ -535,20 +644,38 @@ export default function CheckoutScreen() {
             <Header icon="shopping-bag" title={tr("Order Summary")} />
             {items.map((i) => {
               const err = quote.stockErrors.find((e) => e.productId === i.productId);
+              const itemErr = (quote.itemErrors || []).find((e) => e.productId === i.productId);
               return (
-                <View key={i.id} style={styles.summaryItem}>
+                <View key={i.id} style={styles.summaryItem} testID={`summary-item-${i.productId}`}>
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <ThemedText style={{ color: theme.text, fontSize: 14 }} numberOfLines={1}>{i.name}</ThemedText>
+                    {i.options && Object.keys(i.options).length ? (
+                      <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={2}>
+                        {Object.entries(i.options).map(([k, v]) => `${k}: ${v}`).join(" · ")}
+                      </ThemedText>
+                    ) : null}
                     <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>
-                      {i.quantity} × {money(i.price)}{i.unit ? `/${i.unit}` : ""}
+                      {money(i.price)}{i.unit ? `/${i.unit}` : ""}
                     </ThemedText>
                     {err ? (
                       <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>
                         {tr("Only")} {err.available} {tr("left")}
                       </ThemedText>
                     ) : null}
+                    {itemErr ? <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>{tr(itemErr.error)}</ThemedText> : null}
                   </View>
-                  <ThemedText style={{ color: theme.text, fontWeight: "600" }}>{money(i.price * i.quantity)}</ThemedText>
+                  <View style={{ alignItems: "flex-end", gap: 6 }}>
+                    <ThemedText style={{ color: theme.text, fontWeight: "600" }}>{money(i.price * i.quantity)}</ThemedText>
+                    <View style={[styles.stepper, { borderColor: theme.inputBorder }]}>
+                      <Pressable testID={`qty-minus-${i.productId}`} hitSlop={6} style={styles.stepBtn} onPress={() => (i.quantity <= 1 ? removeItem(i.id) : updateQuantity(i.id, i.quantity - 1))}>
+                        <Feather name={i.quantity <= 1 ? "trash-2" : "minus"} size={14} color={i.quantity <= 1 ? "#DC2626" : theme.text} />
+                      </Pressable>
+                      <ThemedText testID={`qty-${i.productId}`} style={{ color: theme.text, minWidth: 26, textAlign: "center", fontWeight: "600" }}>{i.quantity}</ThemedText>
+                      <Pressable testID={`qty-plus-${i.productId}`} hitSlop={6} style={styles.stepBtn} disabled={!!err} onPress={() => updateQuantity(i.id, i.quantity + 1)}>
+                        <Feather name="plus" size={14} color={err ? theme.textSecondary : theme.text} />
+                      </Pressable>
+                    </View>
+                  </View>
                 </View>
               );
             })}
@@ -578,6 +705,9 @@ export default function CheckoutScreen() {
       <View style={[styles.footer, { backgroundColor: theme.white, borderTopColor: theme.cardBorder, paddingBottom: insets.bottom + Spacing.md }]}>
         <View style={[styles.inner, styles.footerInner]}>
           <View style={{ flexShrink: 1, minWidth: 0 }}>
+            {!contactOk && items.length > 0 ? (
+              <ThemedText testID="checkout-hint" style={{ color: "#DC2626", fontSize: 11 }} numberOfLines={1}>{tr("Add a valid contact number")}</ThemedText>
+            ) : null}
             <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>{tr("Total")}</ThemedText>
             <ThemedText type="h4" style={{ color: theme.text }}>{quoting ? "…" : money(quote.total)}</ThemedText>
           </View>
@@ -687,6 +817,8 @@ const styles = StyleSheet.create({
   applyBtn: { height: 46, paddingHorizontal: Spacing.lg, borderRadius: BorderRadius.sm, alignItems: "center", justifyContent: "center" },
   couponChip: { borderWidth: 1, borderStyle: "dashed", borderRadius: BorderRadius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 6, flexBasis: 150, flexGrow: 1, minWidth: 0 },
   summaryItem: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginBottom: Spacing.sm },
+  stepper: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: BorderRadius.full, paddingHorizontal: 4, paddingVertical: 2 },
+  stepBtn: { width: 26, height: 26, alignItems: "center", justifyContent: "center" },
   summaryRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6, gap: Spacing.sm },
   divider: { height: 1, marginVertical: Spacing.sm },
   footer: { position: "absolute", left: 0, right: 0, bottom: 0, borderTopWidth: 1, paddingTop: Spacing.md, paddingHorizontal: Spacing.lg },

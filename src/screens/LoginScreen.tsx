@@ -13,6 +13,12 @@ import { FontFamily, Spacing } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
+import {
+  firebaseErrorMessage,
+  firebaseSignOut,
+  googleSignInAvailable,
+} from "@/lib/firebaseSignIn";
+import { VerifyEmailPanel } from "@/components/VerifyEmailPanel";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -31,8 +37,9 @@ const COPY = {
     signUp: "Sign up",
     missing: "Please enter email and password",
     failed: "Login failed. Please try again.",
-    googleSoon: "Google login is being configured. Please use email and password for now.",
     back: "Back",
+    verifyTitle: "Verify your email",
+    verifySubtitle: "One more step before you can sign in",
   },
   bn: {
     title: "আবার স্বাগতম",
@@ -48,23 +55,27 @@ const COPY = {
     signUp: "নিবন্ধন করুন",
     missing: "ইমেইল ও পাসওয়ার্ড দিন",
     failed: "লগইন হয়নি। আবার চেষ্টা করুন।",
-    googleSoon: "Google লগইন এখনও চালু হয়নি। আপাতত ইমেইল ও পাসওয়ার্ড ব্যবহার করুন।",
     back: "ফিরে যান",
+    verifyTitle: "ইমেইল যাচাই করুন",
+    verifySubtitle: "সাইন ইন করার আগে আর একটি ধাপ",
   },
 };
 
 export default function LoginScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
-  const { login } = useAuthStore();
+  const { signInWithEmail, signInWithGoogle } = useAuthStore();
   const { language } = useI18n();
-  const t = COPY[language === "bn" ? "bn" : "en"];
+  const lang = language === "bn" ? "bn" : "en";
+  const t = COPY[lang];
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -75,11 +86,17 @@ export default function LoginScreen() {
     setIsLoading(true);
     setErrorMessage("");
     try {
-      const result = await login(email.trim(), password);
+      const result = await signInWithEmail(email.trim(), password);
       if (result.success) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else if (result.needsVerification) {
+        setVerifyEmail(result.email || email.trim());
       } else {
-        setErrorMessage(result.error || t.failed);
+        setErrorMessage(
+          result.firebaseError
+            ? firebaseErrorMessage(result.firebaseError, lang)
+            : result.error || t.failed,
+        );
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch (error: any) {
@@ -89,6 +106,50 @@ export default function LoginScreen() {
       setIsLoading(false);
     }
   };
+
+  const handleGoogle = async () => {
+    setGoogleLoading(true);
+    setErrorMessage("");
+    try {
+      const result = await signInWithGoogle();
+      if (result.success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        setErrorMessage(
+          result.firebaseError
+            ? firebaseErrorMessage(result.firebaseError, lang)
+            : result.error || t.failed,
+        );
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  if (verifyEmail) {
+    return (
+      <AuthShell
+        title={t.verifyTitle}
+        subtitle={t.verifySubtitle}
+        icon="mail"
+        onBack={() => {
+          firebaseSignOut();
+          setVerifyEmail(null);
+        }}
+        backLabel={t.back}
+      >
+        <VerifyEmailPanel
+          email={verifyEmail}
+          lang={lang}
+          onCancel={() => {
+            firebaseSignOut();
+            setVerifyEmail(null);
+            setPassword("");
+          }}
+        />
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
@@ -100,20 +161,33 @@ export default function LoginScreen() {
       footer={
         <View style={styles.row}>
           <ThemedText muted>{t.noAccount}</ThemedText>
-          <Pressable onPress={() => navigation.navigate("Signup")} hitSlop={8} accessibilityRole="link">
-            <ThemedText style={{ color: theme.primary, fontFamily: FontFamily.bold }}>{t.signUp}</ThemedText>
+          <Pressable
+            onPress={() => navigation.navigate("Signup")}
+            hitSlop={8}
+            accessibilityRole="link"
+          >
+            <ThemedText
+              style={{ color: theme.primary, fontFamily: FontFamily.bold }}
+            >
+              {t.signUp}
+            </ThemedText>
           </Pressable>
         </View>
       }
     >
-      <Button
-        title={t.google}
-        variant="outline"
-        icon="globe"
-        onPress={() => setErrorMessage(t.googleSoon)}
-        testID="button-google-signin"
-      />
-      <AuthDivider label={t.or} />
+      {googleSignInAvailable ? (
+        <>
+          <Button
+            title={t.google}
+            variant="outline"
+            icon="globe"
+            onPress={handleGoogle}
+            loading={googleLoading}
+            testID="button-google-signin"
+          />
+          <AuthDivider label={t.or} />
+        </>
+      ) : null}
       <TextField
         label={t.email}
         icon="mail"
@@ -142,14 +216,26 @@ export default function LoginScreen() {
           <Pressable
             onPress={() => setShowPassword((v) => !v)}
             hitSlop={8}
-            accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+            accessibilityLabel={
+              showPassword ? "Hide password" : "Show password"
+            }
           >
-            <Feather name={showPassword ? "eye-off" : "eye"} size={18} color={theme.textTertiary} />
+            <Feather
+              name={showPassword ? "eye-off" : "eye"}
+              size={18}
+              color={theme.textTertiary}
+            />
           </Pressable>
         }
       />
       <FormError message={errorMessage} />
-      <Button title={t.signIn} onPress={handleLogin} loading={isLoading} size="lg" testID="button-signin" />
+      <Button
+        title={t.signIn}
+        onPress={handleLogin}
+        loading={isLoading}
+        size="lg"
+        testID="button-signin"
+      />
     </AuthShell>
   );
 }
