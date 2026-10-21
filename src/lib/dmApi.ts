@@ -219,6 +219,7 @@ const EXT: Record<string, string> = {
   "audio/mpeg": "mp3",
   "audio/3gpp": "3gp",
   "audio/wav": "wav",
+  "audio/x-wav": "wav",
 };
 
 /** Remember where my own just-sent recording is, so I can play it without downloading. */

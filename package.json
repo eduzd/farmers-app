@@ -17,7 +17,8 @@
     "db:push": "drizzle-kit push",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "check:reactions": "node tests/check-reactions.mjs"
+    "check:reactions": "node tests/check-reactions.mjs",
+    "check:chat": "node tests/check-chat.mjs"
   },
   "dependencies": {
     "@config-plugins/react-native-webrtc": "^13.0.0",
