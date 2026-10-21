@@ -122,7 +122,11 @@ function setupErrorHandler(app: express.Application) {
   app.use(platformGuard);
 
   app.get("/api/health", (_req, res) => {
-    res.json({ ok: true, time: new Date().toISOString() });
+    res.json({
+      ok: true,
+      time: new Date().toISOString(),
+      version: (process.env.RENDER_GIT_COMMIT || "local").slice(0, 7),
+    });
   });
 
   registerPlatformRoutes(app);
