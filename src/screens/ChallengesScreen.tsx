@@ -19,6 +19,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Challenge {
   id: string;
   title: string;
@@ -34,78 +35,9 @@ interface Challenge {
   tasks: string[];
 }
 
-const ACTIVE_CHALLENGES: Challenge[] = [
-  {
-    id: "1",
-    title: "সবুজ খামার চ্যালেঞ্জ",
-    description: "জৈব পদ্ধতিতে সবজি চাষ করুন এবং ছবি শেয়ার করুন",
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600",
-    prize: "৫,০০০ টাকা + সার্টিফিকেট",
-    participants: 234,
-    daysLeft: 7,
-    category: "সবজি",
-    difficulty: "medium",
-    progress: 60,
-    isJoined: true,
-    tasks: ["জমি প্রস্তুত করুন", "বীজ রোপণ করুন", "পরিচর্যার ছবি দিন", "ফসল তুলুন"],
-  },
-  {
-    id: "2",
-    title: "মাছ চাষ প্রতিযোগিতা",
-    description: "সেরা মাছ চাষীদের জন্য বিশেষ পুরস্কার",
-    image: "https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=600",
-    prize: "১০,০০০ টাকা",
-    participants: 156,
-    daysLeft: 14,
-    category: "মাছ",
-    difficulty: "hard",
-    isJoined: false,
-    tasks: ["পুকুর প্রস্তুতি", "পোনা ছাড়া", "খাদ্য ব্যবস্থাপনা", "ফলন রিপোর্ট"],
-  },
-  {
-    id: "3",
-    title: "দৈনিক টিপস চ্যালেঞ্জ",
-    description: "৭ দিন ধরে কৃষি টিপস শেয়ার করুন",
-    image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600",
-    prize: "২,০০০ টাকা",
-    participants: 456,
-    daysLeft: 3,
-    category: "জ্ঞান",
-    difficulty: "easy",
-    progress: 85,
-    isJoined: true,
-    tasks: ["দিন ১", "দিন ২", "দিন ৩", "দিন ৪", "দিন ৫", "দিন ৬", "দিন ৭"],
-  },
-];
+const ACTIVE_CHALLENGES: Challenge[] = [];
 
-const UPCOMING_CHALLENGES: Challenge[] = [
-  {
-    id: "4",
-    title: "ধান চাষ অলিম্পিক",
-    description: "সেরা ধান চাষীদের জন্য বড় প্রতিযোগিতা",
-    image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600",
-    prize: "২০,০০০ টাকা",
-    participants: 0,
-    daysLeft: 21,
-    category: "ফসল",
-    difficulty: "hard",
-    isJoined: false,
-    tasks: [],
-  },
-  {
-    id: "5",
-    title: "পশু পালন সেরা",
-    description: "গরু/ছাগল পালনে সেরা কৃষক",
-    image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=600",
-    prize: "১৫,০০০ টাকা",
-    participants: 0,
-    daysLeft: 30,
-    category: "পশু",
-    difficulty: "hard",
-    isJoined: false,
-    tasks: [],
-  },
-];
+const UPCOMING_CHALLENGES: Challenge[] = [];
 
 const getDifficultyConfig = (difficulty: string) => {
   const configs: Record<string, { color: string; label: string }> = {
@@ -217,6 +149,7 @@ export default function ChallengesScreen() {
     <ThemedView style={styles.container}>
       <FlatList
         data={challenges}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={item => item.id}
         renderItem={renderChallenge}
         ListHeaderComponent={
@@ -255,6 +188,7 @@ export default function ChallengesScreen() {
             <View style={styles.sectionHeader}>
               <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>আসন্ন চ্যালেঞ্জ</ThemedText>
             </View>
+            {UPCOMING_CHALLENGES.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {UPCOMING_CHALLENGES.map((challenge, index) => (
               <Animated.View key={challenge.id} entering={FadeInUp.delay(200 + index * 50)}>
                 <Pressable

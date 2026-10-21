@@ -183,7 +183,7 @@ export type RootStackParamList = {
   PostDetail: { postId: string; post: Post };
   Chat: { conversationId: string; userName: string; userInitials: string; isWelfareMember?: boolean };
   Rfq: undefined;
-  Settings: undefined;
+  Settings: { openEditProfile?: boolean } | undefined;
   ProductDetail: { product: Product };
   Cart: undefined;
   Checkout: undefined;

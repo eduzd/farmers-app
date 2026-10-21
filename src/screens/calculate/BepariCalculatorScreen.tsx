@@ -14,6 +14,7 @@ import { saveDraft, getDraft, deleteDraft } from '@/offline/db/drafts';
 import { getSetting, setSetting } from '@/offline/db/database';
 import { Language } from '@/offline/i18n/translations';
 
+import { useRowAutoAdvance } from '@/hooks/useRowAutoAdvance';
 import { tr, useTr } from "@/lib/tr";
 import { useI18n } from "@/lib/i18n";
 function useColors() {
@@ -139,6 +140,11 @@ export function BepariCalculatorScreen() {
   const autoSaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [rows, setRows] = useState<RowData[]>([{ weight: '', pieces: '' }]);
+  // Both fields filled -> cursor moves to the next row's weight by itself.
+  const autoAdvance = useRowAutoAdvance(2);
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+  autoAdvance.setCanEnter((r) => { const next = rowsRef.current[r]; return !next || !next.weight; });
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settings, setSettings] = useState<BepariSettings>(defaultSettings);
   const [savedRecords, setSavedRecords] = useState<CalcRecord[]>([]);
@@ -192,7 +198,7 @@ export function BepariCalculatorScreen() {
 
   const updateRow = (index: number, field: 'weight' | 'pieces', value: string) => {
     const newRows = [...rows];
-    newRows[index][field] = value;
+    newRows[index] = { ...newRows[index], [field]: value };
     
     // Only add new row when BOTH weight AND pieces have values in the last row
     if (index === rows.length - 1) {
@@ -205,6 +211,7 @@ export function BepariCalculatorScreen() {
       }
     }
     setRows(newRows);
+    autoAdvance.afterChange(index, [newRows[index].weight, newRows[index].pieces]);
   };
 
   const removeRow = (index: number) => {
@@ -511,6 +518,11 @@ export function BepariCalculatorScreen() {
                     placeholder={tr("০")}
                     placeholderTextColor={colors.textTertiary}
                     keyboardType="decimal-pad"
+                    ref={autoAdvance.register(index, 0)}
+                    onFocus={autoAdvance.onFocus(index, 0)}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    onSubmitEditing={autoAdvance.next(index, 0)}
                   />
                 </View>
 
@@ -524,6 +536,11 @@ export function BepariCalculatorScreen() {
                     placeholder={tr("০")}
                     placeholderTextColor={colors.textTertiary}
                     keyboardType="number-pad"
+                    ref={autoAdvance.register(index, 1)}
+                    onFocus={autoAdvance.onFocus(index, 1)}
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    onSubmitEditing={autoAdvance.next(index, 1)}
                   />
                 </View>
 

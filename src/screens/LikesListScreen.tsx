@@ -28,16 +28,7 @@ interface LikedUser {
   isFollowing: boolean;
 }
 
-const SAMPLE_LIKED_USERS: LikedUser[] = [
-  { id: "1", name: "রহিম উদ্দিন", initials: "রউ", role: "ধান চাষি", location: "ময়মনসিংহ", isFollowing: false },
-  { id: "2", name: "করিম সাহেব", initials: "কস", role: "সবজি চাষি", location: "বগুড়া", isFollowing: true },
-  { id: "3", name: "জামাল হোসেন", initials: "জহ", role: "মৎস্য চাষি", location: "সিলেট", isFollowing: false },
-  { id: "4", name: "সালমা বেগম", initials: "সব", role: "গবাদি পশু পালক", location: "রাজশাহী", isFollowing: true },
-  { id: "5", name: "আবু তাহের", initials: "আত", role: "ফল চাষি", location: "দিনাজপুর", isFollowing: false },
-  { id: "6", name: "নাজমুল ইসলাম", initials: "নই", role: "পোল্ট্রি ফার্মার", location: "গাজীপুর", isFollowing: false },
-  { id: "7", name: "ফাতেমা খাতুন", initials: "ফখ", role: "মশলা চাষি", location: "কুমিল্লা", isFollowing: true },
-  { id: "8", name: "আলী আকবর", initials: "আআ", role: "চা চাষি", location: "সিলেট", isFollowing: false },
-];
+const SAMPLE_LIKED_USERS: LikedUser[] = [];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type LikesListRouteProp = RouteProp<RootStackParamList, "LikesList">;

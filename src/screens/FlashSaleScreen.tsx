@@ -47,63 +47,7 @@ const getEndTime = (hours: number) => {
   return date;
 };
 
-const FLASH_SALE_ITEMS: FlashSaleItem[] = [
-  {
-    id: "1",
-    name: "প্রিমিয়াম জৈব সার ৫০কেজি",
-    price: 1200,
-    originalPrice: 1800,
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400",
-    seller: "গ্রিন ফার্ম সাপ্লাই",
-    sold: 234,
-    stock: 50,
-    endsAt: getEndTime(2),
-  },
-  {
-    id: "2",
-    name: "হাইব্রিড ধান বীজ ১০কেজি",
-    price: 850,
-    originalPrice: 1200,
-    image: "https://images.unsplash.com/photo-1536617621572-1d5f1e6269a0?w=400",
-    seller: "বীজ বাংলা",
-    sold: 567,
-    stock: 30,
-    endsAt: getEndTime(4),
-  },
-  {
-    id: "3",
-    name: "স্প্রেয়ার মেশিন ২০লি",
-    price: 2500,
-    originalPrice: 3500,
-    image: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400",
-    seller: "কৃষি যন্ত্রপাতি",
-    sold: 89,
-    stock: 15,
-    endsAt: getEndTime(1),
-  },
-  {
-    id: "4",
-    name: "মাছের ভাসমান খাবার ২৫কেজি",
-    price: 1800,
-    originalPrice: 2400,
-    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400",
-    seller: "ফিশ ফিড কর্পোরেশন",
-    sold: 345,
-    stock: 100,
-    endsAt: getEndTime(6),
-  },
-  {
-    id: "5",
-    name: "সেচ পাইপ ১০০মিটার",
-    price: 3200,
-    originalPrice: 4500,
-    image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400",
-    seller: "ইরিগেশন সল্যুশন",
-    sold: 156,
-    stock: 25,
-    endsAt: getEndTime(3),
-  },
-];
+const FLASH_SALE_ITEMS: FlashSaleItem[] = [];
 
 function CountdownTimer({ endsAt, theme }: { endsAt: Date; theme: any }) {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
@@ -200,7 +144,7 @@ export default function FlashSaleScreen() {
         unit: item.unit || "কেজি",
         seller: "ফ্ল্যাশ সেল",
         location: "বাংলাদেশ",
-        rating: 4.8,
+        rating: 0,
         image: item.image,
         description: `${item.name} - ${discount}% ছাড়ে! মূল দাম: ৳${item.originalPrice}`,
         quantity: item.stock,

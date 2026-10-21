@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const SERVICE_TYPES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "survey", label: "জরিপ", icon: "map" },
@@ -20,94 +21,9 @@ const SERVICE_TYPES = [
   { id: "dispute", label: "বিরোধ", icon: "alert-triangle" },
 ];
 
-const PROFESSIONALS = [
-  {
-    id: "1",
-    name: "অ্যাডভোকেট রফিক উদ্দিন",
-    specialty: "ভূমি আইন বিশেষজ্ঞ",
-    qualification: "LLB, LLM",
-    experience: "২৫ বছর",
-    location: "ঢাকা জজ কোর্ট",
-    rating: 4.9,
-    fee: "৳৫,০০০",
-    cases: "৫০০+ মামলা",
-    phone: "+8801712345678",
-    available: true,
-  },
-  {
-    id: "2",
-    name: "সার্ভেয়ার আব্দুল করিম",
-    specialty: "ভূমি জরিপ বিশেষজ্ঞ",
-    qualification: "ডিপ্লোমা (সার্ভে)",
-    experience: "২০ বছর",
-    location: "গাজীপুর",
-    rating: 4.8,
-    fee: "৳৩,০০০",
-    cases: "১,০০০+ জরিপ",
-    phone: "+8801812345678",
-    available: true,
-  },
-  {
-    id: "3",
-    name: "অ্যাডভোকেট সালমা খাতুন",
-    specialty: "সম্পত্তি আইন",
-    qualification: "LLB, LLM (Land Law)",
-    experience: "১৫ বছর",
-    location: "চট্টগ্রাম",
-    rating: 4.7,
-    fee: "৳৪,০০০",
-    cases: "৩০০+ মামলা",
-    phone: "+8801912345678",
-    available: false,
-  },
-];
+const PROFESSIONALS: any[] = [];
 
-const DISCUSSIONS = [
-  {
-    id: "1",
-    author: "আলী হোসেন",
-    title: "জমি দখল সমস্যা - কী করব?",
-    content: "আমার পৈতৃক জমি প্রতিবেশী জোর করে দখল করে নিয়েছে। এখন কী আইনি পদক্ষেপ নেব?",
-    replies: 18,
-    likes: 45,
-    time: "৩ ঘণ্টা আগে",
-    tags: ["দখল", "আইনি সহায়তা"],
-    solved: false,
-  },
-  {
-    id: "2",
-    author: "করিম মিয়া",
-    title: "নামজারি করতে কত সময় লাগে?",
-    content: "বাবার নামে জমি আছে। তাঁর মৃত্যুর পর নামজারি করতে চাই। কী কী কাগজপত্র লাগবে?",
-    replies: 25,
-    likes: 62,
-    time: "৬ ঘণ্টা আগে",
-    tags: ["নামজারি", "উত্তরাধিকার"],
-    solved: true,
-  },
-  {
-    id: "3",
-    author: "ফাতেমা বেগম",
-    title: "জমি কেনার আগে কী যাচাই করব?",
-    content: "একটি জমি কিনতে চাই। প্রতারণা এড়াতে কী কী বিষয় যাচাই করা উচিত?",
-    replies: 32,
-    likes: 89,
-    time: "১ দিন আগে",
-    tags: ["ক্রয়", "যাচাই"],
-    solved: true,
-  },
-  {
-    id: "4",
-    author: "রহিম উদ্দিন",
-    title: "সীমানা বিরোধ সমাধান",
-    content: "প্রতিবেশীর সাথে সীমানা নিয়ে বিরোধ চলছে। সালিশি না মামলা - কোনটা ভালো?",
-    replies: 14,
-    likes: 28,
-    time: "২ দিন আগে",
-    tags: ["সীমানা", "বিরোধ"],
-    solved: false,
-  },
-];
+const DISCUSSIONS: any[] = [];
 
 const QUICK_SERVICES = [
   { id: "1", title: "জমির খতিয়ান", icon: "file", color: "#2563EB" },
@@ -224,6 +140,7 @@ export default function LandServicesScreen() {
               ))}
             </ScrollView>
 
+            {PROFESSIONALS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {PROFESSIONALS.map((pro, index) => (
               <Animated.View key={pro.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.proCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -294,6 +211,7 @@ export default function LandServicesScreen() {
               <ThemedText style={styles.newPostText}>সমস্যা শেয়ার করুন</ThemedText>
             </Pressable>
 
+            {DISCUSSIONS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {DISCUSSIONS.map((discussion, index) => (
               <Animated.View key={discussion.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <Pressable style={[styles.discussionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -317,7 +235,7 @@ export default function LandServicesScreen() {
                     {discussion.content}
                   </ThemedText>
                   <View style={styles.tagsRow}>
-                    {discussion.tags.map((tag, i) => (
+                    {discussion.tags.map((tag: string, i: number) => (
                       <View key={i} style={[styles.tag, { backgroundColor: theme.primary + "15" }]}>
                         <ThemedText style={[styles.tagText, { color: theme.primary }]}>{tag}</ThemedText>
                       </View>

@@ -81,41 +81,7 @@ interface DisputeState {
   getDisputeById: (disputeId: string) => Dispute | undefined;
 }
 
-const MOCK_DISPUTES: Dispute[] = [
-  {
-    id: "d1",
-    orderId: "o1",
-    orderNumber: "#১২৩৪",
-    buyerId: "buyer1",
-    buyerName: "করিম সাহেব",
-    sellerId: "seller1",
-    sellerName: "সবুজ ফসল",
-    reason: "quality_issue",
-    description: "টমেটোগুলো পচা ছিল। অর্ধেক ফেলে দিতে হয়েছে।",
-    evidence: ["https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=200"],
-    status: "under_review",
-    messages: [
-      {
-        id: "m1",
-        senderId: "buyer1",
-        senderType: "buyer",
-        content: "টমেটোগুলো পচা ছিল। ছবি দেখুন।",
-        attachments: [],
-        createdAt: Date.now() - 2 * 24 * 3600000,
-      },
-      {
-        id: "m2",
-        senderId: "seller1",
-        senderType: "seller",
-        content: "দুঃখিত এমন হয়েছে। আমরা পরীক্ষা করে দেখছি।",
-        attachments: [],
-        createdAt: Date.now() - 1 * 24 * 3600000,
-      },
-    ],
-    createdAt: Date.now() - 3 * 24 * 3600000,
-    updatedAt: Date.now() - 1 * 24 * 3600000,
-  },
-];
+const MOCK_DISPUTES: Dispute[] = [];
 
 export const useDisputeStore = create<DisputeState>()(
   persist(
@@ -185,6 +151,15 @@ export const useDisputeStore = create<DisputeState>()(
     {
       name: "dispute-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      // v2: the sample entries older versions saved on the phone are removed; real ones stay.
+      version: 2,
+      migrate: (persisted: any) => {
+        const sample = new Set(["d1"]);
+        if (persisted && Array.isArray(persisted.disputes)) {
+          persisted.disputes = persisted.disputes.filter((x: any) => !sample.has(x?.id));
+        }
+        return persisted;
+      },
     }
   )
 );

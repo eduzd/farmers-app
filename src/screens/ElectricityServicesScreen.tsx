@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const SERVICE_TYPES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "solar", label: "সোলার", icon: "sun" },
@@ -19,72 +20,9 @@ const SERVICE_TYPES = [
   { id: "inverter", label: "ইনভার্টার", icon: "battery-charging" },
 ];
 
-const PROFESSIONALS = [
-  {
-    id: "1",
-    name: "সোলার বাংলা",
-    specialty: "সোলার প্যানেল ইনস্টলেশন",
-    experience: "১২ বছর",
-    location: "ঢাকা",
-    rating: 4.9,
-    services: ["সোলার প্যানেল", "সোলার পাম্প", "ব্যাটারি সিস্টেম"],
-    phone: "+8801712345678",
-  },
-  {
-    id: "2",
-    name: "ইলেকট্রিক কেয়ার",
-    specialty: "বৈদ্যুতিক মেরামত",
-    experience: "১৮ বছর",
-    location: "গাজীপুর",
-    rating: 4.7,
-    services: ["হাউস ওয়্যারিং", "মোটর মেরামত", "জেনারেটর সার্ভিস"],
-    phone: "+8801812345678",
-  },
-  {
-    id: "3",
-    name: "পাওয়ার সলিউশন",
-    specialty: "ইনভার্টার ও IPS",
-    experience: "১০ বছর",
-    location: "চট্টগ্রাম",
-    rating: 4.8,
-    services: ["IPS ইনস্টলেশন", "ইনভার্টার", "ব্যাটারি ব্যাকআপ"],
-    phone: "+8801912345678",
-  },
-];
+const PROFESSIONALS: any[] = [];
 
-const DISCUSSIONS = [
-  {
-    id: "1",
-    author: "আলী হোসেন",
-    title: "সোলার প্যানেল কত ওয়াট লাগবে?",
-    content: "আমার ৫টি লাইট, ২টি ফ্যান, ১টি টিভি চালাতে কত ওয়াটের সোলার প্যানেল লাগবে?",
-    replies: 28,
-    likes: 65,
-    time: "৩ ঘণ্টা আগে",
-    tags: ["সোলার", "ক্যালকুলেশন"],
-    solved: true,
-  },
-  {
-    id: "2",
-    author: "করিম মিয়া",
-    title: "সাবমার্সিবল পাম্পে সমস্যা",
-    content: "আমার সাবমার্সিবল পাম্প ঘন ঘন বন্ধ হয়ে যাচ্ছে। কী কারণ হতে পারে?",
-    replies: 15,
-    likes: 28,
-    time: "৬ ঘণ্টা আগে",
-    tags: ["পাম্প", "সমস্যা"],
-  },
-  {
-    id: "3",
-    author: "ফাতেমা বেগম",
-    title: "বিদ্যুৎ বিল বেশি আসছে কেন?",
-    content: "এ মাসে বিদ্যুৎ বিল অনেক বেশি এসেছে। কীভাবে বিল কমাব?",
-    replies: 42,
-    likes: 98,
-    time: "১ দিন আগে",
-    tags: ["বিল", "সাশ্রয়"],
-  },
-];
+const DISCUSSIONS: any[] = [];
 
 const EMERGENCY = [
   { title: "বিদ্যুৎ জরুরি", number: "16116", icon: "zap", color: "#EA8A0C" },
@@ -186,6 +124,7 @@ export default function ElectricityServicesScreen() {
               ))}
             </ScrollView>
 
+            {PROFESSIONALS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {PROFESSIONALS.map((pro, index) => (
               <Animated.View key={pro.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.proCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -214,7 +153,7 @@ export default function ElectricityServicesScreen() {
                   </View>
 
                   <View style={styles.servicesRow}>
-                    {pro.services.map((service, i) => (
+                    {pro.services.map((service: string, i: number) => (
                       <View key={i} style={[styles.serviceChip, { backgroundColor: "#EA8A0C20" }]}>
                         <ThemedText style={[styles.serviceChipText, { color: "#EA8A0C" }]}>{service}</ThemedText>
                       </View>
@@ -244,6 +183,7 @@ export default function ElectricityServicesScreen() {
               <ThemedText style={styles.newPostText}>প্রশ্ন করুন</ThemedText>
             </Pressable>
 
+            {DISCUSSIONS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {DISCUSSIONS.map((discussion, index) => (
               <Animated.View key={discussion.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <Pressable style={[styles.discussionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -267,7 +207,7 @@ export default function ElectricityServicesScreen() {
                     {discussion.content}
                   </ThemedText>
                   <View style={styles.tagsRow}>
-                    {discussion.tags.map((tag, i) => (
+                    {discussion.tags.map((tag: string, i: number) => (
                       <View key={i} style={[styles.tag, { backgroundColor: "#EA8A0C20" }]}>
                         <ThemedText style={[styles.tagText, { color: "#EA8A0C" }]}>{tag}</ThemedText>
                       </View>

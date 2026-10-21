@@ -10,56 +10,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
-const WAREHOUSES = [
-  {
-    id: "1",
-    name: "ঢাকা কৃষি গুদাম",
-    location: "গাজীপুর, ঢাকা",
-    distance: "১২ কি.মি.",
-    capacity: "৫,০০০ মণ",
-    available: "২,৫০০ মণ",
-    price: "৳১৫/মণ/দিন",
-    rating: 4.8,
-    features: ["শীতাতপ", "নিরাপত্তা", "২৪/৭"],
-    type: "general",
-  },
-  {
-    id: "2",
-    name: "ফ্রেশ কোল্ড স্টোরেজ",
-    location: "সাভার, ঢাকা",
-    distance: "১৮ কি.মি.",
-    capacity: "৩,০০০ মণ",
-    available: "১,২০০ মণ",
-    price: "৳২৫/মণ/দিন",
-    rating: 4.9,
-    features: ["কোল্ড স্টোরেজ", "-১৮°C", "আলু/শাকসবজি"],
-    type: "cold",
-  },
-  {
-    id: "3",
-    name: "চট্টগ্রাম এগ্রো ওয়্যারহাউস",
-    location: "পটিয়া, চট্টগ্রাম",
-    distance: "২৫০ কি.মি.",
-    capacity: "১০,০০০ মণ",
-    available: "৬,০০০ মণ",
-    price: "৳১২/মণ/দিন",
-    rating: 4.6,
-    features: ["বড় ক্যাপাসিটি", "পোর্ট কাছে", "রপ্তানি সুবিধা"],
-    type: "general",
-  },
-  {
-    id: "4",
-    name: "খুলনা শীতল ভাণ্ডার",
-    location: "খুলনা সদর",
-    distance: "২৮০ কি.মি.",
-    capacity: "২,০০০ মণ",
-    available: "৮০০ মণ",
-    price: "৳২০/মণ/দিন",
-    rating: 4.7,
-    features: ["মাছ স্টোরেজ", "-২৫°C", "বরফ সুবিধা"],
-    type: "cold",
-  },
-];
+import { EmptyState } from "@/components/ui";
+const WAREHOUSES: any[] = [];
 
 const FILTERS = [
   { id: "all", label: "সব" },
@@ -129,6 +81,7 @@ export default function WarehouseScreen() {
           {filteredWarehouses.length} টি গুদাম পাওয়া গেছে
         </ThemedText>
 
+        {filteredWarehouses.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
         {filteredWarehouses.map((warehouse, index) => (
           <Animated.View key={warehouse.id} entering={FadeInUp.delay(index * 80).duration(400)}>
             <Pressable
@@ -178,7 +131,7 @@ export default function WarehouseScreen() {
               </View>
 
               <View style={styles.featuresRow}>
-                {warehouse.features.map((feature, i) => (
+                {warehouse.features.map((feature: string, i: number) => (
                   <View key={i} style={[styles.featureChip, { backgroundColor: theme.primary + "15" }]}>
                     <ThemedText style={[styles.featureText, { color: theme.primary }]}>{feature}</ThemedText>
                   </View>

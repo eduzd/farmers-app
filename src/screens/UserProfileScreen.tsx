@@ -30,34 +30,7 @@ interface UserPost {
   isLiked: boolean;
 }
 
-const SAMPLE_POSTS: UserPost[] = [
-  {
-    id: "1",
-    content: "আজকে আমার ক্ষেতে নতুন ধান রোপণ করলাম। আশা করি ভালো ফলন হবে।",
-    image: "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400",
-    likes: 24,
-    comments: 8,
-    createdAt: "২ ঘণ্টা আগে",
-    isLiked: false,
-  },
-  {
-    id: "2",
-    content: "জৈব সার ব্যবহার করে টমেটো চাষ করছি। ফলাফল অসাধারণ!",
-    image: "https://images.unsplash.com/photo-1592841200221-a6898f307baa?w=400",
-    likes: 45,
-    comments: 12,
-    createdAt: "১ দিন আগে",
-    isLiked: true,
-  },
-  {
-    id: "3",
-    content: "আজকের বাজারে সবজির দাম অনেক ভালো পেলাম। কৃষকদের জন্য ভালো খবর!",
-    likes: 32,
-    comments: 5,
-    createdAt: "৩ দিন আগে",
-    isLiked: false,
-  },
-];
+const SAMPLE_POSTS: UserPost[] = [];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type UserProfileRouteProp = RouteProp<RootStackParamList, "UserProfile">;

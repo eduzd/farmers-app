@@ -20,6 +20,7 @@ import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from "reac
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { tr } from "@/lib/tr";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -35,6 +36,7 @@ import { useI18n } from "@/lib/i18n";
 import { useCompanyStore } from "@/lib/companyStore";
 import { CommunitySwitcher, CommunitySwitcherRef } from "@/components/CommunitySwitcher";
 
+import { EmptyState } from "@/components/ui";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const MENU_ITEMS = [
@@ -54,12 +56,7 @@ interface SavedPost {
   image?: string;
 }
 
-const SAVED_POSTS: SavedPost[] = [
-  { id: "sp-1", author: { name: "মোঃ মিজান", avatar: "", initials: "মম" }, content: "এই পুকুরে দেখা যাচ্ছে অনেক শ্যাওলা জমে আছে শ্যাওলা কিভাবে দূর ক...", image: "https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=400" },
-  { id: "sp-2", author: { name: "মোঃ মিজান", avatar: "", initials: "মম" }, content: "তোমার সর্বশেষ লিমিট আছে সেগুলো ঠিক করছো আর যে প্রোফাইলে শেয়ার করে সবাইকে দেখার..." },
-  { id: "sp-3", author: { name: "মোঃ মিজান", avatar: "", initials: "মম" }, content: "কলার গাছে ওষুধ দিতে হবে কীটনাশক দমন এর জন্য কি কি...", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400" },
-  { id: "sp-4", author: { name: "Didu", avatar: "", initials: "Di" }, content: "সবাই কেমন আছো খানা খেয়েছো" },
-];
+const SAVED_POSTS: SavedPost[] = [];
 
 const FEATURE_MENU_ITEMS = [
   { id: "wallet", labelKey: "profile.wallet", icon: "credit-card" as const, screen: "Wallet" as const },
@@ -228,13 +225,35 @@ export default function ProfileScreen() {
             isWelfareMember={isWelfareMember}
             badge={badgeKeyFor(user)}
           />
+          {user ? (
+            <Pressable
+              onPress={() => navigation.navigate("Settings", { openEditProfile: true })}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Change profile picture"
+              style={[styles.cameraBadge, { backgroundColor: theme.primary, borderColor: theme.backgroundRoot }]}
+            >
+              <Feather name="camera" size={14} color="#fff" />
+            </Pressable>
+          ) : null}
         </Pressable>
         <ThemedText type="h3" style={styles.profileName}>
-          {user?.name || "John Doe"}
+          {user?.name || tr("অতিথি")}
         </ThemedText>
         <ThemedText type="body" style={[styles.profileEmail, { color: theme.textSecondary }]}>
-          {user?.email || "john.doe@farmers.com"}
+          {user?.email || ""}
         </ThemedText>
+        {user ? (
+          <Pressable
+            onPress={() => navigation.navigate("Settings", { openEditProfile: true })}
+            style={[styles.editProfileBtn, { borderColor: theme.primary }]}
+            accessibilityRole="button"
+            testID="profile-edit-button"
+          >
+            <Feather name="edit-2" size={14} color={theme.primary} />
+            <ThemedText style={{ color: theme.primary, fontWeight: "600", fontSize: 14 }}>{tr("প্রোফাইল এডিট করুন")}</ThemedText>
+          </Pressable>
+        ) : null}
         <View style={styles.badgeContainer}>
           <View style={[styles.sectorBadge, { backgroundColor: theme.primary + "20" }]}>
             <Feather 
@@ -462,6 +481,7 @@ export default function ProfileScreen() {
                 </Pressable>
                 {savedPostsExpanded ? (
                   <View style={styles.savedPostsList}>
+                    {savedPosts.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
                     {savedPosts.map((post) => (
                       <View 
                         key={post.id} 
@@ -583,6 +603,27 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  cameraBadge: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  editProfileBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginTop: 10,
+  },
   container: {
     flex: 1,
   },

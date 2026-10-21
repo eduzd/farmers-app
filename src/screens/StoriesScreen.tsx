@@ -48,74 +48,7 @@ const STORY_BACKGROUNDS = [
   "#0D9488", "#DB2777", "#673AB7", "#FF5722", "#795548",
 ];
 
-const MOCK_STORIES: Story[] = [
-  {
-    id: "own",
-    userId: "self",
-    userName: "আপনার স্টোরি",
-    userAvatar: "https://randomuser.me/api/portraits/men/1.jpg",
-    items: [],
-    hasUnread: false,
-    isOwn: true,
-  },
-  {
-    id: "1",
-    userId: "u1",
-    userName: "করিম সাহেব",
-    userAvatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    hasUnread: true,
-    isOwn: false,
-    items: [
-      { id: "s1", type: "image", content: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800", createdAt: new Date(Date.now() - 2 * 3600000), views: 45 },
-      { id: "s2", type: "text", content: "আজকে ধানের ফলন অনেক ভালো হয়েছে! সবাইকে ধন্যবাদ।", backgroundColor: "#2FA36B", createdAt: new Date(Date.now() - 1 * 3600000), views: 32 },
-    ],
-  },
-  {
-    id: "2",
-    userId: "u2",
-    userName: "ফাতেমা বেগম",
-    userAvatar: "https://randomuser.me/api/portraits/women/28.jpg",
-    hasUnread: true,
-    isOwn: false,
-    items: [
-      { id: "s3", type: "image", content: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=800", createdAt: new Date(Date.now() - 3 * 3600000), views: 78 },
-    ],
-  },
-  {
-    id: "3",
-    userId: "u3",
-    userName: "রহিম উদ্দিন",
-    userAvatar: "https://randomuser.me/api/portraits/men/45.jpg",
-    hasUnread: false,
-    isOwn: false,
-    items: [
-      { id: "s4", type: "text", content: "নতুন সার প্রয়োগের পদ্ধতি শিখলাম আজকে। খুবই কার্যকর!", backgroundColor: "#2563EB", createdAt: new Date(Date.now() - 5 * 3600000), views: 56 },
-    ],
-  },
-  {
-    id: "4",
-    userId: "u4",
-    userName: "নাজমুল হাসান",
-    userAvatar: "https://randomuser.me/api/portraits/men/67.jpg",
-    hasUnread: true,
-    isOwn: false,
-    items: [
-      { id: "s5", type: "image", content: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800", createdAt: new Date(Date.now() - 4 * 3600000), views: 123 },
-      { id: "s6", type: "text", content: "মাছের পোনা ছাড়লাম আজ! দোয়া করবেন।", backgroundColor: "#7C3AED", createdAt: new Date(Date.now() - 2 * 3600000), views: 89 },
-    ],
-  },
-  {
-    id: "5",
-    userId: "u5",
-    userName: "সালমা আক্তার",
-    userAvatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    hasUnread: false,
-    isOwn: false,
-    items: [
-      { id: "s7", type: "image", content: "https://images.unsplash.com/photo-1560493676-04071c5f467b?w=800", createdAt: new Date(Date.now() - 6 * 3600000), views: 67 },
-    ],
-  },
-];
+const MOCK_STORIES: Story[] = [];
 
 export default function StoriesScreen() {
   const insets = useSafeAreaInsets();

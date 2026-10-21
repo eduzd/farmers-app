@@ -16,6 +16,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Course {
   id: string;
   title: string;
@@ -32,94 +33,7 @@ interface Course {
   progress?: number;
 }
 
-const COURSES: Course[] = [
-  {
-    id: "1",
-    title: "জৈব কৃষি সম্পূর্ণ গাইড",
-    instructor: "ড. রহমান সাহেব",
-    thumbnail: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400",
-    duration: "৪ ঘন্টা ৩০ মিনিট",
-    lessons: 24,
-    level: "beginner",
-    rating: 4.8,
-    students: 1250,
-    price: 500,
-    isFree: false,
-    category: "কৃষি",
-    progress: 45,
-  },
-  {
-    id: "2",
-    title: "মাছ চাষ পদ্ধতি",
-    instructor: "প্রফেসর করিম",
-    thumbnail: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400",
-    duration: "৩ ঘন্টা ১৫ মিনিট",
-    lessons: 18,
-    level: "intermediate",
-    rating: 4.6,
-    students: 890,
-    price: 0,
-    isFree: true,
-    category: "মৎস্য",
-    progress: 80,
-  },
-  {
-    id: "3",
-    title: "গবাদি পশু পালন",
-    instructor: "ড. আকবর আলী",
-    thumbnail: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=400",
-    duration: "৫ ঘন্টা",
-    lessons: 32,
-    level: "beginner",
-    rating: 4.9,
-    students: 2100,
-    price: 750,
-    isFree: false,
-    category: "প্রাণী",
-  },
-  {
-    id: "4",
-    title: "সবজি বাগান তৈরি",
-    instructor: "মিসেস ফাতেমা",
-    thumbnail: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400",
-    duration: "২ ঘন্টা ৪৫ মিনিট",
-    lessons: 15,
-    level: "beginner",
-    rating: 4.7,
-    students: 3200,
-    price: 0,
-    isFree: true,
-    category: "কৃষি",
-  },
-  {
-    id: "5",
-    title: "ধান চাষ আধুনিক পদ্ধতি",
-    instructor: "কৃষিবিদ হাসান",
-    thumbnail: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400",
-    duration: "৬ ঘন্টা",
-    lessons: 40,
-    level: "advanced",
-    rating: 4.9,
-    students: 4500,
-    price: 1000,
-    isFree: false,
-    category: "কৃষি",
-  },
-  {
-    id: "6",
-    title: "হাঁস-মুরগি পালন",
-    instructor: "ড. মাহমুদ",
-    thumbnail: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400",
-    duration: "৩ ঘন্টা",
-    lessons: 20,
-    level: "intermediate",
-    rating: 4.5,
-    students: 1800,
-    price: 350,
-    isFree: false,
-    category: "প্রাণী",
-  },
-];
+const COURSES: Course[] = [];
 
 const CATEGORIES = ["সব", "কৃষি", "মৎস্য", "প্রাণী"];
 
@@ -285,6 +199,7 @@ export default function VideoCoursesScreen() {
 
       <FlatList
         data={filteredCourses}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderCourse}
         contentContainerStyle={[

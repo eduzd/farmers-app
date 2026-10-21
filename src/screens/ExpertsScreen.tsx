@@ -20,6 +20,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { fetchCatalog, createCatalogItem, updateCatalogItem, deleteCatalogItem, myUserId } from "@/lib/catalog";
 import { CatalogFormModal, FormField } from "@/components/CatalogFormModal";
 
+import { EmptyState } from "@/components/ui";
 interface Expert {
   id: string;
   name: string;
@@ -36,64 +37,7 @@ interface Expert {
   ownerId?: string | null;
 }
 
-const EXPERTS: Expert[] = [
-  {
-    id: "1",
-    name: "Dr. Kamal Hossain",
-    initials: "KH",
-    specialty: "Veterinarian",
-    credentials: "DVM, MS in Animal Science",
-    experience: 15,
-    rating: 4.9,
-    consultationFee: 500,
-    currency: "BDT",
-    available: true,
-    bio: "Specializing in cattle and poultry health management.",
-    isWelfareMember: true,
-  },
-  {
-    id: "2",
-    name: "Prof. Fatima Rahman",
-    initials: "FR",
-    specialty: "Agronomist",
-    credentials: "PhD in Agronomy",
-    experience: 20,
-    rating: 4.8,
-    consultationFee: 800,
-    currency: "BDT",
-    available: true,
-    bio: "Expert in crop management and soil fertility.",
-    isWelfareMember: true,
-  },
-  {
-    id: "3",
-    name: "Dr. Rafiq Ahmed",
-    initials: "RA",
-    specialty: "Soil Scientist",
-    credentials: "PhD in Soil Science",
-    experience: 12,
-    rating: 4.7,
-    consultationFee: 600,
-    currency: "BDT",
-    available: false,
-    bio: "Specializing in soil health and sustainable farming.",
-    isWelfareMember: true,
-  },
-  {
-    id: "4",
-    name: "Eng. Nasreen Begum",
-    initials: "NB",
-    specialty: "Pest Control",
-    credentials: "MS in Entomology",
-    experience: 10,
-    rating: 4.6,
-    consultationFee: 400,
-    currency: "BDT",
-    available: true,
-    bio: "Integrated pest management and organic solutions.",
-    isWelfareMember: true,
-  },
-];
+const EXPERTS: Expert[] = [];
 
 export default function ExpertsScreen() {
   const insets = useSafeAreaInsets();
@@ -317,6 +261,7 @@ export default function ExpertsScreen() {
 
       <FlatList
         data={filteredExperts}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderExpert}
         contentContainerStyle={[

@@ -21,6 +21,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
+import { EmptyState } from "@/components/ui";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface TrendingHashtag {
@@ -50,52 +51,11 @@ interface TrendingTopic {
   color: string;
 }
 
-const TRENDING_HASHTAGS: TrendingHashtag[] = [
-  { id: "1", tag: "#ধানচাষ", postsCount: 1234, growth: 45, category: "ফসল" },
-  { id: "2", tag: "#জৈবসার", postsCount: 987, growth: 32, category: "সার" },
-  { id: "3", tag: "#মাছচাষ", postsCount: 876, growth: 28, category: "মাছ" },
-  { id: "4", tag: "#বর্ষাকালীন_চাষ", postsCount: 654, growth: 56, category: "মৌসুম" },
-  { id: "5", tag: "#গরুর_খামার", postsCount: 543, growth: 18, category: "পশু" },
-  { id: "6", tag: "#সবজি_বাগান", postsCount: 432, growth: 24, category: "সবজি" },
-  { id: "7", tag: "#কীটনাশক", postsCount: 321, growth: 12, category: "সার" },
-  { id: "8", tag: "#সেচ_ব্যবস্থা", postsCount: 234, growth: 38, category: "যন্ত্র" },
-];
+const TRENDING_HASHTAGS: TrendingHashtag[] = [];
 
-const TRENDING_TOPICS: TrendingTopic[] = [
-  { id: "1", title: "বর্ষা মৌসুমের চাষাবাদ", description: "বর্ষায় কী কী ফসল চাষ করবেন", postsCount: 456, icon: "cloud-rain", color: "#2563EB" },
-  { id: "2", title: "জৈব কৃষি পদ্ধতি", description: "রাসায়নিক মুক্ত চাষের কৌশল", postsCount: 389, icon: "feather", color: "#2FA36B" },
-  { id: "3", title: "মাছের রোগ প্রতিরোধ", description: "মাছ চাষে সাধারণ রোগ ও প্রতিকার", postsCount: 278, icon: "shield", color: "#EA8A0C" },
-  { id: "4", title: "স্মার্ট ফার্মিং", description: "প্রযুক্তি ব্যবহার করে চাষাবাদ", postsCount: 234, icon: "cpu", color: "#7C3AED" },
-];
+const TRENDING_TOPICS: TrendingTopic[] = [];
 
-const TRENDING_POSTS: TrendingPost[] = [
-  {
-    id: "1",
-    author: { name: "করিম সাহেব", avatar: "https://randomuser.me/api/portraits/men/32.jpg" },
-    content: "এবার আমার জমিতে নতুন জাতের ধান চাষ করেছি। ফলন অনেক ভালো হয়েছে! #ধানচাষ #নতুন_জাত",
-    image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600",
-    likes: 234,
-    comments: 45,
-    hashtags: ["#ধানচাষ", "#নতুন_জাত"],
-  },
-  {
-    id: "2",
-    author: { name: "ফাতেমা বেগম", avatar: "https://randomuser.me/api/portraits/women/28.jpg" },
-    content: "জৈব সার তৈরির সহজ পদ্ধতি শেয়ার করছি। বাড়িতেই তৈরি করা যায়! #জৈবসার #টিপস",
-    likes: 189,
-    comments: 67,
-    hashtags: ["#জৈবসার", "#টিপস"],
-  },
-  {
-    id: "3",
-    author: { name: "রহিম উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/45.jpg" },
-    content: "আমার পুকুরে তেলাপিয়া মাছের চাষ শুরু করেছি। ৩ মাসে ভালো ফলন পাচ্ছি। #মাছচাষ",
-    image: "https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=600",
-    likes: 156,
-    comments: 34,
-    hashtags: ["#মাছচাষ"],
-  },
-];
+const TRENDING_POSTS: TrendingPost[] = [];
 
 export default function TrendingScreen() {
   const insets = useSafeAreaInsets();
@@ -244,6 +204,7 @@ export default function TrendingScreen() {
       {activeTab === "hashtags" ? (
         <FlatList
           data={TRENDING_HASHTAGS}
+          ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
           keyExtractor={item => item.id}
           renderItem={renderHashtag}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
@@ -253,6 +214,7 @@ export default function TrendingScreen() {
       ) : activeTab === "topics" ? (
         <FlatList
           data={TRENDING_TOPICS}
+          ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
           keyExtractor={item => item.id}
           renderItem={renderTopic}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
@@ -262,6 +224,7 @@ export default function TrendingScreen() {
       ) : (
         <FlatList
           data={TRENDING_POSTS}
+          ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
           keyExtractor={item => item.id}
           renderItem={renderPost}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}

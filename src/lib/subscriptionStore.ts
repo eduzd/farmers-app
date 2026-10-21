@@ -47,46 +47,7 @@ interface SubscriptionState {
   getActiveSubscriptions: (userId: string) => Subscription[];
 }
 
-const MOCK_SUBSCRIPTIONS: Subscription[] = [
-  {
-    id: "sub1",
-    userId: "user1",
-    sellerId: "seller1",
-    sellerName: "সবুজ ফসল",
-    items: [
-      { productId: "p1", productName: "জৈব টমেটো", productImage: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=200", quantity: 5, unit: "কেজি", pricePerUnit: 80, currency: "৳" },
-      { productId: "p2", productName: "জৈব গাজর", productImage: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=200", quantity: 3, unit: "কেজি", pricePerUnit: 60, currency: "৳" },
-    ],
-    frequency: "weekly",
-    nextDelivery: Date.now() + 3 * 24 * 3600000,
-    deliveryDay: 5,
-    deliveryAddress: "১২৩, গ্রিন রোড, ঢাকা",
-    totalAmount: 580,
-    discountPercent: 10,
-    status: "active",
-    startDate: Date.now() - 30 * 24 * 3600000,
-    deliveryCount: 4,
-    createdAt: Date.now() - 30 * 24 * 3600000,
-  },
-  {
-    id: "sub2",
-    userId: "user1",
-    sellerId: "seller2",
-    sellerName: "মুক্ত মুরগি খামার",
-    items: [
-      { productId: "p3", productName: "দেশি মুরগির ডিম", productImage: "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=200", quantity: 2, unit: "হালি", pricePerUnit: 180, currency: "৳" },
-    ],
-    frequency: "biweekly",
-    nextDelivery: Date.now() + 10 * 24 * 3600000,
-    deliveryAddress: "১২৩, গ্রিন রোড, ঢাকা",
-    totalAmount: 360,
-    discountPercent: 5,
-    status: "active",
-    startDate: Date.now() - 45 * 24 * 3600000,
-    deliveryCount: 3,
-    createdAt: Date.now() - 45 * 24 * 3600000,
-  },
-];
+const MOCK_SUBSCRIPTIONS: Subscription[] = [];
 
 export const useSubscriptionStore = create<SubscriptionState>()(
   persist(
@@ -170,6 +131,15 @@ export const useSubscriptionStore = create<SubscriptionState>()(
     {
       name: "subscription-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      // v2: the sample entries older versions saved on the phone are removed; real ones stay.
+      version: 2,
+      migrate: (persisted: any) => {
+        const sample = new Set(["sub1", "sub2"]);
+        if (persisted && Array.isArray(persisted.subscriptions)) {
+          persisted.subscriptions = persisted.subscriptions.filter((x: any) => !sample.has(x?.id));
+        }
+        return persisted;
+      },
     }
   )
 );

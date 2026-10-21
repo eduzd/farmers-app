@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const SPECIALTIES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "general", label: "জেনারেল", icon: "user" },
@@ -21,80 +22,9 @@ const SPECIALTIES = [
   { id: "child", label: "শিশু", icon: "smile" },
 ];
 
-const DOCTORS = [
-  {
-    id: "1",
-    name: "ডা. আহমেদ হোসেন",
-    specialty: "জেনারেল ফিজিশিয়ান",
-    qualification: "MBBS, FCPS",
-    experience: "২০ বছর",
-    location: "ঢাকা মেডিকেল কলেজ",
-    rating: 4.9,
-    fee: "৳৮০০",
-    available: true,
-    phone: "+8801712345678",
-    nextSlot: "আজ ৪:০০ PM",
-  },
-  {
-    id: "2",
-    name: "ডা. ফারহানা রহমান",
-    specialty: "হৃদরোগ বিশেষজ্ঞ",
-    qualification: "MBBS, MD (Cardiology)",
-    experience: "১৫ বছর",
-    location: "বঙ্গবন্ধু মেডিকেল",
-    rating: 4.8,
-    fee: "৳১,২০০",
-    available: true,
-    phone: "+8801812345678",
-    nextSlot: "আগামীকাল ১০:০০ AM",
-  },
-  {
-    id: "3",
-    name: "ডা. করিম উদ্দিন",
-    specialty: "অর্থোপেডিক সার্জন",
-    qualification: "MBBS, MS (Ortho)",
-    experience: "১২ বছর",
-    location: "ন্যাশনাল অর্থোপেডিক",
-    rating: 4.7,
-    fee: "৳১,০০০",
-    available: false,
-    phone: "+8801912345678",
-    nextSlot: "শনিবার",
-  },
-];
+const DOCTORS: any[] = [];
 
-const DISCUSSIONS = [
-  {
-    id: "1",
-    author: "রহিম মিয়া",
-    title: "হাঁটুতে ব্যথা - কী করব?",
-    content: "গত ২ মাস ধরে হাঁটুতে প্রচণ্ড ব্যথা। হাঁটতে কষ্ট হয়।",
-    replies: 12,
-    likes: 24,
-    time: "২ ঘণ্টা আগে",
-    tags: ["হাড়", "ব্যথা"],
-  },
-  {
-    id: "2",
-    author: "করিমা বেগম",
-    title: "শিশুর জ্বর ও সর্দি",
-    content: "আমার ৩ বছরের বাচ্চার ৩ দিন ধরে জ্বর। কী ওষুধ দেব?",
-    replies: 8,
-    likes: 15,
-    time: "৫ ঘণ্টা আগে",
-    tags: ["শিশু", "জ্বর"],
-  },
-  {
-    id: "3",
-    author: "আলী হোসেন",
-    title: "ডায়াবেটিস নিয়ন্ত্রণ",
-    content: "ডায়াবেটিস ২০ এর উপরে থাকছে। কীভাবে নিয়ন্ত্রণ করব?",
-    replies: 20,
-    likes: 45,
-    time: "১ দিন আগে",
-    tags: ["ডায়াবেটিস", "জেনারেল"],
-  },
-];
+const DISCUSSIONS: any[] = [];
 
 const EMERGENCY = [
   { title: "জরুরি হটলাইন", number: "999", icon: "phone-call", color: "#DC2626" },
@@ -209,6 +139,7 @@ export default function MedicalServicesScreen() {
               ))}
             </ScrollView>
 
+            {DOCTORS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {DOCTORS.map((doctor, index) => (
               <Animated.View key={doctor.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.doctorCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -278,6 +209,7 @@ export default function MedicalServicesScreen() {
               <ThemedText style={styles.newPostText}>নতুন আলোচনা শুরু করুন</ThemedText>
             </Pressable>
 
+            {DISCUSSIONS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {DISCUSSIONS.map((discussion, index) => (
               <Animated.View key={discussion.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <Pressable style={[styles.discussionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -295,7 +227,7 @@ export default function MedicalServicesScreen() {
                     {discussion.content}
                   </ThemedText>
                   <View style={styles.tagsRow}>
-                    {discussion.tags.map((tag, i) => (
+                    {discussion.tags.map((tag: string, i: number) => (
                       <View key={i} style={[styles.tag, { backgroundColor: theme.primary + "15" }]}>
                         <ThemedText style={[styles.tagText, { color: theme.primary }]}>{tag}</ThemedText>
                       </View>

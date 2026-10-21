@@ -1,4 +1,7 @@
 import { registerDmRoutes } from "./dmRoutes";
+import { registerProfileRoutes } from "./profileRoutes";
+import { registerReactionRoutes } from "./reactionRoutes";
+import { initCalls, handleCallMessage, onCallClientAuthed, onCallClientGone, registerCallRoutes } from "./calls";
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
@@ -101,17 +104,8 @@ interface ChatClient {
   conversationIds: Set<string>;
 }
 
-interface ActiveCall {
-  callId: string;
-  callerId: string;
-  calleeId: string;
-  status: "ringing" | "connected" | "ended";
-  startedAt: Date;
-}
-
 // One person can be connected from several phones/tabs at once.
 const chatClients = new Map<string, Set<ChatClient>>();
-const activeCalls = new Map<string, ActiveCall>();
 
 function addChatClient(userId: string, client: ChatClient) {
   let set = chatClients.get(userId);
@@ -131,12 +125,13 @@ function userOnline(userId: string) {
   return !!set && [...set].some((c) => c.ws.readyState === WebSocket.OPEN);
 }
 
-function sendToUser(userId: string, message: any) {
+function sendToUser(userId: string, message: any, except?: WebSocket) {
   const set = chatClients.get(userId);
   if (!set) return false;
   let sent = false;
   const text = JSON.stringify(message);
   for (const c of set) {
+    if (c.ws === except) continue;
     if (c.ws.readyState === WebSocket.OPEN) {
       c.ws.send(text);
       sent = true;
@@ -159,146 +154,8 @@ const farmingResponses = [
   "During dry seasons, consider mulching to retain soil moisture and regulate temperature.",
 ];
 
-const demoCompanies = [
-  {
-    id: "company-1",
-    name: "গ্রীন হার্ভেস্ট",
-    initials: "GH",
-    description: "উচ্চ মানের বীজ ও চারা সরবরাহকারী। ২০ বছরের অভিজ্ঞতা।",
-    category: "seeds",
-    verified: true,
-    rating: 4.8,
-    reviewsCount: 156,
-    productsCount: 45,
-    followersCount: 1250,
-    totalSales: 3500,
-    responseRate: 98,
-    shipOnTime: 96,
-    establishedYear: 2005,
-    address: "মিরপুর-১০, ঢাকা",
-    phone: "01712345678",
-    email: "info@greenharvest.bd",
-    businessHours: "সকাল ৯টা - রাত ৯টা",
-    returnPolicy: "৭ দিনের মধ্যে রিটার্ন",
-    shippingPolicy: "সারা বাংলাদেশে ডেলিভারি",
-    paymentMethods: ["cash", "bkash", "nagad", "bank"],
-  },
-  {
-    id: "company-2",
-    name: "ফার্মার্স চয়েস",
-    initials: "FC",
-    description: "সেরা মানের সার ও কীটনাশক। কৃষকদের বিশ্বস্ত সঙ্গী।",
-    category: "fertilizer",
-    verified: true,
-    rating: 4.6,
-    reviewsCount: 89,
-    productsCount: 32,
-    followersCount: 890,
-    totalSales: 2100,
-    responseRate: 95,
-    shipOnTime: 94,
-    establishedYear: 2010,
-    address: "গুলশান-২, ঢাকা",
-    phone: "01898765432",
-    email: "sales@farmerschoice.bd",
-    businessHours: "সকাল ৮টা - রাত ১০টা",
-    returnPolicy: "৫ দিনের মধ্যে রিটার্ন",
-    shippingPolicy: "ঢাকায় ফ্রি ডেলিভারি",
-    paymentMethods: ["cash", "bkash", "rocket"],
-  },
-  {
-    id: "company-3",
-    name: "এগ্রো টেক",
-    initials: "AT",
-    description: "আধুনিক কৃষি যন্ত্রপাতি ও সেচ সিস্টেম।",
-    category: "equipment",
-    verified: true,
-    rating: 4.5,
-    reviewsCount: 67,
-    productsCount: 28,
-    followersCount: 650,
-    totalSales: 890,
-    responseRate: 92,
-    shipOnTime: 90,
-    establishedYear: 2015,
-    address: "উত্তরা, ঢাকা",
-    phone: "01567890123",
-    email: "info@agrotech.bd",
-    businessHours: "সকাল ১০টা - সন্ধ্যা ৭টা",
-    returnPolicy: "১৫ দিনের মধ্যে রিটার্ন",
-    shippingPolicy: "সারা বাংলাদেশে ডেলিভারি (শিপিং চার্জ প্রযোজ্য)",
-    paymentMethods: ["cash", "bkash", "nagad", "bank"],
-  },
-  {
-    id: "company-4",
-    name: "ফিশ ফার্ম সাপ্লাই",
-    initials: "FF",
-    description: "মাছ চাষের সব কিছু এক জায়গায়। মাছের খাবার থেকে ওষুধ।",
-    category: "fish",
-    verified: true,
-    rating: 4.7,
-    reviewsCount: 112,
-    productsCount: 56,
-    followersCount: 780,
-    totalSales: 1890,
-    responseRate: 97,
-    shipOnTime: 95,
-    establishedYear: 2012,
-    address: "ময়মনসিংহ সদর",
-    phone: "01456789012",
-    email: "contact@fishfarmsupply.bd",
-    businessHours: "সকাল ৮টা - রাত ৮টা",
-    returnPolicy: "৩ দিনের মধ্যে রিটার্ন",
-    shippingPolicy: "ঢাকা ও ময়মনসিংহে ফ্রি ডেলিভারি",
-    paymentMethods: ["cash", "bkash"],
-  },
-  {
-    id: "company-5",
-    name: "পোল্ট্রি প্লাস",
-    initials: "PP",
-    description: "মুরগি চাষের সব ধরনের সামগ্রী। ভ্যাকসিন, খাবার, সরঞ্জাম।",
-    category: "poultry",
-    verified: false,
-    rating: 4.3,
-    reviewsCount: 45,
-    productsCount: 38,
-    followersCount: 420,
-    totalSales: 780,
-    responseRate: 88,
-    shipOnTime: 85,
-    establishedYear: 2018,
-    address: "গাজীপুর সদর",
-    phone: "01345678901",
-    email: "info@poultryplus.bd",
-    businessHours: "সকাল ৯টা - সন্ধ্যা ৬টা",
-    returnPolicy: "৭ দিনের মধ্যে রিটার্ন",
-    shippingPolicy: "সারা বাংলাদেশে ডেলিভারি",
-    paymentMethods: ["cash", "bkash", "nagad"],
-  },
-  {
-    id: "company-6",
-    name: "অর্গানিক বাংলা",
-    initials: "OB",
-    description: "১০০% অর্গানিক পণ্য। স্বাস্থ্যকর ও নিরাপদ।",
-    category: "organic",
-    verified: true,
-    rating: 4.9,
-    reviewsCount: 78,
-    productsCount: 42,
-    followersCount: 1100,
-    totalSales: 1560,
-    responseRate: 99,
-    shipOnTime: 98,
-    establishedYear: 2016,
-    address: "বনানী, ঢাকা",
-    phone: "01234567890",
-    email: "hello@organicbangla.bd",
-    businessHours: "সকাল ১০টা - রাত ৯টা",
-    returnPolicy: "১০ দিনের মধ্যে রিটার্ন",
-    shippingPolicy: "ঢাকায় একই দিনে ডেলিভারি",
-    paymentMethods: ["cash", "bkash", "nagad", "rocket", "bank"],
-  },
-];
+// No sample shops: these endpoints answer with empty lists until real shops are stored on the server.
+const demoCompanies: any[] = [];
 
 const demoProducts: Record<string, Array<{
   id: string;
@@ -309,43 +166,13 @@ const demoProducts: Record<string, Array<{
   quantity: number;
   category: string;
   status: string;
-}>> = {
-  "company-1": [
-    { id: "prod-1-1", name: "ধান বীজ (BR-28)", description: "উচ্চ ফলনশীল বোরো ধানের বীজ", price: 120, unit: "কেজি", quantity: 500, category: "seeds", status: "active" },
-    { id: "prod-1-2", name: "টমেটো চারা", description: "হাইব্রিড টমেটো চারা, প্রতি ট্রেতে ৫০টি", price: 250, unit: "ট্রে", quantity: 200, category: "seeds", status: "active" },
-    { id: "prod-1-3", name: "মরিচ বীজ", description: "ঝাল মরিচের বীজ, উচ্চ ফলনশীল", price: 80, unit: "প্যাকেট", quantity: 300, category: "seeds", status: "active" },
-    { id: "prod-1-4", name: "বেগুন চারা", description: "দেশি বেগুনের চারা", price: 180, unit: "ট্রে", quantity: 150, category: "seeds", status: "active" },
-  ],
-  "company-2": [
-    { id: "prod-2-1", name: "ইউরিয়া সার", description: "উচ্চ মানের ইউরিয়া সার", price: 25, unit: "কেজি", quantity: 1000, category: "fertilizer", status: "active" },
-    { id: "prod-2-2", name: "TSP সার", description: "ট্রিপল সুপার ফসফেট", price: 30, unit: "কেজি", quantity: 800, category: "fertilizer", status: "active" },
-    { id: "prod-2-3", name: "কীটনাশক স্প্রে", description: "সব ধরনের পোকামাকড়ের জন্য", price: 350, unit: "বোতল", quantity: 250, category: "fertilizer", status: "active" },
-  ],
-  "company-3": [
-    { id: "prod-3-1", name: "স্প্রে মেশিন", description: "ব্যাটারি চালিত স্প্রে মেশিন, ১৬ লিটার", price: 4500, unit: "পিস", quantity: 50, category: "equipment", status: "active" },
-    { id: "prod-3-2", name: "ড্রিপ ইরিগেশন কিট", description: "১ বিঘা জমির জন্য সম্পূর্ণ সেট", price: 8500, unit: "সেট", quantity: 30, category: "equipment", status: "active" },
-    { id: "prod-3-3", name: "পানির পাম্প", description: "১ HP সাবমার্সিবল পাম্প", price: 12000, unit: "পিস", quantity: 20, category: "equipment", status: "active" },
-  ],
-  "company-4": [
-    { id: "prod-4-1", name: "মাছের ভাসমান খাবার", description: "প্রোটিন সমৃদ্ধ মাছের খাবার", price: 85, unit: "কেজি", quantity: 2000, category: "feed", status: "active" },
-    { id: "prod-4-2", name: "মাছের ওষুধ", description: "ব্যাকটেরিয়া ও ফাঙ্গাস প্রতিরোধক", price: 450, unit: "বোতল", quantity: 100, category: "medicine", status: "active" },
-    { id: "prod-4-3", name: "অক্সিজেন ট্যাবলেট", description: "পানিতে অক্সিজেন বাড়াতে", price: 200, unit: "প্যাকেট", quantity: 300, category: "medicine", status: "active" },
-    { id: "prod-4-4", name: "পোনা মাছ", description: "তেলাপিয়া পোনা, প্রতি কেজিতে প্রায় ১০০টি", price: 500, unit: "কেজি", quantity: 500, category: "fish", status: "active" },
-  ],
-  "company-5": [
-    { id: "prod-5-1", name: "মুরগির খাবার", description: "লেয়ার মুরগির জন্য", price: 55, unit: "কেজি", quantity: 3000, category: "feed", status: "active" },
-    { id: "prod-5-2", name: "মুরগির ভ্যাকসিন", description: "নিউ ক্যাসল ডিজিজ ভ্যাকসিন", price: 180, unit: "ভায়াল", quantity: 200, category: "medicine", status: "active" },
-    { id: "prod-5-3", name: "ব্রয়লার চিক", description: "১ দিনের বাচ্চা", price: 45, unit: "পিস", quantity: 5000, category: "poultry", status: "active" },
-  ],
-  "company-6": [
-    { id: "prod-6-1", name: "অর্গানিক সার", description: "১০০% প্রাকৃতিক কম্পোস্ট সার", price: 40, unit: "কেজি", quantity: 500, category: "organic", status: "active" },
-    { id: "prod-6-2", name: "জৈব কীটনাশক", description: "নিম তেল ভিত্তিক কীটনাশক", price: 280, unit: "বোতল", quantity: 150, category: "organic", status: "active" },
-    { id: "prod-6-3", name: "অর্গানিক বীজ সেট", description: "১০ ধরনের সবজি বীজ", price: 450, unit: "সেট", quantity: 100, category: "organic", status: "active" },
-  ],
-};
+}>> = {};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   registerDmRoutes(app, sendToUser);
+  registerCallRoutes(app);
+  registerProfileRoutes(app);
+  registerReactionRoutes(app, sendToUser);
   
   app.post("/api/voice-to-text", async (req, res) => {
     try {
@@ -1234,7 +1061,8 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
 
   const httpServer = createServer(app);
 
-  const wss = new WebSocketServer({ server: httpServer, path: "/ws/chat" });
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws/chat", maxPayload: 256 * 1024 });
+  initCalls({ sendToUser, userOnline });
 
   // Keep idle sockets alive through Render's proxy and drop dead ones.
   const heartbeat = setInterval(() => {
@@ -1252,14 +1080,6 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
     (ws as any).isAlive = true;
     ws.on("pong", () => { (ws as any).isAlive = true; });
     const reply = (m: any) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(m)); };
-    // Only forward call signalling between the two people on that call.
-    const callPeer = (callId: string): string | null => {
-      const call = activeCalls.get(callId);
-      if (!call || !clientId) return null;
-      if (call.callerId === clientId) return call.calleeId;
-      if (call.calleeId === clientId) return call.callerId;
-      return null;
-    };
 
     ws.on("message", (data: Buffer) => {
       try {
@@ -1282,63 +1102,22 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
           clientId = uid;
           client = { ws, userId: uid, conversationIds: new Set() };
           addChatClient(uid, client);
-          return reply({ type: "auth_success", userId: uid });
+          reply({ type: "auth_success", userId: uid });
+          // Deliver a call that is still ringing for this person (e.g. after opening the push).
+          onCallClientAuthed(uid, ws);
+          return;
         }
 
         if (!clientId) return reply({ type: "error", reason: "not_authenticated" });
 
+        const mtype = String(message.type || "");
+        if (mtype.startsWith("call_") || mtype.startsWith("webrtc_")) {
+          // In-app voice calls: see server/calls.ts (who may call whom, and relaying set-up messages).
+          void handleCallMessage(clientId, ws, message, reply).catch((e) => console.error("Call message error:", e?.message || e));
+          return;
+        }
+
         switch (message.type) {
-          case "call_initiate": {
-            const calleeId = String(message.calleeId || "");
-            if (!calleeId || calleeId === clientId) return reply({ type: "call_failed", reason: "invalid_user" });
-            const callId = `call-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-            activeCalls.set(callId, { callId, callerId: clientId, calleeId, status: "ringing", startedAt: new Date() });
-            const sent = sendToUser(calleeId, {
-              type: "incoming_call",
-              callId,
-              callerId: clientId,
-              callerName: String(message.callerName || "").slice(0, 80),
-            });
-            if (sent) reply({ type: "call_ringing", callId, calleeId });
-            else {
-              activeCalls.delete(callId);
-              reply({ type: "call_failed", reason: "user_offline" });
-            }
-            break;
-          }
-
-          case "call_accept": {
-            const call = activeCalls.get(message.callId);
-            if (call && call.calleeId === clientId) {
-              call.status = "connected";
-              sendToUser(call.callerId, { type: "call_accepted", callId: message.callId });
-            }
-            break;
-          }
-
-          case "call_reject":
-          case "call_end": {
-            const peer = callPeer(message.callId);
-            if (peer) {
-              sendToUser(peer, { type: message.type === "call_reject" ? "call_rejected" : "call_ended", callId: message.callId });
-              activeCalls.delete(message.callId);
-            }
-            break;
-          }
-
-          case "webrtc_offer":
-          case "webrtc_answer":
-          case "webrtc_ice_candidate": {
-            const peer = callPeer(message.callId);
-            if (!peer || peer !== message.targetUserId) break;
-            const payload: any = { type: message.type, callId: message.callId, fromUserId: clientId };
-            if (message.type === "webrtc_offer") payload.offer = message.offer;
-            if (message.type === "webrtc_answer") payload.answer = message.answer;
-            if (message.type === "webrtc_ice_candidate") payload.candidate = message.candidate;
-            sendToUser(peer, payload);
-            break;
-          }
-
           default:
             // join_conversation / send_message / typing from the old unused chat hook are
             // no longer relayed: direct messages go through the /api/dm routes, which check
@@ -1352,17 +1131,8 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
 
     const cleanup = () => {
       if (clientId && client) removeChatClient(clientId, client);
-      if (clientId) {
-        // A caller who disappears ends their call for the other person.
-        for (const [id, call] of activeCalls) {
-          if (call.callerId === clientId || call.calleeId === clientId) {
-            if (userOnline(clientId)) continue;
-            const peer = call.callerId === clientId ? call.calleeId : call.callerId;
-            sendToUser(peer, { type: "call_ended", callId: id });
-            activeCalls.delete(id);
-          }
-        }
-      }
+      // A person whose last socket closed gets a short grace period before their call ends.
+      if (clientId) onCallClientGone(clientId);
       client = null;
     };
     ws.on("close", cleanup);

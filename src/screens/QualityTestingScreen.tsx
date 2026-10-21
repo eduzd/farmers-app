@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const TEST_TYPES = [
   { id: "soil", name: "মাটি পরীক্ষা", icon: "layers", price: "৳৫০০-১,০০০", duration: "২-৩ দিন" },
   { id: "water", name: "পানি পরীক্ষা", icon: "droplet", price: "৳৩০০-৬০০", duration: "১-২ দিন" },
@@ -19,37 +20,9 @@ const TEST_TYPES = [
   { id: "pesticide", name: "কীটনাশক অবশিষ্ট", icon: "shield", price: "৳৮০০-১,৫০০", duration: "৩-৪ দিন" },
 ];
 
-const LABS = [
-  {
-    id: "1",
-    name: "বাংলাদেশ কৃষি গবেষণা ইনস্টিটিউট",
-    location: "গাজীপুর",
-    rating: 4.9,
-    tests: ["soil", "water", "crop", "seed"],
-    accredited: true,
-  },
-  {
-    id: "2",
-    name: "মৃত্তিকা গবেষণা উন্নয়ন ইনস্টিটিউট",
-    location: "ঢাকা",
-    rating: 4.8,
-    tests: ["soil", "water", "fertilizer"],
-    accredited: true,
-  },
-  {
-    id: "3",
-    name: "বিএসটিআই ল্যাব",
-    location: "ঢাকা",
-    rating: 4.7,
-    tests: ["crop", "pesticide", "fertilizer"],
-    accredited: true,
-  },
-];
+const LABS: any[] = [];
 
-const MY_TESTS = [
-  { id: "1", type: "মাটি পরীক্ষা", lab: "BARI", date: "১০ জানু ২০২৬", status: "completed", result: "ভালো" },
-  { id: "2", type: "পানি পরীক্ষা", lab: "SRDI", date: "১৫ জানু ২০২৬", status: "pending", result: null },
-];
+const MY_TESTS: any[] = [];
 
 export default function QualityTestingScreen() {
   const insets = useSafeAreaInsets();
@@ -133,6 +106,7 @@ export default function QualityTestingScreen() {
             <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.text }]}>
               স্বীকৃত ল্যাবরেটরি
             </ThemedText>
+            {LABS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {LABS.map((lab, index) => (
               <Animated.View key={lab.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.labCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -157,7 +131,7 @@ export default function QualityTestingScreen() {
                     ) : null}
                   </View>
                   <View style={styles.labTests}>
-                    {lab.tests.map((testId) => {
+                    {lab.tests.map((testId: string) => {
                       const test = TEST_TYPES.find((t) => t.id === testId);
                       return test ? (
                         <View key={testId} style={[styles.testChip, { backgroundColor: theme.primary + "15" }]}>
@@ -184,6 +158,7 @@ export default function QualityTestingScreen() {
             <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.text }]}>
               আমার পরীক্ষার ইতিহাস
             </ThemedText>
+            {MY_TESTS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {MY_TESTS.map((test, index) => (
               <View
                 key={test.id}

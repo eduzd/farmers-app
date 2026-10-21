@@ -93,6 +93,26 @@ export function sendText(otherId: string, content: string, clientId: string): Pr
   return request<DmMessage>("POST", `/api/dm/${enc(otherId)}/messages`, { content, clientId });
 }
 
+export interface DmReaction {
+  messageId: string;
+  userId: string;
+  emoji: string | null;
+  super: boolean;
+}
+
+/** Set (or change) my reaction on a message. `isSuper` is the tap-and-hold super reaction. */
+export function setReaction(messageId: string, emoji: string, isSuper: boolean): Promise<DmReaction> {
+  return request<DmReaction>("PUT", `/api/dm/messages/${enc(messageId)}/reaction`, { emoji, super: isSuper });
+}
+
+export function clearReaction(messageId: string): Promise<DmReaction> {
+  return request<DmReaction>("DELETE", `/api/dm/messages/${enc(messageId)}/reaction`);
+}
+
+export function fetchReactions(ids: string[]): Promise<DmReaction[]> {
+  return request<DmReaction[]>("POST", `/api/dm/reactions`, { ids });
+}
+
 export function fetchContact(otherId: string): Promise<DmContact> {
   return request<DmContact>("GET", `/api/dm/${enc(otherId)}/contact`);
 }
@@ -199,6 +219,7 @@ const EXT: Record<string, string> = {
   "audio/mpeg": "mp3",
   "audio/3gpp": "3gp",
   "audio/wav": "wav",
+  "audio/x-wav": "wav",
 };
 
 /** Remember where my own just-sent recording is, so I can play it without downloading. */
@@ -217,6 +238,21 @@ export function emitLiveDm(m: DmMessage) {
   listeners.forEach((fn) => {
     try {
       fn(m);
+    } catch {}
+  });
+}
+
+/** Same for reactions: the socket's { type: "dm_reaction" } reaches the open chat at once. */
+type ReactionListener = (r: DmReaction) => void;
+const reactionListeners = new Set<ReactionListener>();
+export function onLiveReaction(fn: ReactionListener): () => void {
+  reactionListeners.add(fn);
+  return () => reactionListeners.delete(fn);
+}
+export function emitLiveReaction(r: DmReaction) {
+  reactionListeners.forEach((fn) => {
+    try {
+      fn(r);
     } catch {}
   });
 }

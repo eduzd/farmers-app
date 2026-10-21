@@ -17,6 +17,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface LeaderboardUser {
   id: string;
   rank: number;
@@ -37,18 +38,7 @@ const TABS = [
   { id: "allTime", label: "সর্বকালীন" },
 ];
 
-const MOCK_LEADERBOARD: LeaderboardUser[] = [
-  { id: "1", rank: 1, name: "করিম সাহেব", avatar: "https://randomuser.me/api/portraits/men/32.jpg", location: "ময়মনসিংহ", points: 12500, level: "বিশেষজ্ঞ কৃষক", badges: 15, postsCount: 234, helpedCount: 156, isCurrentUser: false },
-  { id: "2", rank: 2, name: "ফাতেমা বেগম", avatar: "https://randomuser.me/api/portraits/women/28.jpg", location: "রাজশাহী", points: 11200, level: "বিশেষজ্ঞ কৃষক", badges: 12, postsCount: 189, helpedCount: 134, isCurrentUser: false },
-  { id: "3", rank: 3, name: "রহিম উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/45.jpg", location: "রংপুর", points: 9800, level: "অভিজ্ঞ কৃষক", badges: 10, postsCount: 156, helpedCount: 98, isCurrentUser: false },
-  { id: "4", rank: 4, name: "নাজমুল হাসান", avatar: "https://randomuser.me/api/portraits/men/67.jpg", location: "সিলেট", points: 8500, level: "অভিজ্ঞ কৃষক", badges: 8, postsCount: 123, helpedCount: 87, isCurrentUser: false },
-  { id: "5", rank: 5, name: "সালমা আক্তার", avatar: "https://randomuser.me/api/portraits/women/44.jpg", location: "খুলনা", points: 7200, level: "সক্রিয় কৃষক", badges: 7, postsCount: 98, helpedCount: 76, isCurrentUser: false },
-  { id: "6", rank: 6, name: "আব্দুল হক", avatar: "https://randomuser.me/api/portraits/men/55.jpg", location: "বরিশাল", points: 6800, level: "সক্রিয় কৃষক", badges: 6, postsCount: 87, helpedCount: 65, isCurrentUser: false },
-  { id: "7", rank: 7, name: "রুবিনা খাতুন", avatar: "https://randomuser.me/api/portraits/women/55.jpg", location: "চট্টগ্রাম", points: 5500, level: "সক্রিয় কৃষক", badges: 5, postsCount: 76, helpedCount: 54, isCurrentUser: false },
-  { id: "8", rank: 8, name: "জসিম উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/78.jpg", location: "কুমিল্লা", points: 4800, level: "নতুন কৃষক", badges: 4, postsCount: 65, helpedCount: 43, isCurrentUser: false },
-  { id: "9", rank: 9, name: "শামীমা আক্তার", avatar: "https://randomuser.me/api/portraits/women/33.jpg", location: "ঢাকা", points: 4200, level: "নতুন কৃষক", badges: 3, postsCount: 54, helpedCount: 32, isCurrentUser: false },
-  { id: "10", rank: 10, name: "আপনি", avatar: "https://randomuser.me/api/portraits/men/1.jpg", location: "ময়মনসিংহ", points: 3500, level: "নতুন কৃষক", badges: 2, postsCount: 23, helpedCount: 12, isCurrentUser: true },
-];
+const MOCK_LEADERBOARD: LeaderboardUser[] = [];
 
 const getRankBadge = (rank: number) => {
   if (rank === 1) return { color: "#F5B700", icon: "award" as const };
@@ -178,6 +168,7 @@ export default function LeaderboardScreen() {
 
       <FlatList
         data={restUsers}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderUser}
         ListHeaderComponent={renderTopThree}

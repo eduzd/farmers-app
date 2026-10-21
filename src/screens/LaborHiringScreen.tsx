@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Worker {
   id: string;
   name: string;
@@ -24,13 +25,7 @@ interface Worker {
   phone: string;
 }
 
-const WORKERS: Worker[] = [
-  { id: "1", name: "মোহাম্মদ আলী", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100", skills: ["চাষ", "ফসল কাটা", "সেচ"], experience: "১০ বছর", location: "সাভার, ঢাকা", dailyRate: 600, rating: 4.9, completedJobs: 150, available: true, phone: "০১৭১২-১২৩৪৫৬" },
-  { id: "2", name: "করিম মিয়া", avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100", skills: ["ট্রাক্টর চালনা", "হার্ভেস্টার"], experience: "৮ বছর", location: "গাজীপুর", dailyRate: 800, rating: 4.7, completedJobs: 120, available: true, phone: "০১৮১২-২২২২২২" },
-  { id: "3", name: "রহিমা বেগম", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100", skills: ["চারা রোপণ", "আগাছা পরিষ্কার", "ফসল সংগ্রহ"], experience: "৫ বছর", location: "ময়মনসিংহ", dailyRate: 500, rating: 4.8, completedJobs: 85, available: false, phone: "০১৯১২-৩৩৩৩৩৩" },
-  { id: "4", name: "জাহিদ হাসান", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100", skills: ["মাছ চাষ", "পুকুর পরিচর্যা", "জাল ফেলা"], experience: "১২ বছর", location: "কিশোরগঞ্জ", dailyRate: 700, rating: 4.9, completedJobs: 200, available: true, phone: "০১৫১২-৪৪৪৪৪৪" },
-  { id: "5", name: "সালমা খাতুন", avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100", skills: ["গবাদি পশু পালন", "দুধ দোহন"], experience: "৭ বছর", location: "বগুড়া", dailyRate: 550, rating: 4.6, completedJobs: 95, available: true, phone: "০১৬১২-৫৫৫৫৫৫" },
-];
+const WORKERS: Worker[] = [];
 
 const SKILL_FILTERS = ["সব", "চাষ", "ফসল কাটা", "মাছ চাষ", "গবাদি পশু", "যন্ত্রপাতি"];
 
@@ -144,6 +139,7 @@ export default function LaborHiringScreen() {
 
       <FlatList
         data={WORKERS}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderWorker}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + Spacing.xl }]}

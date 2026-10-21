@@ -10,62 +10,10 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
-const CONTRACTS = [
-  {
-    id: "1",
-    company: "এগ্রো ফুড লিমিটেড",
-    crop: "ধান (আমন)",
-    area: "১০ বিঘা",
-    duration: "৪ মাস",
-    price: "৳১,২০০/মণ",
-    status: "active",
-    startDate: "১ আগস্ট ২০২৬",
-    endDate: "৩০ নভেম্বর ২০২৬",
-    terms: ["বীজ সরবরাহ", "কারিগরি সহায়তা", "নির্ধারিত মূল্যে ক্রয়"],
-  },
-  {
-    id: "2",
-    company: "বাংলা ফার্মস",
-    crop: "সবজি (টমেটো)",
-    area: "৫ বিঘা",
-    duration: "৩ মাস",
-    price: "৳৮০/কেজি",
-    status: "pending",
-    startDate: "১ ডিসেম্বর ২০২৬",
-    endDate: "২৮ ফেব্রুয়ারি ২০২৭",
-    terms: ["চারা সরবরাহ", "সার ও কীটনাশক", "পরিবহন সুবিধা"],
-  },
-];
+import { EmptyState } from "@/components/ui";
+const CONTRACTS: any[] = [];
 
-const AVAILABLE_CONTRACTS = [
-  {
-    id: "3",
-    company: "গ্রিন ভ্যালি এগ্রো",
-    crop: "ভুট্টা",
-    area: "১০-২০ বিঘা",
-    price: "৳১,০০০/মণ",
-    deadline: "১৫ জানুয়ারি ২০২৬",
-    benefits: ["বীজ সরবরাহ", "প্রশিক্ষণ", "বাজার নিশ্চিত"],
-  },
-  {
-    id: "4",
-    company: "ফ্রেশ হার্ভেস্ট",
-    crop: "আলু",
-    area: "৫-১৫ বিঘা",
-    price: "৳২৫/কেজি",
-    deadline: "২০ জানুয়ারি ২০২৬",
-    benefits: ["বীজ আলু", "কোল্ড স্টোরেজ", "এডভান্স পেমেন্ট"],
-  },
-  {
-    id: "5",
-    company: "অর্গানিক বাংলাদেশ",
-    crop: "জৈব সবজি",
-    area: "২-৫ বিঘা",
-    price: "প্রিমিয়াম মূল্য",
-    deadline: "২৫ জানুয়ারি ২০২৬",
-    benefits: ["সার্টিফিকেশন", "প্রশিক্ষণ", "রপ্তানি সুবিধা"],
-  },
-];
+const AVAILABLE_CONTRACTS: any[] = [];
 
 export default function ContractFarmingScreen() {
   const insets = useSafeAreaInsets();
@@ -105,6 +53,7 @@ export default function ContractFarmingScreen() {
       >
         {activeTab === "my" ? (
           <>
+            {CONTRACTS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {CONTRACTS.map((contract, index) => (
               <Animated.View key={contract.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.contractCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -150,7 +99,7 @@ export default function ContractFarmingScreen() {
                   <View style={[styles.termsSection, { borderTopColor: theme.cardBorder }]}>
                     <ThemedText style={[styles.termsTitle, { color: theme.textSecondary }]}>সুবিধা সমূহ:</ThemedText>
                     <View style={styles.termsList}>
-                      {contract.terms.map((term, i) => (
+                      {contract.terms.map((term: string, i: number) => (
                         <View key={i} style={styles.termItem}>
                           <Feather name="check" size={14} color="#16A34A" />
                           <ThemedText style={[styles.termText, { color: theme.text }]}>{term}</ThemedText>
@@ -175,6 +124,7 @@ export default function ContractFarmingScreen() {
           </>
         ) : (
           <>
+            {AVAILABLE_CONTRACTS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {AVAILABLE_CONTRACTS.map((contract, index) => (
               <Animated.View key={contract.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <LinearGradient
@@ -207,7 +157,7 @@ export default function ContractFarmingScreen() {
                   </View>
 
                   <View style={styles.benefitsList}>
-                    {contract.benefits.map((benefit, i) => (
+                    {contract.benefits.map((benefit: string, i: number) => (
                       <View key={i} style={[styles.benefitChip, { backgroundColor: theme.primary + "15" }]}>
                         <ThemedText style={[styles.benefitText, { color: theme.primary }]}>{benefit}</ThemedText>
                       </View>

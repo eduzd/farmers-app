@@ -16,6 +16,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Podcast {
   id: string;
   title: string;
@@ -28,74 +29,7 @@ interface Podcast {
   isPlaying: boolean;
 }
 
-const PODCASTS: Podcast[] = [
-  {
-    id: "1",
-    title: "জৈব কৃষির আদ্যোপান্ত",
-    host: "ড. রহমান কৃষিবিদ",
-    thumbnail: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400",
-    duration: "৪৫ মিনিট",
-    category: "জৈব কৃষি",
-    description: "জৈব কৃষি শুরু করার সম্পূর্ণ গাইড - মাটি প্রস্তুতি থেকে বাজারজাত পর্যন্ত",
-    plays: 12500,
-    isPlaying: false,
-  },
-  {
-    id: "2",
-    title: "মাছ চাষে সফলতার গোপন রহস্য",
-    host: "প্রফেসর করিম মৎস্যবিদ",
-    thumbnail: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400",
-    duration: "৩২ মিনিট",
-    category: "মৎস্য চাষ",
-    description: "বায়োফ্লক, RAS এবং প্রাকৃতিক পদ্ধতিতে মাছ চাষের কৌশল",
-    plays: 8900,
-    isPlaying: false,
-  },
-  {
-    id: "3",
-    title: "ফসলের রোগ-বালাই নির্মূল",
-    host: "ড. শামীম হক",
-    thumbnail: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400",
-    duration: "২৮ মিনিট",
-    category: "ফসল সুরক্ষা",
-    description: "ফসলে পোকা-মাকড় এবং রোগের প্রাকৃতিক প্রতিকার",
-    plays: 15200,
-    isPlaying: false,
-  },
-  {
-    id: "4",
-    title: "কৃষি ব্যবসা পরিকল্পনা",
-    host: "আনিসুর রহমান",
-    thumbnail: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400",
-    duration: "৫০ মিনিট",
-    category: "ব্যবসা",
-    description: "কৃষি পণ্যের বাজার বিশ্লেষণ ও মূল্য নির্ধারণ কৌশল",
-    plays: 6700,
-    isPlaying: false,
-  },
-  {
-    id: "5",
-    title: "গবাদি পশুর স্বাস্থ্য সেবা",
-    host: "ড. মাহমুদ ভেট",
-    thumbnail: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=400",
-    duration: "৩৮ মিনিট",
-    category: "প্রাণিসম্পদ",
-    description: "গরু, ছাগল ও মুরগির সাধারণ রোগ ও প্রতিকার",
-    plays: 11300,
-    isPlaying: false,
-  },
-  {
-    id: "6",
-    title: "আধুনিক সেচ ব্যবস্থাপনা",
-    host: "ইঞ্জি. ফারুক আহমেদ",
-    thumbnail: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400",
-    duration: "২৫ মিনিট",
-    category: "সেচ",
-    description: "ড্রিপ ও স্প্রিংকলার সেচের সুবিধা ও স্থাপন পদ্ধতি",
-    plays: 5400,
-    isPlaying: false,
-  },
-];
+const PODCASTS: Podcast[] = [];
 
 export default function PodcastsScreen() {
   const insets = useSafeAreaInsets();
@@ -191,6 +125,7 @@ export default function PodcastsScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <FlatList
         data={podcasts}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderPodcast}
         contentContainerStyle={[

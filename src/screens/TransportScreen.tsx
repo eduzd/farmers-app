@@ -16,6 +16,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface TransportService {
   id: string;
   name: string;
@@ -31,78 +32,7 @@ interface TransportService {
   features: string[];
 }
 
-const TRANSPORTS: TransportService[] = [
-  {
-    id: "1",
-    name: "কৃষি পণ্য পরিবহন",
-    type: "ট্রাক",
-    capacity: "৫ টন",
-    ratePerKm: 25,
-    minCharge: 2000,
-    owner: "আব্দুল করিম ট্রান্সপোর্ট",
-    location: "সাভার, ঢাকা",
-    phone: "০১৭১২-৩৪৫৬৭৮",
-    rating: 4.8,
-    available: true,
-    features: ["কভার্ড", "GPS ট্র্যাকিং", "বীমা"],
-  },
-  {
-    id: "2",
-    name: "ফ্রেশ ভেজিটেবল ক্যারিয়ার",
-    type: "পিকআপ",
-    capacity: "১.৫ টন",
-    ratePerKm: 15,
-    minCharge: 800,
-    owner: "গ্রিন লজিস্টিক",
-    location: "গাজীপুর",
-    phone: "০১৮১২-১২৩৪৫৬",
-    rating: 4.5,
-    available: true,
-    features: ["কভার্ড", "দ্রুত সেবা"],
-  },
-  {
-    id: "3",
-    name: "কোল্ড স্টোরেজ ভ্যান",
-    type: "ভ্যান",
-    capacity: "২ টন",
-    ratePerKm: 35,
-    minCharge: 3000,
-    owner: "ফ্রেশ কুল লজিস্টিক",
-    location: "উত্তরা, ঢাকা",
-    phone: "০১৯১২-৯৮৭৬৫৪",
-    rating: 4.9,
-    available: false,
-    features: ["কুলিং সিস্টেম", "তাপমাত্রা নিয়ন্ত্রণ", "বীমা"],
-  },
-  {
-    id: "4",
-    name: "দ্রুত ডেলিভারি",
-    type: "মোটরসাইকেল",
-    capacity: "৫০ কেজি",
-    ratePerKm: 8,
-    minCharge: 150,
-    owner: "ফার্ম ডেলিভারি",
-    location: "মিরপুর, ঢাকা",
-    phone: "০১৬১২-৫৫৫৫৫৫",
-    rating: 4.6,
-    available: true,
-    features: ["দ্রুত সেবা", "ট্র্যাকিং"],
-  },
-  {
-    id: "5",
-    name: "মাছ পরিবহন স্পেশাল",
-    type: "ট্রাক",
-    capacity: "৩ টন",
-    ratePerKm: 30,
-    minCharge: 2500,
-    owner: "ফিশ ট্রান্সপোর্ট সার্ভিস",
-    location: "ময়মনসিংহ",
-    phone: "০১৫১২-৩৩৩৩৩৩",
-    rating: 4.7,
-    available: true,
-    features: ["অক্সিজেন সাপ্লাই", "পানি ট্যাংক", "বীমা"],
-  },
-];
+const TRANSPORTS: TransportService[] = [];
 
 const VEHICLE_TYPES = ["সব", "ট্রাক", "পিকআপ", "ভ্যান", "মোটরসাইকেল"] as const;
 
@@ -260,6 +190,7 @@ export default function TransportScreen() {
 
       <FlatList
         data={filteredTransports}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderTransport}
         contentContainerStyle={[

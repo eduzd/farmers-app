@@ -33,57 +33,7 @@ interface SavedItem {
   category: string;
 }
 
-const SAVED_ITEMS: SavedItem[] = [
-  {
-    id: "1",
-    type: "post",
-    title: "ধান চাষে নতুন প্রযুক্তি ব্যবহার",
-    description: "আধুনিক পদ্ধতিতে ধান চাষ করে ফলন বাড়ানোর উপায়...",
-    image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600",
-    author: { name: "করিম সাহেব", avatar: "https://randomuser.me/api/portraits/men/32.jpg" },
-    savedAt: new Date(Date.now() - 2 * 3600000),
-    category: "পোস্ট",
-  },
-  {
-    id: "2",
-    type: "product",
-    title: "জৈব সার - প্রিমিয়াম কোয়ালিটি",
-    description: "১০০% অর্গানিক, ফসলের জন্য নিরাপদ",
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600",
-    author: { name: "সবুজ খামার", avatar: "https://randomuser.me/api/portraits/men/45.jpg" },
-    savedAt: new Date(Date.now() - 1 * 24 * 3600000),
-    category: "পণ্য",
-  },
-  {
-    id: "3",
-    type: "article",
-    title: "মাছ চাষে সফলতার ১০টি টিপস",
-    description: "বিশেষজ্ঞদের পরামর্শে মাছ চাষে সাফল্য পান",
-    image: "https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=600",
-    author: { name: "ড. নাজমুল", avatar: "https://randomuser.me/api/portraits/men/55.jpg" },
-    savedAt: new Date(Date.now() - 3 * 24 * 3600000),
-    category: "আর্টিকেল",
-  },
-  {
-    id: "4",
-    type: "video",
-    title: "গরুর খামার পরিচালনা - ভিডিও গাইড",
-    description: "শুরু থেকে শেষ পর্যন্ত সম্পূর্ণ গাইড",
-    image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=600",
-    author: { name: "কৃষি টিভি", avatar: "https://randomuser.me/api/portraits/men/67.jpg" },
-    savedAt: new Date(Date.now() - 5 * 24 * 3600000),
-    category: "ভিডিও",
-  },
-  {
-    id: "5",
-    type: "post",
-    title: "জৈব কীটনাশক তৈরির সহজ পদ্ধতি",
-    description: "বাড়িতেই তৈরি করুন নিরাপদ কীটনাশক",
-    author: { name: "ফাতেমা বেগম", avatar: "https://randomuser.me/api/portraits/women/28.jpg" },
-    savedAt: new Date(Date.now() - 7 * 24 * 3600000),
-    category: "পোস্ট",
-  },
-];
+const SAVED_ITEMS: SavedItem[] = [];
 
 const FILTERS = ["সব", "পোস্ট", "পণ্য", "আর্টিকেল", "ভিডিও"];
 

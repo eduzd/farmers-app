@@ -43,74 +43,7 @@ const ROOM_CATEGORIES = [
   { id: "business", label: "ব্যবসা" },
 ];
 
-const MOCK_ROOMS: VoiceRoom[] = [
-  {
-    id: "1",
-    title: "ধান চাষে নতুন প্রযুক্তি",
-    topic: "আধুনিক পদ্ধতিতে ধান চাষ কিভাবে করবেন",
-    hostName: "করিম সাহেব",
-    hostAvatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    isLive: true,
-    speakersCount: 4,
-    listenersCount: 156,
-    category: "crops",
-    startedAt: new Date(Date.now() - 45 * 60000),
-    speakers: [
-      { id: "1", name: "করিম সাহেব", avatar: "https://randomuser.me/api/portraits/men/32.jpg", isSpeaking: true },
-      { id: "2", name: "রহিম উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/45.jpg", isSpeaking: false },
-      { id: "3", name: "ফাতেমা বেগম", avatar: "https://randomuser.me/api/portraits/women/28.jpg", isSpeaking: true },
-    ],
-  },
-  {
-    id: "2",
-    title: "গরু মোটাতাজাকরণ টিপস",
-    topic: "কম খরচে সঠিক পদ্ধতিতে গরু মোটাতাজাকরণ",
-    hostName: "আব্দুল হক",
-    hostAvatar: "https://randomuser.me/api/portraits/men/55.jpg",
-    isLive: true,
-    speakersCount: 3,
-    listenersCount: 89,
-    category: "livestock",
-    startedAt: new Date(Date.now() - 20 * 60000),
-    speakers: [
-      { id: "4", name: "আব্দুল হক", avatar: "https://randomuser.me/api/portraits/men/55.jpg", isSpeaking: true },
-      { id: "5", name: "সালমা আক্তার", avatar: "https://randomuser.me/api/portraits/women/44.jpg", isSpeaking: false },
-    ],
-  },
-  {
-    id: "3",
-    title: "মাছ চাষে লাভবান হোন",
-    topic: "তেলাপিয়া ও পাংগাস চাষের কৌশল",
-    hostName: "মোহাম্মদ আলী",
-    hostAvatar: "https://randomuser.me/api/portraits/men/22.jpg",
-    isLive: true,
-    speakersCount: 5,
-    listenersCount: 234,
-    category: "fishery",
-    startedAt: new Date(Date.now() - 90 * 60000),
-    speakers: [
-      { id: "6", name: "মোহাম্মদ আলী", avatar: "https://randomuser.me/api/portraits/men/22.jpg", isSpeaking: false },
-      { id: "7", name: "নাজমুল হাসান", avatar: "https://randomuser.me/api/portraits/men/67.jpg", isSpeaking: true },
-      { id: "8", name: "রুবিনা খাতুন", avatar: "https://randomuser.me/api/portraits/women/55.jpg", isSpeaking: true },
-      { id: "9", name: "জসিম উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/78.jpg", isSpeaking: false },
-    ],
-  },
-  {
-    id: "4",
-    title: "কৃষি পণ্যের মার্কেটিং",
-    topic: "কিভাবে সরাসরি ক্রেতার কাছে পৌঁছাবেন",
-    hostName: "শামীমা আক্তার",
-    hostAvatar: "https://randomuser.me/api/portraits/women/33.jpg",
-    isLive: true,
-    speakersCount: 2,
-    listenersCount: 67,
-    category: "business",
-    startedAt: new Date(Date.now() - 15 * 60000),
-    speakers: [
-      { id: "10", name: "শামীমা আক্তার", avatar: "https://randomuser.me/api/portraits/women/33.jpg", isSpeaking: true },
-    ],
-  },
-];
+const MOCK_ROOMS: VoiceRoom[] = [];
 
 const getCategoryColor = (category: string) => {
   const colors: Record<string, string> = {

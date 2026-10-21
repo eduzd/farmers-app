@@ -17,6 +17,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { EmptyState } from "@/components/ui";
 
 interface Mentor {
   id: string;
@@ -32,58 +33,8 @@ interface Mentor {
   bio: string;
 }
 
-const MENTORS: Mentor[] = [
-  {
-    id: "1",
-    name: "ড. ফরিদ উদ্দিন",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    specialty: "কৃষি বিজ্ঞানী",
-    experience: "২০+ বছর",
-    rating: 4.9,
-    reviews: 156,
-    menteesCount: 45,
-    isAvailable: true,
-    skills: ["ধান চাষ", "জৈব কৃষি", "রোগ ব্যবস্থাপনা"],
-    bio: "BARI তে কাজ করেছি ২০ বছর। এখন নতুন কৃষকদের সাহায্য করতে চাই।",
-  },
-  {
-    id: "2",
-    name: "প্রফেসর হাসান আলী",
-    avatar: "https://randomuser.me/api/portraits/men/45.jpg",
-    specialty: "মৎস্য বিশেষজ্ঞ",
-    experience: "১৫+ বছর",
-    rating: 4.8,
-    reviews: 89,
-    menteesCount: 32,
-    isAvailable: true,
-    skills: ["মাছ চাষ", "পুকুর ব্যবস্থাপনা", "মাছের রোগ"],
-    bio: "মৎস্য বিভাগে অধ্যাপনা করছি। ব্যবহারিক জ্ঞান শেয়ার করতে আগ্রহী।",
-  },
-  {
-    id: "3",
-    name: "করিম সাহেব",
-    avatar: "https://randomuser.me/api/portraits/men/55.jpg",
-    specialty: "সফল কৃষক",
-    experience: "২৫+ বছর",
-    rating: 4.7,
-    reviews: 234,
-    menteesCount: 78,
-    isAvailable: false,
-    skills: ["সবজি চাষ", "খামার ব্যবস্থাপনা", "বাজারজাতকরণ"],
-    bio: "অভিজ্ঞতা থেকে শেখানোই আমার আনন্দ। সাধারণ কৃষকের ভাষায় কথা বলি।",
-  },
-];
+const MENTORS: Mentor[] = [];
 
-const MY_MENTORSHIP = {
-  mentor: {
-    name: "ড. ফরিদ উদ্দিন",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-  },
-  startDate: "১৫ জানুয়ারি ২০২৬",
-  sessions: 8,
-  nextSession: "আগামীকাল সন্ধ্যা ৬টা",
-  progress: 65,
-};
 
 export default function MentorshipScreen() {
   const insets = useSafeAreaInsets();
@@ -196,6 +147,7 @@ export default function MentorshipScreen() {
       {activeTab === "find" ? (
         <FlatList
           data={MENTORS}
+          ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
           keyExtractor={item => item.id}
           renderItem={renderMentor}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
@@ -207,49 +159,11 @@ export default function MentorshipScreen() {
           contentContainerStyle={[styles.myMentorshipContent, { paddingBottom: insets.bottom + 100 }]}
           showsVerticalScrollIndicator={false}
         >
-          <Animated.View entering={FadeInUp.delay(100)} style={[styles.currentMentorCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-            <View style={styles.currentMentorHeader}>
-              <Image source={{ uri: MY_MENTORSHIP.mentor.avatar }} style={styles.currentMentorAvatar} />
-              <View style={styles.currentMentorInfo}>
-                <ThemedText style={[styles.currentMentorLabel, { color: theme.textSecondary }]}>আপনার মেন্টর</ThemedText>
-                <ThemedText style={[styles.currentMentorName, { color: theme.text }]}>{MY_MENTORSHIP.mentor.name}</ThemedText>
-                <ThemedText style={[styles.currentMentorDate, { color: theme.textSecondary }]}>
-                  {MY_MENTORSHIP.startDate} থেকে
-                </ThemedText>
-              </View>
-            </View>
-
-            <View style={styles.progressSection}>
-              <View style={styles.progressHeader}>
-                <ThemedText style={[styles.progressLabel, { color: theme.text }]}>শেখার অগ্রগতি</ThemedText>
-                <ThemedText style={[styles.progressPercent, { color: theme.primary }]}>{MY_MENTORSHIP.progress}%</ThemedText>
-              </View>
-              <View style={[styles.progressBar, { backgroundColor: theme.cardBorder }]}>
-                <View style={[styles.progressFill, { width: `${MY_MENTORSHIP.progress}%`, backgroundColor: theme.primary }]} />
-              </View>
-            </View>
-
-            <View style={styles.statsRow}>
-              <View style={[styles.statBox, { backgroundColor: theme.primary + "10" }]}>
-                <ThemedText style={[styles.statBoxValue, { color: theme.primary }]}>{MY_MENTORSHIP.sessions}</ThemedText>
-                <ThemedText style={[styles.statBoxLabel, { color: theme.textSecondary }]}>সেশন সম্পন্ন</ThemedText>
-              </View>
-              <View style={[styles.statBox, { backgroundColor: "#2FA36B10" }]}>
-                <ThemedText style={[styles.statBoxValue, { color: "#2FA36B" }]}>{MY_MENTORSHIP.nextSession}</ThemedText>
-                <ThemedText style={[styles.statBoxLabel, { color: theme.textSecondary }]}>পরবর্তী সেশন</ThemedText>
-              </View>
-            </View>
-
-            <View style={styles.actionButtons}>
-              <Pressable style={[styles.scheduleBtn, { backgroundColor: theme.primary }]}>
-                <Feather name="calendar" size={16} color="#fff" />
-                <ThemedText style={styles.scheduleBtnText}>সেশন শিডিউল করুন</ThemedText>
-              </Pressable>
-              <Pressable style={[styles.chatBtn, { borderColor: theme.primary }]}>
-                <Feather name="message-circle" size={16} color={theme.primary} />
-              </Pressable>
-            </View>
-          </Animated.View>
+          <EmptyState
+            icon="users"
+            title="আপনার এখনও কোনো মেন্টর নেই"
+            message="মেন্টর খুঁজুন ট্যাব থেকে একজন মেন্টর বেছে নিন।"
+          />
 
           <Animated.View entering={FadeInUp.delay(200)} style={styles.becomeMentorSection}>
             <View style={[styles.becomeMentorCard, { backgroundColor: "#EA8A0C10", borderColor: "#EA8A0C" }]}>

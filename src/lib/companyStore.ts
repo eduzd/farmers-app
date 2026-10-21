@@ -52,61 +52,11 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         const reviews = await getCompanyReviews(company.id);
         let chats = await getCompanyChats(company.id);
         
-        if (chats.length === 0) {
-          const demoChats: CompanyChat[] = [
-            {
-              id: "chat_1",
-              companyId: company.id,
-              customerId: "user_1",
-              customerName: "রহিম আহমেদ",
-              customerInitials: "রআ",
-              lastMessage: "আপনার ধান বীজের দাম কত?",
-              unreadCount: 2,
-              updatedAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-            },
-            {
-              id: "chat_2",
-              companyId: company.id,
-              customerId: "user_2",
-              customerName: "করিম উদ্দিন",
-              customerInitials: "কউ",
-              lastMessage: "অর্ডার কনফার্ম করুন প্লিজ",
-              unreadCount: 1,
-              updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            },
-            {
-              id: "chat_3",
-              companyId: company.id,
-              customerId: "user_3",
-              customerName: "ফাতেমা বেগম",
-              customerInitials: "ফব",
-              lastMessage: "ধন্যবাদ, পণ্য পেয়েছি",
-              unreadCount: 0,
-              updatedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-            },
-            {
-              id: "chat_4",
-              companyId: company.id,
-              customerId: "user_4",
-              customerName: "জামাল হোসেন",
-              customerInitials: "জহ",
-              lastMessage: "ডেলিভারি কবে হবে?",
-              unreadCount: 0,
-              updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-            },
-            {
-              id: "chat_5",
-              companyId: company.id,
-              customerId: "user_5",
-              customerName: "সালমা আক্তার",
-              customerInitials: "সআ",
-              lastMessage: "১০ কেজি সার দরকার",
-              unreadCount: 3,
-              updatedAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-            },
-          ];
-          chats = demoChats;
-          await saveCompanyChats(company.id, demoChats);
+        // Sample chats saved by older versions are dropped; only real customer chats stay.
+        const sampleIds = new Set(["chat_1", "chat_2", "chat_3", "chat_4", "chat_5"]);
+        if (chats.some((c) => sampleIds.has(c.id) && /^user_\d+$/.test(c.customerId))) {
+          chats = chats.filter((c) => !(sampleIds.has(c.id) && /^user_\d+$/.test(c.customerId)));
+          await saveCompanyChats(company.id, chats);
         }
         
         set({ company, products, reviews, chats });

@@ -50,21 +50,9 @@ interface Listener {
   hasRaisedHand: boolean;
 }
 
-const MOCK_SPEAKERS: Speaker[] = [
-  { id: "1", name: "ড. ফরিদ উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/32.jpg", isSpeaking: true, isMuted: false, isHost: true, role: "কৃষি বিশেষজ্ঞ" },
-  { id: "2", name: "প্রফেসর হাসান", avatar: "https://randomuser.me/api/portraits/men/45.jpg", isSpeaking: false, isMuted: false, isHost: false, role: "মৎস্য বিশেষজ্ঞ" },
-  { id: "3", name: "ফাতেমা বেগম", avatar: "https://randomuser.me/api/portraits/women/28.jpg", isSpeaking: true, isMuted: false, isHost: false },
-  { id: "4", name: "আব্দুল করিম", avatar: "https://randomuser.me/api/portraits/men/67.jpg", isSpeaking: false, isMuted: true, isHost: false },
-];
+const MOCK_SPEAKERS: Speaker[] = [];
 
-const MOCK_LISTENERS: Listener[] = [
-  { id: "l1", name: "সালমা আক্তার", avatar: "https://randomuser.me/api/portraits/women/44.jpg", hasRaisedHand: true },
-  { id: "l2", name: "নাজমুল হাসান", avatar: "https://randomuser.me/api/portraits/men/22.jpg", hasRaisedHand: false },
-  { id: "l3", name: "রুবিনা খাতুন", avatar: "https://randomuser.me/api/portraits/women/55.jpg", hasRaisedHand: false },
-  { id: "l4", name: "জসিম উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/78.jpg", hasRaisedHand: true },
-  { id: "l5", name: "মনিরা বেগম", avatar: "https://randomuser.me/api/portraits/women/66.jpg", hasRaisedHand: false },
-  { id: "l6", name: "আলম খান", avatar: "https://randomuser.me/api/portraits/men/88.jpg", hasRaisedHand: false },
-];
+const MOCK_LISTENERS: Listener[] = [];
 
 const SpeakerCard = ({ speaker, isLarge }: { speaker: Speaker; isLarge?: boolean }) => {
   const { theme } = useTheme();

@@ -80,64 +80,6 @@ interface LikedUser {
   color: string;
 }
 
-const LIKED_USERS: LikedUser[] = [
-  { id: "1", name: "Abdul Karim", initials: "AK", color: "#2FA36B" },
-  { id: "2", name: "Salma Khatun", initials: "SK", color: "#DB2777" },
-  { id: "3", name: "Mohammad Ali", initials: "MA", color: "#2563EB" },
-  { id: "4", name: "Fatima Begum", initials: "FB", color: "#EA8A0C" },
-  { id: "5", name: "Rahim Hossain", initials: "RH", color: "#7C3AED" },
-];
-
-const INITIAL_COMMENTS: Comment[] = [
-  {
-    id: "1",
-    author: { name: "Abdul Karim", initials: "AK", isWelfareMember: true },
-    content: "Great harvest! How long did it take to grow?",
-    likes: 5,
-    isLiked: false,
-    createdAt: "1 hour ago",
-    replies: [
-      {
-        id: "1-1",
-        author: { name: "John Doe", initials: "JD" },
-        content: "It took about 3 months with proper care.",
-        createdAt: "45 min ago",
-        likes: 2,
-        isLiked: false,
-        replies: [
-          {
-            id: "1-1-1",
-            parentReplyId: "1-1",
-            author: { name: "Abdul Karim", initials: "AK" },
-            content: "That's impressive! What variety did you use?",
-            createdAt: "30 min ago",
-            likes: 1,
-            isLiked: false,
-            replies: [],
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: "2",
-    author: { name: "Salma Khatun", initials: "SK" },
-    content: "Very impressive yield! What fertilizers did you use?",
-    likes: 3,
-    isLiked: true,
-    createdAt: "2 hours ago",
-    replies: [],
-  },
-  {
-    id: "3",
-    author: { name: "Mohammad Ali", initials: "MA" },
-    content: "I'm interested in bulk purchase. Please DM me the details.",
-    likes: 2,
-    isLiked: false,
-    createdAt: "3 hours ago",
-    replies: [],
-  },
-];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -665,7 +607,6 @@ export default function PostDetailScreen() {
           styles.inputWrapper,
           {
             backgroundColor: theme.white,
-            borderTopColor: theme.inputBorder,
           },
           composerPadding,
         ]}
@@ -942,7 +883,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   inputWrapper: {
-    borderTopWidth: 1,
+    borderTopWidth: 0,
   },
   inputContainer: {
     flexDirection: "row",

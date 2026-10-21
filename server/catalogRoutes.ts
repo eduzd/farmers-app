@@ -4,13 +4,12 @@ import crypto from "crypto";
 import { sql } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { config } from "./config";
-import { SEED_EXPERTS, SEED_EVENTS, SEED_LISTINGS } from "./catalogSeed";
 import { onOrderCreated, ensureFeatures } from "./featureRoutes";
 import { quoteOrder, takeStock, ensureCheckout, validateCheckout } from "./checkoutRoutes";
 
 /**
  * Server-backed catalog for content that used to be hard-coded in the app.
- *  GET    /api/catalog/:kind           list (kind = experts | events | listings), seeded on first use
+ *  GET    /api/catalog/:kind           list (kind = experts | events | listings); starts empty, no sample rows
  *  POST   /api/catalog/:kind           create (logged in)
  *  PUT    /api/catalog/:kind/:id       edit (owner or super admin)
  *  DELETE /api/catalog/:kind/:id       delete (owner or super admin)
@@ -21,7 +20,6 @@ import { quoteOrder, takeStock, ensureCheckout, validateCheckout } from "./check
 
 const KINDS = ["experts", "events", "listings"] as const;
 type Kind = (typeof KINDS)[number];
-const SEEDS: Record<Kind, any[]> = { experts: SEED_EXPERTS, events: SEED_EVENTS, listings: SEED_LISTINGS };
 
 const rows = (r: any): any[] => (Array.isArray(r) ? r : r?.rows || []);
 
@@ -48,21 +46,12 @@ function ensure() {
         data jsonb,
         created_at timestamp NOT NULL DEFAULT now()
       )`);
+      // Remove the sample rows older versions inserted on first use (ids "<kind>-seed-<n>", no owner).
+      // Rows people added themselves always have an owner and a different id, so they stay.
       for (const kind of KINDS) {
-        const c = rows(await db.execute(sql`SELECT count(*)::int AS n FROM catalog_items WHERE kind = ${kind}`));
-        if (!c[0] || Number(c[0].n) === 0) {
-          const seed = SEEDS[kind];
-          for (let i = 0; i < seed.length; i++) {
-            const item = { ...seed[i] };
-            const id = `${kind}-seed-${item.id ?? i}`;
-            item.id = id;
-            // keep the seed order: older timestamps for later items
-            const ts = new Date(Date.now() - (i + 1) * 60000).toISOString();
-            await db.execute(sql`INSERT INTO catalog_items (id, kind, data, created_at, updated_at)
-              VALUES (${id}, ${kind}, ${JSON.stringify(item)}::jsonb, ${ts}, ${ts}) ON CONFLICT (id) DO NOTHING`);
-          }
-        }
+        await db.execute(sql`DELETE FROM catalog_items WHERE kind = ${kind} AND owner_id IS NULL AND id LIKE ${kind + "-seed-%"}`);
       }
+      await db.execute(sql`DELETE FROM favorites WHERE item_id LIKE ${"listings-seed-%"}`).catch(() => {});
     })().catch((e) => {
       ready = null;
       throw e;

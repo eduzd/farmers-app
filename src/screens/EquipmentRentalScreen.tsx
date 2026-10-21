@@ -17,6 +17,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Equipment {
   id: string;
   name: string;
@@ -31,86 +32,7 @@ interface Equipment {
   description: string;
 }
 
-const EQUIPMENT: Equipment[] = [
-  {
-    id: "1",
-    name: "ট্রাক্টর - মাহিন্দ্রা ৫৭৫",
-    category: "চাষ",
-    image: "https://images.unsplash.com/photo-1530267981375-f0de937f5f13?w=400",
-    dailyRate: 2500,
-    weeklyRate: 15000,
-    owner: "করিম ফার্ম হাউস",
-    location: "বগুড়া সদর",
-    rating: 4.8,
-    available: true,
-    description: "৫৫ HP ট্রাক্টর, চাষ ও বহনে উপযোগী",
-  },
-  {
-    id: "2",
-    name: "কম্বাইন হার্ভেস্টার",
-    category: "ফসল কাটা",
-    image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400",
-    dailyRate: 8000,
-    weeklyRate: 50000,
-    owner: "আগ্রো টেক সার্ভিস",
-    location: "রংপুর",
-    rating: 4.9,
-    available: true,
-    description: "ধান ও গম কাটার জন্য আধুনিক মেশিন",
-  },
-  {
-    id: "3",
-    name: "পাওয়ার টিলার",
-    category: "চাষ",
-    image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400",
-    dailyRate: 1200,
-    weeklyRate: 7000,
-    owner: "শফিক এগ্রো",
-    location: "দিনাজপুর",
-    rating: 4.5,
-    available: false,
-    description: "১২ HP পাওয়ার টিলার",
-  },
-  {
-    id: "4",
-    name: "স্প্রে মেশিন (ড্রোন)",
-    category: "স্প্রে",
-    image: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=400",
-    dailyRate: 5000,
-    weeklyRate: 30000,
-    owner: "ড্রোন ফার্মিং বিডি",
-    location: "ঢাকা",
-    rating: 4.7,
-    available: true,
-    description: "১০ লিটার ক্যাপাসিটি কৃষি ড্রোন",
-  },
-  {
-    id: "5",
-    name: "সীড ড্রিল মেশিন",
-    category: "বপন",
-    image: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400",
-    dailyRate: 1500,
-    weeklyRate: 9000,
-    owner: "কৃষি যন্ত্র কেন্দ্র",
-    location: "কুমিল্লা",
-    rating: 4.4,
-    available: true,
-    description: "সারি বপন মেশিন, বীজ সাশ্রয়ী",
-  },
-  {
-    id: "6",
-    name: "রাইস ট্রান্সপ্লান্টার",
-    category: "রোপণ",
-    image: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400",
-    dailyRate: 3500,
-    weeklyRate: 20000,
-    owner: "গ্রিন এগ্রো সার্ভিস",
-    location: "সিলেট",
-    rating: 4.6,
-    available: true,
-    description: "৪ সারি ধান রোপণ মেশিন",
-  },
-];
+const EQUIPMENT: Equipment[] = [];
 
 const CATEGORIES = ["সব", "চাষ", "ফসল কাটা", "স্প্রে", "বপন", "রোপণ"];
 
@@ -254,6 +176,7 @@ export default function EquipmentRentalScreen() {
 
       <FlatList
         data={filteredEquipment}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderEquipment}
         contentContainerStyle={[

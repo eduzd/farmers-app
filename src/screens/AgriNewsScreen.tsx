@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const CATEGORIES = [
   { id: "all", label: "সব" },
   { id: "market", label: "বাজার" },
@@ -20,63 +21,7 @@ const CATEGORIES = [
   { id: "export", label: "রপ্তানি" },
 ];
 
-const NEWS = [
-  {
-    id: "1",
-    title: "ধানের দাম বাড়ল ১৫%, কৃষকদের মুখে হাসি",
-    summary: "আমন মৌসুমে ধানের দাম গত বছরের তুলনায় ১৫% বৃদ্ধি পেয়েছে।",
-    category: "market",
-    time: "২ ঘণ্টা আগে",
-    source: "কৃষি বার্তা",
-    featured: true,
-    image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400",
-  },
-  {
-    id: "2",
-    title: "সরকার কৃষকদের জন্য নতুন ভর্তুকি ঘোষণা",
-    summary: "সার ও বীজে ৩০% ভর্তুকি দেওয়ার ঘোষণা দিয়েছে কৃষি মন্ত্রণালয়।",
-    category: "policy",
-    time: "৫ ঘণ্টা আগে",
-    source: "বাংলাদেশ প্রতিদিন",
-    featured: false,
-  },
-  {
-    id: "3",
-    title: "নতুন জৈব সার প্রযুক্তি বাজারে এল",
-    summary: "BARI উদ্ভাবিত নতুন জৈব সার ফসলের উৎপাদন ২০% বাড়াতে সক্ষম।",
-    category: "tech",
-    time: "৮ ঘণ্টা আগে",
-    source: "কৃষি সংবাদ",
-    featured: false,
-  },
-  {
-    id: "4",
-    title: "আগামী সপ্তাহে ভারী বৃষ্টির সম্ভাবনা",
-    summary: "আবহাওয়া অফিস জানিয়েছে, উত্তরাঞ্চলে ভারী বৃষ্টিপাত হতে পারে।",
-    category: "weather",
-    time: "১০ ঘণ্টা আগে",
-    source: "আবহাওয়া অফিস",
-    featured: false,
-  },
-  {
-    id: "5",
-    title: "ম্যাঙ্গো রপ্তানি ২৫% বৃদ্ধি পেয়েছে",
-    summary: "এ বছর ইউরোপে বাংলাদেশি আম রপ্তানি ২৫% বেড়েছে।",
-    category: "export",
-    time: "১২ ঘণ্টা আগে",
-    source: "রপ্তানি উন্নয়ন ব্যুরো",
-    featured: false,
-  },
-  {
-    id: "6",
-    title: "ড্রোন দিয়ে কীটনাশক স্প্রে শুরু",
-    summary: "হাওর এলাকায় ড্রোন প্রযুক্তি ব্যবহার করে কীটনাশক স্প্রে করা হচ্ছে।",
-    category: "tech",
-    time: "১ দিন আগে",
-    source: "টেক কৃষি",
-    featured: false,
-  },
-];
+const NEWS: any[] = [];
 
 export default function AgriNewsScreen() {
   const insets = useSafeAreaInsets();
@@ -167,6 +112,7 @@ export default function AgriNewsScreen() {
           সাম্প্রতিক খবর
         </ThemedText>
 
+        {filteredNews.length === 0 ? <EmptyState icon="file-text" title="এখনও কোনো খবর নেই" message="নতুন খবর এলে এখানে দেখা যাবে।" /> : null}
         {regularNews.map((news, index) => (
           <Animated.View key={news.id} entering={FadeInUp.delay(index * 80).duration(400)}>
             <Pressable

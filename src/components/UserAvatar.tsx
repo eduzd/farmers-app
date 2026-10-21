@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet, ViewStyle } from "react-native";
 import { Image } from "expo-image";
+import { resolveAvatarUri } from "@/lib/avatarUri";
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from "react-native-svg";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -105,7 +106,7 @@ export function UserAvatar({
     <View style={[styles.container, style]}>
       {avatar ? (
         <Image 
-          source={{ uri: avatar }}
+          source={{ uri: resolveAvatarUri(avatar) }}
           style={[
             styles.avatarImage, 
             { 

@@ -10,36 +10,16 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const { width } = Dimensions.get("window");
 
-const STATS = [
-  { id: "production", label: "উৎপাদন", value: "১২.৫ টন", change: "+১৫%", icon: "trending-up", color: "#16A34A" },
-  { id: "revenue", label: "আয়", value: "৳২,৫০,০০০", change: "+২২%", icon: "dollar-sign", color: "#2563EB" },
-  { id: "cost", label: "খরচ", value: "৳৮৫,০০০", change: "-৫%", icon: "minus-circle", color: "#EA8A0C" },
-  { id: "profit", label: "লাভ", value: "৳১,৬৫,০০০", change: "+২৮%", icon: "plus-circle", color: "#7C3AED" },
-];
+const STATS: any[] = [];
 
-const CROPS = [
-  { name: "ধান", production: 85, color: "#16A34A" },
-  { name: "গম", production: 60, color: "#2563EB" },
-  { name: "ভুট্টা", production: 45, color: "#EA8A0C" },
-  { name: "সবজি", production: 72, color: "#7C3AED" },
-];
+const CROPS: any[] = [];
 
-const MONTHLY_DATA = [
-  { month: "জানু", value: 45 },
-  { month: "ফেব্রু", value: 55 },
-  { month: "মার্চ", value: 62 },
-  { month: "এপ্রিল", value: 78 },
-  { month: "মে", value: 85 },
-  { month: "জুন", value: 72 },
-];
+const MONTHLY_DATA: any[] = [];
 
-const INSIGHTS = [
-  { title: "সর্বোচ্চ উৎপাদন", value: "এপ্রিল মাসে", icon: "award" },
-  { title: "সেরা ফসল", value: "ধান (৮৫%)", icon: "star" },
-  { title: "গড় লাভ", value: "৳৩২,০০০/মাস", icon: "bar-chart" },
-];
+const INSIGHTS: any[] = [];
 
 export default function FarmAnalyticsScreen() {
   const insets = useSafeAreaInsets();
@@ -73,6 +53,7 @@ export default function FarmAnalyticsScreen() {
         </View>
 
         <Animated.View entering={FadeInUp.duration(400)} style={styles.statsGrid}>
+          {STATS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
           {STATS.map((stat, index) => (
             <LinearGradient
               key={stat.id}
@@ -106,6 +87,7 @@ export default function FarmAnalyticsScreen() {
           </ThemedText>
           <View style={[styles.chartCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             <View style={styles.barChart}>
+              {MONTHLY_DATA.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
               {MONTHLY_DATA.map((item, index) => (
                 <View key={index} style={styles.barContainer}>
                   <View style={styles.barWrapper}>
@@ -128,6 +110,7 @@ export default function FarmAnalyticsScreen() {
             ফসল অনুযায়ী উৎপাদন
           </ThemedText>
           <View style={[styles.cropsCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            {CROPS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {CROPS.map((crop, index) => (
               <View key={index} style={styles.cropRow}>
                 <ThemedText style={[styles.cropName, { color: theme.text }]}>{crop.name}</ThemedText>
@@ -151,6 +134,7 @@ export default function FarmAnalyticsScreen() {
             মূল তথ্য
           </ThemedText>
           <View style={styles.insightsRow}>
+            {INSIGHTS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {INSIGHTS.map((insight, index) => (
               <View
                 key={index}

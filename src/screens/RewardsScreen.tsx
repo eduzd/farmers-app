@@ -16,6 +16,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Reward {
   id: string;
   title: string;
@@ -34,8 +35,8 @@ interface Activity {
   type: "earn" | "redeem";
 }
 
-const USER_POINTS = 3500;
-const USER_LEVEL = "সক্রিয় কৃষক";
+const USER_POINTS: number = 0;
+const USER_LEVEL = "নতুন সদস্য";
 const NEXT_LEVEL_POINTS = 5000;
 
 const REWARDS: Reward[] = [
@@ -47,13 +48,7 @@ const REWARDS: Reward[] = [
   { id: "6", title: "২০% ছাড় - যন্ত্রপাতি", description: "কৃষি যন্ত্রপাতি ভাড়ায় ২০% ছাড়", pointsCost: 800, category: "discount", isAvailable: true },
 ];
 
-const ACTIVITIES: Activity[] = [
-  { id: "1", action: "পোস্ট করেছেন", points: 10, date: new Date(Date.now() - 2 * 3600000), type: "earn" },
-  { id: "2", action: "প্রশ্নের উত্তর দিয়েছেন", points: 25, date: new Date(Date.now() - 5 * 3600000), type: "earn" },
-  { id: "3", action: "১০% ছাড় রিডিম করেছেন", points: -500, date: new Date(Date.now() - 1 * 24 * 3600000), type: "redeem" },
-  { id: "4", action: "ভয়েস রুমে অংশ নিয়েছেন", points: 15, date: new Date(Date.now() - 1 * 24 * 3600000), type: "earn" },
-  { id: "5", action: "নতুন ফলোয়ার পেয়েছেন", points: 5, date: new Date(Date.now() - 2 * 24 * 3600000), type: "earn" },
-];
+const ACTIVITIES: Activity[] = [];
 
 const EARN_METHODS = [
   { id: "1", action: "পোস্ট করুন", points: "+10", icon: "edit-3" as const },
@@ -210,6 +205,7 @@ export default function RewardsScreen() {
         ) : (
           <View style={styles.historySection}>
             <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>সাম্প্রতিক কার্যক্রম</ThemedText>
+            {ACTIVITIES.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {ACTIVITIES.map((activity, index) => (
               <Animated.View key={activity.id} entering={FadeInUp.delay(150 + index * 50)}>
                 <View style={[styles.activityItem, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>

@@ -21,6 +21,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { EmptyState } from "@/components/ui";
 const { width } = Dimensions.get("window");
 
 interface TracePoint {
@@ -54,54 +55,7 @@ interface TracedProduct {
   organic: boolean;
 }
 
-const SAMPLE_PRODUCTS: TracedProduct[] = [
-  {
-    id: "PRD001",
-    name: "আমন ধান",
-    category: "rice",
-    categoryBn: "চাল",
-    batchNumber: "BATCH-2025-001",
-    productionDate: "2025-01-10",
-    expiryDate: "2026-01-10",
-    farmer: {
-      name: "মোঃ করিম উদ্দিন",
-      location: "রাজশাহী, বাংলাদেশ",
-      farmName: "সবুজ কৃষি খামার",
-      verified: true,
-    },
-    journey: [
-      { id: "j1", stage: "harvested", stageBn: "ফসল কাটা", date: "2025-01-10", location: "রাজশাহী", handler: "কৃষক", verified: true },
-      { id: "j2", stage: "processed", stageBn: "প্রক্রিয়াজাত", date: "2025-01-12", location: "নাটোর মিল", handler: "মিল মালিক", temperature: 25, verified: true },
-      { id: "j3", stage: "packed", stageBn: "প্যাকেজিং", date: "2025-01-13", location: "নাটোর", handler: "প্যাকার", verified: true },
-      { id: "j4", stage: "shipped", stageBn: "পরিবহন", date: "2025-01-14", location: "ঢাকা যাত্রা", handler: "ট্রান্সপোর্ট", verified: true },
-      { id: "j5", stage: "delivered", stageBn: "বিতরণ", date: "2025-01-15", location: "ঢাকা গুদাম", handler: "গুদাম ম্যানেজার", verified: true },
-    ],
-    certifications: ["জৈব সার্টিফিকেট", "BSTI অনুমোদন", "হালাল সার্টিফিকেট"],
-    organic: true,
-  },
-  {
-    id: "PRD002",
-    name: "সবুজ আম",
-    category: "fruit",
-    categoryBn: "ফল",
-    batchNumber: "BATCH-2025-002",
-    productionDate: "2025-01-08",
-    expiryDate: "2025-02-08",
-    farmer: {
-      name: "আব্দুর রহিম",
-      location: "চাঁপাইনবাবগঞ্জ",
-      farmName: "আম বাগান",
-      verified: true,
-    },
-    journey: [
-      { id: "j1", stage: "harvested", stageBn: "ফসল সংগ্রহ", date: "2025-01-08", location: "চাঁপাইনবাবগঞ্জ", handler: "কৃষক", verified: true },
-      { id: "j2", stage: "sorted", stageBn: "বাছাই", date: "2025-01-09", location: "স্থানীয় হাট", handler: "ব্যবসায়ী", verified: true },
-      { id: "j3", stage: "shipped", stageBn: "পরিবহন", date: "2025-01-10", location: "ঢাকা", handler: "ট্রান্সপোর্ট", temperature: 18, verified: true },
-    ],
-    certifications: ["জৈব পণ্য"],
-    organic: true,
-  },
-];
+const SAMPLE_PRODUCTS: TracedProduct[] = [];
 
 const STAGE_ICONS: Record<string, keyof typeof Feather.glyphMap> = {
   harvested: "sun",
@@ -322,6 +276,7 @@ export default function ProductTraceabilityScreen() {
           <View style={[styles.productsCard, { backgroundColor: theme.card }]}>
             <ThemedText style={styles.sectionTitle}>আমার পণ্যসমূহ</ThemedText>
 
+            {products.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {products.map((product, index) => (
               <Animated.View key={product.id} entering={SlideInRight.delay(index * 60)}>
                 <Pressable

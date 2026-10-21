@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const VET_CATEGORIES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "cattle", label: "গরু-মহিষ", icon: "circle" },
@@ -18,52 +19,7 @@ const VET_CATEGORIES = [
   { id: "fish", label: "মাছ", icon: "anchor" },
 ];
 
-const VETS = [
-  {
-    id: "1",
-    name: "ডা. আব্দুর রহমান",
-    specialty: "বড় প্রাণী বিশেষজ্ঞ",
-    rating: 4.9,
-    experience: "১৫ বছর",
-    location: "ঢাকা",
-    available: true,
-    fee: "৳৫০০",
-    phone: "+8801712345678",
-  },
-  {
-    id: "2",
-    name: "ডা. ফাতেমা খাতুন",
-    specialty: "পোল্ট্রি বিশেষজ্ঞ",
-    rating: 4.8,
-    experience: "১০ বছর",
-    location: "চট্টগ্রাম",
-    available: true,
-    fee: "৳৪০০",
-    phone: "+8801812345678",
-  },
-  {
-    id: "3",
-    name: "ডা. মোঃ করিম",
-    specialty: "মৎস্য রোগ বিশেষজ্ঞ",
-    rating: 4.7,
-    experience: "১২ বছর",
-    location: "খুলনা",
-    available: false,
-    fee: "৳৪৫০",
-    phone: "+8801912345678",
-  },
-  {
-    id: "4",
-    name: "ডা. সালমা আক্তার",
-    specialty: "ছাগল-ভেড়া বিশেষজ্ঞ",
-    rating: 4.9,
-    experience: "৮ বছর",
-    location: "রাজশাহী",
-    available: true,
-    fee: "৳৩৫০",
-    phone: "+8801612345678",
-  },
-];
+const VETS: any[] = [];
 
 const EMERGENCY_SERVICES = [
   { title: "জরুরি হটলাইন", number: "16263", icon: "phone-call", color: "#DC2626" },
@@ -152,6 +108,7 @@ export default function VeterinaryScreen() {
           <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.text }]}>
             উপলব্ধ ডাক্তার ({VETS.length})
           </ThemedText>
+          {VETS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
           {VETS.map((vet, index) => (
             <Animated.View key={vet.id} entering={FadeInUp.delay(index * 80).duration(400)}>
               <View style={[styles.vetCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>

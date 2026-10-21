@@ -43,75 +43,32 @@ interface Order {
   steps: DeliveryStep[];
 }
 
-const SAMPLE_ORDER: Order = {
-  id: "1",
-  orderId: "AGR-2024-001234",
-  productName: "জৈব ভার্মিকম্পোস্ট (৫০ কেজি x ১০)",
-  estimatedDelivery: "আজ বিকাল ৪:০০ - ৬:০০",
-  currentStatus: "পথে আছে",
-  driver: {
-    name: "আবুল হোসেন",
-    phone: "01712345678",
-    vehicle: "পিকআপ - ঢাকা মেট্রো ক-১২৩৪",
-  },
-  steps: [
-    {
-      id: "1",
-      title: "অর্ডার কনফার্মড",
-      description: "আপনার অর্ডার গৃহীত হয়েছে",
-      time: "সকাল ৯:৩০",
-      completed: true,
-      active: false,
-      icon: "check-circle",
-    },
-    {
-      id: "2",
-      title: "প্যাকিং সম্পন্ন",
-      description: "পণ্য প্যাক করা হয়েছে",
-      time: "সকাল ১১:১৫",
-      completed: true,
-      active: false,
-      icon: "package",
-    },
-    {
-      id: "3",
-      title: "শিপিং শুরু",
-      description: "ডেলিভারি ম্যান পণ্য নিয়ে রওনা দিয়েছেন",
-      time: "দুপুর ১২:৩০",
-      completed: true,
-      active: false,
-      icon: "truck",
-    },
-    {
-      id: "4",
-      title: "পথে আছে",
-      description: "গন্তব্যের দিকে যাচ্ছে - ৪৫ মিনিট বাকি",
-      time: "বিকাল ৩:১৫",
-      completed: false,
-      active: true,
-      icon: "navigation",
-    },
-    {
-      id: "5",
-      title: "ডেলিভারি সম্পন্ন",
-      description: "পণ্য পৌঁছে গেছে",
-      time: "",
-      completed: false,
-      active: false,
-      icon: "home",
-    },
-  ],
-};
+
 
 export default function DeliveryTrackingScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
 
-  const [order] = useState<Order>(SAMPLE_ORDER);
+  // No live delivery tracking yet: show an honest empty state instead of a made-up order.
+  const [order] = useState<Order | null>(null);
 
   const handleCall = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
+
+  if (!order) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.backgroundRoot, alignItems: "center", justifyContent: "center", padding: Spacing.xl }}>
+        <Feather name="truck" size={44} color={theme.textSecondary} />
+        <ThemedText style={{ marginTop: Spacing.md, fontSize: 16, fontWeight: "600", textAlign: "center" }}>
+          কোনো ডেলিভারি চলছে না
+        </ThemedText>
+        <ThemedText style={{ marginTop: Spacing.xs, color: theme.textSecondary, textAlign: "center" }}>
+          অর্ডার পাঠানো হলে এখানে তার অবস্থা দেখা যাবে।
+        </ThemedText>
+      </View>
+    );
+  }
 
   const activeStep = order.steps.find((s) => s.active);
   const completedSteps = order.steps.filter((s) => s.completed).length;

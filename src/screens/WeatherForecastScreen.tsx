@@ -6,6 +6,7 @@ import {
   Pressable,
   Dimensions,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -53,72 +54,95 @@ interface WeatherData {
   }>;
 }
 
-const MOCK_WEATHER: WeatherData = {
-  current: {
-    temp: 28,
-    humidity: 75,
-    windSpeed: 12,
-    condition: 'আংশিক মেঘলা',
-    icon: 'cloud',
-    feelsLike: 31,
-    uv: 6,
-    visibility: 10,
-  },
-  hourly: [
-    { time: '১২:০০', temp: 28, icon: 'sun', rainChance: 10 },
-    { time: '১৩:০০', temp: 29, icon: 'sun', rainChance: 15 },
-    { time: '১৪:০০', temp: 30, icon: 'cloud', rainChance: 25 },
-    { time: '১৫:০০', temp: 29, icon: 'cloud', rainChance: 40 },
-    { time: '১৬:০০', temp: 28, icon: 'cloud-rain', rainChance: 60 },
-    { time: '১৭:০০', temp: 26, icon: 'cloud-rain', rainChance: 70 },
-    { time: '১৮:০০', temp: 25, icon: 'cloud', rainChance: 45 },
-    { time: '১৯:০০', temp: 24, icon: 'moon', rainChance: 20 },
-  ],
-  daily: [
-    { day: 'Today', dayBn: 'আজ', high: 30, low: 22, icon: 'cloud', condition: 'মেঘলা', rainChance: 60 },
-    { day: 'Tomorrow', dayBn: 'আগামীকাল', high: 28, low: 21, icon: 'cloud-rain', condition: 'বৃষ্টি', rainChance: 80 },
-    { day: 'Wed', dayBn: 'বুধ', high: 27, low: 20, icon: 'cloud-rain', condition: 'ভারী বৃষ্টি', rainChance: 90 },
-    { day: 'Thu', dayBn: 'বৃহঃ', high: 29, low: 21, icon: 'cloud', condition: 'মেঘলা', rainChance: 40 },
-    { day: 'Fri', dayBn: 'শুক্র', high: 31, low: 23, icon: 'sun', condition: 'রৌদ্রোজ্জ্বল', rainChance: 10 },
-    { day: 'Sat', dayBn: 'শনি', high: 32, low: 24, icon: 'sun', condition: 'রৌদ্রোজ্জ্বল', rainChance: 5 },
-    { day: 'Sun', dayBn: 'রবি', high: 31, low: 23, icon: 'cloud', condition: 'আংশিক মেঘলা', rainChance: 20 },
-  ],
-  farmingAdvice: [
-    {
-      id: '1',
-      title: 'ফসল ঢাকা দিন',
-      description: 'আগামী ২-৩ দিন ভারী বৃষ্টির সম্ভাবনা। সংবেদনশীল ফসল ঢেকে রাখুন।',
-      icon: 'umbrella',
-      priority: 'high',
-    },
-    {
-      id: '2',
-      title: 'সার প্রয়োগ স্থগিত',
-      description: 'বৃষ্টির আগে সার প্রয়োগ করবেন না। বৃষ্টি শেষ হলে প্রয়োগ করুন।',
-      icon: 'pause-circle',
-      priority: 'high',
-    },
-    {
-      id: '3',
-      title: 'পানি নিষ্কাশন',
-      description: 'ক্ষেতের পানি নিষ্কাশনের ব্যবস্থা পরীক্ষা করুন।',
-      icon: 'droplet',
-      priority: 'medium',
-    },
-    {
-      id: '4',
-      title: 'শুক্রবার রোপণ',
-      description: 'শুক্রবার থেকে আবহাওয়া ভালো থাকবে। নতুন চারা রোপণের জন্য উপযুক্ত।',
-      icon: 'calendar',
-      priority: 'low',
-    },
-  ],
-};
+// Real forecast from Open-Meteo (free, no key). Nothing here is made up: every number
+// comes from the forecast, and the farming tips are worked out from it.
+type IconName = keyof typeof Feather.glyphMap;
+const BN_DIGITS = "০১২৩৪৫৬৭৮৯";
+const bn = (n: number | string) => String(n).replace(/[0-9]/g, (d) => BN_DIGITS[Number(d)]);
+const DAY_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAY_BN = ["রবি", "সোম", "মঙ্গল", "বুধ", "বৃহঃ", "শুক্র", "শনি"];
+
+function describe(code: number, night = false): { icon: IconName; text: string } {
+  if (code === 0) return { icon: night ? "moon" : "sun", text: "রৌদ্রোজ্জ্বল" };
+  if (code <= 2) return { icon: "cloud", text: "আংশিক মেঘলা" };
+  if (code === 3) return { icon: "cloud", text: "মেঘলা" };
+  if (code === 45 || code === 48) return { icon: "cloud", text: "কুয়াশা" };
+  if (code >= 51 && code <= 57) return { icon: "cloud-drizzle", text: "গুঁড়ি বৃষ্টি" };
+  if ((code >= 61 && code <= 65) || (code >= 80 && code <= 81)) return { icon: "cloud-rain", text: "বৃষ্টি" };
+  if (code === 82 || code === 66 || code === 67) return { icon: "cloud-rain", text: "ভারী বৃষ্টি" };
+  if (code >= 95) return { icon: "cloud-lightning", text: "বজ্রঝড়" };
+  return { icon: "cloud", text: "মেঘলা" };
+}
+
+function adviceFrom(daily: WeatherData["daily"], current: WeatherData["current"]): WeatherData["farmingAdvice"] {
+  const tips: WeatherData["farmingAdvice"] = [];
+  const next3 = daily.slice(0, 3);
+  const wet = next3.filter((d) => d.rainChance >= 60);
+  if (wet.length) {
+    tips.push({ id: "rain", title: "বৃষ্টির প্রস্তুতি নিন", description: `সামনের ৩ দিনের ${bn(wet.length)} দিন বৃষ্টির সম্ভাবনা ${bn(Math.max(...wet.map((d) => d.rainChance)))}% পর্যন্ত। সংবেদনশীল ফসল ঢেকে রাখুন ও নালা পরিষ্কার রাখুন।`, icon: "umbrella", priority: "high" });
+    tips.push({ id: "fert", title: "সার ও কীটনাশক পরে দিন", description: "বৃষ্টির আগে সার বা কীটনাশক দিলে ধুয়ে যায়। বৃষ্টি থামলে প্রয়োগ করুন।", icon: "pause-circle", priority: "medium" });
+  }
+  const hot = next3.find((d) => d.high >= 34);
+  if (hot) tips.push({ id: "heat", title: "গরমে সেচ দিন", description: `তাপমাত্রা ${bn(Math.round(hot.high))}°C পর্যন্ত উঠতে পারে। সকালে বা বিকেলে সেচ দিন।`, icon: "droplet", priority: "high" });
+  if (current.windSpeed >= 30) tips.push({ id: "wind", title: "জোরালো বাতাস", description: `বাতাসের গতি ${bn(Math.round(current.windSpeed))} কিমি/ঘণ্টা। লম্বা ফসলে খুঁটি দিন, স্প্রে করবেন না।`, icon: "wind", priority: "medium" });
+  const dry = daily.findIndex((d, i) => i > 0 && d.rainChance <= 20);
+  if (!wet.length && dry > 0) tips.push({ id: "plant", title: "রোপণের ভালো সময়", description: `${daily[dry].dayBn} বৃষ্টির সম্ভাবনা কম (${bn(daily[dry].rainChance)}%), চারা রোপণ বা ফসল তোলার জন্য উপযুক্ত।`, icon: "sun", priority: "low" });
+  return tips;
+}
+
+async function loadForecast(lat: number, lon: number): Promise<WeatherData> {
+  const url =
+    `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+    "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code,uv_index,visibility,is_day" +
+    "&hourly=temperature_2m,precipitation_probability,weather_code,is_day" +
+    "&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max" +
+    "&timezone=auto&forecast_days=7";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("weather " + res.status);
+  const d = await res.json();
+  const c = d.current;
+  const cur = describe(c.weather_code, c.is_day === 0);
+  const current: WeatherData["current"] = {
+    temp: Math.round(c.temperature_2m),
+    humidity: Math.round(c.relative_humidity_2m),
+    windSpeed: Math.round(c.wind_speed_10m),
+    condition: cur.text,
+    icon: cur.icon,
+    feelsLike: Math.round(c.apparent_temperature),
+    uv: Math.round(c.uv_index ?? 0),
+    visibility: Math.round((c.visibility ?? 0) / 1000),
+  };
+  const nowIdx = Math.max(0, (d.hourly.time as string[]).findIndex((t) => t >= String(c.time).slice(0, 13)));
+  const hourly: WeatherData["hourly"] = (d.hourly.time as string[]).slice(nowIdx, nowIdx + 8).map((t, k) => {
+    const i = nowIdx + k;
+    return {
+      time: bn(t.slice(11, 16)),
+      temp: Math.round(d.hourly.temperature_2m[i]),
+      icon: describe(d.hourly.weather_code[i], d.hourly.is_day?.[i] === 0).icon,
+      rainChance: Math.round(d.hourly.precipitation_probability?.[i] ?? 0),
+    };
+  });
+  const daily: WeatherData["daily"] = (d.daily.time as string[]).map((t, i) => {
+    const wd = new Date(t + "T12:00:00").getDay();
+    const w = describe(d.daily.weather_code[i]);
+    return {
+      day: i === 0 ? "Today" : i === 1 ? "Tomorrow" : DAY_EN[wd],
+      dayBn: i === 0 ? "আজ" : i === 1 ? "আগামীকাল" : DAY_BN[wd],
+      high: Math.round(d.daily.temperature_2m_max[i]),
+      low: Math.round(d.daily.temperature_2m_min[i]),
+      icon: w.icon,
+      condition: w.text,
+      rainChance: Math.round(d.daily.precipitation_probability_max?.[i] ?? 0),
+    };
+  });
+  return { current, hourly, daily, farmingAdvice: adviceFrom(daily, current) };
+}
 
 export default function WeatherForecastScreen() {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useTheme();
-  const [weather, setWeather] = useState<WeatherData>(MOCK_WEATHER);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherError, setWeatherError] = useState(false);
   const [location, setLocation] = useState<string>('ঢাকা, বাংলাদেশ');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -127,10 +151,15 @@ export default function WeatherForecastScreen() {
   }, []);
 
   const requestLocation = async () => {
+    // Dhaka until the phone's location is known.
+    let lat = 23.8103;
+    let lon = 90.4125;
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status === 'granted') {
         const loc = await Location.getCurrentPositionAsync({});
+        lat = loc.coords.latitude;
+        lon = loc.coords.longitude;
         const [address] = await Location.reverseGeocodeAsync({
           latitude: loc.coords.latitude,
           longitude: loc.coords.longitude,
@@ -142,12 +171,18 @@ export default function WeatherForecastScreen() {
     } catch (error) {
       console.log('Location error:', error);
     }
+    try {
+      setWeather(await loadForecast(lat, lon));
+      setWeatherError(false);
+    } catch {
+      setWeatherError(true);
+    }
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
     await requestLocation();
-    setTimeout(() => setRefreshing(false), 1000);
+    setRefreshing(false);
   };
 
   const getPriorityColor = (priority: string) => {
@@ -168,6 +203,26 @@ export default function WeatherForecastScreen() {
     if (hour >= 17 && hour < 20) return ['#FB923C', '#DC2626'];
     return ['#1E3A8A', '#312E81'];
   };
+
+  if (!weather) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.backgroundRoot, alignItems: 'center', justifyContent: 'center', padding: Spacing.xl }]}>
+        {weatherError ? (
+          <>
+            <Feather name="cloud-off" size={40} color={theme.textSecondary} />
+            <ThemedText style={{ marginTop: Spacing.md, textAlign: 'center', color: theme.textSecondary }}>
+              আবহাওয়ার তথ্য আনা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।
+            </ThemedText>
+            <Pressable onPress={requestLocation} style={{ marginTop: Spacing.lg, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.sm, borderRadius: BorderRadius.full, backgroundColor: theme.primary }}>
+              <ThemedText style={{ color: '#fff', fontWeight: '600' }}>আবার চেষ্টা করুন</ThemedText>
+            </Pressable>
+          </>
+        ) : (
+          <ActivityIndicator size="large" color={theme.primary} />
+        )}
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>

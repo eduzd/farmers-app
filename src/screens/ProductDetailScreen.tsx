@@ -43,11 +43,7 @@ const IMAGE_HEIGHT = SCREEN_HEIGHT * 0.42;
 type ProductDetailRouteProp = RouteProp<RootStackParamList, "ProductDetail">;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const SAMPLE_IMAGES = [
-  "https://images.unsplash.com/photo-1518977676601-b53f82ber66?w=800",
-  "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800",
-  "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800",
-];
+const SAMPLE_IMAGES: any[] = [];
 
 export default function ProductDetailScreen() {
   const tr = useTr();
@@ -136,7 +132,7 @@ export default function ProductDetailScreen() {
   const cartCount = getItemCount();
   const scrollX = useRef(new Animated.Value(0)).current;
 
-  const productImages = (product as any).images?.length ? (product as any).images : [product.image, ...SAMPLE_IMAGES.slice(0, 2)];
+  const productImages = (product as any).images?.length ? (product as any).images : [product.image].filter(Boolean);
 
   const handleAddToCart = () => {
     if (outOfStock) return;
@@ -369,16 +365,16 @@ export default function ProductDetailScreen() {
                       key={star}
                       name="star"
                       size={14}
-                      color={star <= Math.floor(product.rating || 4.5) ? "#F5B700" : "#E0E0E0"}
+                      color={star <= Math.round(reviews.count ? reviews.average : product.rating || 0) ? "#F5B700" : "#E0E0E0"}
                       style={{ marginRight: 2 }}
                     />
                   ))}
                 </View>
                 <ThemedText style={[styles.ratingText, { color: theme.text }]}>
-                  {product.rating || 4.5}
+                  {reviews.count ? reviews.average.toFixed(1) : product.rating ? Number(product.rating).toFixed(1) : tr("নতুন")}
                 </ThemedText>
                 <ThemedText style={[styles.reviewCount, { color: theme.textSecondary }]}>
-                  {tr("(১২৮ রিভিউ)")}
+                  {`(${reviews.count} ${tr("রিভিউ")})`}
                 </ThemedText>
               </View>
               

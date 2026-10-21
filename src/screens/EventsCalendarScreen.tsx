@@ -20,6 +20,7 @@ import { fetchCatalog, createCatalogItem, updateCatalogItem, deleteCatalogItem, 
 import { CatalogFormModal, FormField } from "@/components/CatalogFormModal";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface AgriEvent {
   id: string;
   title: string;
@@ -37,75 +38,7 @@ interface AgriEvent {
   ownerId?: string | null;
 }
 
-const EVENTS: AgriEvent[] = [
-  {
-    id: "1",
-    title: "জাতীয় কৃষি মেলা ২০২৬",
-    type: "মেলা",
-    date: "২৫-২৮ জানুয়ারি",
-    time: "সকাল ৯টা - রাত ৯টা",
-    location: "কৃষিবিদ ইনস্টিটিউট, ঢাকা",
-    organizer: "কৃষি মন্ত্রণালয়",
-    description: "বাংলাদেশের সবচেয়ে বড় কৃষি মেলা - নতুন প্রযুক্তি, বীজ, যন্ত্রপাতি প্রদর্শনী",
-    isFree: true,
-    registered: false,
-    spotsLeft: 999,
-  },
-  {
-    id: "2",
-    title: "জৈব কৃষি প্রশিক্ষণ",
-    type: "প্রশিক্ষণ",
-    date: "১৫ ফেব্রুয়ারি",
-    time: "সকাল ১০টা - বিকাল ৪টা",
-    location: "বাংলাদেশ কৃষি বিশ্ববিদ্যালয়, ময়মনসিংহ",
-    organizer: "কৃষি সম্প্রসারণ অধিদপ্তর",
-    description: "হাতে-কলমে জৈব সার তৈরি ও জৈব চাষ পদ্ধতি শিখুন",
-    isFree: false,
-    fee: 500,
-    registered: true,
-    spotsLeft: 12,
-  },
-  {
-    id: "3",
-    title: "মৎস্য চাষ সেমিনার",
-    type: "সেমিনার",
-    date: "২০ ফেব্রুয়ারি",
-    time: "বিকাল ৩টা - সন্ধ্যা ৬টা",
-    location: "মৎস্য ভবন, ঢাকা",
-    organizer: "মৎস্য অধিদপ্তর",
-    description: "বায়োফ্লক ও RAS প্রযুক্তিতে মাছ চাষ - বিশেষজ্ঞদের আলোচনা",
-    isFree: true,
-    registered: false,
-    spotsLeft: 45,
-  },
-  {
-    id: "4",
-    title: "স্মার্ট ফার্মিং ওয়ার্কশপ",
-    type: "ওয়ার্কশপ",
-    date: "১ মার্চ",
-    time: "সকাল ১০টা - বিকাল ৫টা",
-    location: "বিএসইসি, চট্টগ্রাম",
-    organizer: "আগ্রো টেক বাংলাদেশ",
-    description: "IoT, ড্রোন এবং AI ব্যবহার করে আধুনিক কৃষি প্রযুক্তি",
-    isFree: false,
-    fee: 1500,
-    registered: false,
-    spotsLeft: 25,
-  },
-  {
-    id: "5",
-    title: "বগুড়া কৃষি মেলা",
-    type: "মেলা",
-    date: "১০-১২ মার্চ",
-    time: "সকাল ১০টা - রাত ৮টা",
-    location: "শাহজাহান আলী স্টেডিয়াম, বগুড়া",
-    organizer: "জেলা কৃষি অফিস",
-    description: "উত্তরবঙ্গের বৃহত্তম কৃষি মেলা - স্থানীয় ফসল ও পণ্য প্রদর্শনী",
-    isFree: true,
-    registered: false,
-    spotsLeft: 999,
-  },
-];
+const EVENTS: AgriEvent[] = [];
 
 const EVENT_TYPES = ["সব", "মেলা", "প্রশিক্ষণ", "সেমিনার", "ওয়ার্কশপ"] as const;
 
@@ -368,6 +301,7 @@ export default function EventsCalendarScreen() {
       ) : null}
       <FlatList
         data={filteredEvents}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderEvent}
         contentContainerStyle={[

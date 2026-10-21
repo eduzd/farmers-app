@@ -139,15 +139,8 @@ export const useReferralStore = create<ReferralState>()(
         return { current: completedCount, next: nextTier.minReferrals, percentage };
       },
 
-      getLeaderboard: () => {
-        return [
-          { userId: "1", name: "করিম সাহেব", count: 87, tier: REFERRAL_TIERS[4] },
-          { userId: "2", name: "ফাতেমা বেগম", count: 65, tier: REFERRAL_TIERS[4] },
-          { userId: "3", name: "রহিম উদ্দিন", count: 42, tier: REFERRAL_TIERS[3] },
-          { userId: "4", name: "নাজমুল হাসান", count: 28, tier: REFERRAL_TIERS[2] },
-          { userId: "5", name: "সালমা আক্তার", count: 19, tier: REFERRAL_TIERS[2] },
-        ];
-      },
+      // No real referral leaderboard yet; never show made-up people.
+      getLeaderboard: () => [],
     }),
     {
       name: "referral-storage",

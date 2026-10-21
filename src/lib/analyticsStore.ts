@@ -55,41 +55,35 @@ interface AnalyticsState {
 }
 
 const MOCK_USER_STATS: UserStats = {
-  totalPosts: 45,
-  totalLikes: 890,
-  totalComments: 234,
-  totalShares: 56,
-  totalViews: 12500,
-  followers: 156,
-  following: 89,
-  postsThisWeek: 5,
-  postsThisMonth: 18,
-  engagementRate: 7.2,
-  avgLikesPerPost: 19.8,
-  avgCommentsPerPost: 5.2,
-  topPerformingPosts: ["post1", "post2", "post3"],
-  peakActivityHour: 18,
+  totalPosts: 0,
+  totalLikes: 0,
+  totalComments: 0,
+  totalShares: 0,
+  totalViews: 0,
+  followers: 0,
+  following: 0,
+  postsThisWeek: 0,
+  postsThisMonth: 0,
+  engagementRate: 0,
+  avgLikesPerPost: 0,
+  avgCommentsPerPost: 0,
+  topPerformingPosts: [],
+  peakActivityHour: 0,
   mostActiveDay: "Saturday",
 };
 
 const MOCK_COMMUNITY_STATS: CommunityStats = {
-  totalMembers: 25678,
-  activeMembers: 8934,
-  newMembersToday: 45,
-  newMembersThisWeek: 312,
-  totalPosts: 156789,
-  postsToday: 234,
-  totalEvents: 45,
-  upcomingEvents: 8,
-  topContributors: [
-    { userId: "u1", name: "রহিম আহমেদ", points: 12500 },
-    { userId: "u2", name: "ফাতিমা বেগম", points: 10200 },
-    { userId: "u3", name: "করিম উদ্দিন", points: 8900 },
-    { userId: "u4", name: "নাসরিন আক্তার", points: 7500 },
-    { userId: "u5", name: "আব্দুল করিম", points: 6800 },
-  ],
-  growthRate: 5.2,
-  engagementRate: 34.8,
+  totalMembers: 0,
+  activeMembers: 0,
+  newMembersToday: 0,
+  newMembersThisWeek: 0,
+  totalPosts: 0,
+  postsToday: 0,
+  totalEvents: 0,
+  upcomingEvents: 0,
+  topContributors: [],
+  growthRate: 0,
+  engagementRate: 0,
 };
 
 const generateDailyActivity = (): DailyActivity[] => {
@@ -151,6 +145,15 @@ export const useAnalyticsStore = create<AnalyticsState>()(
     {
       name: "analytics-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      // v2: drop the made-up numbers older versions saved on the phone.
+      version: 2,
+      migrate: (persisted: any) => {
+        if (persisted) {
+          persisted.userStats = MOCK_USER_STATS;
+          persisted.communityStats = MOCK_COMMUNITY_STATS;
+        }
+        return persisted;
+      },
     }
   )
 );

@@ -18,6 +18,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Farmer {
   id: string;
   name: string;
@@ -43,103 +44,9 @@ interface Shop {
   phone: string;
 }
 
-const FARMERS: Farmer[] = [
-  {
-    id: "1",
-    name: "করিম উদ্দিন",
-    initials: "ক",
-    specialty: "ধান ও সবজি চাষী",
-    distance: "১.২ কিমি",
-    rating: 4.8,
-    reviews: 45,
-    phone: "01712345678",
-    products: ["ধান", "টমেটো", "বেগুন"],
-    verified: true,
-  },
-  {
-    id: "2",
-    name: "রহিম মিয়া",
-    initials: "র",
-    specialty: "মাছ চাষী",
-    distance: "২.৫ কিমি",
-    rating: 4.5,
-    reviews: 32,
-    phone: "01812345678",
-    products: ["রুই", "তেলাপিয়া", "কাতলা"],
-    verified: true,
-  },
-  {
-    id: "3",
-    name: "ফাতেমা বেগম",
-    initials: "ফা",
-    specialty: "পোল্ট্রি ফার্মার",
-    distance: "৩.১ কিমি",
-    rating: 4.9,
-    reviews: 67,
-    phone: "01912345678",
-    products: ["মুরগি", "ডিম", "হাঁস"],
-    verified: false,
-  },
-  {
-    id: "4",
-    name: "জালাল উদ্দিন",
-    initials: "জা",
-    specialty: "ফল চাষী",
-    distance: "৪.০ কিমি",
-    rating: 4.6,
-    reviews: 28,
-    phone: "01612345678",
-    products: ["আম", "লিচু", "কাঁঠাল"],
-    verified: true,
-  },
-];
+const FARMERS: Farmer[] = [];
 
-const SHOPS: Shop[] = [
-  {
-    id: "s1",
-    name: "কৃষি ভাণ্ডার",
-    type: "সার ও বীজ",
-    icon: "🌱",
-    distance: "০.৮ কিমি",
-    rating: 4.7,
-    openNow: true,
-    address: "মেইন রোড, বাজার মোড়",
-    phone: "01512345678",
-  },
-  {
-    id: "s2",
-    name: "মৎস্য কেন্দ্র",
-    type: "মাছের খাবার ও ঔষধ",
-    icon: "🐟",
-    distance: "১.৫ কিমি",
-    rating: 4.4,
-    openNow: true,
-    address: "স্টেশন রোড",
-    phone: "01412345678",
-  },
-  {
-    id: "s3",
-    name: "পোল্ট্রি সাপ্লাই",
-    type: "পোল্ট্রি সামগ্রী",
-    icon: "🐔",
-    distance: "২.২ কিমি",
-    rating: 4.5,
-    openNow: false,
-    address: "কলেজ রোড",
-    phone: "01312345678",
-  },
-  {
-    id: "s4",
-    name: "যন্ত্রপাতি হাউজ",
-    type: "কৃষি যন্ত্রপাতি",
-    icon: "🚜",
-    distance: "৩.৫ কিমي",
-    rating: 4.8,
-    openNow: true,
-    address: "ইন্ডাস্ট্রিয়াল এরিয়া",
-    phone: "01212345678",
-  },
-];
+const SHOPS: Shop[] = [];
 
 export default function NearbyFarmersScreen() {
   const insets = useSafeAreaInsets();
@@ -402,6 +309,7 @@ export default function NearbyFarmersScreen() {
             : renderShop({ item: item as Shop, index })
         }
         ListHeaderComponent={renderHeader}
+        ListEmptyComponent={<EmptyState icon="map-pin" title="কাছাকাছি কাউকে পাওয়া যায়নি" message="নতুন কৃষক ও দোকান যোগ হলে এখানে দেখা যাবে।" />}
         contentContainerStyle={[
           styles.listContent,
           {

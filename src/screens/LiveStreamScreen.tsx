@@ -23,6 +23,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { EmptyState } from "@/components/ui";
 const { width } = Dimensions.get("window");
 
 interface LiveStream {
@@ -43,55 +44,7 @@ interface LiveStream {
 
 const CATEGORIES = ["সব", "ফসল চাষ", "মাছ চাষ", "পশুপালন", "প্রশিক্ষণ", "Q&A"];
 
-const MOCK_STREAMS: LiveStream[] = [
-  {
-    id: "1",
-    title: "ধান রোপণের সঠিক পদ্ধতি - লাইভ ডেমো",
-    streamer: { name: "ড. ফরিদ উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/32.jpg", isVerified: true },
-    thumbnail: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600",
-    viewers: 234,
-    category: "ফসল চাষ",
-    isLive: true,
-  },
-  {
-    id: "2",
-    title: "তেলাপিয়া মাছের খাবার ব্যবস্থাপনা",
-    streamer: { name: "প্রফেসর হাসান", avatar: "https://randomuser.me/api/portraits/men/45.jpg", isVerified: true },
-    thumbnail: "https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=600",
-    viewers: 156,
-    category: "মাছ চাষ",
-    isLive: true,
-  },
-  {
-    id: "3",
-    title: "গরুর খামার পরিচালনা টিপস",
-    streamer: { name: "করিম সাহেব", avatar: "https://randomuser.me/api/portraits/men/55.jpg", isVerified: false },
-    thumbnail: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=600",
-    viewers: 89,
-    category: "পশুপালন",
-    isLive: true,
-  },
-  {
-    id: "4",
-    title: "জৈব সার তৈরি - হাতে কলমে শিক্ষা",
-    streamer: { name: "ফাতেমা বেগম", avatar: "https://randomuser.me/api/portraits/women/28.jpg", isVerified: true },
-    thumbnail: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600",
-    viewers: 0,
-    category: "প্রশিক্ষণ",
-    isLive: false,
-    scheduledFor: "আজ বিকাল ৫টায়",
-  },
-  {
-    id: "5",
-    title: "বিশেষজ্ঞ Q&A সেশন - সব প্রশ্নের উত্তর",
-    streamer: { name: "ড. নাজমুল হাসান", avatar: "https://randomuser.me/api/portraits/men/67.jpg", isVerified: true },
-    thumbnail: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600",
-    viewers: 0,
-    category: "Q&A",
-    isLive: false,
-    scheduledFor: "আগামীকাল সকাল ১০টায়",
-  },
-];
+const MOCK_STREAMS: LiveStream[] = [];
 
 export default function LiveStreamScreen() {
   const insets = useSafeAreaInsets();
@@ -245,6 +198,7 @@ export default function LiveStreamScreen() {
               <Feather name="clock" size={16} color={theme.primary} />
               <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>আসন্ন লাইভ</ThemedText>
             </View>
+            {upcomingStreams.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {upcomingStreams.map((stream, index) => renderUpcoming({ item: stream, index }))}
           </View>
         }

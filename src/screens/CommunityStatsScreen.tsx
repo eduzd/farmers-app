@@ -15,6 +15,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const { width } = Dimensions.get("window");
 
 const COMMUNITY_STATS = {
@@ -28,30 +29,11 @@ const COMMUNITY_STATS = {
   expertSessions: 45,
 };
 
-const GROWTH_DATA = [
-  { month: "জুলাই", members: 80000 },
-  { month: "আগস্ট", members: 92000 },
-  { month: "সেপ্টেম্বর", members: 105000 },
-  { month: "অক্টোবর", members: 115000 },
-  { month: "নভেম্বর", members: 120000 },
-  { month: "ডিসেম্বর", members: 125000 },
-];
+const GROWTH_DATA: any[] = [];
 
-const TOP_CATEGORIES = [
-  { name: "ধান চাষ", posts: 4500, color: "#2FA36B" },
-  { name: "মাছ চাষ", posts: 3200, color: "#2563EB" },
-  { name: "সবজি বাগান", posts: 2800, color: "#EA8A0C" },
-  { name: "গবাদি পশু", posts: 2100, color: "#7C3AED" },
-  { name: "হাঁস-মুরগি", posts: 1900, color: "#DC2626" },
-];
+const TOP_CATEGORIES: any[] = [];
 
-const ACTIVITY_TIMELINE = [
-  { time: "২ মিনিট আগে", action: "নতুন পোস্ট", user: "করিম সাহেব", category: "ধান চাষ" },
-  { time: "৫ মিনিট আগে", action: "প্রশ্নের উত্তর", user: "ড. ফরিদ", category: "বিশেষজ্ঞ" },
-  { time: "১০ মিনিট আগে", action: "নতুন পণ্য", user: "সবুজ খামার", category: "মার্কেট" },
-  { time: "১৫ মিনিট আগে", action: "ভয়েস রুম শুরু", user: "প্রফেসর হাসান", category: "লাইভ" },
-  { time: "২০ মিনিট আগে", action: "নতুন সদস্য", user: "নাজমুল হাসান", category: "যোগদান" },
-];
+const ACTIVITY_TIMELINE: any[] = [];
 
 export default function CommunityStatsScreen() {
   const insets = useSafeAreaInsets();
@@ -111,6 +93,7 @@ export default function CommunityStatsScreen() {
         <Animated.View entering={FadeInUp.delay(150)} style={styles.section}>
           <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>টপ ক্যাটেগরি</ThemedText>
           <View style={[styles.categoriesCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            {TOP_CATEGORIES.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {TOP_CATEGORIES.map((cat, index) => (
               <View key={index} style={styles.categoryRow}>
                 <View style={styles.categoryInfo}>
@@ -132,6 +115,7 @@ export default function CommunityStatsScreen() {
           <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>সদস্য বৃদ্ধি</ThemedText>
           <View style={[styles.growthCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             <View style={styles.growthChart}>
+              {GROWTH_DATA.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
               {GROWTH_DATA.map((data, index) => {
                 const maxMembers = Math.max(...GROWTH_DATA.map(d => d.members));
                 const height = (data.members / maxMembers) * 100;
@@ -158,6 +142,7 @@ export default function CommunityStatsScreen() {
         <Animated.View entering={FadeInUp.delay(250)} style={styles.section}>
           <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>সাম্প্রতিক কার্যক্রম</ThemedText>
           <View style={[styles.activityCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            {ACTIVITY_TIMELINE.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {ACTIVITY_TIMELINE.map((activity, index) => (
               <View key={index} style={[styles.activityRow, index < ACTIVITY_TIMELINE.length - 1 && styles.activityRowBorder, { borderBottomColor: theme.cardBorder }]}>
                 <View style={[styles.activityDot, { backgroundColor: theme.primary }]} />
