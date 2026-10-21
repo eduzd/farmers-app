@@ -656,6 +656,7 @@ export default function MarketScreen() {
           data={CATEGORIES}
           keyExtractor={(item) => item.id}
           showsHorizontalScrollIndicator={false}
+          style={[styles.chipRow, styles.chipRowFirst]}
           contentContainerStyle={styles.categoriesContainer}
           renderItem={({ item }) => (
             <Pressable
@@ -695,7 +696,8 @@ export default function MarketScreen() {
           data={SORTS as any}
           keyExtractor={(item: any) => item.id}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.categoriesContainer, { paddingTop: 0 }]}
+          style={styles.chipRow}
+          contentContainerStyle={styles.categoriesContainer}
           renderItem={({ item }: any) => {
             const active = sortBy === item.id;
             return (
@@ -1038,15 +1040,26 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_400Regular",
     textAlignVertical: "center",
   },
+  // Each tab row has its own fixed height, so the two rows (and Bangla text) never overlap.
+  chipRow: {
+    flexGrow: 0,
+    flexShrink: 0,
+    height: 44,
+    marginTop: Spacing.sm,
+  },
+  chipRowFirst: {
+    marginTop: Spacing.md,
+  },
   categoriesContainer: {
-    paddingTop: Spacing.lg,
-    gap: Spacing.sm,
+    alignItems: "center",
+    paddingRight: Spacing.sm,
   },
   categoryChip: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    height: 38,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
     marginRight: Spacing.sm,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
@@ -1054,8 +1067,11 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 13,
+    lineHeight: 18,
     fontWeight: "500",
     fontFamily: "PlusJakartaSans_500Medium",
+    includeFontPadding: false,
+    textAlignVertical: "center",
   },
   productsContainer: {
     paddingHorizontal: Spacing.lg,

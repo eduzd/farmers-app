@@ -20,6 +20,7 @@ import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from "reac
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { tr } from "@/lib/tr";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -226,13 +227,35 @@ export default function ProfileScreen() {
             size="large"
             isWelfareMember={isWelfareMember}
           />
+          {user ? (
+            <Pressable
+              onPress={() => navigation.navigate("Settings", { openEditProfile: true })}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Change profile picture"
+              style={[styles.cameraBadge, { backgroundColor: theme.primary, borderColor: theme.backgroundRoot }]}
+            >
+              <Feather name="camera" size={14} color="#fff" />
+            </Pressable>
+          ) : null}
         </Pressable>
         <ThemedText type="h3" style={styles.profileName}>
-          {user?.name || "John Doe"}
+          {user?.name || tr("অতিথি")}
         </ThemedText>
         <ThemedText type="body" style={[styles.profileEmail, { color: theme.textSecondary }]}>
-          {user?.email || "john.doe@farmers.com"}
+          {user?.email || ""}
         </ThemedText>
+        {user ? (
+          <Pressable
+            onPress={() => navigation.navigate("Settings", { openEditProfile: true })}
+            style={[styles.editProfileBtn, { borderColor: theme.primary }]}
+            accessibilityRole="button"
+            testID="profile-edit-button"
+          >
+            <Feather name="edit-2" size={14} color={theme.primary} />
+            <ThemedText style={{ color: theme.primary, fontWeight: "600", fontSize: 14 }}>{tr("প্রোফাইল এডিট করুন")}</ThemedText>
+          </Pressable>
+        ) : null}
         <View style={styles.badgeContainer}>
           <View style={[styles.sectorBadge, { backgroundColor: theme.primary + "20" }]}>
             <Feather 
@@ -581,6 +604,27 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  cameraBadge: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  editProfileBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginTop: 10,
+  },
   container: {
     flex: 1,
   },

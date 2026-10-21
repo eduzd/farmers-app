@@ -57,6 +57,20 @@
         {
           "barStyle": "dark"
         }
+      ],
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "Farmers uses the camera for video features.",
+          "microphonePermission": "Farmers uses the microphone for voice calls and voice messages."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Farmers needs your photos to set your profile picture.",
+          "cameraPermission": "Farmers uses the camera to take your profile picture."
+        }
       ]
     ],
     "experiments": {

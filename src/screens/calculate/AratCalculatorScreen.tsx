@@ -14,6 +14,7 @@ import { saveDraft, getDraft, deleteDraft } from '@/offline/db/drafts';
 import { getSetting, setSetting } from '@/offline/db/database';
 
 import { tr, useTr } from "@/lib/tr";
+import { useRowAutoAdvance } from "@/hooks/useRowAutoAdvance";
 import { useI18n } from "@/lib/i18n";
 type Language = 'bn' | 'en';
 
@@ -200,6 +201,11 @@ export function AratCalculatorScreen() {
   const scrollViewRef = useRef<any>(null);
 
   const [rows, setRows] = useState<RowData[]>([{ fishName: '', rate: '', weight: '' }]);
+  // Rate and kg both filled -> cursor moves to the next row's rate by itself.
+  const autoAdvance = useRowAutoAdvance(2);
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+  autoAdvance.setCanEnter((r) => { const next = rowsRef.current[r]; return !next || !next.rate; });
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settings, setSettings] = useState<AratSettings>(defaultSettings);
   const [savedRecords, setSavedRecords] = useState<CalcRecord[]>([]);
@@ -270,6 +276,7 @@ export function AratCalculatorScreen() {
     }
     
     setRows(newRows);
+    if (field !== 'fishName') autoAdvance.afterChange(index, [newRows[index].rate, newRows[index].weight]);
   };
 
   const removeRow = (index: number) => {
@@ -554,6 +561,11 @@ export function AratCalculatorScreen() {
                   value={row.rate}
                   onChangeText={(v) => updateRow(index, 'rate', v)}
                   keyboardType="decimal-pad"
+                  ref={autoAdvance.register(index, 0)}
+                  onFocus={autoAdvance.onFocus(index, 0)}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={autoAdvance.next(index, 0)}
                   placeholder={tr("০")}
                   placeholderTextColor={colors.textTertiary}
                 />
@@ -565,6 +577,11 @@ export function AratCalculatorScreen() {
                   value={row.weight}
                   onChangeText={(v) => updateRow(index, 'weight', v)}
                   keyboardType="decimal-pad"
+                  ref={autoAdvance.register(index, 1)}
+                  onFocus={autoAdvance.onFocus(index, 1)}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                  onSubmitEditing={autoAdvance.next(index, 1)}
                   placeholder={tr("০")}
                   placeholderTextColor={colors.textTertiary}
                 />

@@ -1,4 +1,7 @@
 import { registerDmRoutes } from "./dmRoutes";
+import { registerProfileRoutes } from "./profileRoutes";
+import { registerReactionRoutes } from "./reactionRoutes";
+import { initCalls, handleCallMessage, onCallClientAuthed, onCallClientGone, registerCallRoutes } from "./calls";
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
@@ -101,17 +104,8 @@ interface ChatClient {
   conversationIds: Set<string>;
 }
 
-interface ActiveCall {
-  callId: string;
-  callerId: string;
-  calleeId: string;
-  status: "ringing" | "connected" | "ended";
-  startedAt: Date;
-}
-
 // One person can be connected from several phones/tabs at once.
 const chatClients = new Map<string, Set<ChatClient>>();
-const activeCalls = new Map<string, ActiveCall>();
 
 function addChatClient(userId: string, client: ChatClient) {
   let set = chatClients.get(userId);
@@ -131,12 +125,13 @@ function userOnline(userId: string) {
   return !!set && [...set].some((c) => c.ws.readyState === WebSocket.OPEN);
 }
 
-function sendToUser(userId: string, message: any) {
+function sendToUser(userId: string, message: any, except?: WebSocket) {
   const set = chatClients.get(userId);
   if (!set) return false;
   let sent = false;
   const text = JSON.stringify(message);
   for (const c of set) {
+    if (c.ws === except) continue;
     if (c.ws.readyState === WebSocket.OPEN) {
       c.ws.send(text);
       sent = true;
@@ -346,6 +341,9 @@ const demoProducts: Record<string, Array<{
 
 export async function registerRoutes(app: Express): Promise<Server> {
   registerDmRoutes(app, sendToUser);
+  registerCallRoutes(app);
+  registerProfileRoutes(app);
+  registerReactionRoutes(app, sendToUser);
   
   app.post("/api/voice-to-text", async (req, res) => {
     try {
@@ -1234,7 +1232,8 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
 
   const httpServer = createServer(app);
 
-  const wss = new WebSocketServer({ server: httpServer, path: "/ws/chat" });
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws/chat", maxPayload: 256 * 1024 });
+  initCalls({ sendToUser, userOnline });
 
   // Keep idle sockets alive through Render's proxy and drop dead ones.
   const heartbeat = setInterval(() => {
@@ -1252,14 +1251,6 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
     (ws as any).isAlive = true;
     ws.on("pong", () => { (ws as any).isAlive = true; });
     const reply = (m: any) => { if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(m)); };
-    // Only forward call signalling between the two people on that call.
-    const callPeer = (callId: string): string | null => {
-      const call = activeCalls.get(callId);
-      if (!call || !clientId) return null;
-      if (call.callerId === clientId) return call.calleeId;
-      if (call.calleeId === clientId) return call.callerId;
-      return null;
-    };
 
     ws.on("message", (data: Buffer) => {
       try {
@@ -1282,63 +1273,22 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
           clientId = uid;
           client = { ws, userId: uid, conversationIds: new Set() };
           addChatClient(uid, client);
-          return reply({ type: "auth_success", userId: uid });
+          reply({ type: "auth_success", userId: uid });
+          // Deliver a call that is still ringing for this person (e.g. after opening the push).
+          onCallClientAuthed(uid, ws);
+          return;
         }
 
         if (!clientId) return reply({ type: "error", reason: "not_authenticated" });
 
+        const mtype = String(message.type || "");
+        if (mtype.startsWith("call_") || mtype.startsWith("webrtc_")) {
+          // In-app voice calls: see server/calls.ts (who may call whom, and relaying set-up messages).
+          void handleCallMessage(clientId, ws, message, reply).catch((e) => console.error("Call message error:", e?.message || e));
+          return;
+        }
+
         switch (message.type) {
-          case "call_initiate": {
-            const calleeId = String(message.calleeId || "");
-            if (!calleeId || calleeId === clientId) return reply({ type: "call_failed", reason: "invalid_user" });
-            const callId = `call-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
-            activeCalls.set(callId, { callId, callerId: clientId, calleeId, status: "ringing", startedAt: new Date() });
-            const sent = sendToUser(calleeId, {
-              type: "incoming_call",
-              callId,
-              callerId: clientId,
-              callerName: String(message.callerName || "").slice(0, 80),
-            });
-            if (sent) reply({ type: "call_ringing", callId, calleeId });
-            else {
-              activeCalls.delete(callId);
-              reply({ type: "call_failed", reason: "user_offline" });
-            }
-            break;
-          }
-
-          case "call_accept": {
-            const call = activeCalls.get(message.callId);
-            if (call && call.calleeId === clientId) {
-              call.status = "connected";
-              sendToUser(call.callerId, { type: "call_accepted", callId: message.callId });
-            }
-            break;
-          }
-
-          case "call_reject":
-          case "call_end": {
-            const peer = callPeer(message.callId);
-            if (peer) {
-              sendToUser(peer, { type: message.type === "call_reject" ? "call_rejected" : "call_ended", callId: message.callId });
-              activeCalls.delete(message.callId);
-            }
-            break;
-          }
-
-          case "webrtc_offer":
-          case "webrtc_answer":
-          case "webrtc_ice_candidate": {
-            const peer = callPeer(message.callId);
-            if (!peer || peer !== message.targetUserId) break;
-            const payload: any = { type: message.type, callId: message.callId, fromUserId: clientId };
-            if (message.type === "webrtc_offer") payload.offer = message.offer;
-            if (message.type === "webrtc_answer") payload.answer = message.answer;
-            if (message.type === "webrtc_ice_candidate") payload.candidate = message.candidate;
-            sendToUser(peer, payload);
-            break;
-          }
-
           default:
             // join_conversation / send_message / typing from the old unused chat hook are
             // no longer relayed: direct messages go through the /api/dm routes, which check
@@ -1352,17 +1302,8 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
 
     const cleanup = () => {
       if (clientId && client) removeChatClient(clientId, client);
-      if (clientId) {
-        // A caller who disappears ends their call for the other person.
-        for (const [id, call] of activeCalls) {
-          if (call.callerId === clientId || call.calleeId === clientId) {
-            if (userOnline(clientId)) continue;
-            const peer = call.callerId === clientId ? call.calleeId : call.callerId;
-            sendToUser(peer, { type: "call_ended", callId: id });
-            activeCalls.delete(id);
-          }
-        }
-      }
+      // A person whose last socket closed gets a short grace period before their call ends.
+      if (clientId) onCallClientGone(clientId);
       client = null;
     };
     ws.on("close", cleanup);

@@ -45,6 +45,7 @@ import {
 import { useVoiceRecorder, type FinishedRecording } from "@/hooks/useVoiceRecorder";
 import { VoiceMessagePlayer, formatVoiceTime } from "@/components/VoiceMessagePlayer";
 
+import { useOptionalVoiceCall } from "@/contexts/VoiceCallContext";
 import { tr, useTr } from "@/lib/tr";
 
 type ChatRouteProp = RouteProp<RootStackParamList, "Chat">;
@@ -107,6 +108,7 @@ export default function ChatScreen() {
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showMediaMenu, setShowMediaMenu] = useState(false);
   const [calling, setCalling] = useState(false);
+  const voiceCall = useOptionalVoiceCall();
   const lastTapRef = useRef<{ id: string; time: number } | null>(null);
   const lastServerAt = useRef<string | null>(null);
   const seenUntil = useRef<string | null>(null);
@@ -230,7 +232,8 @@ export default function ChatScreen() {
   // The Call button opens the phone's dialer with the other person's number
   // (normal phone call from your SIM). The number comes from their shop, or from their
   // profile once you have dealt with each other (they messaged you, or you have an order).
-  const handleVoiceCall = async () => {
+  // Long-press on the phone button: an ordinary SIM call to their shared number.
+  const handlePhoneCall = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (mode === "guest") {
       Alert.alert(tr("Call"), tr("Please sign in to call or message people."));
@@ -264,6 +267,39 @@ export default function ChatScreen() {
     } finally {
       setCalling(false);
     }
+  };
+
+  // Phone button: an in-app voice call over the internet (WebRTC), no SIM charges.
+  const handleVoiceCall = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (mode === "guest") {
+      Alert.alert(tr("Call"), tr("Please sign in to call or message people."));
+      return;
+    }
+    if (mode === "noAccount") {
+      Alert.alert(tr("Call"), `${userName} isn't on Farmers yet, so they can't get calls.`);
+      return;
+    }
+    if (!voiceCall) {
+      Alert.alert(tr("Call"), tr("Please sign in to call or message people."));
+      return;
+    }
+    if (calling) return;
+    let peerId = otherIdRef.current;
+    let peerName = userName;
+    let peerAvatar: string | null = null;
+    // Product, shop or company chats point at the owner's account: look it up first.
+    if (mode !== "live") {
+      setCalling(true);
+      try {
+        const c: any = await fetchContact(otherIdRef.current);
+        if (c?.userId) peerId = String(c.userId);
+        if (c?.name) peerName = c.name;
+        if (c?.avatar) peerAvatar = c.avatar;
+      } catch {}
+      setCalling(false);
+    }
+    void voiceCall.startCall(peerId, peerName, peerAvatar);
   };
 
   const markFailed = (id: string) =>
@@ -771,8 +807,11 @@ export default function ChatScreen() {
           <Pressable
             style={styles.headerButton}
             onPress={handleVoiceCall}
+            onLongPress={handlePhoneCall}
             accessibilityRole="button"
-            accessibilityLabel={`Call ${userName}`}
+            accessibilityLabel={`Voice call ${userName}`}
+            accessibilityHint="Long press for a normal phone call"
+            testID="chat-call-button"
           >
             {calling ? <ActivityIndicator size="small" color={theme.text} /> : <Feather name="phone" size={22} color={theme.text} />}
           </Pressable>
@@ -833,7 +872,6 @@ export default function ChatScreen() {
             styles.inputContainer,
             {
               backgroundColor: theme.white,
-              borderTopColor: theme.inputBorder,
             },
           ]}
         >
@@ -1044,10 +1082,8 @@ const styles = StyleSheet.create({
   backButton: {
     padding: Spacing.sm,
   },
-  bottomBar: {
-    borderTopWidth: 1,
-    borderTopColor: "#E5E5E5",
-  },
+  // No line above the typing bar.
+  bottomBar: {},
   headerTitleContainer: {
     flex: 1,
     flexDirection: "row",
@@ -1314,7 +1350,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
-    borderTopWidth: 1,
     gap: Spacing.sm,
     minHeight: 60,
   },

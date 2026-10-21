@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -7,12 +7,13 @@ import {
   Modal,
   TextInput,
   Alert,
+  ActivityIndicator,
   Platform,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { CustomSwitch } from "@/components/CustomSwitch";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -26,6 +27,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useAuthStore } from "@/lib/authStore";
+import { fetchAbout, isLocalPhoto, removeAvatar, saveAbout, saveProfileDetails, uploadAvatar } from "@/lib/profileApi";
 import { useI18n, Language } from "@/lib/i18n";
 import { useThemeStore, ThemePreference } from "@/lib/themeStore";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
@@ -85,6 +87,38 @@ export default function SettingsScreen() {
   const [editAvatar, setEditAvatar] = useState(user?.avatar);
   const [editAvatarId, setEditAvatarId] = useState(user?.avatarId);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const token = useAuthStore((s) => s.token);
+  const route = useRoute<any>();
+
+  const openEditProfile = () => {
+    setEditName(user?.name || "");
+    setEditUsername(user?.username || "");
+    setEditPhone(user?.phone || "");
+    setEditLocation(user?.location || "");
+    setEditBio(user?.bio || "");
+    setEditCategory(user?.farmingCategory || "");
+    setEditAvatar(user?.avatar);
+    setEditAvatarId(user?.avatarId);
+    setShowEditProfileModal(true);
+    // Bio and location saved on the server (e.g. from another phone) win.
+    if (token) {
+      void fetchAbout().then((a) => {
+        if (!a) return;
+        if (a.bio) setEditBio(a.bio);
+        if (a.location) setEditLocation(a.location);
+      });
+    }
+  };
+
+  // Profile page "Edit profile" opens this form straight away.
+  useEffect(() => {
+    if (route.params?.openEditProfile) {
+      openEditProfile();
+      navigation.setParams?.({ openEditProfile: undefined } as any);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.params?.openEditProfile]);
 
   const handleLanguageSelect = async (lang: Language) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -106,28 +140,47 @@ export default function SettingsScreen() {
     setShowThemeModal(false);
   };
 
-  const handlePickImage = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
+  const pickFrom = async (source: "camera" | "library") => {
     if (Platform.OS !== "web") {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
+      const perm = source === "camera"
+        ? await ImagePicker.requestCameraPermissionsAsync()
+        : await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (perm.status !== "granted") {
         Alert.alert(t("settings.permissionRequired"), t("settings.photoLibraryAccess"));
         return;
       }
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
+    const opts: ImagePicker.ImagePickerOptions = {
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
-    });
-
+    };
+    const result = source === "camera"
+      ? await ImagePicker.launchCameraAsync(opts)
+      : await ImagePicker.launchImageLibraryAsync(opts);
     if (!result.canceled && result.assets[0]) {
       setEditAvatar(result.assets[0].uri);
       setEditAvatarId(undefined);
     }
+  };
+
+  const handlePickImage = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const bn = language === "bn";
+    if (Platform.OS === "web") {
+      await pickFrom("library");
+      return;
+    }
+    const buttons: any[] = [
+      { text: bn ? "ছবি তুলুন" : "Take photo", onPress: () => void pickFrom("camera") },
+      { text: bn ? "গ্যালারি থেকে" : "Choose from gallery", onPress: () => void pickFrom("library") },
+    ];
+    if (editAvatar) {
+      buttons.push({ text: bn ? "ছবি সরান" : "Remove photo", style: "destructive", onPress: () => setEditAvatar(undefined) });
+    }
+    buttons.push({ text: bn ? "বাতিল" : "Cancel", style: "cancel" });
+    Alert.alert(bn ? "প্রোফাইল ছবি" : "Profile picture", undefined, buttons);
   };
 
   const handleSelectAvatar = (avatar: AvatarOption) => {
@@ -143,7 +196,32 @@ export default function SettingsScreen() {
       return;
     }
 
+    if (savingProfile) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    // Signed in: save to the server first, so the photo and details show for everyone.
+    let avatarToSave = editAvatar;
+    if (token) {
+      setSavingProfile(true);
+      try {
+        if (editAvatar && isLocalPhoto(editAvatar)) {
+          avatarToSave = await uploadAvatar(editAvatar);
+        } else if (!editAvatar && user?.avatar && !isLocalPhoto(user.avatar)) {
+          await removeAvatar();
+        }
+        await saveProfileDetails({
+          name: editName.trim(),
+          phone: editPhone.trim() || undefined,
+          farmingCategory: editCategory || undefined,
+        });
+        await saveAbout({ bio: editBio.trim(), location: editLocation.trim() });
+      } catch (e: any) {
+        setSavingProfile(false);
+        Alert.alert(language === "bn" ? "সেভ হয়নি" : "Couldn't save", e?.message || "Try again.");
+        return;
+      }
+      setSavingProfile(false);
+    }
 
     const selectedAvatarData = editAvatarId ? AVATAR_OPTIONS.find(a => a.id === editAvatarId) : null;
 
@@ -163,7 +241,7 @@ export default function SettingsScreen() {
       phone: editPhone.trim() || undefined,
       location: editLocation.trim() || undefined,
       bio: editBio.trim() || undefined,
-      avatar: editAvatar,
+      avatar: avatarToSave,
       avatarId: editAvatarId,
       avatarColor: selectedAvatarData?.backgroundColor,
       farmingCategory: editCategory || undefined,
@@ -206,16 +284,7 @@ export default function SettingsScreen() {
         <View style={[styles.settingsGroup, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           <Pressable
             style={styles.settingItem}
-            onPress={() => {
-              setEditName(user?.name || "");
-              setEditUsername(user?.username || "");
-              setEditPhone(user?.phone || "");
-              setEditLocation(user?.location || "");
-              setEditBio(user?.bio || "");
-              setEditCategory(user?.farmingCategory || "");
-              setEditAvatar(user?.avatar);
-              setShowEditProfileModal(true);
-            }}
+            onPress={openEditProfile}
           >
             <View style={styles.settingLeft}>
               <Feather name="user" size={20} color={theme.iconDefault || theme.text} />
@@ -668,12 +737,18 @@ export default function SettingsScreen() {
                 </ThemedText>
               </Pressable>
               <Pressable
-                style={[styles.saveButton, { backgroundColor: theme.primary }]}
+                style={[styles.saveButton, { backgroundColor: theme.primary, opacity: savingProfile ? 0.7 : 1 }]}
                 onPress={handleSaveProfile}
+                disabled={savingProfile}
+                testID="save-profile"
               >
-                <ThemedText style={[styles.saveButtonText, { color: theme.white }]}>
-                  {t("settings.saveProfile")}
-                </ThemedText>
+                {savingProfile ? (
+                  <ActivityIndicator color={theme.white} />
+                ) : (
+                  <ThemedText style={[styles.saveButtonText, { color: theme.white }]}>
+                    {t("settings.saveProfile")}
+                  </ThemedText>
+                )}
               </Pressable>
             </View>
             <ModalBottomInset avoidKeyboard={false} />
