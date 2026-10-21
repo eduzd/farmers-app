@@ -59,3 +59,4 @@ scripts/__pycache__/
 scripts/
 .vercel
 dist-vercel/
+.push_setup_progress

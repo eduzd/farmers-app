@@ -22,7 +22,8 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.farmers.app",
       "softwareKeyboardLayoutMode": "resize",
-      "allowBackup": false
+      "allowBackup": false,
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "single",
