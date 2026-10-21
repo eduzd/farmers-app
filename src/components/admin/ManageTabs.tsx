@@ -4,6 +4,7 @@ import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 /** Admin app tabs that control the whole platform: orders, seller stores, listings + community, notifications, and a per-user control sheet. */
 
@@ -435,6 +436,7 @@ export function AdminUserSheet({ userId, onClose, onChanged }: { userId: string;
               </View>
             </ScrollView>
           ) : null}
+          <ModalBottomInset />
         </View>
       </View>
     </Modal>

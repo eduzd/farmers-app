@@ -15,6 +15,8 @@ import {
   NativeScrollEvent,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import Animated from "react-native-reanimated";
+import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
@@ -59,6 +61,8 @@ function greeting(bn: boolean) {
 export default function CommunityScreen() {
   const tr = useTr();
   const insets = useSafeAreaInsets();
+  // New-post toolbar: above the navigation bar, or right on top of the keyboard.
+  const toolbarPadding = useKeyboardAwareBottomPadding(Spacing.md);
   const tabBarHeight = useBottomTabBarHeight();
   const { theme, isDark } = useTheme();
   const navigation = useNavigation<NavigationProp>();
@@ -548,7 +552,7 @@ export default function CommunityScreen() {
       <Modal visible={showCreatePost} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowCreatePost(false)}>
         <KeyboardAvoidingView
           style={{ flex: 1, backgroundColor: theme.backgroundDefault }}
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior="padding"
         >
           <View style={[styles.modalHeader, { borderBottomColor: theme.divider, paddingTop: Platform.OS === "android" ? insets.top + Spacing.md : Spacing.lg }]}>
             <Pressable onPress={() => setShowCreatePost(false)} hitSlop={10} accessibilityRole="button">
@@ -591,9 +595,9 @@ export default function CommunityScreen() {
               </View>
             ) : null}
           </ScrollView>
-          <View style={[styles.modalToolbar, { borderTopColor: theme.divider, paddingBottom: insets.bottom + Spacing.md }]}>
+          <Animated.View style={[styles.modalToolbar, { borderTopColor: theme.divider }, toolbarPadding]}>
             <Button title={isBn ? "ছবি যোগ করুন" : "Add photo"} icon="image" variant="secondary" size="sm" onPress={pickImage} />
-          </View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
     </View>

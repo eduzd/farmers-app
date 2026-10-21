@@ -21,6 +21,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 type RouteProps = RouteProp<RootStackParamList, "GroupDetail">;
 
@@ -377,7 +378,7 @@ export default function GroupDetailScreen() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={[
                 styles.modalScrollContent,
-                { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.xl },
+                { paddingBottom: Spacing.xl },
               ]}
             >
               <TextInput
@@ -421,6 +422,7 @@ export default function GroupDetailScreen() {
                 </ThemedText>
               </Pressable>
             </ScrollView>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

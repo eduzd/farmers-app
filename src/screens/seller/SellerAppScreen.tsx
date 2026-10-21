@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import {
   View,
   Text,
@@ -475,7 +476,8 @@ function ProductForm({ L, product, onClose, onSaved }: { L: any; product: Produc
   };
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <View style={st.modalBack}>
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <View style={st.modalBack}>
         <View style={st.modal}>
           <H right={<Pressable onPress={onClose} hitSlop={10}><Feather name="x" size={20} color={S.muted} /></Pressable>}>{product ? L("Edit product", "পণ্য সম্পাদনা") : L("New product", "নতুন পণ্য")}</H>
           <ScrollView style={{ maxHeight: 520 }} keyboardShouldPersistTaps="handled">
@@ -517,7 +519,8 @@ function ProductForm({ L, product, onClose, onSaved }: { L: any; product: Produc
             <Btn testID="save-product" icon="check" label={busy ? L("Saving…", "সংরক্ষণ হচ্ছে…") : L("Save", "সংরক্ষণ")} onPress={save} disabled={busy || !f.name.trim() || !(Number(f.price) > 0)} />
           </View>
         </View>
-      </View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -748,7 +751,7 @@ const st = StyleSheet.create({
   toast: { position: "absolute", bottom: 16, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: S.sidebar, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
   toastText: { color: "#fff", fontSize: 13, fontWeight: "500" },
   modalBack: { flex: 1, backgroundColor: "rgba(15,23,42,0.45)", alignItems: "center", justifyContent: "center", padding: 16 },
-  modal: { width: "100%", maxWidth: 560, backgroundColor: S.surface, borderRadius: 12, padding: 18 },
+  modal: { width: "100%", maxWidth: 560, maxHeight: "100%", backgroundColor: S.surface, borderRadius: 12, padding: 18 },
   swatch: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   swatchOn: { borderWidth: 3, borderColor: "#CBD5E1" },
   preview: { backgroundColor: S.surface, borderRadius: 12, borderWidth: 1, borderColor: S.border, overflow: "hidden" },

@@ -21,6 +21,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 interface Transaction {
   id: string;
   type: "credit" | "debit";
@@ -204,7 +205,7 @@ export default function WalletScreen() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.modalScrollContent,
-              { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.xl },
+              { paddingBottom: Spacing.xl },
             ]}
           >
             <ThemedText style={[styles.inputLabel, { color: theme.text }]}>
@@ -315,6 +316,7 @@ export default function WalletScreen() {
               </ThemedText>
             </Pressable>
           </ScrollView>
+          <ModalBottomInset />
         </View>
       </View>
     </Modal>

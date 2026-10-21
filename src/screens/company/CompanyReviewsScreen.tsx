@@ -21,6 +21,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { useCompanyStore } from "@/lib/companyStore";
 import { CompanyReview } from "@/lib/storage";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -373,6 +374,7 @@ export default function CompanyReviewsScreen() {
               <Feather name="send" size={18} color="#FFFFFF" />
               <ThemedText style={styles.sendReplyText}>পাঠান</ThemedText>
             </Pressable>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

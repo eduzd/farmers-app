@@ -31,6 +31,7 @@ import { useI18n } from "@/lib/i18n";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { useHeaderAddButton } from "@/components/HeaderAddButton";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 interface PollOption {
   id: string;
   text: string;
@@ -366,7 +367,7 @@ export default function PollsScreen() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={[
                 styles.modalScrollContent,
-                { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.xl },
+                { paddingBottom: Spacing.xl },
               ]}
             >
               <ThemedText style={[styles.inputLabel, { color: theme.text }]}>
@@ -439,6 +440,7 @@ export default function PollsScreen() {
                 </ThemedText>
               </Pressable>
             </ScrollView>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

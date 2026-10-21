@@ -5,6 +5,7 @@ import {
   Pressable,
   Modal,
   FlatList,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -515,7 +516,7 @@ export function AvatarPicker({ selectedAvatar, onSelectAvatar }: AvatarPickerPro
         onRequestClose={() => setIsVisible(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }, Platform.OS === "android" && { paddingTop: insets.top + Spacing.md }]}>
             <View style={styles.modalTitleRow}>
               <ThemedText style={[styles.modalTitle, { color: theme.text }]}>
                 Choose Your Avatar

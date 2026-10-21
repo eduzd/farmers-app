@@ -67,7 +67,7 @@ export function StickyActionBar({ actions }: StickyActionBarProps) {
     <View
       style={[
         styles.container,
-        { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom || Spacing.md },
+        { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: insets.bottom ? insets.bottom + Spacing.sm : Spacing.md },
       ]}
     >
       {actions.map((action, index) => {

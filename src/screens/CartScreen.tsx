@@ -140,7 +140,7 @@ export default function CartScreen() {
               styles.footer,
               {
                 backgroundColor: theme.white,
-                paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.lg,
+                paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.sm : Spacing.lg,
                 borderTopColor: theme.inputBorder,
               },
             ]}

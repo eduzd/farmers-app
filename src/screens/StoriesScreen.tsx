@@ -20,6 +20,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 const { width, height } = Dimensions.get("window");
 
@@ -371,6 +372,7 @@ export default function StoriesScreen() {
               <Feather name="send" size={20} color="#fff" />
               <ThemedText style={styles.shareButtonText}>শেয়ার করুন</ThemedText>
             </Pressable>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

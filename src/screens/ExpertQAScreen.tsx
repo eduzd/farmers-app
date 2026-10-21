@@ -30,6 +30,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 import { useHeaderAddButton } from "@/components/HeaderAddButton";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface Expert {
@@ -458,7 +459,7 @@ export default function ExpertQAScreen() {
               showsVerticalScrollIndicator={false}
               contentContainerStyle={[
                 styles.modalScrollContent,
-                { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.xl },
+                { paddingBottom: Spacing.xl },
               ]}
             >
               <ThemedText style={[styles.inputLabel, { color: theme.text }]}>
@@ -530,6 +531,7 @@ export default function ExpertQAScreen() {
                 </ThemedText>
               </Pressable>
             </ScrollView>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

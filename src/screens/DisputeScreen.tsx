@@ -22,6 +22,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { useDisputeStore, DISPUTE_REASONS, Dispute, DisputeReason } from "@/lib/disputeStore";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 const getStatusConfig = (status: Dispute["status"]) => {
   const configs: Record<string, { color: string; labelBn: string; labelEn: string; icon: string }> = {
@@ -301,6 +302,7 @@ export default function DisputeScreen() {
                 </ThemedText>
               </Pressable>
             </View>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

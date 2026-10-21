@@ -25,6 +25,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { useI18n } from "@/lib/i18n";
 
 import { tr, useTr } from "@/lib/tr";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 interface RfqRequest {
   id: string;
   buyer: {
@@ -377,6 +378,7 @@ export default function RfqScreen() {
                 </ThemedText>
               </Pressable>
             </KeyboardAwareScrollViewCompat>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

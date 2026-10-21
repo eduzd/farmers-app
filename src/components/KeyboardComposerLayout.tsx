@@ -8,7 +8,8 @@ import {
   ListRenderItem,
 } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated from "react-native-reanimated";
+import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
@@ -41,8 +42,8 @@ export default function KeyboardComposerLayout<T>({
   rightButton,
   headerComponent,
 }: KeyboardComposerLayoutProps<T>) {
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const composerPadding = useKeyboardAwareBottomPadding(Spacing.sm);
   const listRef = useRef<FlatList>(null);
 
   const [composerHeight, setComposerHeight] = useState(44);
@@ -82,7 +83,7 @@ export default function KeyboardComposerLayout<T>({
         showsVerticalScrollIndicator={false}
       />
 
-      <View style={[styles.composerWrap, { paddingBottom: insets.bottom > 0 ? insets.bottom : 8, backgroundColor: theme.white, borderTopColor: theme.inputBorder }]}>
+      <Animated.View style={[styles.composerWrap, { backgroundColor: theme.white, borderTopColor: theme.inputBorder }, composerPadding]}>
         <View style={styles.composerRow}>
           {leftButton}
           <View style={[styles.composer, { backgroundColor: theme.backgroundRoot, borderColor: theme.inputBorder }]}>
@@ -104,7 +105,7 @@ export default function KeyboardComposerLayout<T>({
           </View>
           {rightButton}
         </View>
-      </View>
+      </Animated.View>
     </KeyboardAvoidingView>
   );
 }

@@ -20,6 +20,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 const { width } = Dimensions.get("window");
 
@@ -545,6 +546,7 @@ export default function LivestockTrackerScreen() {
                 </>
               )}
             </ScrollView>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>
@@ -652,6 +654,7 @@ export default function LivestockTrackerScreen() {
               <Feather name="check" size={20} color="#FFF" />
               <ThemedText style={styles.saveButtonText}>সংরক্ষণ করুন</ThemedText>
             </Pressable>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>
@@ -753,6 +756,7 @@ export default function LivestockTrackerScreen() {
               <Feather name="check" size={20} color="#FFF" />
               <ThemedText style={styles.saveButtonText}>সংরক্ষণ করুন</ThemedText>
             </Pressable>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

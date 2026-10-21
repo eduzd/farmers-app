@@ -8,6 +8,7 @@ import { tr } from "@/lib/tr";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 export interface FormField {
   key: string;
@@ -162,6 +163,7 @@ export function CatalogFormModal({ visible, title, fields, initial, submitLabel,
               </Pressable>
             ) : null}
           </ScrollView>
+          <ModalBottomInset />
         </View>
       </View>
     </Modal>

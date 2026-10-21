@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { View, StyleSheet, FlatList, Pressable, RefreshControl, Modal, TextInput, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -170,7 +171,8 @@ export default function FarmDiaryScreen() {
       />
 
       <Modal visible={modalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+          <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <View style={styles.modalHeader}>
               <ThemedText style={[styles.modalTitle, { color: theme.text }]}>{tr("নতুন এন্ট্রি")}</ThemedText>
@@ -223,7 +225,8 @@ export default function FarmDiaryScreen() {
               <ThemedText style={styles.saveButtonText}>{tr("সংরক্ষণ করুন")}</ThemedText>
             </Pressable>
           </View>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

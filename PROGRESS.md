@@ -126,3 +126,15 @@ Started 2026-10-20. Small steps, logged as they land.
       quietly skips when missing), syncPushTokenAfterSignIn after every sign-in and app start, removes token on logout. Guests skip.
 - [x] scripts/push_tokens_test.py (fake Expo server on 5599): 26/26.
 - [ ] Needs user: Expo account + `eas init` projectId, Android app com.farmers.app in Firebase (google-services.json), FCM V1 key uploaded to Expo.
+
+## Expo link (2026-10-21)
+- [x] Expo account username is dinaparp (login dirapir3@gmail.com). Created project @dinaparp/farmers, ID 506448c5-81c8-45ae-b73a-2f85302df243.
+- [x] app.json: expo.owner=dinaparp, extra.eas.projectId set.
+
+## Bottom bar / keyboard / nav bar colour (APK v1.0.0-bottombar1)
+- New hook src/hooks/useKeyboardAwareBottomPadding.ts: bottom padding = nav-bar inset + extra when keyboard closed, extra only when open (optional follow = translate with keyboard). Uses keyboard-controller values (not Reanimated useAnimatedKeyboard).
+- Chat composer was paddingBottom insets-8, so it sat 8dp inside the 48dp 3-button bar. Fixed via hook; same for PostDetail comments, AI assistant, Community new-post toolbar, KeyboardComposerLayout, BottomActionBar. ProductDetail footer (qty input) follows the keyboard.
+- ModalBottomInset grows to keyboard height (Android modals use ADJUST_NOTHING), avoidKeyboard={false} where a KAV already wraps (Settings edit modal).
+- FarmDiary, Inventory, SellerApp product modals wrapped in keyboard-controller KAV; Welfare and Fish Summit forms switched to keyboard-controller KAV padding.
+- Cart footer and calculator StickyActionBar get +8dp above the nav bar.
+- app.json androidNavigationBar.enforceContrast=false (no grey scrim) + expo-navigation-bar; App.tsx sets button style by in-app theme.

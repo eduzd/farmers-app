@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import {
   View,
   StyleSheet,
@@ -7,7 +8,6 @@ import {
   Pressable,
   Alert,
   Platform,
-  KeyboardAvoidingView,
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -749,7 +749,7 @@ export default function WelfareAssociationScreen() {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior="padding"
       keyboardVerticalOffset={0}
     >
       {step === "info" && renderInfoStep()}

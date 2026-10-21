@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import {
   View,
   StyleSheet,
@@ -333,7 +334,8 @@ export default function InventoryScreen() {
       />
 
       <Modal visible={modalVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+          <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
             <View style={styles.modalHeader}>
               <ThemedText style={[styles.modalTitle, { color: theme.text }]}>স্টক আপডেট</ThemedText>
@@ -385,7 +387,8 @@ export default function InventoryScreen() {
               </>
             ) : null}
           </View>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

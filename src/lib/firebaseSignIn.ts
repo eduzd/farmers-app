@@ -165,6 +165,26 @@ const MESSAGES: Record<string, { en: string; bn: string }> = {
     en: "This sign-in method is turned off.",
     bn: "এই সাইন ইন পদ্ধতি বন্ধ আছে।",
   },
+  "app/play-services": {
+    en: "Google Play services is missing or out of date on this phone. Update it, or use email.",
+    bn: "এই ফোনে Google Play services নেই বা পুরোনো। আপডেট করুন, অথবা ইমেইল ব্যবহার করুন।",
+  },
+  "app/google-config": {
+    en: "Google sign-in isn't set up for this version of the app yet. Please use email for now.",
+    bn: "অ্যাপের এই সংস্করণে Google সাইন ইন এখনও সেট আপ হয়নি। আপাতত ইমেইল ব্যবহার করুন।",
+  },
+  "app/google-no-token": {
+    en: "Google sign-in didn't finish. Please try again.",
+    bn: "Google সাইন ইন শেষ হয়নি। আবার চেষ্টা করুন।",
+  },
+  "app/google-failed": {
+    en: "Google sign-in failed. Please try again or use email.",
+    bn: "Google সাইন ইন হয়নি। আবার চেষ্টা করুন অথবা ইমেইল ব্যবহার করুন।",
+  },
+  "auth/account-exists-with-different-credential": {
+    en: "This email already has an account with a password. Sign in with email and password.",
+    bn: "এই ইমেইলে পাসওয়ার্ড দিয়ে অ্যাকাউন্ট আছে। ইমেইল ও পাসওয়ার্ড দিয়ে সাইন ইন করুন।",
+  },
   "app/google-unavailable": {
     en: "Google sign-in is coming to the phone app soon. Please use email for now.",
     bn: "ফোন অ্যাপে Google সাইন ইন শীঘ্রই আসছে। আপাতত ইমেইল ব্যবহার করুন।",

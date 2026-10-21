@@ -516,7 +516,7 @@ export default function CompanyProfileScreen() {
         onRequestClose={() => setShowPolicyModal(false)}
       >
         <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-          <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }, Platform.OS === "android" && { paddingTop: insets.top + Spacing.md }]}>
             <Pressable onPress={() => setShowPolicyModal(false)}>
               <Feather name="x" size={24} color={theme.text} />
             </Pressable>
@@ -584,7 +584,7 @@ export default function CompanyProfileScreen() {
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
           <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }, Platform.OS === "android" && { paddingTop: insets.top + Spacing.md }]}>
               <Pressable onPress={() => setShowEditModal(false)}>
                 <Feather name="x" size={24} color={theme.text} />
               </Pressable>

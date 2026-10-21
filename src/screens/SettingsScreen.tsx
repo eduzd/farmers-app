@@ -28,6 +28,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n, Language } from "@/lib/i18n";
 import { useThemeStore, ThemePreference } from "@/lib/themeStore";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -403,6 +404,7 @@ export default function SettingsScreen() {
                 ) : null}
               </Pressable>
             ))}
+            <ModalBottomInset />
           </View>
         </Pressable>
       </Modal>
@@ -436,6 +438,7 @@ export default function SettingsScreen() {
                 ) : null}
               </Pressable>
             ))}
+            <ModalBottomInset />
           </View>
         </Pressable>
       </Modal>
@@ -472,6 +475,7 @@ export default function SettingsScreen() {
                 ) : null}
               </Pressable>
             ))}
+            <ModalBottomInset />
           </View>
         </Pressable>
       </Modal>
@@ -672,6 +676,7 @@ export default function SettingsScreen() {
                 </ThemedText>
               </Pressable>
             </View>
+            <ModalBottomInset avoidKeyboard={false} />
           </View>
         </View>
       </KeyboardAvoidingView>

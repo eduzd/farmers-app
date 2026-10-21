@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 interface VendorOrder {
   id: string;
@@ -447,6 +448,7 @@ export default function CompanyOrdersScreen() {
                 }}
               />
             ) : null}
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

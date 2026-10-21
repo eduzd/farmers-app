@@ -21,6 +21,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -567,6 +568,7 @@ export default function GroupsScreen() {
                 </ThemedText>
               </Pressable>
             </ScrollView>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

@@ -18,6 +18,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 interface VoiceRoom {
   id: string;
@@ -433,6 +434,7 @@ export default function VoiceRoomsScreen() {
               <Feather name="radio" size={20} color="#fff" />
               <ThemedText style={styles.startRoomText}>রুম শুরু করুন</ThemedText>
             </Pressable>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

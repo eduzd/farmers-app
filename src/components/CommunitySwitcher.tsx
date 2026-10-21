@@ -12,6 +12,7 @@ import { useCommunityStore, Community } from "@/lib/communityStore";
 import { useI18n } from "@/lib/i18n";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { ThemedText } from "@/components/ThemedText";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 interface CommunitySwitcherProps {
   compact?: boolean;
@@ -131,6 +132,7 @@ export const CommunitySwitcher = forwardRef<CommunitySwitcherRef, CommunitySwitc
                 );
               }}
             />
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

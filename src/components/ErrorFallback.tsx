@@ -13,6 +13,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Fonts } from "@/constants/theme";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -135,6 +136,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                   </Text>
                 </View>
               </ScrollView>
+              <ModalBottomInset />
             </ThemedView>
           </View>
         </Modal>

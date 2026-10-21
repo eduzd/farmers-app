@@ -18,7 +18,7 @@
         "backgroundColor": "#389466",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
-      "edgeToEdgeEnabled": false,
+      "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.farmers.app",
       "softwareKeyboardLayoutMode": "resize",
@@ -51,7 +51,13 @@
           "useSQLCipher": true
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-navigation-bar",
+        {
+          "barStyle": "dark"
+        }
+      ]
     ],
     "experiments": {
       "reactCompiler": true
@@ -60,6 +66,9 @@
       "eas": {
         "projectId": "506448c5-81c8-45ae-b73a-2f85302df243"
       }
+    },
+    "androidNavigationBar": {
+      "enforceContrast": false
     }
   }
 }

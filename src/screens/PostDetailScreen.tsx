@@ -7,9 +7,10 @@ import {
   Pressable,
   Platform,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
+import Animated from "react-native-reanimated";
+import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
@@ -131,7 +132,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function PostDetailScreen() {
   const tr = useTr();
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
+  // Just above the navigation bar; right on top of the keyboard when it is open.
+  const composerPadding = useKeyboardAwareBottomPadding(Spacing.sm, { min: Spacing.md });
   const { theme } = useTheme();
   const route = useRoute<PostDetailRouteProp>();
   const navigation = useNavigation<NavigationProp>();
@@ -559,11 +561,7 @@ export default function PostDetailScreen() {
   );
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      behavior="padding"
-      keyboardVerticalOffset={headerHeight}
-    >
+    <KeyboardAvoidingScreen style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <FlatList
         ref={flatListRef}
         data={comments}
@@ -579,14 +577,14 @@ export default function PostDetailScreen() {
         keyboardShouldPersistTaps="handled"
       />
 
-      <View
+      <Animated.View
         style={[
           styles.inputWrapper,
           {
             backgroundColor: theme.white,
-            paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md,
             borderTopColor: theme.inputBorder,
           },
+          composerPadding,
         ]}
       >
         {replyingTo ? (
@@ -628,8 +626,8 @@ export default function PostDetailScreen() {
             <Feather name="send" size={18} color={newComment.trim() ? theme.white : theme.textSecondary} />
           </Pressable>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </Animated.View>
+    </KeyboardAvoidingScreen>
   );
 }
 

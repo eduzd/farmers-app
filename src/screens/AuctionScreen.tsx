@@ -30,6 +30,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 interface AuctionItem {
   id: string;
   name: string;
@@ -373,7 +374,7 @@ export default function AuctionScreen() {
             </View>
 
             {selectedAuction ? (
-              <View style={[styles.modalBody, { paddingBottom: insets.bottom || Spacing.xl }]}>
+              <View style={[styles.modalBody, { paddingBottom: Spacing.xl }]}>
                 <ThemedText style={[styles.auctionNameModal, { color: theme.text }]}>
                   {selectedAuction.name}
                 </ThemedText>
@@ -433,6 +434,7 @@ export default function AuctionScreen() {
                 </Pressable>
               </View>
             ) : null}
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

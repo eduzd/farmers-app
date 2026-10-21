@@ -14,6 +14,8 @@ import {
   TextInput,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Reanimated from "react-native-reanimated";
+import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
@@ -50,6 +52,9 @@ const SAMPLE_IMAGES = [
 export default function ProductDetailScreen() {
   const tr = useTr();
   const insets = useSafeAreaInsets();
+  // Footer (quantity box + buttons): above the navigation bar, and it rides on
+  // top of the keyboard while the quantity is being typed.
+  const footerKeyboard = useKeyboardAwareBottomPadding(12, { follow: true, min: 20 });
   const { theme, isDark } = useTheme();
   const route = useRoute<ProductDetailRouteProp>();
   const navigation = useNavigation<NavigationProp>();
@@ -630,14 +635,14 @@ export default function ProductDetailScreen() {
         ) : null}
       </ScrollView>
 
-      <View
+      <Reanimated.View
         style={[
           styles.footer,
           {
             backgroundColor: theme.white,
-            paddingBottom: insets.bottom > 0 ? insets.bottom + 12 : 20,
             borderTopColor: theme.inputBorder,
           },
+          footerKeyboard,
         ]}
       >
         <View style={styles.footerContent}>
@@ -688,7 +693,7 @@ export default function ProductDetailScreen() {
             </Pressable>
           </View>
         </View>
-      </View>
+      </Reanimated.View>
 
       {cartCount > 0 ? (
         <Pressable

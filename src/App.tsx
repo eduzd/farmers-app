@@ -8,6 +8,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
+import * as NavigationBar from "expo-navigation-bar";
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -84,6 +85,18 @@ export default function App() {
     // restore the saved Bangla/English choice (was never loaded on start)
     useI18n.getState().loadLanguage();
   }, []);
+
+  // The Android navigation bar is transparent (edge to edge, no grey contrast
+  // scrim), so the app's own background shows through it. Keep its buttons
+  // readable: dark buttons on the light theme, light buttons on the dark one.
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    try {
+      NavigationBar.setStyle(isDark ? "light" : "dark");
+    } catch {
+      // older native build without the module: keep the system default
+    }
+  }, [isDark]);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {

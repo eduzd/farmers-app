@@ -290,7 +290,7 @@ export default function AddressManagementScreen() {
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
           <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }, Platform.OS === "android" && { paddingTop: insets.top + Spacing.md }]}>
               <Pressable onPress={() => setShowAddModal(false)}>
                 <ThemedText style={[styles.cancelButton, { color: theme.textSecondary }]}>
                   {tr("বাতিল")}

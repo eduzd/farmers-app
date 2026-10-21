@@ -9,9 +9,10 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
+import Animated from "react-native-reanimated";
+import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { HeaderButton } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
@@ -53,7 +54,8 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AIAssistantScreen() {
   const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
+  // Just above the navigation bar; right on top of the keyboard when it is open.
+  const composerPadding = useKeyboardAwareBottomPadding(Spacing.sm, { min: Spacing.md });
   const navigation = useNavigation<NavigationProp>();
   const { theme } = useTheme();
   const flatListRef = useRef<FlatList>(null);
@@ -292,11 +294,7 @@ export default function AIAssistantScreen() {
   );
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0}
-    >
+    <KeyboardAvoidingScreen style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       {aiNotice ? (
         <View style={[styles.noticeBar, { backgroundColor: theme.accentSoft, borderColor: theme.accent }]}>
           <Feather name="info" size={16} color={theme.text} style={{ marginTop: 2 }} />
@@ -332,14 +330,14 @@ export default function AIAssistantScreen() {
         </View>
       ) : null}
 
-      <View
+      <Animated.View
         style={[
           styles.inputContainer,
           {
             backgroundColor: theme.backgroundRoot,
             borderTopColor: theme.divider,
-            paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md,
           },
+          composerPadding,
         ]}
       >
         <TextInput
@@ -377,8 +375,8 @@ export default function AIAssistantScreen() {
         >
           <Feather name="send" size={20} color="#FFFFFF" />
         </Pressable>
-      </View>
-    </KeyboardAvoidingView>
+      </Animated.View>
+    </KeyboardAvoidingScreen>
   );
 }
 

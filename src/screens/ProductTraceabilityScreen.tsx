@@ -19,6 +19,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 const { width } = Dimensions.get("window");
 
@@ -471,6 +472,7 @@ export default function ProductTraceabilityScreen() {
                 </>
               )}
             </ScrollView>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>
@@ -569,6 +571,7 @@ export default function ProductTraceabilityScreen() {
               <Feather name="check" size={20} color="#FFF" />
               <ThemedText style={styles.saveButtonText}>পণ্য তৈরি করুন</ThemedText>
             </Pressable>
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

@@ -8,6 +8,7 @@ import {
   Modal,
   Alert,
   Dimensions,
+  Platform,
 } from "react-native";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -305,7 +306,7 @@ export default function FarmNotesScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={[styles.modalContainer, { backgroundColor: selectedColor }]}>
-            <View style={styles.modalHeader}>
+            <View style={[styles.modalHeader, Platform.OS === "android" && { paddingTop: insets.top + Spacing.md }]}>
               <Pressable
                 style={styles.modalButton}
                 onPress={() => setIsModalVisible(false)}

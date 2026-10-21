@@ -1,13 +1,9 @@
 import React, { ReactNode } from "react";
-import { View, StyleSheet, ViewStyle, Platform } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, {
-  useAnimatedKeyboard,
-  useAnimatedStyle,
-  withTiming,
-} from "react-native-reanimated";
+import { StyleSheet, ViewStyle } from "react-native";
+import Animated from "react-native-reanimated";
 
 import { useTheme } from "@/hooks/useTheme";
+import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { Spacing } from "@/constants/theme";
 
 interface BottomActionBarProps {
@@ -16,34 +12,19 @@ interface BottomActionBarProps {
   showBorder?: boolean;
 }
 
+/**
+ * Action bar pinned to the bottom of a screen. Sits just above the phone's
+ * navigation bar, and rides on top of the keyboard while it is open.
+ * Uses the keyboard-controller values (the app's KeyboardProvider) rather than
+ * Reanimated's own keyboard listener, which conflicts with it on Android.
+ */
 export function BottomActionBar({
   children,
   style,
   showBorder = true,
 }: BottomActionBarProps) {
-  const insets = useSafeAreaInsets();
   const { theme } = useTheme();
-  const keyboard = useAnimatedKeyboard();
-
-  const animatedStyle = useAnimatedStyle(() => {
-    if (Platform.OS === "web") {
-      return {
-        paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.md,
-      };
-    }
-    
-    return {
-      paddingBottom:
-        keyboard.height.value > 0
-          ? withTiming(Spacing.md, { duration: 150 })
-          : withTiming(insets.bottom > 0 ? insets.bottom : Spacing.md, { duration: 150 }),
-      transform: [
-        {
-          translateY: withTiming(-keyboard.height.value, { duration: 150 }),
-        },
-      ],
-    };
-  });
+  const animatedStyle = useKeyboardAwareBottomPadding(Spacing.md, { follow: true });
 
   return (
     <Animated.View

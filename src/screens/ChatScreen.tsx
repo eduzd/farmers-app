@@ -12,7 +12,9 @@ import {
   TextInputContentSizeChangeEventData,
   ActionSheetIOS,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
+import Animated from "react-native-reanimated";
+import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -877,14 +879,16 @@ export default function ChatScreen() {
     setInputHeight(newHeight);
   };
 
-  const bottomSafeArea = Math.max(insets.bottom - 8, 4);
+  // Keyboard closed: sit just above the phone's navigation bar. Keyboard open:
+  // sit right on top of the keyboard (KeyboardAvoidingScreen lifts the bar).
+  const composerPadding = useKeyboardAwareBottomPadding(Spacing.sm);
 
   const handleGoBack = () => {
     navigation.goBack();
   };
 
   return (
-    <KeyboardAvoidingView style={[styles.container, { backgroundColor: theme.backgroundRoot }]} behavior="padding" keyboardVerticalOffset={0}>
+    <KeyboardAvoidingScreen style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <View style={[styles.customHeader, { backgroundColor: theme.backgroundRoot, paddingTop: insets.top }]}>
         <Pressable style={styles.backButton} onPress={handleGoBack}>
           <Feather name="arrow-left" size={24} color={theme.text} />
@@ -932,7 +936,7 @@ export default function ChatScreen() {
         keyboardShouldPersistTaps="handled"
       />
 
-      <View style={[styles.bottomBar, { backgroundColor: theme.white, paddingBottom: bottomSafeArea }]}>
+      <Animated.View style={[styles.bottomBar, { backgroundColor: theme.white }, composerPadding]}>
         {replyingTo ? (
           <View style={[styles.replyBar, { backgroundColor: theme.surface, borderTopColor: theme.divider }]}>
             <View style={styles.replyBarContent}>
@@ -1015,7 +1019,7 @@ export default function ChatScreen() {
           </>
         )}
         </View>
-      </View>
+      </Animated.View>
 
       <Modal visible={showOptionsMenu} transparent animationType="fade" onRequestClose={() => setShowOptionsMenu(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowOptionsMenu(false)}>
@@ -1127,7 +1131,7 @@ export default function ChatScreen() {
           </View>
         </Pressable>
       </Modal>
-    </KeyboardAvoidingView>
+    </KeyboardAvoidingScreen>
   );
 }
 

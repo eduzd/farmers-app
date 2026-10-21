@@ -24,6 +24,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 interface BulkProduct {
   id: string;
   name: string;
@@ -329,7 +330,7 @@ export default function BulkOrderScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={[
                   styles.modalScrollContent,
-                  { paddingBottom: insets.bottom > 0 ? insets.bottom : Spacing.xl },
+                  { paddingBottom: Spacing.xl },
                 ]}
               >
                 <ThemedText style={[styles.productNameModal, { color: theme.text }]}>
@@ -459,6 +460,7 @@ export default function BulkOrderScreen() {
                 </Pressable>
               </ScrollView>
             ) : null}
+            <ModalBottomInset />
           </View>
         </View>
       </Modal>

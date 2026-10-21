@@ -541,7 +541,7 @@ export default function CompanyProductsScreen() {
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
           <View style={[styles.modalContainer, { backgroundColor: theme.backgroundRoot }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.cardBorder }, Platform.OS === "android" && { paddingTop: insets.top + Spacing.md }]}>
               <Pressable onPress={() => setShowAddModal(false)}>
                 <Feather name="x" size={24} color={theme.text} />
               </Pressable>
