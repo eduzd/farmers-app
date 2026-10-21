@@ -29,6 +29,17 @@ function isExpoGo(): boolean {
   return Constants.appOwnership === 'expo' || Constants.executionEnvironment === 'storeClient';
 }
 
+/** EAS project id from app.json (extra.eas.projectId) or the EAS build config. */
+export function getEasProjectId(): string | null {
+  const id = (Constants.expoConfig as any)?.extra?.eas?.projectId || (Constants as any)?.easConfig?.projectId;
+  return typeof id === 'string' && id.trim() ? id.trim() : null;
+}
+
+/**
+ * Ask for permission and get this phone's Expo push token.
+ * Returns null (quietly) on web, simulators, Expo Go on Android, when permission
+ * is refused, or when the app has no EAS project id yet.
+ */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   if (Platform.OS === 'web') {
     return null;
@@ -43,6 +54,17 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   }
 
   try {
+    // Android 13+ only shows the permission prompt once a channel exists.
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'Farmers App',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#2E7D32',
+        sound: 'default',
+      });
+    }
+
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 
@@ -55,8 +77,9 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       return null;
     }
 
-    const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+    const projectId = getEasProjectId();
     if (!projectId) {
+      console.log('Push notifications: no EAS projectId in app.json yet, skipping push token.');
       return null;
     }
 
@@ -65,17 +88,9 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
     await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
 
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#2E7D32',
-      });
-    }
-
     return token;
-  } catch {
+  } catch (error) {
+    console.log('Push notifications: could not get a push token', error);
     return null;
   }
 }
@@ -88,21 +103,48 @@ export async function getStoredPushToken(): Promise<string | null> {
   }
 }
 
-export async function savePushTokenToServer(userId: string, token: string): Promise<boolean> {
+/** Save this phone's push token for the signed-in user. The server takes the user from authToken. */
+export async function savePushTokenToServer(token: string, authToken: string): Promise<boolean> {
   try {
-    const response = await fetch(`${getApiUrl()}/api/push-tokens`, {
+    const response = await fetch(`${getApiUrl()}/api/me/push-tokens`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify({ userId, token }),
+      body: JSON.stringify({ token, platform: Platform.OS }),
     });
 
     return response.ok;
   } catch (error) {
-    console.error('Failed to save push token to server:', error);
+    console.log('Failed to save push token to server:', error);
     return false;
   }
+}
+
+/** After sign-in (or app start with a saved session): get the token and send it to the server. Never throws. */
+export async function syncPushTokenAfterSignIn(authToken: string | null | undefined): Promise<void> {
+  if (!authToken) return;
+  try {
+    const pushToken = await registerForPushNotificationsAsync();
+    if (pushToken) await savePushTokenToServer(pushToken, authToken);
+  } catch {}
+}
+
+/** On logout: stop pushes for this phone. Never throws. */
+export async function removePushTokenFromServer(authToken: string | null | undefined): Promise<void> {
+  try {
+    const pushToken = await getStoredPushToken();
+    if (!pushToken || !authToken) return;
+    await fetch(`${getApiUrl()}/api/me/push-tokens`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ token: pushToken }),
+    });
+  } catch {}
 }
 
 export async function sendLocalNotification(title: string, body: string, data?: any): Promise<void> {
@@ -127,38 +169,6 @@ export function addNotificationResponseReceivedListener(
   callback: (response: Notifications.NotificationResponse) => void
 ): Notifications.Subscription {
   return Notifications.addNotificationResponseReceivedListener(callback);
-}
-
-export async function sendPushNotification(
-  expoPushToken: string,
-  title: string,
-  body: string,
-  data?: NotificationData
-): Promise<boolean> {
-  const message = {
-    to: expoPushToken,
-    sound: 'default',
-    title,
-    body,
-    data: data || {},
-  };
-
-  try {
-    const response = await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Accept-encoding': 'gzip, deflate',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(message),
-    });
-
-    return response.ok;
-  } catch (error) {
-    console.error('Failed to send push notification:', error);
-    return false;
-  }
 }
 
 export async function getBadgeCount(): Promise<number> {

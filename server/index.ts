@@ -1,5 +1,6 @@
 import { registerCatalogRoutes } from "./catalogRoutes";
 import { registerFeatureRoutes } from "./featureRoutes";
+import { registerPushRoutes } from "./push";
 import { registerCheckoutRoutes } from "./checkoutRoutes";
 import { registerPlatformRoutes, platformGuard } from "./platformRoutes";
 import { config } from "./config";
@@ -127,6 +128,7 @@ function setupErrorHandler(app: express.Application) {
   registerPlatformRoutes(app);
   registerCatalogRoutes(app);
   registerFeatureRoutes(app);
+  registerPushRoutes(app);
   registerCheckoutRoutes(app);
   app.use("/api/admin", adminRoutes);
   app.use("/api", communityRoutes);

@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User, saveUser, getUser, clearUser, setOnboardingComplete, isOnboardingComplete } from "./storage";
 import { getApiUrl } from "./query-client";
 import { useCommunityStore } from "./communityStore";
-import { registerForPushNotificationsAsync, savePushTokenToServer } from "./notificationService";
+import { syncPushTokenAfterSignIn, removePushTokenFromServer } from "./notificationService";
 import {
   FirebaseStep,
   firebaseCheckVerified,
@@ -176,11 +176,7 @@ async function exchangeFirebaseToken(
   // The app session is all we need from here; drop the Firebase one.
   firebaseSignOut();
 
-  registerForPushNotificationsAsync().then((pushToken) => {
-    if (pushToken && user.id) {
-      savePushTokenToServer(user.id, pushToken);
-    }
-  });
+  void syncPushTokenAfterSignIn(token);
 
   return { success: true };
 }
@@ -269,12 +265,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         onboardingComplete: true,
       });
 
-      // Register for push notifications
-      registerForPushNotificationsAsync().then((pushToken) => {
-        if (pushToken && user.id) {
-          savePushTokenToServer(user.id, pushToken);
-        }
-      });
+      // Register this phone for push notifications
+      void syncPushTokenAfterSignIn(token);
 
       return { success: true };
     } catch (error: any) {
@@ -482,6 +474,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isSuperAdmin: apiUser.isSuperAdmin || false,
       });
 
+      void syncPushTokenAfterSignIn(token);
       return { success: true };
     } catch (error: any) {
       console.error("Google login error:", error);
@@ -568,18 +561,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await saveUser(user);
     await setOnboardingComplete();
     set({ user, isAuthenticated: true, isSuperAdmin: false, onboardingComplete: true });
-
-    // Register for push notifications
-    registerForPushNotificationsAsync().then((pushToken) => {
-      if (pushToken && user.id) {
-        savePushTokenToServer(user.id, pushToken);
-      }
-    });
+    // Guests have no server account, so no push token is registered.
 
     return true;
   },
 
   logout: async () => {
+    await removePushTokenFromServer(get().token);
     await firebaseSignOut();
     await clearUser();
     await AsyncStorage.removeItem(TOKEN_KEY);
@@ -658,6 +646,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               summitMemberNumber: summitNumber,
               applications,
             });
+            void syncPushTokenAfterSignIn(token);
             return;
           }
         } catch (e) {
@@ -773,31 +762,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           await get().setSummitMember(true, memberNumber);
         }
 
-        // Send push notification to user
-        if (user?.id) {
-          const typeName = approvedApp.type === "welfare" 
-            ? "মাছ কল্যাণ সমিতি" 
-            : "আন্তর্জাতিক মাছ সম্মেলন";
-          
-          try {
-            await fetch(`${getApiUrl()}/api/send-notification`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userId: user.id,
-                title: "আবেদন অনুমোদিত! ✓",
-                body: `আপনার ${typeName} আবেদন অনুমোদিত হয়েছে। সদস্য নম্বর: ${memberNumber}`,
-                data: {
-                  type: "application_approved",
-                  applicationId,
-                  memberNumber,
-                },
-              }),
-            });
-          } catch (notifyError) {
-            console.log("Push notification could not be sent:", notifyError);
-          }
-        }
       }
 
       set({ applications: updatedApplications });

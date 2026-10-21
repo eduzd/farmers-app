@@ -115,3 +115,14 @@ Started 2026-10-20. Small steps, logged as they land.
 - [x] Checks: tsc clean; audit.py Market/Cart/Checkout/ProductDetail/Orders/OrderDetail at 5 sizes 0 flagged; flows2 + flows4 16/16 +
       api_features pass; scripts/shots5.py places a real order through the UI (KRISHI10, COD) with no page errors; stock went down.
 - Leftovers: admin account has a saved address and a few test orders from shots5; test listing deleted.
+
+## Push notifications, code side (2026-10-21)
+- [x] server/push.ts: push_tokens table; POST/DELETE/GET /api/me/push-tokens (sign-in required, user from token only,
+      userId for someone else -> 403, delete only own -> 404, Expo token format check, max 10 per user, masked list).
+      sendPush() via Expo push API (EXPO_ACCESS_TOKEN optional, PUSH_DISABLED=1, EXPO_PUSH_URL for tests), drops DeviceNotRegistered.
+- [x] notify() in featureRoutes.ts also sends a push, so new order (seller), order status (buyer), admin announcements, DMs etc. reach phones.
+- [x] Removed the old open endpoints: POST /api/push-tokens, GET /api/push-tokens/:userId, POST /api/send-notification (no auth!).
+- [x] Client: notificationService registers channel, asks permission, gets Expo token (projectId from extra.eas.projectId or easConfig;
+      quietly skips when missing), syncPushTokenAfterSignIn after every sign-in and app start, removes token on logout. Guests skip.
+- [x] scripts/push_tokens_test.py (fake Expo server on 5599): 26/26.
+- [ ] Needs user: Expo account + `eas init` projectId, Android app com.farmers.app in Firebase (google-services.json), FCM V1 key uploaded to Expo.

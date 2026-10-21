@@ -8,6 +8,7 @@ import { sql } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { config } from "./config";
 import { SEED_POLLS, SEED_QUESTIONS, SEED_RFQS } from "./communitySeed";
+import { sendPush } from "./push";
 
 /**
  * Pass 4 features (all stored in the same database as the rest of the app):
@@ -129,6 +130,8 @@ export async function notify(userId: string | null | undefined, type: string, ti
     const id = `n-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
     await db.execute(sql`INSERT INTO app_notifications (id, user_id, type, title, body, data)
       VALUES (${id}, ${userId}, ${type}, ${title.slice(0, 200)}, ${body.slice(0, 500)}, ${JSON.stringify(data)}::jsonb)`);
+    // Also send it to the user's phones (fire and forget).
+    void sendPush(userId, title, body, { ...data, type, notificationId: id });
   } catch (e: any) {
     console.error("[notify]", e?.message);
   }
