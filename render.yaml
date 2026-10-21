@@ -24,8 +24,6 @@ services:
         value: admin@farmers.app
       - key: BKASH_SANDBOX
         value: "true"
-      - key: GOOGLE_API_KEY
-        sync: false
 
 databases:
   - name: farmers-db
