@@ -16,6 +16,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Story {
   id: string;
   title: string;
@@ -32,83 +33,7 @@ interface Story {
   date: string;
 }
 
-const STORIES: Story[] = [
-  {
-    id: "1",
-    title: "জৈব চাষে বদলে গেল জীবন",
-    farmer: "আব্দুর রহিম",
-    location: "বগুড়া, রংপুর",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
-    coverImage: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=600",
-    category: "জৈব কৃষি",
-    summary: "রাসায়নিক সার ছেড়ে জৈব চাষে এসে বছরে আয় দ্বিগুণ করেছেন আব্দুর রহিম।",
-    achievement: "১০ বিঘা জমিতে সম্পূর্ণ জৈব চাষ",
-    earnings: "বার্ষিক আয় ৮ লক্ষ টাকা",
-    views: 12500,
-    likes: 890,
-    date: "১৫ জানুয়ারি ২০২৬",
-  },
-  {
-    id: "2",
-    title: "ড্রাগন ফলে কোটিপতি",
-    farmer: "সুফিয়া বেগম",
-    location: "নওগাঁ",
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
-    coverImage: "https://images.unsplash.com/photo-1527903789995-dc8ad2ad6de0?w=600",
-    category: "ফলচাষ",
-    summary: "মাত্র ২ বিঘা জমিতে ড্রাগন ফল চাষ করে কোটি টাকা আয় করছেন সুফিয়া বেগম।",
-    achievement: "বছরে ১৫০০ কেজি ফল উৎপাদন",
-    earnings: "বার্ষিক আয় ১২ লক্ষ টাকা",
-    views: 25000,
-    likes: 2100,
-    date: "১০ জানুয়ারি ২০২৬",
-  },
-  {
-    id: "3",
-    title: "বায়োফ্লক মাছ চাষে সাফল্য",
-    farmer: "মোহাম্মদ ইকবাল",
-    location: "ময়মনসিংহ",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
-    coverImage: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600",
-    category: "মৎস্য চাষ",
-    summary: "ছোট জায়গায় বায়োফ্লক প্রযুক্তিতে মাছ চাষ করে সফল হয়েছেন ইকবাল।",
-    achievement: "৩টি ট্যাংকে বছরে ৩ টন মাছ",
-    earnings: "বার্ষিক আয় ৫ লক্ষ টাকা",
-    views: 18000,
-    likes: 1500,
-    date: "৫ জানুয়ারি ২০২৬",
-  },
-  {
-    id: "4",
-    title: "মুরগির খামারে স্বাবলম্বী",
-    farmer: "রাজিয়া সুলতানা",
-    location: "গাজীপুর",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100",
-    coverImage: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=600",
-    category: "পোল্ট্রি",
-    summary: "৫০০ মুরগির খামার দিয়ে শুরু করে এখন ৫০০০ মুরগির খামারের মালিক রাজিয়া।",
-    achievement: "দৈনিক ৪০০০ ডিম উৎপাদন",
-    earnings: "মাসিক আয় ৭০,০০০ টাকা",
-    views: 9500,
-    likes: 720,
-    date: "১ জানুয়ারি ২০২৬",
-  },
-  {
-    id: "5",
-    title: "ভার্মিকম্পোস্টে লাখপতি",
-    farmer: "আনোয়ার হোসেন",
-    location: "কুমিল্লা",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100",
-    coverImage: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600",
-    category: "জৈব সার",
-    summary: "কেঁচো সার উৎপাদন করে বাজারে বিক্রি করছেন এবং অন্য কৃষকদের প্রশিক্ষণ দিচ্ছেন।",
-    achievement: "মাসে ৫ টন ভার্মিকম্পোস্ট উৎপাদন",
-    earnings: "মাসিক আয় ৪৫,০০০ টাকা",
-    views: 7200,
-    likes: 540,
-    date: "২৮ ডিসেম্বর ২০২৫",
-  },
-];
+const STORIES: Story[] = [];
 
 export default function SuccessStoriesScreen() {
   const insets = useSafeAreaInsets();
@@ -197,6 +122,7 @@ export default function SuccessStoriesScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <FlatList
         data={STORIES}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderStory}
         contentContainerStyle={[

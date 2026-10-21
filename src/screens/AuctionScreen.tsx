@@ -31,6 +31,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
+import { EmptyState } from "@/components/ui";
 interface AuctionItem {
   id: string;
   name: string;
@@ -180,7 +181,7 @@ export default function AuctionScreen() {
                 unit: "টি",
                 seller: item.seller,
                 location: "বাংলাদেশ",
-                rating: 4.7,
+                rating: 0,
                 image: item.image,
                 description: `নিলামে ${item.bidCount} বিড পড়েছে। শুরুর দাম: ৳${item.startingPrice}`,
                 quantity: 1,
@@ -273,6 +274,7 @@ export default function AuctionScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <FlatList
         data={auctions}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderAuction}
         contentContainerStyle={[

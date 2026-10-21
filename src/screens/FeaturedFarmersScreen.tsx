@@ -21,6 +21,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const { width } = Dimensions.get("window");
 
 interface FeaturedFarmer {
@@ -39,86 +40,9 @@ interface FeaturedFarmer {
   rating: number;
 }
 
-const FEATURED_FARMERS: FeaturedFarmer[] = [
-  {
-    id: "1",
-    name: "করিম সাহেব",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    coverImage: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800",
-    location: "ময়মনসিংহ",
-    specialty: "ধান ও সবজি চাষ",
-    story: "২০ বছর ধরে জৈব পদ্ধতিতে চাষ করছি। আমার খামার থেকে প্রতি মৌসুমে ৫০০+ কৃষক শিখছেন।",
-    followers: 12500,
-    posts: 234,
-    achievements: ["সেরা কৃষক ২০২৫", "জৈব চাষ বিশেষজ্ঞ", "কমিউনিটি লিডার"],
-    isFollowing: false,
-    featuredFor: "এ মাসের সেরা কৃষক",
-    rating: 4.9,
-  },
-  {
-    id: "2",
-    name: "ফাতেমা বেগম",
-    avatar: "https://randomuser.me/api/portraits/women/28.jpg",
-    coverImage: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=800",
-    location: "রাজশাহী",
-    specialty: "মাছ চাষ",
-    story: "নারী উদ্যোক্তা হিসেবে মাছ চাষে সফলতা অর্জন করেছি। এখন ৫০ জনকে কর্মসংস্থান দিয়েছি।",
-    followers: 8900,
-    posts: 156,
-    achievements: ["নারী উদ্যোক্তা", "মৎস্য বিশেষজ্ঞ"],
-    isFollowing: true,
-    featuredFor: "সফল নারী কৃষক",
-    rating: 4.8,
-  },
-  {
-    id: "3",
-    name: "রহিম উদ্দিন",
-    avatar: "https://randomuser.me/api/portraits/men/45.jpg",
-    coverImage: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=800",
-    location: "রংপুর",
-    specialty: "গবাদি পশু পালন",
-    story: "ছোট্ট একটি খামার থেকে শুরু, এখন ২০০+ গরু-ছাগলের মালিক। স্বপ্ন দেখতে শিখিয়েছে কৃষি।",
-    followers: 6700,
-    posts: 98,
-    achievements: ["সেরা পশু পালক", "উদ্যোক্তা পুরস্কার"],
-    isFollowing: false,
-    featuredFor: "সফল খামারি",
-    rating: 4.7,
-  },
-];
+const FEATURED_FARMERS: FeaturedFarmer[] = [];
 
-const RISING_STARS: FeaturedFarmer[] = [
-  {
-    id: "4",
-    name: "নাজমুল হাসান",
-    avatar: "https://randomuser.me/api/portraits/men/67.jpg",
-    coverImage: "",
-    location: "সিলেট",
-    specialty: "চা বাগান",
-    story: "",
-    followers: 2300,
-    posts: 45,
-    achievements: ["নতুন প্রতিভা"],
-    isFollowing: false,
-    featuredFor: "দ্রুত বাড়ছে",
-    rating: 4.5,
-  },
-  {
-    id: "5",
-    name: "সালমা আক্তার",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    coverImage: "",
-    location: "খুলনা",
-    specialty: "হাঁস-মুরগি",
-    story: "",
-    followers: 1800,
-    posts: 67,
-    achievements: ["সক্রিয় সদস্য"],
-    isFollowing: true,
-    featuredFor: "জনপ্রিয়তা বৃদ্ধি",
-    rating: 4.6,
-  },
-];
+const RISING_STARS: FeaturedFarmer[] = [];
 
 export default function FeaturedFarmersScreen() {
   const insets = useSafeAreaInsets();
@@ -245,6 +169,7 @@ export default function FeaturedFarmersScreen() {
         </Animated.View>
 
         <View style={styles.featuredSection}>
+          {farmers.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
           {farmers.map((farmer, index) => renderFeatured({ item: farmer, index }))}
         </View>
 
@@ -258,6 +183,7 @@ export default function FeaturedFarmersScreen() {
               দ্রুত জনপ্রিয়তা পাচ্ছেন
             </ThemedText>
           </View>
+          {RISING_STARS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
           {RISING_STARS.map((farmer, index) => renderRisingStar({ item: farmer, index }))}
         </View>
 

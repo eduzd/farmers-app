@@ -25,6 +25,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
+import { EmptyState } from "@/components/ui";
 interface BulkProduct {
   id: string;
   name: string;
@@ -37,72 +38,7 @@ interface BulkProduct {
   available: number;
 }
 
-const BULK_PRODUCTS: BulkProduct[] = [
-  {
-    id: "1",
-    name: "জৈব ভার্মিকম্পোস্ট",
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400",
-    basePrice: 12,
-    unit: "কেজি",
-    minQuantity: 100,
-    discounts: [
-      { quantity: 100, discount: 0 },
-      { quantity: 500, discount: 10 },
-      { quantity: 1000, discount: 15 },
-      { quantity: 5000, discount: 20 },
-    ],
-    seller: "গ্রিন ফার্ম সাপ্লাই",
-    available: 50000,
-  },
-  {
-    id: "2",
-    name: "হাইব্রিড ধান বীজ",
-    image: "https://images.unsplash.com/photo-1536617621572-1d5f1e6269a0?w=400",
-    basePrice: 85,
-    unit: "কেজি",
-    minQuantity: 50,
-    discounts: [
-      { quantity: 50, discount: 0 },
-      { quantity: 200, discount: 8 },
-      { quantity: 500, discount: 12 },
-      { quantity: 1000, discount: 18 },
-    ],
-    seller: "বীজ বাংলা",
-    available: 10000,
-  },
-  {
-    id: "3",
-    name: "মাছের ভাসমান খাবার",
-    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400",
-    basePrice: 75,
-    unit: "কেজি",
-    minQuantity: 100,
-    discounts: [
-      { quantity: 100, discount: 0 },
-      { quantity: 500, discount: 10 },
-      { quantity: 1000, discount: 15 },
-      { quantity: 2000, discount: 22 },
-    ],
-    seller: "ফিশ ফিড কর্পোরেশন",
-    available: 25000,
-  },
-  {
-    id: "4",
-    name: "মুরগির দানাদার খাদ্য",
-    image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400",
-    basePrice: 55,
-    unit: "কেজি",
-    minQuantity: 200,
-    discounts: [
-      { quantity: 200, discount: 0 },
-      { quantity: 500, discount: 8 },
-      { quantity: 1000, discount: 12 },
-      { quantity: 5000, discount: 18 },
-    ],
-    seller: "পোল্ট্রি ফিড লিমিটেড",
-    available: 100000,
-  },
-];
+const BULK_PRODUCTS: BulkProduct[] = [];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -142,7 +78,7 @@ export default function BulkOrderScreen() {
         unit: product.unit,
         seller: product.seller,
         location: "বাংলাদেশ",
-        rating: 4.6,
+        rating: 0,
         image: product.image,
         description: `বাল্ক অর্ডারে সর্বোচ্চ ${maxDiscount}% ছাড়। ন্যূনতম অর্ডার: ${product.minQuantity} ${product.unit}`,
         quantity: product.available,
@@ -271,6 +207,7 @@ export default function BulkOrderScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <FlatList
         data={BULK_PRODUCTS}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderProduct}
         contentContainerStyle={[

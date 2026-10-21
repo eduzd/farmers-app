@@ -9,6 +9,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Cooperative {
   id: string;
   name: string;
@@ -21,12 +22,7 @@ interface Cooperative {
   benefits: string[];
 }
 
-const COOPERATIVES: Cooperative[] = [
-  { id: "1", name: "কৃষক উন্নয়ন সমবায় সমিতি", type: "বহুমুখী", location: "গাজীপুর", members: 450, established: "২০১৫", services: ["ঋণ সুবিধা", "সার সরবরাহ", "বাজারজাতকরণ"], contact: "০১৭১২-১১১১১১", benefits: ["৫% কম সুদে ঋণ", "পাইকারি দরে সার"] },
-  { id: "2", name: "মৎস্যজীবী সমবায়", type: "মৎস্য", location: "কিশোরগঞ্জ", members: 280, established: "২০১৮", services: ["পোনা সরবরাহ", "খাদ্য সরবরাহ", "প্রশিক্ষণ"], contact: "০১৮১২-২২২২২২", benefits: ["বিনামূল্যে প্রশিক্ষণ", "মাছ বিক্রয় সহায়তা"] },
-  { id: "3", name: "দুগ্ধ উৎপাদক সমিতি", type: "দুগ্ধ", location: "বগুড়া", members: 320, established: "২০১০", services: ["দুধ সংগ্রহ", "পশু চিকিৎসা", "খাদ্য সরবরাহ"], contact: "০১৯১২-৩৩৩৩৩৩", benefits: ["উচ্চ দরে দুধ ক্রয়", "বিনামূল্যে পশু টিকা"] },
-  { id: "4", name: "জৈব কৃষি সমবায়", type: "জৈব", location: "ময়মনসিংহ", members: 180, established: "২০২০", services: ["জৈব সার সরবরাহ", "সার্টিফিকেশন", "রপ্তানি সহায়তা"], contact: "০১৫১২-৪৪৪৪৪৪", benefits: ["জৈব সনদ প্রাপ্তি", "প্রিমিয়াম মূল্য"] },
-];
+const COOPERATIVES: Cooperative[] = [];
 
 export default function CooperativeScreen() {
   const insets = useSafeAreaInsets();
@@ -104,6 +100,7 @@ export default function CooperativeScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <FlatList
         data={COOPERATIVES}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderCooperative}
         contentContainerStyle={[styles.listContent, { paddingTop: Spacing.md, paddingBottom: insets.bottom + Spacing.xl }]}

@@ -15,6 +15,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface PriceItem {
   id: string;
   name: string;
@@ -29,96 +30,7 @@ interface PriceItem {
 
 const CATEGORIES = ["সব", "শস্য", "সবজি", "মাছ", "ফল", "পশু"];
 
-const PRICE_DATA: PriceItem[] = [
-  {
-    id: "1",
-    name: "চাল (মোটা)",
-    icon: "🌾",
-    currentPrice: 52,
-    previousPrice: 50,
-    unit: "কেজি",
-    trend: "up",
-    priceHistory: [48, 49, 50, 50, 51, 52],
-    location: "ঢাকা",
-  },
-  {
-    id: "2",
-    name: "আলু",
-    icon: "🥔",
-    currentPrice: 35,
-    previousPrice: 40,
-    unit: "কেজি",
-    trend: "down",
-    priceHistory: [45, 42, 40, 38, 36, 35],
-    location: "রংপুর",
-  },
-  {
-    id: "3",
-    name: "তেলাপিয়া",
-    icon: "🐟",
-    currentPrice: 180,
-    previousPrice: 180,
-    unit: "কেজি",
-    trend: "stable",
-    priceHistory: [175, 178, 180, 180, 180, 180],
-    location: "ময়মনসিংহ",
-  },
-  {
-    id: "4",
-    name: "টমেটো",
-    icon: "🍅",
-    currentPrice: 60,
-    previousPrice: 55,
-    unit: "কেজি",
-    trend: "up",
-    priceHistory: [45, 48, 52, 55, 58, 60],
-    location: "রাজশাহী",
-  },
-  {
-    id: "5",
-    name: "পেঁয়াজ",
-    icon: "🧅",
-    currentPrice: 45,
-    previousPrice: 50,
-    unit: "কেজি",
-    trend: "down",
-    priceHistory: [55, 52, 50, 48, 46, 45],
-    location: "ফরিদপুর",
-  },
-  {
-    id: "6",
-    name: "মুরগি (ব্রয়লার)",
-    icon: "🐔",
-    currentPrice: 175,
-    previousPrice: 170,
-    unit: "কেজি",
-    trend: "up",
-    priceHistory: [160, 165, 168, 170, 172, 175],
-    location: "গাজীপুর",
-  },
-  {
-    id: "7",
-    name: "গম",
-    icon: "🌾",
-    currentPrice: 38,
-    previousPrice: 38,
-    unit: "কেজি",
-    trend: "stable",
-    priceHistory: [36, 37, 38, 38, 38, 38],
-    location: "দিনাজপুর",
-  },
-  {
-    id: "8",
-    name: "আম",
-    icon: "🥭",
-    currentPrice: 120,
-    previousPrice: 100,
-    unit: "কেজি",
-    trend: "up",
-    priceHistory: [80, 90, 95, 100, 110, 120],
-    location: "চাঁপাইনবাবগঞ্জ",
-  },
-];
+const PRICE_DATA: PriceItem[] = [];
 
 const { width } = Dimensions.get("window");
 
@@ -382,6 +294,7 @@ export default function MarketPriceScreen() {
       </View>
 
       <View style={styles.priceList}>
+        {PRICE_DATA.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
         {PRICE_DATA.map((item, index) => renderPriceCard(item, index))}
       </View>
 

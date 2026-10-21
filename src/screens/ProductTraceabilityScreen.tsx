@@ -21,6 +21,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { EmptyState } from "@/components/ui";
 const { width } = Dimensions.get("window");
 
 interface TracePoint {
@@ -275,6 +276,7 @@ export default function ProductTraceabilityScreen() {
           <View style={[styles.productsCard, { backgroundColor: theme.card }]}>
             <ThemedText style={styles.sectionTitle}>আমার পণ্যসমূহ</ThemedText>
 
+            {products.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {products.map((product, index) => (
               <Animated.View key={product.id} entering={SlideInRight.delay(index * 60)}>
                 <Pressable

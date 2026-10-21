@@ -9,6 +9,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface ColdStorage {
   id: string;
   name: string;
@@ -24,12 +25,7 @@ interface ColdStorage {
   rating: number;
 }
 
-const COLD_STORAGES: ColdStorage[] = [
-  { id: "1", name: "বগুড়া কোল্ড স্টোরেজ", location: "বগুড়া সদর", distance: "১২ কিমি", capacity: "৫০০০ মেট্রিক টন", available: "১২০০ মেট্রিক টন", ratePerKg: 3, ratePerMonth: 90, temperature: "০-৪°C", products: ["আলু", "পেঁয়াজ", "রসুন"], phone: "০৫১-৬৭৮৯০", rating: 4.7 },
-  { id: "2", name: "গ্রিন ফ্রেশ কোল্ড স্টোরেজ", location: "রংপুর", distance: "২৫ কিমি", capacity: "৩০০০ মেট্রিক টন", available: "৮০০ মেট্রিক টন", ratePerKg: 2.5, ratePerMonth: 75, temperature: "-১৮ থেকে ০°C", products: ["মাছ", "মাংস", "সবজি"], phone: "০৫২১-৫৫৫৫৫", rating: 4.9 },
-  { id: "3", name: "কিষাণ কোল্ড স্টোরেজ", location: "দিনাজপুর", distance: "৮ কিমি", capacity: "২০০০ মেট্রিক টন", available: "৫০০ মেট্রিক টন", ratePerKg: 2.8, ratePerMonth: 85, temperature: "২-৮°C", products: ["আলু", "ফল", "সবজি"], phone: "০৫৩১-৪৪৪৪৪", rating: 4.5 },
-  { id: "4", name: "আইস ল্যান্ড স্টোরেজ", location: "ঢাকা, গাজীপুর", distance: "১৫ কিমি", capacity: "৮০০০ মেট্রিক টন", available: "২৫০০ মেট্রিক টন", ratePerKg: 4, ratePerMonth: 120, temperature: "-২৫ থেকে ৫°C", products: ["সব ধরনের পণ্য"], phone: "০২-৯১২৩৪৫৬", rating: 4.8 },
-];
+const COLD_STORAGES: ColdStorage[] = [];
 
 export default function ColdStorageScreen() {
   const insets = useSafeAreaInsets();
@@ -124,6 +120,7 @@ export default function ColdStorageScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <FlatList
         data={COLD_STORAGES}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderStorage}
         contentContainerStyle={[styles.listContent, { paddingTop: Spacing.md, paddingBottom: insets.bottom + Spacing.xl }]}

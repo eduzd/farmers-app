@@ -7,7 +7,6 @@ import path from "path";
 import { sql } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { config } from "./config";
-import { SEED_POLLS, SEED_QUESTIONS, SEED_RFQS } from "./communitySeed";
 import { sendPush } from "./push";
 
 /**
@@ -69,20 +68,9 @@ export function ensureFeatures() {
         id varchar PRIMARY KEY, user_id varchar NOT NULL, product text NOT NULL, condition varchar NOT NULL,
         target numeric NOT NULL, active boolean NOT NULL DEFAULT true, triggered_at timestamp,
         created_at timestamp NOT NULL DEFAULT now())`);
-      const seeds: Record<string, any[]> = { polls: SEED_POLLS, questions: SEED_QUESTIONS, rfqs: SEED_RFQS };
-      for (const [kind, seed] of Object.entries(seeds)) {
-        const c = rows(await q(sql`SELECT count(*)::int AS n FROM community_items WHERE kind = ${kind}`));
-        if (c[0] && Number(c[0].n) > 0) continue;
-        for (let i = 0; i < seed.length; i++) {
-          const item: any = { ...seed[i] };
-          const id = `${kind}-seed-${item.id ?? i}`;
-          delete item.id;
-          delete item.votedOptionId;
-          delete item.isUpvoted;
-          const ts = new Date(Date.now() - (i + 1) * 3600000).toISOString();
-          await q(sql`INSERT INTO community_items (id, kind, data, created_at, updated_at)
-            VALUES (${id}, ${kind}, ${JSON.stringify(item)}::jsonb, ${ts}, ${ts}) ON CONFLICT (id) DO NOTHING`);
-        }
+      // Remove the sample polls, questions and requests older versions inserted (ids "<kind>-seed-<n>", no owner).
+      for (const kind of ["polls", "questions", "rfqs"]) {
+        await q(sql`DELETE FROM community_items WHERE kind = ${kind} AND owner_id IS NULL AND id LIKE ${kind + "-seed-%"}`);
       }
     })().catch((e) => {
       ready = null;

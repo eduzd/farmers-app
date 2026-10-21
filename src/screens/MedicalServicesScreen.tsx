@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const SPECIALTIES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "general", label: "জেনারেল", icon: "user" },
@@ -138,6 +139,7 @@ export default function MedicalServicesScreen() {
               ))}
             </ScrollView>
 
+            {DOCTORS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {DOCTORS.map((doctor, index) => (
               <Animated.View key={doctor.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.doctorCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -207,6 +209,7 @@ export default function MedicalServicesScreen() {
               <ThemedText style={styles.newPostText}>নতুন আলোচনা শুরু করুন</ThemedText>
             </Pressable>
 
+            {DISCUSSIONS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {DISCUSSIONS.map((discussion, index) => (
               <Animated.View key={discussion.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <Pressable style={[styles.discussionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>

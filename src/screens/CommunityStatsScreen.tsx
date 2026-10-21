@@ -15,6 +15,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const { width } = Dimensions.get("window");
 
 const COMMUNITY_STATS = {
@@ -92,6 +93,7 @@ export default function CommunityStatsScreen() {
         <Animated.View entering={FadeInUp.delay(150)} style={styles.section}>
           <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>টপ ক্যাটেগরি</ThemedText>
           <View style={[styles.categoriesCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            {TOP_CATEGORIES.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {TOP_CATEGORIES.map((cat, index) => (
               <View key={index} style={styles.categoryRow}>
                 <View style={styles.categoryInfo}>
@@ -113,6 +115,7 @@ export default function CommunityStatsScreen() {
           <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>সদস্য বৃদ্ধি</ThemedText>
           <View style={[styles.growthCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             <View style={styles.growthChart}>
+              {GROWTH_DATA.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
               {GROWTH_DATA.map((data, index) => {
                 const maxMembers = Math.max(...GROWTH_DATA.map(d => d.members));
                 const height = (data.members / maxMembers) * 100;
@@ -139,6 +142,7 @@ export default function CommunityStatsScreen() {
         <Animated.View entering={FadeInUp.delay(250)} style={styles.section}>
           <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>সাম্প্রতিক কার্যক্রম</ThemedText>
           <View style={[styles.activityCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            {ACTIVITY_TIMELINE.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {ACTIVITY_TIMELINE.map((activity, index) => (
               <View key={index} style={[styles.activityRow, index < ACTIVITY_TIMELINE.length - 1 && styles.activityRowBorder, { borderBottomColor: theme.cardBorder }]}>
                 <View style={[styles.activityDot, { backgroundColor: theme.primary }]} />

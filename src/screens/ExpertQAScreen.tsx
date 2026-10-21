@@ -122,7 +122,7 @@ export default function ExpertQAScreen() {
     (q) => selectedCategory === "সব" || q.category === selectedCategory
   );
 
-  const renderLiveSessions = () => (
+  const renderLiveSessions = () => LIVE_SESSIONS.length === 0 ? null : (
     <View style={styles.liveSection}>
       <View style={styles.sectionHeader}>
         <View style={styles.liveBadge}>

@@ -25,6 +25,7 @@ import { useReferralStore, REFERRAL_TIERS, REFERRAL_POINTS, Referral, ReferralTi
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 
+import { EmptyState } from "@/components/ui";
 export default function ReferralScreen() {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useTheme();
@@ -374,6 +375,7 @@ export default function ReferralScreen() {
             </ThemedText>
             <FlatList
               data={leaderboard}
+              ListEmptyComponent={<EmptyState icon="bar-chart-2" title="এখনও কোনো র‍্যাংকিং নেই" message="বন্ধুরা আপনার রেফারেল কোডে যোগ দিলে এখানে দেখা যাবে।" />}
               renderItem={renderLeaderboardItem}
               keyExtractor={(item) => item.userId}
               scrollEnabled={false}

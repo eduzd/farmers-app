@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const { width } = Dimensions.get("window");
 
 const STATS: any[] = [];
@@ -52,6 +53,7 @@ export default function FarmAnalyticsScreen() {
         </View>
 
         <Animated.View entering={FadeInUp.duration(400)} style={styles.statsGrid}>
+          {STATS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
           {STATS.map((stat, index) => (
             <LinearGradient
               key={stat.id}
@@ -85,6 +87,7 @@ export default function FarmAnalyticsScreen() {
           </ThemedText>
           <View style={[styles.chartCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             <View style={styles.barChart}>
+              {MONTHLY_DATA.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
               {MONTHLY_DATA.map((item, index) => (
                 <View key={index} style={styles.barContainer}>
                   <View style={styles.barWrapper}>
@@ -107,6 +110,7 @@ export default function FarmAnalyticsScreen() {
             ফসল অনুযায়ী উৎপাদন
           </ThemedText>
           <View style={[styles.cropsCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            {CROPS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {CROPS.map((crop, index) => (
               <View key={index} style={styles.cropRow}>
                 <ThemedText style={[styles.cropName, { color: theme.text }]}>{crop.name}</ThemedText>
@@ -130,6 +134,7 @@ export default function FarmAnalyticsScreen() {
             মূল তথ্য
           </ThemedText>
           <View style={styles.insightsRow}>
+            {INSIGHTS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {INSIGHTS.map((insight, index) => (
               <View
                 key={index}

@@ -23,6 +23,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { EmptyState } from "@/components/ui";
 const { width } = Dimensions.get("window");
 
 interface LiveStream {
@@ -197,6 +198,7 @@ export default function LiveStreamScreen() {
               <Feather name="clock" size={16} color={theme.primary} />
               <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>আসন্ন লাইভ</ThemedText>
             </View>
+            {upcomingStreams.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {upcomingStreams.map((stream, index) => renderUpcoming({ item: stream, index }))}
           </View>
         }

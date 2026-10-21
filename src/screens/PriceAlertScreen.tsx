@@ -16,6 +16,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { useHeaderAddButton } from "@/components/HeaderAddButton";
 import { apiGet, apiPost, apiPut, apiDelete, isLoggedIn } from "@/lib/api";
 import { tr, useTr } from "@/lib/tr";
+import { EmptyState } from "@/components/ui";
 const MY_ALERTS: any[] = [];
 
 const POPULAR_PRODUCTS: any[] = [];
@@ -182,6 +183,7 @@ export default function PriceAlertScreen() {
           </ThemedText>
           
           <View style={[styles.pricesCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+            {POPULAR_PRODUCTS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {POPULAR_PRODUCTS.map((product, index) => (
               <View
                 key={index}

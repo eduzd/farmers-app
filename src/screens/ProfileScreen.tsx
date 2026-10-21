@@ -36,6 +36,7 @@ import { useI18n } from "@/lib/i18n";
 import { useCompanyStore } from "@/lib/companyStore";
 import { CommunitySwitcher, CommunitySwitcherRef } from "@/components/CommunitySwitcher";
 
+import { EmptyState } from "@/components/ui";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const MENU_ITEMS = [
@@ -55,12 +56,7 @@ interface SavedPost {
   image?: string;
 }
 
-const SAVED_POSTS: SavedPost[] = [
-  { id: "sp-1", author: { name: "মোঃ মিজান", avatar: "", initials: "মম" }, content: "এই পুকুরে দেখা যাচ্ছে অনেক শ্যাওলা জমে আছে শ্যাওলা কিভাবে দূর ক...", image: "https://images.unsplash.com/photo-1544943910-4c1dc44aab44?w=400" },
-  { id: "sp-2", author: { name: "মোঃ মিজান", avatar: "", initials: "মম" }, content: "তোমার সর্বশেষ লিমিট আছে সেগুলো ঠিক করছো আর যে প্রোফাইলে শেয়ার করে সবাইকে দেখার..." },
-  { id: "sp-3", author: { name: "মোঃ মিজান", avatar: "", initials: "মম" }, content: "কলার গাছে ওষুধ দিতে হবে কীটনাশক দমন এর জন্য কি কি...", image: "https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=400" },
-  { id: "sp-4", author: { name: "Didu", avatar: "", initials: "Di" }, content: "সবাই কেমন আছো খানা খেয়েছো" },
-];
+const SAVED_POSTS: SavedPost[] = [];
 
 const FEATURE_MENU_ITEMS = [
   { id: "wallet", labelKey: "profile.wallet", icon: "credit-card" as const, screen: "Wallet" as const },
@@ -485,6 +481,7 @@ export default function ProfileScreen() {
                 </Pressable>
                 {savedPostsExpanded ? (
                   <View style={styles.savedPostsList}>
+                    {savedPosts.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
                     {savedPosts.map((post) => (
                       <View 
                         key={post.id} 

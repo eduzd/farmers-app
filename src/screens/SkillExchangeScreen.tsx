@@ -17,6 +17,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface SkillPost {
   id: string;
   user: { name: string; avatar: string; location: string };
@@ -27,49 +28,12 @@ interface SkillPost {
   responses: number;
 }
 
-const SKILL_POSTS: SkillPost[] = [
-  {
-    id: "1",
-    user: { name: "করিম সাহেব", avatar: "https://randomuser.me/api/portraits/men/32.jpg", location: "ময়মনসিংহ" },
-    offering: ["ধান চাষ", "জৈব সার তৈরি"],
-    seeking: ["মাছ চাষ", "পুকুর ব্যবস্থাপনা"],
-    description: "২০ বছরের অভিজ্ঞতা ধান চাষে। মাছ চাষ শিখতে চাই।",
-    createdAt: "২ ঘণ্টা আগে",
-    responses: 5,
-  },
-  {
-    id: "2",
-    user: { name: "ফাতেমা বেগম", avatar: "https://randomuser.me/api/portraits/women/28.jpg", location: "রাজশাহী" },
-    offering: ["হাঁস পালন", "মুরগি পালন"],
-    seeking: ["সবজি চাষ", "বাজারজাতকরণ"],
-    description: "পোল্ট্রি ফার্মিং এ সাফল্য পেয়েছি। সবজি চাষ শিখতে আগ্রহী।",
-    createdAt: "৫ ঘণ্টা আগে",
-    responses: 8,
-  },
-  {
-    id: "3",
-    user: { name: "রহিম উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/45.jpg", location: "রংপুর" },
-    offering: ["গরু পালন", "ছাগল পালন"],
-    seeking: ["ডেইরি ফার্মিং", "দুধ প্রক্রিয়াজাতকরণ"],
-    description: "পশুপালনে অভিজ্ঞ। দুধ থেকে পণ্য তৈরি শিখতে চাই।",
-    createdAt: "১ দিন আগে",
-    responses: 3,
-  },
-  {
-    id: "4",
-    user: { name: "নাজমুল হাসান", avatar: "https://randomuser.me/api/portraits/men/55.jpg", location: "সিলেট" },
-    offering: ["চা বাগান", "বাগান ব্যবস্থাপনা"],
-    seeking: ["ফলের বাগান", "আম চাষ"],
-    description: "চা বাগানে কাজ করি। ফল চাষে হাত দিতে চাই।",
-    createdAt: "২ দিন আগে",
-    responses: 2,
-  },
-];
+const SKILL_POSTS: SkillPost[] = [];
 
-const MY_SKILLS = {
-  offering: ["ধান চাষ", "সবজি চাষ"],
-  seeking: ["মাছ চাষ"],
-  matches: 12,
+const MY_SKILLS: { offering: string[]; seeking: string[]; matches: number } = {
+  offering: [],
+  seeking: [],
+  matches: 0,
 };
 
 export default function SkillExchangeScreen() {
@@ -205,6 +169,7 @@ export default function SkillExchangeScreen() {
 
       <FlatList
         data={SKILL_POSTS}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={item => item.id}
         renderItem={renderPost}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}

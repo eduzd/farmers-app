@@ -365,16 +365,16 @@ export default function ProductDetailScreen() {
                       key={star}
                       name="star"
                       size={14}
-                      color={star <= Math.floor(product.rating || 4.5) ? "#F5B700" : "#E0E0E0"}
+                      color={star <= Math.round(reviews.count ? reviews.average : product.rating || 0) ? "#F5B700" : "#E0E0E0"}
                       style={{ marginRight: 2 }}
                     />
                   ))}
                 </View>
                 <ThemedText style={[styles.ratingText, { color: theme.text }]}>
-                  {product.rating || 4.5}
+                  {reviews.count ? reviews.average.toFixed(1) : product.rating ? Number(product.rating).toFixed(1) : tr("নতুন")}
                 </ThemedText>
                 <ThemedText style={[styles.reviewCount, { color: theme.textSecondary }]}>
-                  {tr("(১২৮ রিভিউ)")}
+                  {`(${reviews.count} ${tr("রিভিউ")})`}
                 </ThemedText>
               </View>
               

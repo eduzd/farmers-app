@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const WASTE_TYPES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "organic", label: "জৈব", icon: "feather" },
@@ -119,6 +120,7 @@ export default function WasteManagementScreen() {
               ))}
             </ScrollView>
 
+            {SERVICES.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {SERVICES.map((service, index) => (
               <Animated.View key={service.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.serviceCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -176,6 +178,7 @@ export default function WasteManagementScreen() {
               <ThemedText style={styles.newPostText}>প্রশ্ন করুন / সমস্যা শেয়ার করুন</ThemedText>
             </Pressable>
 
+            {DISCUSSIONS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {DISCUSSIONS.map((discussion, index) => (
               <Animated.View key={discussion.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <Pressable style={[styles.discussionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>

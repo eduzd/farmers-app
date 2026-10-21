@@ -128,7 +128,7 @@ export default function WishlistScreen() {
         unit: "কেজি",
         seller: item.seller,
         location: "বাংলাদেশ",
-        rating: 4.5,
+        rating: 0,
         image: item.image,
         description: `${item.seller} এর পণ্য`,
         quantity: item.inStock ? 100 : 0,

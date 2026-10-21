@@ -19,6 +19,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface InventoryItem {
   id: string;
   name: string;
@@ -32,80 +33,7 @@ interface InventoryItem {
   status: "in_stock" | "low_stock" | "out_of_stock";
 }
 
-const INITIAL_INVENTORY: InventoryItem[] = [
-  {
-    id: "1",
-    name: "জৈব সার (ভার্মিকম্পোস্ট)",
-    category: "সার",
-    quantity: 150,
-    unit: "কেজি",
-    minStock: 50,
-    purchasePrice: 15,
-    sellingPrice: 25,
-    lastUpdated: "আজ সকাল ১০:৩০",
-    status: "in_stock",
-  },
-  {
-    id: "2",
-    name: "হাইব্রিড টমেটো বীজ",
-    category: "বীজ",
-    quantity: 25,
-    unit: "প্যাকেট",
-    minStock: 30,
-    purchasePrice: 80,
-    sellingPrice: 120,
-    lastUpdated: "গতকাল",
-    status: "low_stock",
-  },
-  {
-    id: "3",
-    name: "নিম তেল কীটনাশক",
-    category: "কীটনাশক",
-    quantity: 0,
-    unit: "লিটার",
-    minStock: 10,
-    purchasePrice: 350,
-    sellingPrice: 450,
-    lastUpdated: "৩ দিন আগে",
-    status: "out_of_stock",
-  },
-  {
-    id: "4",
-    name: "ধানের বীজ (BRRI-28)",
-    category: "বীজ",
-    quantity: 500,
-    unit: "কেজি",
-    minStock: 100,
-    purchasePrice: 45,
-    sellingPrice: 60,
-    lastUpdated: "আজ বিকাল ৩:০০",
-    status: "in_stock",
-  },
-  {
-    id: "5",
-    name: "মাছের খাবার (ফ্লোটিং)",
-    category: "খাদ্য",
-    quantity: 80,
-    unit: "কেজি",
-    minStock: 100,
-    purchasePrice: 55,
-    sellingPrice: 75,
-    lastUpdated: "গতকাল সন্ধ্যা",
-    status: "low_stock",
-  },
-  {
-    id: "6",
-    name: "ইউরিয়া সার",
-    category: "সার",
-    quantity: 200,
-    unit: "কেজি",
-    minStock: 50,
-    purchasePrice: 22,
-    sellingPrice: 28,
-    lastUpdated: "৫ দিন আগে",
-    status: "in_stock",
-  },
-];
+const INITIAL_INVENTORY: InventoryItem[] = [];
 
 const CATEGORIES = ["সব", "সার", "বীজ", "কীটনাশক", "খাদ্য"];
 
@@ -297,6 +225,7 @@ export default function InventoryScreen() {
 
       <FlatList
         data={filteredInventory}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={[

@@ -54,11 +54,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     nameBn: "বীজ",
     icon: "sun",
     color: "#2FA36B",
-    items: [
-      { id: "1", name: "Rice Seeds", nameBn: "ধানের বীজ", quantity: 50, unit: "kg", unitBn: "কেজি", category: "seeds", purchaseDate: "2025-01-10", expiryDate: "2026-01-10", price: 120, supplier: "কৃষি ভাণ্ডার", lowStockThreshold: 10 },
-      { id: "2", name: "Vegetable Seeds", nameBn: "সবজির বীজ", quantity: 5, unit: "kg", unitBn: "কেজি", category: "seeds", purchaseDate: "2025-01-15", expiryDate: "2025-12-15", price: 500, supplier: "বীজ ঘর", lowStockThreshold: 2 },
-      { id: "3", name: "Wheat Seeds", nameBn: "গমের বীজ", quantity: 30, unit: "kg", unitBn: "কেজি", category: "seeds", purchaseDate: "2025-01-05", expiryDate: "2026-01-05", price: 80, lowStockThreshold: 8 },
-    ],
+    items: [],
   },
   {
     id: "fertilizers",
@@ -66,11 +62,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     nameBn: "সার",
     icon: "package",
     color: "#795548",
-    items: [
-      { id: "4", name: "Urea", nameBn: "ইউরিয়া", quantity: 100, unit: "kg", unitBn: "কেজি", category: "fertilizers", purchaseDate: "2025-01-12", price: 25, supplier: "সার বিপণন", lowStockThreshold: 20 },
-      { id: "5", name: "DAP", nameBn: "ডিএপি", quantity: 50, unit: "kg", unitBn: "কেজি", category: "fertilizers", purchaseDate: "2025-01-08", price: 60, lowStockThreshold: 15 },
-      { id: "6", name: "Organic Compost", nameBn: "জৈব সার", quantity: 200, unit: "kg", unitBn: "কেজি", category: "fertilizers", purchaseDate: "2025-01-01", price: 15, lowStockThreshold: 50 },
-    ],
+    items: [],
   },
   {
     id: "pesticides",
@@ -78,10 +70,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     nameBn: "কীটনাশক",
     icon: "shield",
     color: "#DC2626",
-    items: [
-      { id: "7", name: "Insecticide", nameBn: "পোকামাকড় নাশক", quantity: 10, unit: "L", unitBn: "লিটার", category: "pesticides", purchaseDate: "2025-01-10", expiryDate: "2026-06-10", price: 350, lowStockThreshold: 3 },
-      { id: "8", name: "Herbicide", nameBn: "আগাছানাশক", quantity: 5, unit: "L", unitBn: "লিটার", category: "pesticides", purchaseDate: "2025-01-05", expiryDate: "2026-03-05", price: 450, lowStockThreshold: 2 },
-    ],
+    items: [],
   },
   {
     id: "equipment",
@@ -89,11 +78,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     nameBn: "যন্ত্রপাতি",
     icon: "tool",
     color: "#475569",
-    items: [
-      { id: "9", name: "Hand Sprayer", nameBn: "স্প্রেয়ার", quantity: 2, unit: "pcs", unitBn: "টি", category: "equipment", purchaseDate: "2024-06-15", price: 1500, lowStockThreshold: 1 },
-      { id: "10", name: "Hoe", nameBn: "কোদাল", quantity: 5, unit: "pcs", unitBn: "টি", category: "equipment", purchaseDate: "2024-03-20", price: 250, lowStockThreshold: 2 },
-      { id: "11", name: "Sickle", nameBn: "কাস্তে", quantity: 8, unit: "pcs", unitBn: "টি", category: "equipment", purchaseDate: "2024-04-10", price: 150, lowStockThreshold: 3 },
-    ],
+    items: [],
   },
   {
     id: "harvest",
@@ -101,10 +86,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     nameBn: "ফসল",
     icon: "box",
     color: "#EA8A0C",
-    items: [
-      { id: "12", name: "Rice", nameBn: "ধান", quantity: 500, unit: "kg", unitBn: "কেজি", category: "harvest", purchaseDate: "2025-01-18", price: 35, lowStockThreshold: 100 },
-      { id: "13", name: "Vegetables", nameBn: "সবজি", quantity: 50, unit: "kg", unitBn: "কেজি", category: "harvest", purchaseDate: "2025-01-20", price: 40, lowStockThreshold: 10 },
-    ],
+    items: [],
   },
   {
     id: "feed",
@@ -112,11 +94,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     nameBn: "পশু খাদ্য",
     icon: "heart",
     color: "#DB2777",
-    items: [
-      { id: "14", name: "Cattle Feed", nameBn: "গরুর খাদ্য", quantity: 200, unit: "kg", unitBn: "কেজি", category: "feed", purchaseDate: "2025-01-15", price: 45, lowStockThreshold: 50 },
-      { id: "15", name: "Fish Feed", nameBn: "মাছের খাবার", quantity: 100, unit: "kg", unitBn: "কেজি", category: "feed", purchaseDate: "2025-01-12", price: 80, lowStockThreshold: 25 },
-      { id: "16", name: "Poultry Feed", nameBn: "মুরগির খাবার", quantity: 150, unit: "kg", unitBn: "কেজি", category: "feed", purchaseDate: "2025-01-18", price: 55, lowStockThreshold: 30 },
-    ],
+    items: [],
   },
 ];
 

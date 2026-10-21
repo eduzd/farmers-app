@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const SERVICE_TYPES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "solar", label: "সোলার", icon: "sun" },
@@ -123,6 +124,7 @@ export default function ElectricityServicesScreen() {
               ))}
             </ScrollView>
 
+            {PROFESSIONALS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {PROFESSIONALS.map((pro, index) => (
               <Animated.View key={pro.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.proCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -181,6 +183,7 @@ export default function ElectricityServicesScreen() {
               <ThemedText style={styles.newPostText}>প্রশ্ন করুন</ThemedText>
             </Pressable>
 
+            {DISCUSSIONS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
             {DISCUSSIONS.map((discussion, index) => (
               <Animated.View key={discussion.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <Pressable style={[styles.discussionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>

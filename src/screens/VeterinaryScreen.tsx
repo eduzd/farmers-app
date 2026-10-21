@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const VET_CATEGORIES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "cattle", label: "গরু-মহিষ", icon: "circle" },
@@ -107,6 +108,7 @@ export default function VeterinaryScreen() {
           <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.text }]}>
             উপলব্ধ ডাক্তার ({VETS.length})
           </ThemedText>
+          {VETS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
           {VETS.map((vet, index) => (
             <Animated.View key={vet.id} entering={FadeInUp.delay(index * 80).duration(400)}>
               <View style={[styles.vetCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>

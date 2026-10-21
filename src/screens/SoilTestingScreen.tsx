@@ -15,6 +15,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface TestCenter {
   id: string;
   name: string;
@@ -26,38 +27,7 @@ interface TestCenter {
   turnaround: string;
 }
 
-const TEST_CENTERS: TestCenter[] = [
-  {
-    id: "1",
-    name: "মৃত্তিকা গবেষণা ও উন্নয়ন ইনস্টিটিউট",
-    location: "ফার্মগেট, ঢাকা",
-    distance: "১২ কিমি",
-    phone: "০২-৯১১৮৭৬৫",
-    services: ["pH পরীক্ষা", "জৈব পদার্থ", "NPK", "মাইক্রোনিউট্রিয়েন্ট"],
-    fee: 300,
-    turnaround: "৭ দিন",
-  },
-  {
-    id: "2",
-    name: "জেলা কৃষি অফিস ল্যাব",
-    location: "সদর, গাজীপুর",
-    distance: "৫ কিমি",
-    phone: "০২-৯২২৩৪৫৬",
-    services: ["pH পরীক্ষা", "জৈব পদার্থ", "NPK"],
-    fee: 150,
-    turnaround: "১০ দিন",
-  },
-  {
-    id: "3",
-    name: "বিএআরআই মৃত্তিকা বিভাগ",
-    location: "জয়দেবপুর, গাজীপুর",
-    distance: "১৫ কিমি",
-    phone: "০২-৯২৫২৫২৫",
-    services: ["সম্পূর্ণ বিশ্লেষণ", "সার সুপারিশ", "পানি পরীক্ষা"],
-    fee: 500,
-    turnaround: "৫ দিন",
-  },
-];
+const TEST_CENTERS: TestCenter[] = [];
 
 const SOIL_PARAMETERS = [
   { id: "ph", name: "pH মান", ideal: "৬.০ - ৭.০", icon: "droplet", color: "#2563EB" },
@@ -191,6 +161,7 @@ export default function SoilTestingScreen() {
           <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>
             কাছের পরীক্ষাগার
           </ThemedText>
+          {TEST_CENTERS.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
           {TEST_CENTERS.map((center, index) => (
             <Animated.View
               key={center.id}

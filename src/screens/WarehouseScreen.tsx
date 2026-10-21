@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 const WAREHOUSES: any[] = [];
 
 const FILTERS = [
@@ -80,6 +81,7 @@ export default function WarehouseScreen() {
           {filteredWarehouses.length} টি গুদাম পাওয়া গেছে
         </ThemedText>
 
+        {filteredWarehouses.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
         {filteredWarehouses.map((warehouse, index) => (
           <Animated.View key={warehouse.id} entering={FadeInUp.delay(index * 80).duration(400)}>
             <Pressable

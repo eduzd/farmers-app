@@ -17,6 +17,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface LeaderboardUser {
   id: string;
   rank: number;
@@ -167,6 +168,7 @@ export default function LeaderboardScreen() {
 
       <FlatList
         data={restUsers}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderUser}
         ListHeaderComponent={renderTopThree}

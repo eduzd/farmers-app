@@ -23,6 +23,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { EmptyState } from "@/components/ui";
 type RouteProps = RouteProp<RootStackParamList, "GroupDetail">;
 
 interface GroupPost {
@@ -291,6 +292,7 @@ export default function GroupDetailScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <FlatList
         data={posts}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderPost}
         ListHeaderComponent={renderHeader}

@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface Seed {
   id: string;
   name: string;
@@ -26,13 +27,7 @@ interface Seed {
   certified: boolean;
 }
 
-const SEEDS: Seed[] = [
-  { id: "1", name: "BRRI ধান-৮৯", variety: "হাইব্রিড", crop: "ধান", image: "https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?w=400", price: 120, yield: "বিঘা প্রতি ২০ মণ", duration: "১৪০-১৪৫ দিন", season: "বোরো", seller: "বাংলাদেশ ধান গবেষণা ইনস্টিটিউট", location: "গাজীপুর", rating: 4.9, certified: true },
-  { id: "2", name: "বারি টমেটো-১৪", variety: "হাইব্রিড", crop: "টমেটো", image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400", price: 350, yield: "বিঘা প্রতি ৬০ মণ", duration: "৯০-১০০ দিন", season: "রবি", seller: "বারি বীজ কেন্দ্র", location: "জয়দেবপুর", rating: 4.7, certified: true },
-  { id: "3", name: "বারি পেঁয়াজ-১", variety: "দেশি", crop: "পেঁয়াজ", image: "https://images.unsplash.com/photo-1518977956812-cd3dbadaaf31?w=400", price: 180, yield: "বিঘা প্রতি ৪০ মণ", duration: "১২০-১৩০ দিন", season: "রবি", seller: "স্থানীয় বীজ বিক্রেতা", location: "পাবনা", rating: 4.5, certified: false },
-  { id: "4", name: "বারি মরিচ-২", variety: "হাইব্রিড", crop: "মরিচ", image: "https://images.unsplash.com/photo-1583119022894-919a68a3d0e3?w=400", price: 250, yield: "বিঘা প্রতি ১৫ মণ", duration: "১১০-১২০ দিন", season: "সারাবছর", seller: "গ্রিন সীড কোম্পানি", location: "বগুড়া", rating: 4.6, certified: true },
-  { id: "5", name: "বিএডিসি গম", variety: "উফশী", crop: "গম", image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400", price: 65, yield: "বিঘা প্রতি ১২ মণ", duration: "১১০-১২০ দিন", season: "রবি", seller: "বিএডিসি", location: "ঢাকা", rating: 4.8, certified: true },
-];
+const SEEDS: Seed[] = [];
 
 const CROP_FILTERS = ["সব", "ধান", "টমেটো", "পেঁয়াজ", "মরিচ", "গম"];
 
@@ -133,6 +128,7 @@ export default function SeedFinderScreen() {
 
       <FlatList
         data={filteredSeeds}
+        ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
         keyExtractor={(item) => item.id}
         renderItem={renderSeed}
         numColumns={2}

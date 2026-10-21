@@ -28,10 +28,7 @@ interface EmergencyContact {
 }
 
 const EMERGENCY_CONTACTS: EmergencyContact[] = [
-  { id: "1", name: "জেলা পশু হাসপাতাল", category: "পশু চিকিৎসা", phone: "০২-৯১১২৩৪৫", location: "সদর, ঢাকা", available: "২৪/৭", icon: "heart", color: "#DC2626" },
   { id: "2", name: "কৃষি হটলাইন", category: "কৃষি পরামর্শ", phone: "১৬১২৩", location: "সারাদেশ", available: "২৪/৭", icon: "phone", color: "#2FA36B" },
-  { id: "3", name: "পোকা-মাকড় হেল্পলাইন", category: "কীটনাশক", phone: "০১৭১২-৩৩৩৪৪৪", location: "সারাদেশ", available: "সকাল ৯-রাত ৯", icon: "alert-triangle", color: "#EA8A0C" },
-  { id: "4", name: "মৎস্য জরুরি সেবা", category: "মাছ চাষ", phone: "০২-৯৫৫৬৭৮৯", location: "ময়মনসিংহ", available: "সকাল ৮-রাত ১০", icon: "droplet", color: "#2563EB" },
   { id: "5", name: "ফায়ার সার্ভিস", category: "অগ্নিকাণ্ড", phone: "৯৯৯", location: "সারাদেশ", available: "২৪/৭", icon: "zap", color: "#DB2777" },
   { id: "6", name: "আবহাওয়া সতর্কতা", category: "আবহাওয়া", phone: "১০৯০", location: "সারাদেশ", available: "২৪/৭", icon: "cloud", color: "#0D9488" },
 ];

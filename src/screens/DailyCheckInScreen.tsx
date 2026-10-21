@@ -17,22 +17,19 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 const WEEK_DAYS = ["শনি", "রবি", "সোম", "মঙ্গল", "বুধ", "বৃহস্পতি", "শুক্র"];
-const CURRENT_STREAK = 7;
-const TOTAL_POINTS = 3500;
+const CURRENT_STREAK: number = 0;
+const TOTAL_POINTS: number = 0;
 
-const WEEKLY_STATUS = [
-  { day: "শনি", date: 11, checked: true, points: 10 },
-  { day: "রবি", date: 12, checked: true, points: 10 },
-  { day: "সোম", date: 13, checked: true, points: 10 },
-  { day: "মঙ্গল", date: 14, checked: true, points: 10 },
-  { day: "বুধ", date: 15, checked: true, points: 10 },
-  { day: "বৃহস্পতি", date: 16, checked: true, points: 10 },
-  { day: "শুক্র", date: 17, checked: false, points: 15, isToday: true },
-];
+// This week, ending today (no check-ins recorded yet)
+const WEEKLY_STATUS = Array.from({ length: 7 }, (_, i) => {
+  const d = new Date();
+  d.setDate(d.getDate() - (6 - i));
+  return { day: WEEK_DAYS[(d.getDay() + 1) % 7], date: d.getDate(), checked: false, points: i === 6 ? 15 : 10, isToday: i === 6 };
+});
 
 const DAILY_TASKS = [
-  { id: "1", title: "অ্যাপে লগইন করুন", points: 5, completed: true, icon: "log-in" as const },
-  { id: "2", title: "একটি পোস্ট পড়ুন", points: 5, completed: true, icon: "book-open" as const },
+  { id: "1", title: "অ্যাপে লগইন করুন", points: 5, completed: false, icon: "log-in" as const },
+  { id: "2", title: "একটি পোস্ট পড়ুন", points: 5, completed: false, icon: "book-open" as const },
   { id: "3", title: "একটি পোস্টে লাইক দিন", points: 3, completed: false, icon: "heart" as const },
   { id: "4", title: "একটি মন্তব্য করুন", points: 5, completed: false, icon: "message-circle" as const },
   { id: "5", title: "মার্কেটপ্লেস ভিজিট করুন", points: 3, completed: false, icon: "shopping-bag" as const },
@@ -40,7 +37,7 @@ const DAILY_TASKS = [
 ];
 
 const STREAK_MILESTONES = [
-  { days: 7, reward: "৫০ বোনাস পয়েন্ট", achieved: true },
+  { days: 7, reward: "৫০ বোনাস পয়েন্ট", achieved: false },
   { days: 14, reward: "১০০ বোনাস পয়েন্ট", achieved: false },
   { days: 30, reward: "বিশেষ ব্যাজ", achieved: false },
   { days: 60, reward: "প্রিমিয়াম ১ সপ্তাহ", achieved: false },

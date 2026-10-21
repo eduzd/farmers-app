@@ -15,6 +15,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
+import { EmptyState } from "@/components/ui";
 interface CompareProduct {
   id: string;
   name: string;
@@ -32,56 +33,7 @@ interface CompareProduct {
   };
 }
 
-const COMPARE_PRODUCTS: CompareProduct[] = [
-  {
-    id: "1",
-    name: "জৈব ভার্মিকম্পোস্ট",
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400",
-    price: 450,
-    seller: "গ্রিন ফার্ম সাপ্লাই",
-    rating: 4.8,
-    reviews: 234,
-    features: {
-      weight: "৫০ কেজি",
-      origin: "রাজশাহী",
-      organic: true,
-      delivery: "৩-৫ দিন",
-      warranty: "মান গ্যারান্টি",
-    },
-  },
-  {
-    id: "2",
-    name: "প্রিমিয়াম জৈব সার",
-    image: "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400",
-    price: 520,
-    seller: "অর্গানিক বাংলা",
-    rating: 4.5,
-    reviews: 187,
-    features: {
-      weight: "৫০ কেজি",
-      origin: "বগুড়া",
-      organic: true,
-      delivery: "২-৪ দিন",
-      warranty: "১০০% ফেরত",
-    },
-  },
-  {
-    id: "3",
-    name: "সুপার গ্রো কম্পোস্ট",
-    image: "https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=400",
-    price: 380,
-    seller: "কৃষি সমৃদ্ধি",
-    rating: 4.2,
-    reviews: 156,
-    features: {
-      weight: "৪০ কেজি",
-      origin: "ঢাকা",
-      organic: false,
-      delivery: "৫-৭ দিন",
-      warranty: "নেই",
-    },
-  },
-];
+const COMPARE_PRODUCTS: CompareProduct[] = [];
 
 const FEATURES = [
   { key: "weight", label: "ওজন" },
@@ -127,6 +79,14 @@ export default function ProductCompareScreen() {
     }
     return null;
   };
+
+  if (selectedProducts.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.backgroundRoot, justifyContent: "center" }]}>
+        <EmptyState icon="columns" title="তুলনার জন্য কোনো পণ্য নেই" message="বাজার থেকে পণ্য বেছে নিলে এখানে পাশাপাশি তুলনা দেখা যাবে।" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView
