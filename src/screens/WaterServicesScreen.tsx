@@ -19,85 +19,9 @@ const SERVICE_TYPES = [
   { id: "quality", label: "পানির মান", icon: "check-circle" },
 ];
 
-const PROFESSIONALS = [
-  {
-    id: "1",
-    name: "সেচ সমাধান বাংলাদেশ",
-    specialty: "সেচ সিস্টেম ইনস্টলেশন",
-    experience: "১৫ বছর",
-    location: "গাজীপুর",
-    rating: 4.8,
-    fee: "প্রকল্প অনুযায়ী",
-    services: ["ড্রিপ সেচ", "স্প্রিংকলার", "সোলার পাম্প"],
-    phone: "+8801712345678",
-  },
-  {
-    id: "2",
-    name: "নলকূপ সার্ভিস সেন্টার",
-    specialty: "নলকূপ স্থাপন ও মেরামত",
-    experience: "২০ বছর",
-    location: "ময়মনসিংহ",
-    rating: 4.7,
-    fee: "৳১৫,০০০-৫০,০০০",
-    services: ["নতুন নলকূপ", "মেরামত", "পানি পরীক্ষা"],
-    phone: "+8801812345678",
-  },
-  {
-    id: "3",
-    name: "অ্যাকোয়া টেক",
-    specialty: "পানি পরিশোধন",
-    experience: "১০ বছর",
-    location: "ঢাকা",
-    rating: 4.9,
-    fee: "৳৫,০০০-২০,০০০",
-    services: ["ফিল্টার সিস্টেম", "আর্সেনিক দূরীকরণ", "পানি পরীক্ষা"],
-    phone: "+8801912345678",
-  },
-];
+const PROFESSIONALS: any[] = [];
 
-const DISCUSSIONS = [
-  {
-    id: "1",
-    author: "আলী হোসেন",
-    title: "সোলার পাম্প কি সাশ্রয়ী?",
-    content: "ডিজেল পাম্পের বদলে সোলার পাম্প লাগাতে চাই। খরচ কেমন হবে? অভিজ্ঞতা শেয়ার করুন।",
-    replies: 24,
-    likes: 56,
-    time: "৪ ঘণ্টা আগে",
-    tags: ["সোলার পাম্প", "সেচ"],
-  },
-  {
-    id: "2",
-    author: "করিম মিয়া",
-    title: "নলকূপে পানি কম আসছে",
-    content: "আমার নলকূপে আগের মতো পানি আসছে না। কী করা যায়?",
-    replies: 18,
-    likes: 32,
-    time: "৮ ঘণ্টা আগে",
-    tags: ["নলকূপ", "সমস্যা"],
-    solved: true,
-  },
-  {
-    id: "3",
-    author: "ফাতেমা বেগম",
-    title: "পুকুরের পানি দূষিত হয়ে গেছে",
-    content: "মাছের পুকুরের পানি সবুজ হয়ে গেছে। মাছ মারা যাচ্ছে। কী করব?",
-    replies: 31,
-    likes: 78,
-    time: "১ দিন আগে",
-    tags: ["পুকুর", "দূষণ", "মাছ"],
-  },
-  {
-    id: "4",
-    author: "রহিম উদ্দিন",
-    title: "ড্রিপ সেচ সিস্টেম কীভাবে করব?",
-    content: "সবজি বাগানে ড্রিপ সেচ দিতে চাই। কোথায় পাব এবং খরচ কত?",
-    replies: 15,
-    likes: 42,
-    time: "২ দিন আগে",
-    tags: ["ড্রিপ সেচ", "সবজি"],
-  },
-];
+const DISCUSSIONS: any[] = [];
 
 const EMERGENCY = [
   { title: "বন্যা হটলাইন", number: "1090", icon: "alert-circle", color: "#DC2626" },
@@ -225,7 +149,7 @@ export default function WaterServicesScreen() {
                   </View>
 
                   <View style={styles.servicesRow}>
-                    {pro.services.map((service, i) => (
+                    {pro.services.map((service: string, i: number) => (
                       <View key={i} style={[styles.serviceChip, { backgroundColor: theme.primary + "15" }]}>
                         <ThemedText style={[styles.serviceChipText, { color: theme.primary }]}>{service}</ThemedText>
                       </View>
@@ -283,7 +207,7 @@ export default function WaterServicesScreen() {
                     {discussion.content}
                   </ThemedText>
                   <View style={styles.tagsRow}>
-                    {discussion.tags.map((tag, i) => (
+                    {discussion.tags.map((tag: string, i: number) => (
                       <View key={i} style={[styles.tag, { backgroundColor: "#2563EB20" }]}>
                         <ThemedText style={[styles.tagText, { color: "#2563EB" }]}>{tag}</ThemedText>
                       </View>

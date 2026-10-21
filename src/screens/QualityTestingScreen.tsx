@@ -19,32 +19,7 @@ const TEST_TYPES = [
   { id: "pesticide", name: "কীটনাশক অবশিষ্ট", icon: "shield", price: "৳৮০০-১,৫০০", duration: "৩-৪ দিন" },
 ];
 
-const LABS = [
-  {
-    id: "1",
-    name: "বাংলাদেশ কৃষি গবেষণা ইনস্টিটিউট",
-    location: "গাজীপুর",
-    rating: 4.9,
-    tests: ["soil", "water", "crop", "seed"],
-    accredited: true,
-  },
-  {
-    id: "2",
-    name: "মৃত্তিকা গবেষণা উন্নয়ন ইনস্টিটিউট",
-    location: "ঢাকা",
-    rating: 4.8,
-    tests: ["soil", "water", "fertilizer"],
-    accredited: true,
-  },
-  {
-    id: "3",
-    name: "বিএসটিআই ল্যাব",
-    location: "ঢাকা",
-    rating: 4.7,
-    tests: ["crop", "pesticide", "fertilizer"],
-    accredited: true,
-  },
-];
+const LABS: any[] = [];
 
 const MY_TESTS = [
   { id: "1", type: "মাটি পরীক্ষা", lab: "BARI", date: "১০ জানু ২০২৬", status: "completed", result: "ভালো" },
@@ -157,7 +132,7 @@ export default function QualityTestingScreen() {
                     ) : null}
                   </View>
                   <View style={styles.labTests}>
-                    {lab.tests.map((testId) => {
+                    {lab.tests.map((testId: string) => {
                       const test = TEST_TYPES.find((t) => t.id === testId);
                       return test ? (
                         <View key={testId} style={[styles.testChip, { backgroundColor: theme.primary + "15" }]}>

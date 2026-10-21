@@ -32,7 +32,6 @@ import { fetchCatalog, createCatalogItem, updateCatalogItem, deleteCatalogItem, 
 import { CatalogFormModal, FormField } from "@/components/CatalogFormModal";
 import { useAuthStore } from "@/lib/authStore";
 import { useCommunityStore, CommunityType } from "@/lib/communityStore";
-import { getProductsByCommunity, CommunityProduct } from "@/lib/communityData";
 
 import { tr, useTr } from "@/lib/tr";
 import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
@@ -83,92 +82,7 @@ export interface Product {
   };
 }
 
-const DEMO_PRODUCTS: Product[] = [
-  {
-    id: "demo_1",
-    name: "জৈব টমেটো",
-    price: 80,
-    currency: "৳",
-    unit: "কেজি",
-    seller: "সবুজ ফসল",
-    location: "গাজীপুর, বাংলাদেশ",
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400",
-    description: "কীটনাশকমুক্ত তাজা জৈব টমেটো। সালাদ এবং রান্নার জন্য উপযুক্ত।",
-    quantity: 500,
-    category: "vegetables",
-  },
-  {
-    id: "demo_2",
-    name: "তাজা স্ট্রবেরি",
-    price: 350,
-    currency: "৳",
-    unit: "কেজি",
-    seller: "বেরি ফার্মস",
-    location: "রাজশাহী, বাংলাদেশ",
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=400",
-    description: "মিষ্টি এবং রসালো স্ট্রবেরি সরাসরি আমাদের খামার থেকে।",
-    quantity: 200,
-    category: "fruits",
-  },
-  {
-    id: "demo_3",
-    name: "জৈব গম",
-    price: 45,
-    currency: "৳",
-    unit: "কেজি",
-    seller: "সোনালী ফসল",
-    location: "দিনাজপুর, বাংলাদেশ",
-    rating: 4.7,
-    image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=400",
-    description: "বেকিং এবং রান্নার জন্য প্রিমিয়াম মানের জৈব গম।",
-    quantity: 1000,
-    category: "grains",
-  },
-  {
-    id: "demo_4",
-    name: "দেশি মুরগির ডিম",
-    price: 180,
-    currency: "৳",
-    unit: "হালি",
-    seller: "মুক্ত মুরগি খামার",
-    location: "ময়মনসিংহ, বাংলাদেশ",
-    rating: 5.0,
-    image: "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400",
-    description: "স্বাস্থ্যকর দেশি মুরগির ফ্রি-রেঞ্জ ডিম।",
-    quantity: 100,
-    category: "dairy",
-  },
-  {
-    id: "demo_5",
-    name: "জৈব গাজর",
-    price: 60,
-    currency: "৳",
-    unit: "কেজি",
-    seller: "মূল ও কাণ্ড",
-    location: "বগুড়া, বাংলাদেশ",
-    rating: 4.6,
-    image: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400",
-    description: "খাস্তা জৈব গাজর স্ন্যাকিং এবং রান্নার জন্য উপযুক্ত।",
-    quantity: 300,
-    category: "vegetables",
-  },
-  {
-    id: "demo_6",
-    name: "তাজা আপেল",
-    price: 220,
-    currency: "৳",
-    unit: "কেজি",
-    seller: "বাগান উপত্যকা",
-    location: "সিলেট, বাংলাদেশ",
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400",
-    description: "আমাদের পারিবারিক বাগান থেকে সুস্বাদু আপেল।",
-    quantity: 400,
-    category: "fruits",
-  },
-];
+const DEMO_PRODUCTS: Product[] = [];
 
 export default function MarketScreen() {
   const tr = useTr();
@@ -267,50 +181,12 @@ export default function MarketScreen() {
         company: p.company,
       }));
 
-      const communityProducts = getProductsByCommunity(communityType);
-      const mappedCommunityProducts: Product[] = communityProducts.map((cp) => ({
-        id: cp.id,
-        name: cp.name,
-        price: cp.price,
-        currency: cp.currency,
-        unit: cp.unit,
-        seller: cp.seller,
-        location: cp.location,
-        rating: cp.rating,
-        image: cp.image,
-        description: cp.description,
-        quantity: cp.quantity,
-        category: cp.category,
-      }));
-
-      const allProducts = [...serverListings, ...mappedCommunityProducts, ...formattedProducts];
+      const allProducts = [...serverListings, ...formattedProducts];
       
-      if (allProducts.length > 0) {
-        setProducts(allProducts);
-      } else {
-        setProducts(DEMO_PRODUCTS);
-      }
+      setProducts(allProducts);
     } catch (error) {
       console.error("Error loading products:", error);
-      const communityProducts = getProductsByCommunity(communityType);
-      if (communityProducts.length > 0) {
-        setProducts(communityProducts.map((cp) => ({
-          id: cp.id,
-          name: cp.name,
-          price: cp.price,
-          currency: cp.currency,
-          unit: cp.unit,
-          seller: cp.seller,
-          location: cp.location,
-          rating: cp.rating,
-          image: cp.image,
-          description: cp.description,
-          quantity: cp.quantity,
-          category: cp.category,
-        })));
-      } else {
-        setProducts(DEMO_PRODUCTS);
-      }
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }

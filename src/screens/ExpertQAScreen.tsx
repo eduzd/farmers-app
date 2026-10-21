@@ -65,32 +65,7 @@ interface Question {
 const CATEGORIES = ["সব", "ফসল", "মাছ", "পোল্ট্রি", "পশুপালন", "সার ও কীটনাশক", "যন্ত্রপাতি"];
 
 
-const LIVE_SESSIONS = [
-  {
-    id: "l1",
-    title: "ধান চাষের আধুনিক পদ্ধতি",
-    expert: {
-      name: "ড. ফরিদ উদ্দিন",
-      initials: "ফ",
-      specialty: "কৃষি বিজ্ঞানী",
-    },
-    startTime: "আজ বিকাল ৪টায়",
-    participants: 156,
-    isLive: true,
-  },
-  {
-    id: "l2",
-    title: "মাছ চাষে সফলতার কৌশল",
-    expert: {
-      name: "প্রফেসর হাসান আলী",
-      initials: "হা",
-      specialty: "মৎস্য বিশেষজ্ঞ",
-    },
-    startTime: "আগামীকাল সকাল ১০টায়",
-    participants: 0,
-    isLive: false,
-  },
-];
+const LIVE_SESSIONS: any[] = [];
 
 export default function ExpertQAScreen() {
   const insets = useSafeAreaInsets();

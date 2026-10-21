@@ -93,6 +93,26 @@ export function sendText(otherId: string, content: string, clientId: string): Pr
   return request<DmMessage>("POST", `/api/dm/${enc(otherId)}/messages`, { content, clientId });
 }
 
+export interface DmReaction {
+  messageId: string;
+  userId: string;
+  emoji: string | null;
+  super: boolean;
+}
+
+/** Set (or change) my reaction on a message. `isSuper` is the tap-and-hold super reaction. */
+export function setReaction(messageId: string, emoji: string, isSuper: boolean): Promise<DmReaction> {
+  return request<DmReaction>("PUT", `/api/dm/messages/${enc(messageId)}/reaction`, { emoji, super: isSuper });
+}
+
+export function clearReaction(messageId: string): Promise<DmReaction> {
+  return request<DmReaction>("DELETE", `/api/dm/messages/${enc(messageId)}/reaction`);
+}
+
+export function fetchReactions(ids: string[]): Promise<DmReaction[]> {
+  return request<DmReaction[]>("POST", `/api/dm/reactions`, { ids });
+}
+
 export function fetchContact(otherId: string): Promise<DmContact> {
   return request<DmContact>("GET", `/api/dm/${enc(otherId)}/contact`);
 }

@@ -38,16 +38,7 @@ const CATEGORIES = [
   { id: "experts", label: "বিশেষজ্ঞ" },
 ];
 
-const MOCK_USERS: User[] = [
-  { id: "1", name: "করিম সাহেব", avatar: "https://randomuser.me/api/portraits/men/32.jpg", location: "ময়মনসিংহ", category: "crops", followers: 1234, isFollowing: false, isVerified: true },
-  { id: "2", name: "ফাতেমা বেগম", avatar: "https://randomuser.me/api/portraits/women/28.jpg", location: "রাজশাহী", category: "crops", followers: 987, isFollowing: true, isVerified: false },
-  { id: "3", name: "রহিম উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/45.jpg", location: "রংপুর", category: "livestock", followers: 2345, isFollowing: false, isVerified: true },
-  { id: "4", name: "নাজমুল হাসান", avatar: "https://randomuser.me/api/portraits/men/67.jpg", location: "সিলেট", category: "fish", followers: 1567, isFollowing: false, isVerified: false },
-  { id: "5", name: "সালমা আক্তার", avatar: "https://randomuser.me/api/portraits/women/44.jpg", location: "খুলনা", category: "poultry", followers: 876, isFollowing: true, isVerified: false },
-  { id: "6", name: "ড. আব্দুল করিম", avatar: "https://randomuser.me/api/portraits/men/55.jpg", location: "ঢাকা", category: "experts", followers: 5678, isFollowing: false, isVerified: true },
-  { id: "7", name: "রুবিনা খাতুন", avatar: "https://randomuser.me/api/portraits/women/55.jpg", location: "চট্টগ্রাম", category: "fish", followers: 654, isFollowing: false, isVerified: false },
-  { id: "8", name: "জসিম উদ্দিন", avatar: "https://randomuser.me/api/portraits/men/78.jpg", location: "কুমিল্লা", category: "crops", followers: 432, isFollowing: false, isVerified: false },
-];
+const MOCK_USERS: User[] = [];
 
 const SUGGESTED_SEARCHES = ["ধান চাষী", "মাছ চাষী", "কৃষি বিশেষজ্ঞ", "গরু খামার", "হাঁস-মুরগি"];
 

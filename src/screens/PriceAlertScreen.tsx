@@ -16,21 +16,9 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { useHeaderAddButton } from "@/components/HeaderAddButton";
 import { apiGet, apiPost, apiPut, apiDelete, isLoggedIn } from "@/lib/api";
 import { tr, useTr } from "@/lib/tr";
-const MY_ALERTS = [
-  { id: "1", product: "ধান (আমন)", condition: "উপরে", price: 1200, unit: "মণ", active: true, triggered: false },
-  { id: "2", product: "সার (ইউরিয়া)", condition: "নিচে", price: 25, unit: "কেজি", active: true, triggered: true },
-  { id: "3", product: "আলু", condition: "উপরে", price: 30, unit: "কেজি", active: false, triggered: false },
-  { id: "4", product: "পেঁয়াজ", condition: "নিচে", price: 40, unit: "কেজি", active: true, triggered: false },
-];
+const MY_ALERTS: any[] = [];
 
-const POPULAR_PRODUCTS = [
-  { name: "ধান", currentPrice: "৳১,১৫০/মণ", trend: "up", change: "+৫%" },
-  { name: "গম", currentPrice: "৳১,৮০০/মণ", trend: "down", change: "-২%" },
-  { name: "ভুট্টা", currentPrice: "৳১,০০০/মণ", trend: "up", change: "+৩%" },
-  { name: "আলু", currentPrice: "৳২৮/কেজি", trend: "stable", change: "০%" },
-  { name: "পেঁয়াজ", currentPrice: "৳৪৫/কেজি", trend: "up", change: "+১০%" },
-  { name: "টমেটো", currentPrice: "৳৬০/কেজি", trend: "down", change: "-৮%" },
-];
+const POPULAR_PRODUCTS: any[] = [];
 
 export default function PriceAlertScreen() {
   const insets = useSafeAreaInsets();

@@ -49,76 +49,7 @@ const getEndTime = (hours: number) => {
   return date.getTime();
 };
 
-const MOCK_DEALS: GroupBuyDeal[] = [
-  {
-    id: "gb1",
-    productId: "p1",
-    productName: "জৈব টমেটো - ১০০ কেজি",
-    productImage: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400",
-    sellerId: "s1",
-    sellerName: "সবুজ ফসল",
-    originalPrice: 80,
-    groupPrice: 65,
-    discountPercent: 19,
-    currency: "৳",
-    unit: "কেজি",
-    minParticipants: 10,
-    maxParticipants: 20,
-    currentParticipants: 7,
-    participants: [
-      { userId: "u1", userName: "করিম সাহেব", userInitials: "কস", quantity: 15, joinedAt: Date.now() - 24 * 3600000 },
-      { userId: "u2", userName: "ফাতেমা বেগম", userInitials: "ফব", quantity: 10, joinedAt: Date.now() - 20 * 3600000 },
-      { userId: "u3", userName: "রহিম উদ্দিন", userInitials: "রউ", quantity: 20, joinedAt: Date.now() - 18 * 3600000 },
-      { userId: "u4", userName: "নাজমুল হাসান", userInitials: "নহ", quantity: 8, joinedAt: Date.now() - 12 * 3600000 },
-      { userId: "u5", userName: "সালমা আক্তার", userInitials: "সা", quantity: 12, joinedAt: Date.now() - 8 * 3600000 },
-      { userId: "u6", userName: "আব্দুল হক", userInitials: "আহ", quantity: 5, joinedAt: Date.now() - 4 * 3600000 },
-      { userId: "u7", userName: "রুবিনা খাতুন", userInitials: "রখ", quantity: 10, joinedAt: Date.now() - 2 * 3600000 },
-    ],
-    status: "active",
-    endsAt: getEndTime(48),
-    createdAt: Date.now() - 48 * 3600000,
-  },
-  {
-    id: "gb2",
-    productId: "p2",
-    productName: "দেশি মুরগির ডিম - ৫০০ হালি",
-    productImage: "https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=400",
-    sellerId: "s2",
-    sellerName: "মুক্ত মুরগি খামার",
-    originalPrice: 180,
-    groupPrice: 150,
-    discountPercent: 17,
-    currency: "৳",
-    unit: "হালি",
-    minParticipants: 15,
-    maxParticipants: 30,
-    currentParticipants: 12,
-    participants: [],
-    status: "active",
-    endsAt: getEndTime(72),
-    createdAt: Date.now() - 24 * 3600000,
-  },
-  {
-    id: "gb3",
-    productId: "p3",
-    productName: "রুই মাছের পোনা - ৫০০০টি",
-    productImage: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400",
-    sellerId: "s3",
-    sellerName: "মৎস্য হ্যাচারি",
-    originalPrice: 5,
-    groupPrice: 4,
-    discountPercent: 20,
-    currency: "৳",
-    unit: "পিস",
-    minParticipants: 5,
-    maxParticipants: 10,
-    currentParticipants: 5,
-    participants: [],
-    status: "success",
-    endsAt: Date.now() - 24 * 3600000,
-    createdAt: Date.now() - 96 * 3600000,
-  },
-];
+const MOCK_DEALS: GroupBuyDeal[] = [];
 
 export const useGroupBuyStore = create<GroupBuyState>()(
   persist(
@@ -225,6 +156,15 @@ export const useGroupBuyStore = create<GroupBuyState>()(
     {
       name: "group-buy-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      // v2: the sample entries older versions saved on the phone are removed; real ones stay.
+      version: 2,
+      migrate: (persisted: any) => {
+        const sample = new Set(["gb1", "gb2", "gb3"]);
+        if (persisted && Array.isArray(persisted.deals)) {
+          persisted.deals = persisted.deals.filter((x: any) => !sample.has(x?.id));
+        }
+        return persisted;
+      },
     }
   )
 );

@@ -53,67 +53,7 @@ const FILTER_TABS = [
   { id: "delivered", label: "ডেলিভার করা" },
 ];
 
-const DEMO_ORDERS: VendorOrder[] = [
-  {
-    id: "ord-1",
-    customerName: "রহিম আহমেদ",
-    customerPhone: "01712345678",
-    items: [
-      { name: "ধান বীজ (BR-28)", quantity: 10, price: 120 },
-      { name: "টমেটো চারা", quantity: 5, price: 250 },
-    ],
-    total: 2450,
-    status: "pending",
-    paymentMethod: "bkash",
-    paymentStatus: "pending",
-    shippingAddress: "গ্রাম: কালিকাপুর, উপজেলা: সাভার, জেলা: ঢাকা",
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "ord-2",
-    customerName: "করিম খান",
-    customerPhone: "01898765432",
-    items: [
-      { name: "মাছের ভাসমান খাবার", quantity: 20, price: 85 },
-    ],
-    total: 1700,
-    status: "confirmed",
-    paymentMethod: "cash",
-    paymentStatus: "pending",
-    shippingAddress: "গ্রাম: বাগবাড়ি, উপজেলা: ময়মনসিংহ সদর",
-    notes: "সকালে ডেলিভারি দিতে হবে",
-    createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "ord-3",
-    customerName: "জামিল হোসেন",
-    customerPhone: "01567890123",
-    items: [
-      { name: "স্প্রে মেশিন", quantity: 1, price: 4500 },
-    ],
-    total: 4500,
-    status: "shipped",
-    paymentMethod: "nagad",
-    paymentStatus: "paid",
-    shippingAddress: "গ্রাম: পাটগ্রাম, উপজেলা: উত্তরা, ঢাকা",
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "ord-4",
-    customerName: "সালমা বেগম",
-    customerPhone: "01456789012",
-    items: [
-      { name: "ইউরিয়া সার", quantity: 50, price: 25 },
-      { name: "TSP সার", quantity: 30, price: 30 },
-    ],
-    total: 2150,
-    status: "delivered",
-    paymentMethod: "bkash",
-    paymentStatus: "paid",
-    shippingAddress: "গ্রাম: মহিষালবাড়ি, উপজেলা: গাজীপুর সদর",
-    createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
-  },
-];
+const DEMO_ORDERS: VendorOrder[] = [];
 
 export default function CompanyOrdersScreen() {
   const insets = useSafeAreaInsets();

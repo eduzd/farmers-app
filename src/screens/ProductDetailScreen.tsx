@@ -43,11 +43,7 @@ const IMAGE_HEIGHT = SCREEN_HEIGHT * 0.42;
 type ProductDetailRouteProp = RouteProp<RootStackParamList, "ProductDetail">;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const SAMPLE_IMAGES = [
-  "https://images.unsplash.com/photo-1518977676601-b53f82ber66?w=800",
-  "https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=800",
-  "https://images.unsplash.com/photo-1542838132-92c53300491e?w=800",
-];
+const SAMPLE_IMAGES: any[] = [];
 
 export default function ProductDetailScreen() {
   const tr = useTr();
@@ -136,7 +132,7 @@ export default function ProductDetailScreen() {
   const cartCount = getItemCount();
   const scrollX = useRef(new Animated.Value(0)).current;
 
-  const productImages = (product as any).images?.length ? (product as any).images : [product.image, ...SAMPLE_IMAGES.slice(0, 2)];
+  const productImages = (product as any).images?.length ? (product as any).images : [product.image].filter(Boolean);
 
   const handleAddToCart = () => {
     if (outOfStock) return;

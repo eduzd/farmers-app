@@ -120,18 +120,8 @@ export default function DiseaseDetectorScreen() {
       );
     } catch (error) {
       setAnalysisResult(
-        "Note: Can't reach the AI server right now, so this is general guidance.\n\n" +
-        "AI Disease Analysis:\n\nBased on the image provided, here are potential observations:\n\n" +
-        "1. Visual Assessment: The sample appears to show signs that may require further examination.\n\n" +
-        "2. Recommendations:\n" +
-        "   - Consult with a local agricultural expert for precise diagnosis\n" +
-        "   - Monitor the affected area for changes over the next few days\n" +
-        "   - Consider taking samples to your nearest agricultural extension office\n\n" +
-        "3. General Tips:\n" +
-        "   - Ensure proper drainage and soil health\n" +
-        "   - Maintain appropriate spacing between plants\n" +
-        "   - Use disease-resistant varieties when possible\n\n" +
-        "Note: This is an AI-assisted preliminary analysis. Always verify with agricultural professionals for accurate diagnosis and treatment."
+        "Couldn't analyse this photo: the AI server can't be reached right now. " +
+          "Check your internet connection and try again in a minute."
       );
     } finally {
       setIsAnalyzing(false);

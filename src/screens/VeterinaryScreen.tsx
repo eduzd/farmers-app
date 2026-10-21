@@ -18,52 +18,7 @@ const VET_CATEGORIES = [
   { id: "fish", label: "মাছ", icon: "anchor" },
 ];
 
-const VETS = [
-  {
-    id: "1",
-    name: "ডা. আব্দুর রহমান",
-    specialty: "বড় প্রাণী বিশেষজ্ঞ",
-    rating: 4.9,
-    experience: "১৫ বছর",
-    location: "ঢাকা",
-    available: true,
-    fee: "৳৫০০",
-    phone: "+8801712345678",
-  },
-  {
-    id: "2",
-    name: "ডা. ফাতেমা খাতুন",
-    specialty: "পোল্ট্রি বিশেষজ্ঞ",
-    rating: 4.8,
-    experience: "১০ বছর",
-    location: "চট্টগ্রাম",
-    available: true,
-    fee: "৳৪০০",
-    phone: "+8801812345678",
-  },
-  {
-    id: "3",
-    name: "ডা. মোঃ করিম",
-    specialty: "মৎস্য রোগ বিশেষজ্ঞ",
-    rating: 4.7,
-    experience: "১২ বছর",
-    location: "খুলনা",
-    available: false,
-    fee: "৳৪৫০",
-    phone: "+8801912345678",
-  },
-  {
-    id: "4",
-    name: "ডা. সালমা আক্তার",
-    specialty: "ছাগল-ভেড়া বিশেষজ্ঞ",
-    rating: 4.9,
-    experience: "৮ বছর",
-    location: "রাজশাহী",
-    available: true,
-    fee: "৳৩৫০",
-    phone: "+8801612345678",
-  },
-];
+const VETS: any[] = [];
 
 const EMERGENCY_SERVICES = [
   { title: "জরুরি হটলাইন", number: "16263", icon: "phone-call", color: "#DC2626" },

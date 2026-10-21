@@ -50,53 +50,7 @@ const getEndTime = (hours: number) => {
   return date;
 };
 
-const AUCTIONS: AuctionItem[] = [
-  {
-    id: "1",
-    name: "বিশেষ জাতের আম গাছ - ল্যাংড়া",
-    image: "https://images.unsplash.com/photo-1553279768-865429fa0078?w=400",
-    currentBid: 8500,
-    startingPrice: 5000,
-    bidCount: 23,
-    seller: "রাজশাহী নার্সারি",
-    endsAt: getEndTime(2),
-    topBidder: "করিম মিয়া",
-  },
-  {
-    id: "2",
-    name: "হাইব্রিড দেশি মুরগি - ২০টি",
-    image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400",
-    currentBid: 12000,
-    startingPrice: 8000,
-    bidCount: 45,
-    seller: "পোল্ট্রি ফার্ম ঢাকা",
-    endsAt: getEndTime(5),
-    topBidder: "রহিম আহমেদ",
-    myBid: 11500,
-  },
-  {
-    id: "3",
-    name: "ট্র্যাক্টর - মিতসুবিশি ১৮HP",
-    image: "https://images.unsplash.com/photo-1530267981375-f0de937f5f13?w=400",
-    currentBid: 185000,
-    startingPrice: 150000,
-    bidCount: 12,
-    seller: "কৃষি যন্ত্রপাতি হাউজ",
-    endsAt: getEndTime(24),
-    topBidder: "জালাল উদ্দিন",
-  },
-  {
-    id: "4",
-    name: "রুই মাছের পোনা - ১০০০টি",
-    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400",
-    currentBid: 3500,
-    startingPrice: 2500,
-    bidCount: 18,
-    seller: "মৎস্য হ্যাচারি",
-    endsAt: getEndTime(8),
-    topBidder: "সেলিম বিশ্বাস",
-  },
-];
+const AUCTIONS: AuctionItem[] = [];
 
 function CountdownTimer({ endsAt, theme }: { endsAt: Date; theme: any }) {
   const tr = useTr();

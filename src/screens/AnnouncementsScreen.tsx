@@ -26,62 +26,7 @@ interface Announcement {
   isPinned: boolean;
 }
 
-const MOCK_ANNOUNCEMENTS: Announcement[] = [
-  {
-    id: "1",
-    title: "নতুন ফিচার: ভয়েস রুম",
-    content: "এখন থেকে লাইভ অডিও আলোচনায় অংশ নিতে পারবেন। ভয়েস রুমে যোগ দিন এবং অন্যান্য কৃষকদের সাথে অভিজ্ঞতা শেয়ার করুন।",
-    type: "success",
-    date: new Date(Date.now() - 2 * 3600000),
-    isRead: false,
-    isPinned: true,
-  },
-  {
-    id: "2",
-    title: "জরুরি: ধান ব্লাস্ট রোগের সতর্কতা",
-    content: "বর্তমান আবহাওয়ায় ধান ব্লাস্ট রোগ ছড়িয়ে পড়তে পারে। সতর্ক থাকুন এবং প্রতিরোধমূলক ব্যবস্থা নিন। বিস্তারিত জানতে AI সহায়ক ব্যবহার করুন।",
-    type: "urgent",
-    date: new Date(Date.now() - 1 * 24 * 3600000),
-    isRead: false,
-    isPinned: true,
-  },
-  {
-    id: "3",
-    title: "কৃষি ভর্তুকি আবেদনের সময়সীমা",
-    content: "সরকারি কৃষি ভর্তুকির জন্য আবেদনের শেষ তারিখ ৩১ জানুয়ারি। এখনই আবেদন করুন সরকারি প্রকল্প সেকশন থেকে।",
-    type: "warning",
-    date: new Date(Date.now() - 2 * 24 * 3600000),
-    isRead: true,
-    isPinned: false,
-  },
-  {
-    id: "4",
-    title: "মাসিক কৃষি মেলা আগামী সপ্তাহে",
-    content: "ময়মনসিংহে আগামী শনিবার বড় কৃষি মেলা অনুষ্ঠিত হবে। বিভিন্ন কৃষি যন্ত্রপাতি ও বীজ প্রদর্শনী থাকবে।",
-    type: "info",
-    date: new Date(Date.now() - 3 * 24 * 3600000),
-    isRead: true,
-    isPinned: false,
-  },
-  {
-    id: "5",
-    title: "নতুন বিশেষজ্ঞ যোগ হয়েছেন",
-    content: "ড. আব্দুল করিম (মৎস্য বিশেষজ্ঞ) আমাদের প্ল্যাটফর্মে যোগ দিয়েছেন। এখন থেকে মাছ চাষ সংক্রান্ত প্রশ্ন করতে পারবেন।",
-    type: "success",
-    date: new Date(Date.now() - 5 * 24 * 3600000),
-    isRead: true,
-    isPinned: false,
-  },
-  {
-    id: "6",
-    title: "অ্যাপ আপডেট v2.5",
-    content: "নতুন আপডেটে যোগ হয়েছে: ফার্ম ডায়েরি, বীজ খুঁজুন, ঋণ ক্যালকুলেটর এবং আরও অনেক ফিচার। এখনই আপডেট করুন।",
-    type: "info",
-    date: new Date(Date.now() - 7 * 24 * 3600000),
-    isRead: true,
-    isPinned: false,
-  },
-];
+const MOCK_ANNOUNCEMENTS: Announcement[] = [];
 
 const getTypeConfig = (type: string) => {
   const configs: Record<string, { color: string; icon: keyof typeof Feather.glyphMap; bgColor: string }> = {

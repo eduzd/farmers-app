@@ -12,34 +12,13 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 
 const { width } = Dimensions.get("window");
 
-const STATS = [
-  { id: "production", label: "উৎপাদন", value: "১২.৫ টন", change: "+১৫%", icon: "trending-up", color: "#16A34A" },
-  { id: "revenue", label: "আয়", value: "৳২,৫০,০০০", change: "+২২%", icon: "dollar-sign", color: "#2563EB" },
-  { id: "cost", label: "খরচ", value: "৳৮৫,০০০", change: "-৫%", icon: "minus-circle", color: "#EA8A0C" },
-  { id: "profit", label: "লাভ", value: "৳১,৬৫,০০০", change: "+২৮%", icon: "plus-circle", color: "#7C3AED" },
-];
+const STATS: any[] = [];
 
-const CROPS = [
-  { name: "ধান", production: 85, color: "#16A34A" },
-  { name: "গম", production: 60, color: "#2563EB" },
-  { name: "ভুট্টা", production: 45, color: "#EA8A0C" },
-  { name: "সবজি", production: 72, color: "#7C3AED" },
-];
+const CROPS: any[] = [];
 
-const MONTHLY_DATA = [
-  { month: "জানু", value: 45 },
-  { month: "ফেব্রু", value: 55 },
-  { month: "মার্চ", value: 62 },
-  { month: "এপ্রিল", value: 78 },
-  { month: "মে", value: 85 },
-  { month: "জুন", value: 72 },
-];
+const MONTHLY_DATA: any[] = [];
 
-const INSIGHTS = [
-  { title: "সর্বোচ্চ উৎপাদন", value: "এপ্রিল মাসে", icon: "award" },
-  { title: "সেরা ফসল", value: "ধান (৮৫%)", icon: "star" },
-  { title: "গড় লাভ", value: "৳৩২,০০০/মাস", icon: "bar-chart" },
-];
+const INSIGHTS: any[] = [];
 
 export default function FarmAnalyticsScreen() {
   const insets = useSafeAreaInsets();

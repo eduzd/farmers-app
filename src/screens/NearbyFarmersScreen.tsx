@@ -43,56 +43,7 @@ interface Shop {
   phone: string;
 }
 
-const FARMERS: Farmer[] = [
-  {
-    id: "1",
-    name: "করিম উদ্দিন",
-    initials: "ক",
-    specialty: "ধান ও সবজি চাষী",
-    distance: "১.২ কিমি",
-    rating: 4.8,
-    reviews: 45,
-    phone: "01712345678",
-    products: ["ধান", "টমেটো", "বেগুন"],
-    verified: true,
-  },
-  {
-    id: "2",
-    name: "রহিম মিয়া",
-    initials: "র",
-    specialty: "মাছ চাষী",
-    distance: "২.৫ কিমি",
-    rating: 4.5,
-    reviews: 32,
-    phone: "01812345678",
-    products: ["রুই", "তেলাপিয়া", "কাতলা"],
-    verified: true,
-  },
-  {
-    id: "3",
-    name: "ফাতেমা বেগম",
-    initials: "ফা",
-    specialty: "পোল্ট্রি ফার্মার",
-    distance: "৩.১ কিমি",
-    rating: 4.9,
-    reviews: 67,
-    phone: "01912345678",
-    products: ["মুরগি", "ডিম", "হাঁস"],
-    verified: false,
-  },
-  {
-    id: "4",
-    name: "জালাল উদ্দিন",
-    initials: "জা",
-    specialty: "ফল চাষী",
-    distance: "৪.০ কিমি",
-    rating: 4.6,
-    reviews: 28,
-    phone: "01612345678",
-    products: ["আম", "লিচু", "কাঁঠাল"],
-    verified: true,
-  },
-];
+const FARMERS: Farmer[] = [];
 
 const SHOPS: Shop[] = [
   {

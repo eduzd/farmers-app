@@ -40,36 +40,7 @@ interface GroupPost {
   createdAt: string;
 }
 
-const SAMPLE_POSTS: GroupPost[] = [
-  {
-    id: "1",
-    author: { name: "করিম উদ্দিন", initials: "ক" },
-    content: "এই বছর বোরো ধানের ফলন অনেক ভালো হয়েছে। সবাইকে ধন্যবাদ পরামর্শের জন্য!",
-    image: "https://images.unsplash.com/photo-1536617621572-1d5f1e6269a0?w=600",
-    likes: 45,
-    comments: 12,
-    isLiked: false,
-    createdAt: "২ ঘণ্টা আগে",
-  },
-  {
-    id: "2",
-    author: { name: "রহিম মিয়া", initials: "র" },
-    content: "ধানের পাতা হলুদ হয়ে যাচ্ছে। কেউ কি বলতে পারবেন কী সমস্যা হতে পারে?",
-    likes: 23,
-    comments: 18,
-    isLiked: true,
-    createdAt: "৫ ঘণ্টা আগে",
-  },
-  {
-    id: "3",
-    author: { name: "ফাতেমা বেগম", initials: "ফা" },
-    content: "নতুন জাতের বীজ পেয়েছি কৃষি অফিস থেকে। এবার চাষ করে দেখব ফলন কেমন হয়।",
-    likes: 67,
-    comments: 8,
-    isLiked: false,
-    createdAt: "গতকাল",
-  },
-];
+const SAMPLE_POSTS: GroupPost[] = [];
 
 export default function GroupDetailScreen() {
   const insets = useSafeAreaInsets();

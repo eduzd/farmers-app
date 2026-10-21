@@ -20,85 +20,9 @@ const WASTE_TYPES = [
   { id: "hazard", label: "ক্ষতিকর", icon: "alert-triangle" },
 ];
 
-const SERVICES = [
-  {
-    id: "1",
-    name: "ঢাকা রিসাইক্লিং সেন্টার",
-    type: "রিসাইক্লিং",
-    location: "মিরপুর, ঢাকা",
-    distance: "৫ কি.মি.",
-    accepts: ["প্লাস্টিক", "কাগজ", "ধাতু"],
-    rating: 4.7,
-    phone: "+8801712345678",
-    buyPrice: "প্লাস্টিক ৳২০/কেজি",
-  },
-  {
-    id: "2",
-    name: "গ্রিন এনভায়রনমেন্ট",
-    type: "জৈব সার উৎপাদন",
-    location: "সাভার, ঢাকা",
-    distance: "১২ কি.মি.",
-    accepts: ["জৈব বর্জ্য", "কৃষি বর্জ্য"],
-    rating: 4.8,
-    phone: "+8801812345678",
-    buyPrice: "জৈব বর্জ্য ৳১৫/কেজি",
-  },
-  {
-    id: "3",
-    name: "ই-ওয়েস্ট সলিউশন",
-    type: "ই-বর্জ্য সংগ্রহ",
-    location: "উত্তরা, ঢাকা",
-    distance: "৮ কি.মি.",
-    accepts: ["মোবাইল", "কম্পিউটার", "ব্যাটারি"],
-    rating: 4.6,
-    phone: "+8801912345678",
-    buyPrice: "ব্যাটারি ৳৫০/কেজি",
-  },
-];
+const SERVICES: any[] = [];
 
-const DISCUSSIONS = [
-  {
-    id: "1",
-    author: "আকবর হোসেন",
-    title: "প্লাস্টিক বোতল কোথায় বিক্রি করব?",
-    content: "আমার কাছে অনেক প্লাস্টিক বোতল জমা হয়েছে। কোথায় ভালো দাম পাব?",
-    replies: 15,
-    likes: 32,
-    time: "৩ ঘণ্টা আগে",
-    tags: ["প্লাস্টিক", "রিসাইক্লিং"],
-  },
-  {
-    id: "2",
-    author: "ফাতেমা খাতুন",
-    title: "জৈব সার তৈরি করব কীভাবে?",
-    content: "বাড়িতে রান্নাঘরের বর্জ্য থেকে কীভাবে জৈব সার বানাব? কেউ কি জানেন?",
-    replies: 28,
-    likes: 67,
-    time: "৬ ঘণ্টা আগে",
-    tags: ["জৈব সার", "কম্পোস্ট"],
-    solved: true,
-  },
-  {
-    id: "3",
-    author: "রহিম মিয়া",
-    title: "ধানের খড় দিয়ে কী করব?",
-    content: "প্রতি বছর অনেক ধানের খড় জমা হয়। পোড়ানো ছাড়া কোনো উপায় আছে?",
-    replies: 22,
-    likes: 45,
-    time: "১ দিন আগে",
-    tags: ["কৃষি বর্জ্য", "খড়"],
-  },
-  {
-    id: "4",
-    author: "করিম উদ্দিন",
-    title: "পুরনো মোবাইল বিক্রি করার জায়গা",
-    content: "কয়েকটা পুরনো মোবাইল আছে। কোথায় বিক্রি করতে পারি?",
-    replies: 10,
-    likes: 18,
-    time: "২ দিন আগে",
-    tags: ["ই-বর্জ্য", "মোবাইল"],
-  },
-];
+const DISCUSSIONS: any[] = [];
 
 const TIPS = [
   { title: "প্লাস্টিক কমান", desc: "কাপড়ের ব্যাগ ব্যবহার করুন", icon: "shopping-bag", color: "#2563EB" },
@@ -220,7 +144,7 @@ export default function WasteManagementScreen() {
 
                   <View style={styles.acceptsRow}>
                     <ThemedText style={[styles.acceptsLabel, { color: theme.textSecondary }]}>গ্রহণ করে:</ThemedText>
-                    {service.accepts.map((item, i) => (
+                    {service.accepts.map((item: string, i: number) => (
                       <View key={i} style={[styles.acceptChip, { backgroundColor: theme.primary + "15" }]}>
                         <ThemedText style={[styles.acceptText, { color: theme.primary }]}>{item}</ThemedText>
                       </View>
@@ -275,7 +199,7 @@ export default function WasteManagementScreen() {
                     {discussion.content}
                   </ThemedText>
                   <View style={styles.tagsRow}>
-                    {discussion.tags.map((tag, i) => (
+                    {discussion.tags.map((tag: string, i: number) => (
                       <View key={i} style={[styles.tag, { backgroundColor: "#16A34A20" }]}>
                         <ThemedText style={[styles.tagText, { color: "#16A34A" }]}>{tag}</ThemedText>
                       </View>

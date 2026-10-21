@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -14,6 +14,8 @@ import {
   ActivityIndicator,
   AppState,
   Linking,
+  Animated as RNAnimated,
+  Text,
 } from "react-native";
 import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import Animated from "react-native-reanimated";
@@ -34,6 +36,9 @@ import * as Clipboard from "expo-clipboard";
 import { useAuthStore } from "@/lib/authStore";
 import {
   fetchMessages,
+  fetchReactions,
+  setReaction as saveReaction,
+  clearReaction,
   sendText,
   sendVoice,
   fetchContact,
@@ -63,6 +68,7 @@ interface Message {
   imageUri?: string;
   replyTo?: { id: string; text: string; isMe: boolean };
   reactions?: string[];
+  superReact?: boolean;
   seen?: boolean;
   createdAt?: string; // server time; missing while my message is still sending
   clientId?: string;
@@ -105,6 +111,10 @@ export default function ChatScreen() {
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
+  // messageId -> userId -> reaction, as stored on the server (both people see them)
+  const [reactionMap, setReactionMap] = useState<Record<string, Record<string, { emoji: string; super: boolean }>>>({});
+  const [superBurst, setSuperBurst] = useState<string | null>(null);
+  const burstAnim = useRef(new RNAnimated.Value(0)).current;
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showMediaMenu, setShowMediaMenu] = useState(false);
   const [calling, setCalling] = useState(false);
@@ -399,22 +409,47 @@ export default function ChatScreen() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const myUserId = authUser?.id ? String(authUser.id) : "me";
+
+  /** Apply my reaction locally at once, then save it so the other person sees it too. */
+  const reactTo = useCallback(
+    (message: Message, emoji: string, isSuper: boolean) => {
+      const current = reactionMap[message.id]?.[myUserId];
+      const removing = !isSuper && current?.emoji === emoji && !current.super;
+      setReactionMap((prev) => {
+        const forMsg = { ...(prev[message.id] || {}) };
+        if (removing) delete forMsg[myUserId];
+        else forMsg[myUserId] = { emoji, super: isSuper };
+        return { ...prev, [message.id]: forMsg };
+      });
+      if (isSuper) {
+        setSuperBurst(emoji);
+        burstAnim.setValue(0);
+        RNAnimated.sequence([
+          RNAnimated.spring(burstAnim, { toValue: 1, friction: 4, tension: 80, useNativeDriver: true }),
+          RNAnimated.delay(450),
+          RNAnimated.timing(burstAnim, { toValue: 0, duration: 220, useNativeDriver: true }),
+        ]).start(() => setSuperBurst(null));
+      }
+      // Only messages already on the server can carry a shared reaction.
+      if (mode === "live" && message.status === "sent") {
+        const call = removing ? clearReaction(message.id) : saveReaction(message.id, emoji, isSuper);
+        call.catch(() => {});
+      }
+    },
+    [reactionMap, myUserId, mode, burstAnim],
+  );
+
   const handleDoubleTap = useCallback((message: Message) => {
     const now = Date.now();
     if (lastTapRef.current && lastTapRef.current.id === message.id && now - lastTapRef.current.time < 300) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === message.id
-            ? { ...m, reactions: m.reactions?.[0] === "❤️" ? [] : ["❤️"] }
-            : m
-        )
-      );
+      reactTo(message, "❤️", false);
       lastTapRef.current = null;
     } else {
       lastTapRef.current = { id: message.id, time: now };
     }
-  }, []);
+  }, [reactTo]);
 
   const handleLongPress = (message: Message) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -422,22 +457,54 @@ export default function ChatScreen() {
     setShowReactionPicker(true);
   };
 
-  const handleReaction = (reaction: string) => {
+  const handleReaction = (reaction: string, isSuper = false) => {
     if (!selectedMessage) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.id === selectedMessage.id
-          ? {
-              ...m,
-              reactions: m.reactions?.[0] === reaction ? [] : [reaction],
-            }
-          : m
-      )
-    );
+    Haptics.impactAsync(isSuper ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Light);
+    reactTo(selectedMessage, reaction, isSuper);
     setShowReactionPicker(false);
     setSelectedMessage(null);
   };
+
+  // Load reactions for the messages on screen, and refresh them while the chat is open.
+  const serverIdsKey = messages
+    .filter((m) => m.status === "sent")
+    .slice(0, 200)
+    .map((m) => m.id)
+    .join(",");
+  useEffect(() => {
+    if (mode !== "live" || !serverIdsKey) return;
+    let alive = true;
+    const load = () => {
+      fetchReactions(serverIdsKey.split(","))
+        .then((list) => {
+          if (!alive) return;
+          const next: Record<string, Record<string, { emoji: string; super: boolean }>> = {};
+          for (const r of list) {
+            if (!r.emoji) continue;
+            (next[r.messageId] ||= {})[r.userId] = { emoji: r.emoji, super: r.super };
+          }
+          setReactionMap(next);
+        })
+        .catch(() => {});
+    };
+    load();
+    const t = setInterval(load, 5000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [mode, serverIdsKey]);
+
+  const shownMessages = useMemo(
+    () =>
+      messages.map((m) => {
+        const r = reactionMap[m.id];
+        if (!r) return m.reactions?.length ? { ...m, reactions: [] } : m;
+        const list = Object.values(r);
+        return { ...m, reactions: [...new Set(list.map((x) => x.emoji))], superReact: list.some((x) => x.super) };
+      }),
+    [messages, reactionMap],
+  );
 
   const handleReply = () => {
     if (!selectedMessage) return;
@@ -612,9 +679,9 @@ export default function ChatScreen() {
                   />
                 </View>
                 {item.reactions && item.reactions.length > 0 ? (
-                  <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight]}>
+                  <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                     {item.reactions.map((r, i) => (
-                      <ThemedText key={i} style={styles.reactionEmoji}>{r}</ThemedText>
+                      <ThemedText key={i} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                     ))}
                   </View>
                 ) : null}
@@ -663,9 +730,9 @@ export default function ChatScreen() {
                   />
                 </Pressable>
                 {item.reactions && item.reactions.length > 0 ? (
-                  <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight]}>
+                  <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                     {item.reactions.map((r, i) => (
-                      <ThemedText key={i} style={styles.reactionEmoji}>{r}</ThemedText>
+                      <ThemedText key={i} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                     ))}
                   </View>
                 ) : null}
@@ -727,9 +794,9 @@ export default function ChatScreen() {
                 </ThemedText>
               </View>
               {item.reactions && item.reactions.length > 0 ? (
-                <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight]}>
+                <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                   {item.reactions.map((r, i) => (
-                    <ThemedText key={i} style={styles.reactionEmoji}>{r}</ThemedText>
+                    <ThemedText key={i} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                   ))}
                 </View>
               ) : null}
@@ -823,7 +890,7 @@ export default function ChatScreen() {
 
       <FlatList
         ref={flatListRef}
-        data={messages}
+        data={shownMessages}
         keyExtractor={(item) => item.id}
         renderItem={renderMessage}
         inverted={messages.length > 0}
@@ -990,14 +1057,21 @@ export default function ChatScreen() {
             <View style={styles.reactionBarWrapper}>
               <View style={[styles.reactionBar, { backgroundColor: theme.white }]}>
                 {REACTIONS.map((reaction) => (
-                  <Pressable key={reaction} style={styles.reactionItem} onPress={() => handleReaction(reaction)}>
-                    <ThemedText style={styles.reactionItemText}>{reaction}</ThemedText>
+                  <Pressable
+                    key={reaction}
+                    style={({ pressed }) => [styles.reactionItem, pressed && styles.reactionItemPressed]}
+                    onPress={() => handleReaction(reaction)}
+                    onLongPress={() => handleReaction(reaction, true)}
+                    delayLongPress={350}
+                    accessibilityRole="button"
+                    accessibilityLabel={`React ${reaction}`}
+                    accessibilityHint="Hold for a super reaction"
+                    testID={`reaction-${reaction}`}
+                  >
+                    <Text style={styles.reactionItemText} allowFontScaling={false}>{reaction}</Text>
                   </Pressable>
                 ))}
               </View>
-              <ThemedText style={[styles.reactionHint, { color: theme.textSecondary }]}>
-                {tr("Tap and hold to super react")}
-              </ThemedText>
             </View>
 
             <View style={[styles.messageActionsMenu, { backgroundColor: theme.white }]}>
@@ -1033,6 +1107,26 @@ export default function ChatScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      {superBurst ? (
+        <View pointerEvents="none" style={styles.superBurstWrap}>
+          <RNAnimated.Text
+            allowFontScaling={false}
+            style={[
+              styles.superBurstEmoji,
+              {
+                opacity: burstAnim,
+                transform: [
+                  { scale: burstAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) },
+                  { translateY: burstAnim.interpolate({ inputRange: [0, 1], outputRange: [40, 0] }) },
+                ],
+              },
+            ]}
+          >
+            {superBurst}
+          </RNAnimated.Text>
+        </View>
+      ) : null}
 
       <Modal visible={showMediaMenu} transparent animationType="fade" onRequestClose={() => setShowMediaMenu(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowMediaMenu(false)}>
@@ -1204,7 +1298,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   bubbleWithReaction: {
-    marginBottom: 10,
+    marginBottom: 14,
   },
   myMessage: {
     alignSelf: "flex-end",
@@ -1266,12 +1360,14 @@ const styles = StyleSheet.create({
   },
   reactionsContainer: {
     position: "absolute",
-    bottom: -6,
+    bottom: -8,
     left: 6,
+    flexDirection: "row",
     backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    width: 20,
-    height: 20,
+    borderRadius: 11,
+    minWidth: 22,
+    height: 22,
+    paddingHorizontal: 3,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -1287,6 +1383,18 @@ const styles = StyleSheet.create({
   },
   reactionEmoji: {
     fontSize: 12,
+    lineHeight: 16,
+    includeFontPadding: false,
+  },
+  reactionsSuper: {
+    height: 30,
+    minWidth: 30,
+    borderRadius: 15,
+    bottom: -12,
+  },
+  reactionEmojiSuper: {
+    fontSize: 18,
+    lineHeight: 24,
   },
   voiceMessageBubble: {
     flexDirection: "row",
@@ -1429,8 +1537,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   instagramReactionContainer: {
-    width: "85%",
-    maxWidth: 320,
+    width: "72%",
+    maxWidth: 280,
     alignItems: "center",
   },
   reactionBarWrapper: {
@@ -1439,8 +1547,9 @@ const styles = StyleSheet.create({
   },
   reactionBar: {
     flexDirection: "row",
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    alignItems: "center",
+    paddingHorizontal: 6,
+    paddingVertical: 4,
     borderRadius: BorderRadius.full,
     gap: 2,
     shadowColor: "#000",
@@ -1450,10 +1559,31 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   reactionItem: {
-    padding: 4,
+    width: 40,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 22,
+  },
+  reactionItemPressed: {
+    transform: [{ scale: 1.25 }],
   },
   reactionItemText: {
     fontSize: 26,
+    lineHeight: 34,
+    textAlign: "center",
+    includeFontPadding: false,
+  },
+  superBurstWrap: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  superBurstEmoji: {
+    fontSize: 110,
+    lineHeight: 130,
+    textAlign: "center",
+    includeFontPadding: false,
   },
   reactionHint: {
     fontSize: 12,

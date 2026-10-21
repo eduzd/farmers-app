@@ -59,37 +59,7 @@ const generateInvoiceNumber = (): string => {
   return `INV-${year}${month}-${random}`;
 };
 
-const MOCK_INVOICES: Invoice[] = [
-  {
-    id: "inv1",
-    invoiceNumber: "INV-2601-0001",
-    orderId: "o1",
-    sellerId: "seller1",
-    sellerName: "সবুজ ফসল",
-    sellerAddress: "১২৩, গ্রিন ভিলেজ, গাজীপুর",
-    sellerPhone: "০১৭১২-১১১১১১",
-    sellerEmail: "info@sobujfosol.com",
-    buyerId: "buyer1",
-    buyerName: "করিম সাহেব",
-    buyerAddress: "৪৫৬, শান্তিনগর, ঢাকা",
-    buyerPhone: "০১৮১২-২২২২২২",
-    items: [
-      { id: "i1", name: "জৈব টমেটো", quantity: 10, unit: "কেজি", unitPrice: 80, total: 800 },
-      { id: "i2", name: "জৈব গাজর", quantity: 5, unit: "কেজি", unitPrice: 60, total: 300 },
-    ],
-    subtotal: 1100,
-    discount: 110,
-    discountPercent: 10,
-    tax: 0,
-    taxPercent: 0,
-    shippingCost: 50,
-    total: 1040,
-    currency: "৳",
-    notes: "ধন্যবাদ আপনার ক্রয়ের জন্য!",
-    paymentStatus: "paid",
-    createdAt: Date.now() - 7 * 24 * 3600000,
-  },
-];
+const MOCK_INVOICES: Invoice[] = [];
 
 export const useInvoiceStore = create<InvoiceState>()(
   persist(
@@ -138,6 +108,15 @@ export const useInvoiceStore = create<InvoiceState>()(
     {
       name: "invoice-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      // v2: the sample entries older versions saved on the phone are removed; real ones stay.
+      version: 2,
+      migrate: (persisted: any) => {
+        const sample = new Set(["inv1"]);
+        if (persisted && Array.isArray(persisted.invoices)) {
+          persisted.invoices = persisted.invoices.filter((x: any) => !sample.has(x?.id));
+        }
+        return persisted;
+      },
     }
   )
 );

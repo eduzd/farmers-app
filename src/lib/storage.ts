@@ -421,9 +421,18 @@ export const getCompanyChats = async (companyId: string): Promise<CompanyChat[]>
   return data ? JSON.parse(data) : [];
 };
 
+// Older versions saved sample shops (owner "owner-1", "owner-2", ...). They are not real
+// sellers, so they are dropped here and removed from the phone the first time this runs.
+const isSampleCompany = (c: Company) => /^owner-/.test(String((c as any)?.ownerId || ""));
+
 export const getAllCompanies = async (): Promise<Company[]> => {
   const data = await AsyncStorage.getItem(STORAGE_KEYS.ALL_COMPANIES);
-  return data ? JSON.parse(data) : [];
+  const all: Company[] = data ? JSON.parse(data) : [];
+  const real = all.filter((c) => !isSampleCompany(c));
+  if (real.length !== all.length) {
+    await AsyncStorage.setItem(STORAGE_KEYS.ALL_COMPANIES, JSON.stringify(real));
+  }
+  return real;
 };
 
 export const saveAllCompanies = async (companies: Company[]): Promise<void> => {

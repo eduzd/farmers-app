@@ -55,60 +55,7 @@ interface ProductReviewState {
   canUserReview: (productId: string, userId: string) => boolean;
 }
 
-const MOCK_REVIEWS: ProductReview[] = [
-  {
-    id: "r1",
-    productId: "demo_1",
-    userId: "u1",
-    userName: "করিম সাহেব",
-    userInitials: "কস",
-    isVerifiedPurchase: true,
-    rating: 5,
-    title: "চমৎকার মানের টমেটো!",
-    content: "অনেক তাজা এবং সুস্বাদু। পরিবারের সবাই খুব পছন্দ করেছে। আবার অর্ডার করব।",
-    images: ["https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=200"],
-    helpfulCount: 24,
-    notHelpfulCount: 2,
-    createdAt: Date.now() - 7 * 24 * 3600000,
-    updatedAt: Date.now() - 7 * 24 * 3600000,
-    sellerReply: {
-      content: "ধন্যবাদ আপনার সুন্দর রিভিউর জন্য! আমরা সবসময় সেরা মানের পণ্য দেওয়ার চেষ্টা করি।",
-      repliedAt: Date.now() - 6 * 24 * 3600000,
-    },
-  },
-  {
-    id: "r2",
-    productId: "demo_1",
-    userId: "u2",
-    userName: "ফাতেমা বেগম",
-    userInitials: "ফব",
-    isVerifiedPurchase: true,
-    rating: 4,
-    title: "ভালো, কিন্তু দাম একটু বেশি",
-    content: "টমেটোর মান ভালো, কিন্তু দাম স্থানীয় বাজারের চেয়ে একটু বেশি। তবে জৈব হওয়ায় এটা গ্রহণযোগ্য।",
-    images: [],
-    helpfulCount: 12,
-    notHelpfulCount: 3,
-    createdAt: Date.now() - 14 * 24 * 3600000,
-    updatedAt: Date.now() - 14 * 24 * 3600000,
-  },
-  {
-    id: "r3",
-    productId: "demo_1",
-    userId: "u3",
-    userName: "রহিম উদ্দিন",
-    userInitials: "রউ",
-    isVerifiedPurchase: false,
-    rating: 3,
-    title: "মোটামুটি",
-    content: "আশা করেছিলাম আরো ভালো হবে। কিছু টমেটো একটু পাকা ছিল।",
-    images: [],
-    helpfulCount: 5,
-    notHelpfulCount: 8,
-    createdAt: Date.now() - 21 * 24 * 3600000,
-    updatedAt: Date.now() - 21 * 24 * 3600000,
-  },
-];
+const MOCK_REVIEWS: ProductReview[] = [];
 
 export const useProductReviewStore = create<ProductReviewState>()(
   persist(
@@ -242,6 +189,15 @@ export const useProductReviewStore = create<ProductReviewState>()(
     {
       name: "product-review-storage",
       storage: createJSONStorage(() => AsyncStorage),
+      // v2: the sample entries older versions saved on the phone are removed; real ones stay.
+      version: 2,
+      migrate: (persisted: any) => {
+        const sample = new Set(["r1", "r2", "r3"]);
+        if (persisted && Array.isArray(persisted.reviews)) {
+          persisted.reviews = persisted.reviews.filter((x: any) => !sample.has(x?.id));
+        }
+        return persisted;
+      },
     }
   )
 );

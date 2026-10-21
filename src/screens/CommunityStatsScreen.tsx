@@ -28,30 +28,11 @@ const COMMUNITY_STATS = {
   expertSessions: 45,
 };
 
-const GROWTH_DATA = [
-  { month: "জুলাই", members: 80000 },
-  { month: "আগস্ট", members: 92000 },
-  { month: "সেপ্টেম্বর", members: 105000 },
-  { month: "অক্টোবর", members: 115000 },
-  { month: "নভেম্বর", members: 120000 },
-  { month: "ডিসেম্বর", members: 125000 },
-];
+const GROWTH_DATA: any[] = [];
 
-const TOP_CATEGORIES = [
-  { name: "ধান চাষ", posts: 4500, color: "#2FA36B" },
-  { name: "মাছ চাষ", posts: 3200, color: "#2563EB" },
-  { name: "সবজি বাগান", posts: 2800, color: "#EA8A0C" },
-  { name: "গবাদি পশু", posts: 2100, color: "#7C3AED" },
-  { name: "হাঁস-মুরগি", posts: 1900, color: "#DC2626" },
-];
+const TOP_CATEGORIES: any[] = [];
 
-const ACTIVITY_TIMELINE = [
-  { time: "২ মিনিট আগে", action: "নতুন পোস্ট", user: "করিম সাহেব", category: "ধান চাষ" },
-  { time: "৫ মিনিট আগে", action: "প্রশ্নের উত্তর", user: "ড. ফরিদ", category: "বিশেষজ্ঞ" },
-  { time: "১০ মিনিট আগে", action: "নতুন পণ্য", user: "সবুজ খামার", category: "মার্কেট" },
-  { time: "১৫ মিনিট আগে", action: "ভয়েস রুম শুরু", user: "প্রফেসর হাসান", category: "লাইভ" },
-  { time: "২০ মিনিট আগে", action: "নতুন সদস্য", user: "নাজমুল হাসান", category: "যোগদান" },
-];
+const ACTIVITY_TIMELINE: any[] = [];
 
 export default function CommunityStatsScreen() {
   const insets = useSafeAreaInsets();

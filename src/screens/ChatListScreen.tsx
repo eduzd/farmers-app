@@ -52,50 +52,7 @@ function formatAgo(iso?: string) {
   return `${Math.round(h / 24)}d`;
 }
 
-const CONVERSATIONS: ChatConversation[] = [
-  {
-    id: "1",
-    user: { name: "Rahim Ahmed", initials: "RA", isOnline: true, isWelfareMember: true },
-    lastMessage: "I'm interested in your organic tomatoes. What's the price per kg?",
-    time: "2m",
-    unreadCount: 2,
-  },
-  {
-    id: "2",
-    user: { name: "Fatima Begum", initials: "FB", isOnline: true, isWelfareMember: true },
-    lastMessage: "Thank you for the advice! It really helped.",
-    time: "15m",
-    unreadCount: 0,
-  },
-  {
-    id: "3",
-    user: { name: "Karim Uddin", initials: "KU", isOnline: false },
-    lastMessage: "Can you share the irrigation system details?",
-    time: "1h",
-    unreadCount: 1,
-  },
-  {
-    id: "4",
-    user: { name: "Nasreen Akter", initials: "NA", isOnline: false, isWelfareMember: true },
-    lastMessage: "The weather forecast looks good for planting.",
-    time: "3h",
-    unreadCount: 0,
-  },
-  {
-    id: "5",
-    user: { name: "Abdul Karim", initials: "AK", isOnline: true },
-    lastMessage: "I'll send you the seeds tomorrow.",
-    time: "5h",
-    unreadCount: 0,
-  },
-  {
-    id: "6",
-    user: { name: "Salma Khatun", initials: "SK", isOnline: false },
-    lastMessage: "Great! Let's meet at the market on Sunday.",
-    time: "Yesterday",
-    unreadCount: 0,
-  },
-];
+const CONVERSATIONS: ChatConversation[] = [];
 
 export default function ChatListScreen() {
   const tr = useTr();
