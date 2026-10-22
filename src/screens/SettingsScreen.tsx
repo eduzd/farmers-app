@@ -393,7 +393,7 @@ export default function SettingsScreen() {
         <View style={[styles.settingsGroup, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           <Pressable
             style={styles.settingItem}
-            onPress={() => navigation.navigate("Support")}
+            onPress={() => navigation.navigate("SupportChat")}
           >
             <View style={styles.settingLeft}>
               <Feather name="help-circle" size={20} color={theme.iconDefault || theme.text} />

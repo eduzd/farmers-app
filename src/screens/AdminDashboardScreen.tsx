@@ -19,7 +19,7 @@ import { useCommunityStore } from "@/lib/communityStore";
 import { useI18n } from "@/lib/i18n";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { ThemedText } from "@/components/ThemedText";
 import {
   AdminCard,
@@ -123,7 +123,7 @@ export default function AdminDashboardScreen() {
   const { language } = useI18n();
   const navigation = useNavigation();
 
-  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [activeTab, setActiveTab] = useState<AdminTab>(((useRoute() as any)?.params?.initialTab as AdminTab) || "overview");
   const [manageUserId, setManageUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);

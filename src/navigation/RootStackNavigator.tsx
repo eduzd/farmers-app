@@ -132,6 +132,8 @@ import WasteManagementScreen from "@/screens/WasteManagementScreen";
 import WaterServicesScreen from "@/screens/WaterServicesScreen";
 import ElectricityServicesScreen from "@/screens/ElectricityServicesScreen";
 import AdminDashboardScreen from "@/screens/AdminDashboardScreen";
+import AdminAppScreen from "@/admin/AdminAppScreen";
+import SupportChatScreen from "@/screens/SupportChatScreen";
 import SellerAppScreen from "@/screens/seller/SellerAppScreen";
 import { getAppVariant } from "@/lib/appVariant";
 import SmartFarmingScreen from "@/screens/SmartFarmingScreen";
@@ -180,6 +182,7 @@ export type RootStackParamList = {
   OnboardingRole: undefined;
   OnboardingProfile: undefined;
   Support: undefined;
+  SupportChat: undefined;
   Main: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   PostDetail: { postId: string; post: Post };
@@ -383,7 +386,7 @@ export default function RootStackNavigator() {
             <Stack.Screen name="SellerApp" component={SellerAppScreen} options={{ headerShown: false, title: "Seller Hub" }} />
           ) : null}
           {variant === "admin" ? (
-            <Stack.Screen name="AdminApp" component={AdminDashboardScreen} options={{ headerShown: false, title: "Farmers Admin" }} />
+            <Stack.Screen name="AdminApp" component={AdminAppScreen} options={{ headerShown: false, title: "Farmers Admin" }} />
           ) : null}
           <Stack.Screen
             name="Main"
@@ -393,6 +396,10 @@ export default function RootStackNavigator() {
           {variant !== "seller" ? (
             <Stack.Screen name="SellerApp" component={SellerAppScreen} options={{ headerShown: false, title: "Seller Hub" }} />
           ) : null}
+          {variant !== "admin" ? (
+            <Stack.Screen name="AdminApp" component={AdminAppScreen} options={{ headerShown: false, title: "Farmers Admin" }} />
+          ) : null}
+          <Stack.Screen name="SupportChat" component={SupportChatScreen} options={{ headerShown: false, title: "Help" }} />
           <Stack.Screen
             name="PostDetail"
             component={PostDetailScreen}

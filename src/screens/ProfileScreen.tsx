@@ -132,7 +132,7 @@ export default function ProfileScreen() {
     if (newCount >= 5) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setAdminTapCount(0);
-      navigation.navigate("AdminDashboard");
+      navigation.navigate("AdminApp");
     } else if (newCount >= 3) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -414,7 +414,7 @@ export default function ProfileScreen() {
               style={({ pressed }) => [styles.menuItem, pressed && styles.menuPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigation.navigate("AdminDashboard");
+                navigation.navigate("AdminApp");
               }}
             >
               <View style={styles.menuLeft}>
