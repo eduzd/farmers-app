@@ -156,9 +156,18 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
       `isSaved?: boolean` added to the PostDetail `Post` param type in RootStackNavigator.tsx). `npx tsc --noEmit` clean.
 - [x] Committed all saved UI work on ui-headers (ab49992), then merged main (calls2 fix 4be0d40: VoiceCallContext opens /ws/chat).
       Merge had no conflicts; tsc clean again after the merge.
-- [ ] USER DECISION 2026-10-22: no APK for now. Deliver the WEB version (Render https://farmers-2ybg.onrender.com) for the user
+- [x] (live a4bd5b9 on Render, health checked) USER DECISION 2026-10-22: no APK for now. Deliver the WEB version (Render https://farmers-2ybg.onrender.com) for the user
       to check first; they will confirm before any APK build.
-- [ ] Web: `npm run web:export` (dist is committed, served by server on Render), smoke test, merge ui-headers -> main, push origin main, verify Render /api/health shows the new commit.
+- [x] Web: `npm run web:export` (dist is committed, served by server on Render), smoke test, merge ui-headers -> main, push origin main, verify Render /api/health shows the new commit.
 - [ ] Then: Connect tab + screen + server /api/connect/professionals; unread refresh after mark-read; UserAvatar online dot; narrow-width Bangla/English audit.
+- [ ] NEW REQUEST 2026-10-22: SEPARATE ADMIN APP (own app, same look/UI design as the main Farmers app, different functionality).
+      Two apps: (1) Farmers main app for everybody, (2) Farmers Admin app that controls the whole platform. Must include:
+      users (view/search, roles, verify, suspend/ban, delete), products + product listings (approve/reject/hide/edit/delete),
+      shops = different companies selling different products (approve companies/stores, suspend, per-company products),
+      orders (approve/reject, status, refunds/cancel), payment system setup (bKash etc. keys/config, payment records),
+      community posts/reports moderation, notifications/announcements, Connect (the "Connect" name/tab must be in it), app settings.
+      Starting point: existing AdminDashboardScreen + src/components/admin/* (orders/stores/listings/delivery tiles, 8 tabs)
+      and server/adminRoutes.ts. Plan: separate Expo entry/app (e.g. apps/admin or second app.json) sharing src/ components
+      and the same server; web first, user checks before any APK.
 - [ ] LAST (after user confirms everything is done): full source handoff zip + HANDOFF.md for another AI agent (what the app is,
       how to run server/web/APK, env keys needed, branches, what is done/pending). Not before.
