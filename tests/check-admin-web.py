@@ -177,6 +177,49 @@ const { PGlite } = require('@electric-sql/pglite');
             r["errors"] = errs
             await ctx.close()
 
+        # ---- Connect page: ad carousel instead of the intro line, floating Help button -> admin chat ----
+        for lang in ("en", "bn"):
+            for w in (320, 360, 390):
+                r = rep[f"connect-{lang}-{w}"] = {}
+                ctx = await b.new_context(viewport={"width": w, "height": 760})
+                pg = await ctx.new_page()
+                errs = []
+                pg.on("pageerror", lambda e: errs.append(str(e)[:160]))
+                await pg.add_init_script(init_script(ann, lang))
+                await pg.goto(BASE, wait_until="networkidle")
+                await pg.wait_for_timeout(3500)
+                await pg.evaluate("()=>window.__nav.navigate('Main',{screen:'Connect'})")
+                await pg.wait_for_timeout(3000)
+                body = await pg.evaluate("()=>document.body.innerText")
+                r["old_intro_gone"] = ("Talk to real" not in body) and ("আসল" not in body)
+                car = pg.locator('[data-testid="connect-carousel"]')
+                r["carousel"] = await car.count()
+                fab = pg.locator('[data-testid="connect-help-fab"]')
+                r["fab"] = await fab.count()
+                if r["carousel"]:
+                    cb = await car.first.bounding_box()
+                    r["carousel_box"] = [round(cb["x"]), round(cb["y"]), round(cb["width"]), round(cb["height"])]
+                    first = pg.locator('[data-testid="connect-carousel-card-advertise"]')
+                    x0 = (await first.bounding_box())["x"]
+                    await pg.wait_for_timeout(4800)
+                    r["auto_moved_px"] = round(x0 - (await first.bounding_box())["x"])
+                    r["card_cut"] = await pg.evaluate(CUT_JS, '[data-testid^="connect-carousel-card-"]')
+                if r["fab"]:
+                    fb = await fab.first.bounding_box()
+                    r["fab_box"] = [round(fb["x"]), round(fb["y"]), round(fb["width"]), round(fb["height"])]
+                    tabs = await pg.evaluate("()=>{const t=[...document.querySelectorAll('[role=tablist],[role=tab]')].map(e=>e.getBoundingClientRect().top);return t.length?Math.min(...t):null}")
+                    r["tabbar_top"] = tabs and round(tabs)
+                    r["fab_above_tabbar"] = (tabs is None) or (fb["y"] + fb["height"] <= tabs)
+                r["overflow"] = await pg.evaluate(OVERFLOW_JS)
+                await pg.screenshot(path=f"{SHOTS}/connect-{lang}-{w}.png")
+                if r["fab"] and w == 360:
+                    await fab.first.click()
+                    await pg.wait_for_timeout(2500)
+                    r["fab_opens_chat"] = await pg.locator('[data-testid="support-chat"]').count()
+                    await pg.screenshot(path=f"{SHOTS}/connect-fab-chat-{lang}.png")
+                r["errors"] = errs
+                await ctx.close()
+
         # ---- admin app: reply to Ann in Support, then all tabs at 3 widths x 2 languages ----
         replied = False
         quick = os.environ.get("QUICK") == "1"
