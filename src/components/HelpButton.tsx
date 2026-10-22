@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
 import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
+import { useAuthStore } from "@/lib/authStore";
 
 /** Header Help button: a small popup to message the Farmers admins, or open the full conversation. */
 export default function HelpButton({ color, size = 40 }: { color?: string; size?: number }) {
@@ -19,14 +20,16 @@ export default function HelpButton({ color, size = 40 }: { color?: string; size?
   const [err, setErr] = useState<string | null>(null);
   const [unread, setUnread] = useState(0);
 
+  // Re-run once the saved sign-in has loaded (it hydrates after the first render).
+  const token = useAuthStore((s) => (s.isAuthenticated ? s.token : null));
   useEffect(() => {
     let alive = true;
-    if (!isLoggedIn()) return;
+    if (!token) { setUnread(0); return; }
     const check = () => apiGet("/api/support/unread").then((r) => alive && setUnread(Number(r?.unread || 0))).catch(() => {});
     check();
     const t = setInterval(check, 30000);
     return () => { alive = false; clearInterval(t); };
-  }, []);
+  }, [token]);
 
   const openChat = () => {
     setOpen(false);
