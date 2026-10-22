@@ -25,3 +25,15 @@ User 2026-10-22: no keyboard shortcuts needed in Shop.
        NOT re-run post-merge: admin tabs at 320/390 and in Bangla.
 5. [ ] push main (after the farmers-ui deploy task is finished), Render deploy + live check
 6. [ ] Admin APK (applicationId com.farmers.admin, EXPO_PUBLIC_APP_VARIANT=admin), release on GitHub, download check
+
+## Round: shared chat icon + Connect online dots, then merge to main + Render (task started 2026-10-22 08:11)
+User (call): Connect specialist cards keep avatar+name, add green online dot; Message button = icon only (no text);
+the icon must be the "nav chat icon" (custom ChatIcon in src/components/icons/ChatIcon.tsx, used by the Chats tab)
+everywhere a chat/message/comment icon appears (posts, comments, Connect, etc.). One shared component.
+Plan:
+ a. [x] ChatIcon gets style prop; src/components/icons/AppIcon.tsx = drop-in Feather that renders ChatIcon for
+        message-circle/message-square. Codemod: literal Feather message-* -> ChatIcon; dynamic <Feather name={..}> -> AppIcon.
+ b. [x] Connect card: icon-only round chat button, "Active now" when online (avatar dot via UserAvatar userId).
+ c. [ ] tsc + checks; commit on admin-app
+ d. [ ] fast-forward main to admin-app, push, Render deploy, live check of commit
+ e. [ ] narrow-width check Connect + posts en/bn

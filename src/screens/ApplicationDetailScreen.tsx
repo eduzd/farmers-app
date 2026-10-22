@@ -17,6 +17,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useI18n } from "@/lib/i18n";
 import { MembershipApplication } from "@/lib/authStore";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type ApplicationDetailRouteProp = RouteProp<RootStackParamList, "ApplicationDetail">;
 
 export default function ApplicationDetailScreen() {
@@ -107,7 +108,7 @@ export default function ApplicationDetailScreen() {
       >
         <View style={[styles.statusCard, { backgroundColor: getStatusColor(application.status) + "15", borderColor: getStatusColor(application.status) + "30" }]}>
           <View style={[styles.statusIconContainer, { backgroundColor: getStatusColor(application.status) + "20" }]}>
-            <Feather
+            <AppIcon
               name={getStatusIcon(application.status) as any}
               size={32}
               color={getStatusColor(application.status)}
@@ -127,7 +128,7 @@ export default function ApplicationDetailScreen() {
 
         <View style={[styles.infoCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           <View style={styles.cardHeader}>
-            <Feather
+            <AppIcon
               name={application.type === "welfare" ? "award" : "globe"}
               size={24}
               color={application.type === "welfare" ? "#1D4ED8" : "#0D47A1"}
@@ -288,7 +289,7 @@ export default function ApplicationDetailScreen() {
               {language === "bn" ? "পেমেন্ট যাচাই" : "Payment Verified"}
             </ThemedText>
             <View style={[styles.verifyBadge, { backgroundColor: application.paymentVerified ? "#16A34A20" : "#EA8A0C20" }]}>
-              <Feather
+              <AppIcon
                 name={application.paymentVerified ? "check-circle" : "clock"}
                 size={14}
                 color={application.paymentVerified ? "#16A34A" : "#EA8A0C"}

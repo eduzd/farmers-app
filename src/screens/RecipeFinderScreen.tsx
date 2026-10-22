@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const CATEGORIES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "rice", label: "ভাত", icon: "circle" },
@@ -114,7 +115,7 @@ export default function RecipeFinderScreen() {
               setSelectedCategory(cat.id);
             }}
           >
-            <Feather
+            <AppIcon
               name={cat.icon as any}
               size={16}
               color={selectedCategory === cat.id ? "#fff" : theme.textSecondary}

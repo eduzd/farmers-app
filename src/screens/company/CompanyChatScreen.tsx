@@ -21,6 +21,7 @@ import { CompanyChat } from "@/lib/storage";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useI18n } from "@/lib/i18n";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function CompanyChatScreen() {
@@ -131,7 +132,7 @@ export default function CompanyChatScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Feather name="message-circle" size={64} color={theme.textSecondary} />
+      <ChatIcon size={64} color={theme.textSecondary} />
       <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>
         {language === "bn" ? "কোনো চ্যাট নেই" : "No conversations yet"}
       </ThemedText>

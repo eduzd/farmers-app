@@ -17,6 +17,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius } from '@/constants/theme';
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get('window');
 
 interface WeatherData {
@@ -249,7 +250,7 @@ export default function WeatherForecastScreen() {
           </View>
 
           <View style={styles.tempContainer}>
-            <Feather name={weather.current.icon} size={64} color="#fff" />
+            <AppIcon name={weather.current.icon} size={64} color="#fff" />
             <View style={styles.tempInfo}>
               <ThemedText style={styles.tempValue}>
                 {weather.current.temp}°
@@ -308,7 +309,7 @@ export default function WeatherForecastScreen() {
                 style={[styles.hourlyCard, { backgroundColor: theme.card }]}
               >
                 <ThemedText style={styles.hourlyTime}>{hour.time}</ThemedText>
-                <Feather
+                <AppIcon
                   name={hour.icon}
                   size={24}
                   color={hour.icon === 'cloud-rain' ? '#2563EB' : '#EA8A0C'}
@@ -346,7 +347,7 @@ export default function WeatherForecastScreen() {
                     </ThemedText>
                   </View>
                 </View>
-                <Feather
+                <AppIcon
                   name={day.icon}
                   size={24}
                   color={day.icon === 'sun' ? '#EA8A0C' : day.icon === 'cloud-rain' ? '#2563EB' : '#9CA3AF'}
@@ -372,7 +373,7 @@ export default function WeatherForecastScreen() {
                 style={[styles.adviceCard, { backgroundColor: colors.bg }]}
               >
                 <View style={[styles.adviceIcon, { backgroundColor: colors.icon + '20' }]}>
-                  <Feather name={advice.icon} size={20} color={colors.icon} />
+                  <AppIcon name={advice.icon} size={20} color={colors.icon} />
                 </View>
                 <View style={styles.adviceContent}>
                   <ThemedText style={[styles.adviceTitle, { color: colors.text }]}>

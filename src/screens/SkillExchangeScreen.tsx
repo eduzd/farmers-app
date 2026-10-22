@@ -18,6 +18,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
 interface SkillPost {
   id: string;
   user: { name: string; avatar: string; location: string };
@@ -100,7 +101,7 @@ export default function SkillExchangeScreen() {
 
         <View style={styles.postFooter}>
           <View style={styles.responsesRow}>
-            <Feather name="message-circle" size={14} color={theme.textSecondary} />
+            <ChatIcon size={14} color={theme.textSecondary} />
             <ThemedText style={[styles.responsesText, { color: theme.textSecondary }]}>
               {item.responses} রেসপন্স
             </ThemedText>

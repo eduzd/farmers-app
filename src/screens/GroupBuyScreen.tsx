@@ -24,6 +24,7 @@ import { useGroupBuyStore, GroupBuyDeal } from "@/lib/groupBuyStore";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const CountdownTimer = ({ endsAt, theme }: { endsAt: number; theme: any }) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0 });
 
@@ -247,7 +248,7 @@ export default function GroupBuyScreen() {
               setActiveTab(tab.id as any);
             }}
           >
-            <Feather
+            <AppIcon
               name={tab.icon as any}
               size={16}
               color={activeTab === tab.id ? "#FFF" : theme.textSecondary}

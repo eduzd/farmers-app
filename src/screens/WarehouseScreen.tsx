@@ -11,6 +11,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 const WAREHOUSES: any[] = [];
 
 const FILTERS = [
@@ -94,7 +95,7 @@ export default function WarehouseScreen() {
                     { backgroundColor: warehouse.type === "cold" ? "#2563EB20" : "#16A34A20" },
                   ]}
                 >
-                  <Feather
+                  <AppIcon
                     name={warehouse.type === "cold" ? "thermometer" : "box"}
                     size={24}
                     color={warehouse.type === "cold" ? "#2563EB" : "#16A34A"}

@@ -27,6 +27,8 @@ import { Company, CompanyProduct, getCompany, getCompanyProducts } from "@/lib/s
 import { useCartStore } from "@/lib/cartStore";
 
 import { tr, useTr } from "@/lib/tr";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const PRODUCT_CARD_WIDTH = (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md) / 2;
 
@@ -365,7 +367,7 @@ export default function StoreViewScreen() {
               ]}
               onPress={handleFollow}
             >
-              <Feather
+              <AppIcon
                 name={isFollowing ? "check" : "user-plus"}
                 size={16}
                 color={isFollowing ? "#FFFFFF" : theme.primary}
@@ -380,7 +382,7 @@ export default function StoreViewScreen() {
               style={[styles.messageButton, { borderColor: "rgba(255,255,255,0.5)" }]}
               onPress={handleMessage}
             >
-              <Feather name="message-circle" size={16} color="#FFFFFF" />
+              <ChatIcon size={16} color="#FFFFFF" />
               <ThemedText style={styles.messageButtonText}>{tr("মেসেজ")}</ThemedText>
             </Pressable>
           </View>
@@ -473,7 +475,7 @@ export default function StoreViewScreen() {
                   ]}
                   onPress={() => setSelectedCategory(cat.id)}
                 >
-                  <Feather
+                  <AppIcon
                     name={cat.icon as any}
                     size={14}
                     color={selectedCategory === cat.id ? "#FFFFFF" : theme.textSecondary}

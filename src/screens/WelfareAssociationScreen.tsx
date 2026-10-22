@@ -28,6 +28,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
 import { getApiUrl } from "@/lib/query-client";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface FormData {
@@ -297,7 +298,7 @@ export default function WelfareAssociationScreen() {
         {WELFARE_BENEFITS.map((benefit, index) => (
           <View key={index} style={styles.benefitItem}>
             <View style={[styles.benefitIcon, { backgroundColor: theme.primary + "15" }]}>
-              <Feather name={benefit.icon as any} size={22} color={theme.primary} />
+              <AppIcon name={benefit.icon as any} size={22} color={theme.primary} />
             </View>
             <View style={styles.benefitContent}>
               <ThemedText style={[styles.benefitTitle, { color: theme.text }]}>
@@ -670,7 +671,7 @@ export default function WelfareAssociationScreen() {
         </View>
         <View style={styles.verifyingSteps}>
           <View style={styles.verifyStep}>
-            <Feather
+            <AppIcon
               name={submissionProgress >= 30 ? "check-circle" : "circle"}
               size={18}
               color={submissionProgress >= 30 ? "#16A34A" : theme.textSecondary}
@@ -680,7 +681,7 @@ export default function WelfareAssociationScreen() {
             </ThemedText>
           </View>
           <View style={styles.verifyStep}>
-            <Feather
+            <AppIcon
               name={submissionProgress >= 60 ? "check-circle" : "circle"}
               size={18}
               color={submissionProgress >= 60 ? "#16A34A" : theme.textSecondary}
@@ -690,7 +691,7 @@ export default function WelfareAssociationScreen() {
             </ThemedText>
           </View>
           <View style={styles.verifyStep}>
-            <Feather
+            <AppIcon
               name={submissionProgress >= 100 ? "check-circle" : "circle"}
               size={18}
               color={submissionProgress >= 100 ? "#16A34A" : theme.textSecondary}

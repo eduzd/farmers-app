@@ -21,6 +21,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useAuthStore } from "@/lib/authStore";
 import { useCompanyStore } from "@/lib/companyStore";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const STEPS = [
@@ -253,7 +254,7 @@ export default function SellerOnboardingScreen() {
               setFormData({ ...formData, category: category.id });
             }}
           >
-            <Feather
+            <AppIcon
               name={category.icon as any}
               size={24}
               color={formData.category === category.id ? theme.primary : theme.textSecondary}
@@ -390,7 +391,7 @@ export default function SellerOnboardingScreen() {
               <ThemedText style={styles.nextButtonText}>
                 {currentStep === 3 ? "দোকান সেটআপ করুন" : "পরবর্তী"}
               </ThemedText>
-              <Feather name={currentStep === 3 ? "check" : "arrow-right"} size={20} color="#FFFFFF" />
+              <AppIcon name={currentStep === 3 ? "check" : "arrow-right"} size={20} color="#FFFFFF" />
             </>
           )}
         </Pressable>

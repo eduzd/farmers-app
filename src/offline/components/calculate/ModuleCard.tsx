@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 
+import { AppIcon } from "@/components/icons/AppIcon";
 function useColors() {
   const { theme } = useTheme();
   return {
@@ -54,7 +55,7 @@ export function ModuleCard({
       disabled={disabled}
     >
       <View style={[styles.iconContainer, { backgroundColor: (iconColor || colors.primary) + '1A' }]}>
-        <Feather name={icon} size={24} color={iconColor || colors.primary} />
+        <AppIcon name={icon} size={24} color={iconColor || colors.primary} />
       </View>
       <View style={styles.content}>
         <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
@@ -108,7 +109,7 @@ export function ShortcutMenu({ visible, items, onClose, position }: ShortcutMenu
             }}
           >
             {item.icon ? (
-              <Feather name={item.icon} size={18} color={colors.textSecondary} style={styles.menuIcon} />
+              <AppIcon name={item.icon} size={18} color={colors.textSecondary} style={styles.menuIcon} />
             ) : null}
             <Text style={[styles.menuText, { color: colors.text }]}>{item.label}</Text>
           </Pressable>

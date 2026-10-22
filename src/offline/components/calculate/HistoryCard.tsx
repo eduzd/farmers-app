@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 
+import { AppIcon } from "@/components/icons/AppIcon";
 function useColors() {
   const { theme } = useTheme();
   return {
@@ -75,7 +76,7 @@ export function HistoryCard({
       onPress={onPress}
     >
       <View style={[styles.iconContainer, { backgroundColor: colors.primary + '15' }]}>
-        <Feather name={icon} size={20} color={colors.primary} />
+        <AppIcon name={icon} size={20} color={colors.primary} />
       </View>
       <View style={styles.content}>
         <View style={styles.header}>

@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface LoanResult {
   monthlyPayment: number;
   totalPayment: number;
@@ -247,7 +248,7 @@ export default function LoanCalculatorScreen() {
             <ThemedText style={[styles.scheduleToggleText, { color: theme.text }]}>
               {tr("কিস্তির সূচি দেখুন")}
             </ThemedText>
-            <Feather
+            <AppIcon
               name={showSchedule ? "chevron-up" : "chevron-down"}
               size={20}
               color={theme.textSecondary}

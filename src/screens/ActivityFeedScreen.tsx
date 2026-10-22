@@ -20,6 +20,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface Activity {
@@ -108,12 +109,12 @@ export default function ActivityFeedScreen() {
         >
           <View style={[styles.iconContainer, { backgroundColor: config.color + "15" }]}>
             {item.type === "achievement" ? (
-              <Feather name={config.icon} size={20} color={config.color} />
+              <AppIcon name={config.icon} size={20} color={config.color} />
             ) : (
               <Image source={{ uri: item.user.avatar }} style={styles.userAvatar} />
             )}
             <View style={[styles.activityIcon, { backgroundColor: config.color }]}>
-              <Feather name={config.icon} size={10} color="#fff" />
+              <AppIcon name={config.icon} size={10} color="#fff" />
             </View>
           </View>
           <View style={styles.activityContent}>

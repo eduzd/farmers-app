@@ -21,6 +21,7 @@ import { useOrdersStore, Order, OrderStatus } from "@/lib/ordersStore";
 import { useI18n } from "@/lib/i18n";
 
 import { tr, useTr } from "@/lib/tr";
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const STATUS_CONFIG: Record<OrderStatus, { color: string; icon: string; label: string }> = {
@@ -116,7 +117,7 @@ export default function OrdersScreen() {
             </ThemedText>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + "20" }]}>
-            <Feather name={statusConfig.icon as any} size={14} color={statusConfig.color} />
+            <AppIcon name={statusConfig.icon as any} size={14} color={statusConfig.color} />
             <ThemedText style={[styles.statusText, { color: statusConfig.color }]}>
               {statusConfig.label}
             </ThemedText>

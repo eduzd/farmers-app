@@ -9,6 +9,7 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, FontFamily, Palette, Shadows, Spacing } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 /** Shared frame for Login, Signup and OTP: green hero, title, and a form sheet. */
 export function AuthShell({
   title,
@@ -68,7 +69,7 @@ export function AuthShell({
       >
         <View style={styles.heading}>
           <View style={styles.logo}>
-            <Feather name={icon} size={22} color={Palette.leaf} />
+            <AppIcon name={icon} size={22} color={Palette.leaf} />
           </View>
           <ThemedText style={styles.title}>{title}</ThemedText>
           {subtitle ? <ThemedText style={styles.subtitle}>{subtitle}</ThemedText> : null}

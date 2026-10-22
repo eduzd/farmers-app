@@ -18,6 +18,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { PublicUser } from "@/lib/storage";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
 interface LikedUser {
   id: string;
   name: string;
@@ -140,7 +141,7 @@ export default function LikesListScreen() {
           ]}
           onPress={() => handleMessage(item)}
         >
-          <Feather name="message-circle" size={18} color={theme.text} />
+          <ChatIcon size={18} color={theme.text} />
         </Pressable>
       </View>
     </View>

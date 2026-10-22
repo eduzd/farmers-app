@@ -15,6 +15,7 @@ import { useTr } from "@/lib/tr";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { useHeaderAddButton } from "@/components/HeaderAddButton";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface DiaryEntry {
   id: string;
   date: string;
@@ -109,7 +110,7 @@ export default function FarmDiaryScreen() {
           <View style={[styles.categoryDot, { backgroundColor: getCategoryColor(item.category) }]} />
           <ThemedText style={[styles.entryDate, { color: theme.textSecondary }]}>{item.date}</ThemedText>
           <View style={styles.weatherContainer}>
-            <Feather name={getWeatherIcon(item.weather) as any} size={14} color={theme.textSecondary} />
+            <AppIcon name={getWeatherIcon(item.weather) as any} size={14} color={theme.textSecondary} />
           </View>
         </View>
         <ThemedText style={[styles.entryTitle, { color: theme.text }]}>{item.title}</ThemedText>

@@ -6,6 +6,7 @@ import { useI18n } from "@/lib/i18n";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 /** Admin app tabs that control the whole platform: orders, seller stores, listings + community, notifications, and a per-user control sheet. */
 
 const taka = (n: number) => `৳${Math.round(Number(n) || 0).toLocaleString("en-IN")}`;
@@ -50,7 +51,7 @@ function Chip({ label, on, onPress, testID }: { label: string; on: boolean; onPr
 function SmallBtn({ label, icon, color, onPress, testID, disabled }: { label: string; icon?: keyof typeof Feather.glyphMap; color: string; onPress: () => void; testID?: string; disabled?: boolean }) {
   return (
     <Pressable testID={testID} disabled={disabled} onPress={onPress} style={[s.sbtn, { borderColor: color + "55", backgroundColor: color + "12", opacity: disabled ? 0.5 : 1 }]}>
-      {icon ? <Feather name={icon} size={13} color={color} /> : null}
+      {icon ? <AppIcon name={icon} size={13} color={color} /> : null}
       <Text style={[s.sbtnText, { color }]}>{label}</Text>
     </Pressable>
   );
@@ -296,7 +297,7 @@ export function AdminMarketplacePanel({ onOpen, onOpenSellerHub }: { onOpen: (ta
             style={({ pressed }) => [{ flexGrow: 1, flexBasis: 150, minWidth: 140, padding: 14, borderRadius: 14, borderWidth: 1, borderColor: theme.cardBorder, backgroundColor: theme.card, opacity: pressed ? 0.8 : 1 }]}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
               <View style={{ width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: t.color + "18" }}>
-                <Feather name={t.icon} size={15} color={t.color} />
+                <AppIcon name={t.icon} size={15} color={t.color} />
               </View>
               <Text style={[s.muted, { color: theme.textSecondary, flex: 1 }]} numberOfLines={1}>{t.label}</Text>
               <Feather name="chevron-right" size={14} color={theme.textSecondary} />

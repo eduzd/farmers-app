@@ -23,6 +23,7 @@ import { useCompanyStore } from "@/lib/companyStore";
 import { CompanyReview } from "@/lib/storage";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const FILTER_OPTIONS = [
@@ -188,7 +189,7 @@ export default function CompanyReviewsScreen() {
             setReplyingTo(item.id);
           }}
         >
-          <Feather name="message-circle" size={16} color={theme.primary} />
+          <ChatIcon size={16} color={theme.primary} />
           <ThemedText style={[styles.actionText, { color: theme.primary }]}>উত্তর দিন</ThemedText>
         </Pressable>
       </View>

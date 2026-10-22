@@ -13,6 +13,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const COPY = {
@@ -120,7 +121,7 @@ export default function LandingScreen() {
           <View style={styles.features}>
             {t.features.map((f) => (
               <View key={f.label} style={styles.featurePill}>
-                <Feather name={f.icon as keyof typeof Feather.glyphMap} size={13} color="#FFFFFF" />
+                <AppIcon name={f.icon as keyof typeof Feather.glyphMap} size={13} color="#FFFFFF" />
                 <ThemedText style={styles.featureText}>{f.label}</ThemedText>
               </View>
             ))}

@@ -21,6 +21,7 @@ import { useCommunityStore, CommunityType } from "@/lib/communityStore";
 import { getToolsByCommunity, CommunityTool, CommunityToolCategory } from "@/lib/communityData";
 import { useI18n } from "@/lib/i18n";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = (width - Spacing.xl * 3) / 2;
 
@@ -88,7 +89,7 @@ export default function ToolsScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.iconGradient}
         >
-          <Feather name={tool.icon} size={24} color="#FFF" />
+          <AppIcon name={tool.icon} size={24} color="#FFF" />
         </LinearGradient>
         
         <ThemedText style={[styles.cardTitle, { color: theme.text }]} numberOfLines={1}>

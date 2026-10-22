@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface TransportService {
   id: string;
   name: string;
@@ -91,7 +92,7 @@ export default function TransportScreen() {
       >
         <View style={styles.transportHeader}>
           <View style={[styles.typeIcon, { backgroundColor: theme.primary + "15" }]}>
-            <Feather name={getTypeIcon(item.type) as any} size={24} color={theme.primary} />
+            <AppIcon name={getTypeIcon(item.type) as any} size={24} color={theme.primary} />
           </View>
           <View style={styles.transportInfo}>
             <ThemedText style={[styles.transportName, { color: theme.text }]}>{item.name}</ThemedText>

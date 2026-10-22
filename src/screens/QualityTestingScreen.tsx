@@ -11,6 +11,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 const TEST_TYPES = [
   { id: "soil", name: "মাটি পরীক্ষা", icon: "layers", price: "৳৫০০-১,০০০", duration: "২-৩ দিন" },
   { id: "water", name: "পানি পরীক্ষা", icon: "droplet", price: "৳৩০০-৬০০", duration: "১-২ দিন" },
@@ -83,7 +84,7 @@ export default function QualityTestingScreen() {
                     style={[styles.testCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
                   >
                     <View style={[styles.testIcon, { backgroundColor: theme.primary + "20" }]}>
-                      <Feather name={test.icon as any} size={28} color={theme.primary} />
+                      <AppIcon name={test.icon as any} size={28} color={theme.primary} />
                     </View>
                     <ThemedText style={[styles.testName, { color: theme.text }]}>{test.name}</ThemedText>
                     <ThemedText style={[styles.testPrice, { color: theme.primary }]}>{test.price}</ThemedText>

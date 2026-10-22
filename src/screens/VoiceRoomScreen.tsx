@@ -31,6 +31,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get("window");
 
 interface Speaker {
@@ -394,7 +395,7 @@ export default function VoiceRoomScreen() {
               style={[styles.micBtn, isMuted && styles.micBtnMuted]}
               onPress={handleMuteToggle}
             >
-              <Feather name={isMuted ? "mic-off" : "mic"} size={28} color="#fff" />
+              <AppIcon name={isMuted ? "mic-off" : "mic"} size={28} color="#fff" />
             </Pressable>
           )}
 

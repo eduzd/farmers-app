@@ -9,6 +9,7 @@ import { useSyncContext } from '@/offline/providers/SyncProvider';
 import { useTr } from '@/lib/tr';
 import { useI18n } from '@/lib/i18n';
 
+import { AppIcon } from "@/components/icons/AppIcon";
 export type SummaryRow = { label: string; value: string };
 
 type Props = {
@@ -61,7 +62,7 @@ export function SaveCalcButton({ recordType, title, inputs, summary, disabled }:
           { backgroundColor: saved ? theme.primarySoft : theme.primary, opacity: disabled ? 0.5 : 1 },
         ]}
       >
-        <Feather name={saved ? 'check' : 'save'} size={18} color={saved ? theme.primary : '#FFFFFF'} />
+        <AppIcon name={saved ? 'check' : 'save'} size={18} color={saved ? theme.primary : '#FFFFFF'} />
         <ThemedText style={[styles.text, { color: saved ? theme.primary : '#FFFFFF' }]}>
           {saved ? tr('Saved on phone') : tr('Save on phone')}
         </ThemedText>

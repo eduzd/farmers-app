@@ -17,6 +17,8 @@ import { useAuthStore } from "@/lib/authStore";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Post {
   id: string;
   content: string;
@@ -140,7 +142,7 @@ export default function MyPostsScreen() {
                 setActiveFilter(filter.key);
               }}
             >
-              <Feather 
+              <AppIcon 
                 name={filter.icon} 
                 size={14} 
                 color={isActive ? "#fff" : filter.key === "pending" ? "#EA8A0C" : filter.key === "approved" ? "#16A34A" : theme.text} 
@@ -255,7 +257,7 @@ export default function MyPostsScreen() {
             }}
           >
             <View style={styles.actionIconCircle}>
-              <Feather name="message-circle" size={18} color={theme.textSecondary} />
+              <ChatIcon size={18} color={theme.textSecondary} />
             </View>
             <ThemedText style={[styles.actionCount, { color: theme.textSecondary }]}>
               {item.comments}

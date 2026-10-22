@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface InsuranceResult {
   annualPremium: number;
   coverage: number;
@@ -117,7 +118,7 @@ export default function InsuranceCalculatorScreen() {
                 setResult(null);
               }}
             >
-              <Feather name={type.icon as any} size={24} color={type.color} />
+              <AppIcon name={type.icon as any} size={24} color={type.color} />
               <ThemedText style={[styles.typeName, { color: theme.text }]}>{type.name}</ThemedText>
               <ThemedText style={[styles.typeRate, { color: type.color }]}>
                 প্রিমিয়াম {type.rate}%

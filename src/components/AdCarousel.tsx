@@ -7,6 +7,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 export type AdCard = {
   key: string;
   icon: keyof typeof Feather.glyphMap;
@@ -84,7 +85,7 @@ export function AdCarousel({ cards, testID = "ad-carousel" }: { cards: AdCard[];
               <LinearGradient colors={c.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
                 <View style={styles.decor} />
                 <View style={styles.icon}>
-                  <Feather name={c.icon} size={22} color="#FFFFFF" />
+                  <AppIcon name={c.icon} size={22} color="#FFFFFF" />
                 </View>
                 <View style={{ flex: 1, justifyContent: "flex-end" }}>
                   <ThemedText type="h4" style={styles.title} numberOfLines={1}>

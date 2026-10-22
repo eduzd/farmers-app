@@ -20,6 +20,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface SavedItem {
@@ -118,13 +119,13 @@ export default function SavedPostsScreen() {
             <Image source={{ uri: item.image }} style={styles.itemImage} contentFit="cover" />
           ) : (
             <View style={[styles.itemImagePlaceholder, { backgroundColor: typeColor + "15" }]}>
-              <Feather name={getTypeIcon(item.type)} size={24} color={typeColor} />
+              <AppIcon name={getTypeIcon(item.type)} size={24} color={typeColor} />
             </View>
           )}
           <View style={styles.itemContent}>
             <View style={styles.itemHeader}>
               <View style={[styles.typeBadge, { backgroundColor: typeColor + "15" }]}>
-                <Feather name={getTypeIcon(item.type)} size={10} color={typeColor} />
+                <AppIcon name={getTypeIcon(item.type)} size={10} color={typeColor} />
                 <ThemedText style={[styles.typeText, { color: typeColor }]}>{item.category}</ThemedText>
               </View>
               <Pressable onPress={() => handleRemove(item.id)} hitSlop={10}>

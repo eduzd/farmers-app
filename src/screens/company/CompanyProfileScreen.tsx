@@ -27,6 +27,8 @@ import { useAuthStore } from "@/lib/authStore";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useI18n } from "@/lib/i18n";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -405,7 +407,7 @@ export default function CompanyProfileScreen() {
           <View style={styles.performanceGrid}>
             <View style={styles.performanceItem}>
               <View style={styles.performanceRow}>
-                <Feather name="message-circle" size={18} color={theme.primary} />
+                <ChatIcon size={18} color={theme.primary} />
                 <ThemedText style={styles.performanceValue}>{company.responseTime}</ThemedText>
               </View>
               <ThemedText style={[styles.performanceLabel, { color: theme.textSecondary }]}>
@@ -498,7 +500,7 @@ export default function CompanyProfileScreen() {
               if (!method) return null;
               return (
                 <View key={methodId} style={[styles.paymentBadge, { backgroundColor: theme.primary + "15" }]}>
-                  <Feather name={method.icon as any} size={14} color={theme.primary} />
+                  <AppIcon name={method.icon as any} size={14} color={theme.primary} />
                   <ThemedText style={[styles.paymentText, { color: theme.primary }]}>
                     {method.label}
                   </ThemedText>
@@ -640,7 +642,7 @@ export default function CompanyProfileScreen() {
                       ]}
                       onPress={() => toggleCategory(cat.id)}
                     >
-                      <Feather 
+                      <AppIcon 
                         name={cat.icon as any} 
                         size={16} 
                         color={isSelected ? "#FFFFFF" : theme.textSecondary} 
@@ -729,7 +731,7 @@ export default function CompanyProfileScreen() {
                     ]}
                     onPress={() => togglePaymentMethod(method.id)}
                   >
-                    <Feather 
+                    <AppIcon 
                       name={formData.paymentMethods.includes(method.id) ? "check-square" : "square"} 
                       size={18} 
                       color={formData.paymentMethods.includes(method.id) ? theme.primary : theme.textSecondary} 

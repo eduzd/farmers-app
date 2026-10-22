@@ -8,6 +8,7 @@ import {
   taka, STATUS_COLOR, statusLabel, fmtDate, pickAndUpload, confirmAsk, st, ShopSection,
 } from "./ui";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 export type Category = { id: string; slug: string; nameEn: string; nameBn: string; icon: string; color: string; sortOrder: number; active: boolean; productCount?: number };
 
 export function useCategories() {
@@ -33,7 +34,7 @@ export function ShopTab({ section, setSection }: { section: ShopSection; setSect
         {tabs.map(([k, label, icon]) => (
           <Pressable key={k} testID={`shop-section-${k}`} onPress={() => setSection(k)}
             style={{ flex: 1, flexDirection: "row", gap: 6, alignItems: "center", justifyContent: "center", height: 38, borderRadius: 9, backgroundColor: section === k ? theme.card : "transparent" }}>
-            <Feather name={icon} size={14} color={section === k ? theme.primary : theme.textSecondary} />
+            <AppIcon name={icon} size={14} color={section === k ? theme.primary : theme.textSecondary} />
             <Text style={{ fontWeight: "700", fontSize: 13, color: section === k ? theme.primary : theme.textSecondary }} numberOfLines={1}>{label}</Text>
           </Pressable>
         ))}
@@ -196,7 +197,7 @@ function CategoriesList() {
         <Card key={c.id} testID={`category-${c.slug}`} style={{ paddingVertical: 10 }}>
           <View style={st.row}>
             <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: c.color + "20", alignItems: "center", justifyContent: "center" }}>
-              <Feather name={(c.icon as any) || "grid"} size={18} color={c.color} />
+              <AppIcon name={(c.icon as any) || "grid"} size={18} color={c.color} />
             </View>
             <Pressable style={{ flex: 1, gap: 2 }} onPress={() => nav.push({ name: "categoryForm", id: c.id })}>
               <Text style={{ color: theme.text, fontWeight: "700", fontSize: 14.5 }} numberOfLines={1}>{c.nameEn} · {c.nameBn}</Text>
@@ -264,7 +265,7 @@ export function CategoryForm({ id }: { id?: string }) {
         <View style={[st.grid, { marginBottom: 12 }]}>
           {ICONS.map((ic) => (
             <Pressable key={ic} onPress={() => setF({ ...f, icon: ic })} style={{ width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: f.icon === ic ? f.color : theme.cardBorder, backgroundColor: f.icon === ic ? f.color + "18" : theme.card }}>
-              <Feather name={ic as any} size={18} color={f.icon === ic ? f.color : theme.textSecondary} />
+              <AppIcon name={ic as any} size={18} color={f.icon === ic ? f.color : theme.textSecondary} />
             </Pressable>
           ))}
         </View>
@@ -595,7 +596,7 @@ export function StoreForm({ id }: { id?: string }) {
           {(users.data || []).slice(0, 8).map((u) => (
             <Pressable key={u.id} testID={`pick-owner-${u.id}`} disabled={!!u.store} onPress={() => set("owner")(u.id)}
               style={[st.row, { paddingVertical: 8, opacity: u.store ? 0.45 : 1 }]}>
-              <Feather name={f.owner === u.id ? "check-circle" : "circle"} size={18} color={f.owner === u.id ? theme.primary : theme.textTertiary} />
+              <AppIcon name={f.owner === u.id ? "check-circle" : "circle"} size={18} color={f.owner === u.id ? theme.primary : theme.textTertiary} />
               <View style={{ flex: 1 }}>
                 <Text style={{ color: theme.text, fontWeight: "600" }}>{u.name}</Text>
                 <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{u.email || u.phone}{u.store ? ` · ${L("already has a shop", "ইতিমধ্যে দোকান আছে")}` : ""}</Text>

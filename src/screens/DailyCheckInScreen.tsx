@@ -16,6 +16,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const WEEK_DAYS = ["শনি", "রবি", "সোম", "মঙ্গল", "বুধ", "বৃহস্পতি", "শুক্র"];
 const CURRENT_STREAK: number = 0;
 const TOTAL_POINTS: number = 0;
@@ -142,7 +143,7 @@ export default function DailyCheckInScreen() {
             {tasks.map((task, index) => (
               <View key={task.id} style={[styles.taskRow, index < tasks.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.cardBorder }]}>
                 <View style={[styles.taskIcon, { backgroundColor: task.completed ? "#2FA36B15" : theme.primary + "15" }]}>
-                  <Feather name={task.icon} size={16} color={task.completed ? "#2FA36B" : theme.primary} />
+                  <AppIcon name={task.icon} size={16} color={task.completed ? "#2FA36B" : theme.primary} />
                 </View>
                 <ThemedText style={[styles.taskTitle, { color: theme.text, textDecorationLine: task.completed ? "line-through" : "none" }]}>
                   {task.title}

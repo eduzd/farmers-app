@@ -10,6 +10,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { Spacing, BorderRadius, FontFamily } from "@/constants/theme";
 import { deleteServerPost, editServerPost, reportServerPost, setUserRelation } from "@/lib/feedApi";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 export interface PostActionsTarget {
   id: string;
   content: string;
@@ -226,7 +227,7 @@ export function PostActionsSheet({ visible, post, onClose, onToggleSave, onDelet
               testID={`post-menu-${it.key}`}
               style={({ pressed }) => [styles.row, pressed && { backgroundColor: theme.backgroundSecondary }]}
             >
-              <Feather name={it.icon} size={20} color={it.danger ? theme.error : theme.text} />
+              <AppIcon name={it.icon} size={20} color={it.danger ? theme.error : theme.text} />
               <ThemedText style={[styles.rowText, { color: it.danger ? theme.error : theme.text }]} numberOfLines={1}>
                 {it.label}
               </ThemedText>
@@ -237,7 +238,7 @@ export function PostActionsSheet({ visible, post, onClose, onToggleSave, onDelet
             <ThemedText style={[styles.title, { color: theme.text }]}>{L("Why are you reporting this post?", "কেন রিপোর্ট করছেন?")}</ThemedText>
             {REASONS.map((r) => (
               <Pressable key={r.id} testID={`report-reason-${r.id}`} onPress={() => setReason(r.id)} style={({ pressed }) => [styles.row, pressed && { backgroundColor: theme.backgroundSecondary }]}>
-                <Feather name={reason === r.id ? "check-circle" : "circle"} size={20} color={reason === r.id ? theme.primary : theme.textSecondary} />
+                <AppIcon name={reason === r.id ? "check-circle" : "circle"} size={20} color={reason === r.id ? theme.primary : theme.textSecondary} />
                 <ThemedText style={[styles.rowText, { color: theme.text }]}>{bn ? r.bn : r.en}</ThemedText>
               </Pressable>
             ))}

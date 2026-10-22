@@ -11,6 +11,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 const VET_CATEGORIES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "cattle", label: "গরু-মহিষ", icon: "circle" },
@@ -71,7 +73,7 @@ export default function VeterinaryScreen() {
                 setSelectedCategory(cat.id);
               }}
             >
-              <Feather
+              <AppIcon
                 name={cat.icon as any}
                 size={16}
                 color={selectedCategory === cat.id ? "#fff" : theme.textSecondary}
@@ -96,7 +98,7 @@ export default function VeterinaryScreen() {
                 style={[styles.emergencyCard, { backgroundColor: service.color + "15", borderColor: service.color }]}
                 onPress={() => handleCall(service.number)}
               >
-                <Feather name={service.icon as any} size={24} color={service.color} />
+                <AppIcon name={service.icon as any} size={24} color={service.color} />
                 <ThemedText style={[styles.emergencyTitle, { color: theme.text }]}>{service.title}</ThemedText>
                 <ThemedText style={[styles.emergencyNumber, { color: service.color }]}>{service.number}</ThemedText>
               </Pressable>
@@ -164,7 +166,7 @@ export default function VeterinaryScreen() {
                       <Feather name="phone" size={18} color={theme.primary} />
                     </Pressable>
                     <Pressable style={[styles.actionButton, { backgroundColor: theme.primary }]}>
-                      <Feather name="message-circle" size={18} color="#fff" />
+                      <ChatIcon size={18} color="#fff" />
                     </Pressable>
                   </View>
                 </View>

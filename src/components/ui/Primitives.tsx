@@ -7,6 +7,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, FontFamily, Spacing } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type IconName = keyof typeof Feather.glyphMap;
 
 /** Round icon-only button (header actions, toolbars). */
@@ -54,7 +55,7 @@ export function IconButton({
         style,
       ]}
     >
-      <Feather name={icon} size={size * 0.48} color={fg} />
+      <AppIcon name={icon} size={size * 0.48} color={fg} />
       {badge ? (
         <View style={[styles.badgeDot, { backgroundColor: theme.error, borderColor: theme.backgroundRoot }]}>
           <ThemedText style={styles.badgeDotText}>{badge > 9 ? "9+" : badge}</ThemedText>
@@ -97,7 +98,7 @@ export function Chip({
         style,
       ]}
     >
-      {icon ? <Feather name={icon} size={14} color={selected ? "#FFFFFF" : theme.textSecondary} /> : null}
+      {icon ? <AppIcon name={icon} size={14} color={selected ? "#FFFFFF" : theme.textSecondary} /> : null}
       <ThemedText
         style={{
           fontSize: 13,
@@ -200,7 +201,7 @@ export function ListRow({
     >
       {icon ? (
         <View style={[styles.listIcon, { backgroundColor: tint + "1A" }]}>
-          <Feather name={icon} size={18} color={tint} />
+          <AppIcon name={icon} size={18} color={tint} />
         </View>
       ) : null}
       <View style={{ flex: 1 }}>
@@ -256,7 +257,7 @@ export function TextField({
           },
         ]}
       >
-        {icon ? <Feather name={icon} size={18} color={focused ? theme.primary : theme.textTertiary} /> : null}
+        {icon ? <AppIcon name={icon} size={18} color={focused ? theme.primary : theme.textTertiary} /> : null}
         <TextInput
           placeholderTextColor={theme.textTertiary}
           {...inputProps}

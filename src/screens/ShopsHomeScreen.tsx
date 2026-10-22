@@ -23,6 +23,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Company, getAllCompanies } from "@/lib/storage";
 import { initializeSeedData } from "@/lib/seedData";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const SHOP_CATEGORIES = [
@@ -244,7 +245,7 @@ export default function ShopsHomeScreen() {
             ]}
             onPress={() => handleCategoryPress(item.id)}
           >
-            <Feather
+            <AppIcon
               name={item.icon as any}
               size={14}
               color={selectedCategory === item.id ? "#FFFFFF" : item.color}

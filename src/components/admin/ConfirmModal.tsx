@@ -11,6 +11,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface ConfirmModalProps {
   visible: boolean;
   title: string;
@@ -57,7 +58,7 @@ export function ConfirmModal({
           <View
             style={[styles.iconContainer, { backgroundColor: iconClr + "15" }]}
           >
-            <Feather name={icon} size={32} color={iconClr} />
+            <AppIcon name={icon} size={32} color={iconClr} />
           </View>
 
           <ThemedText type="h3" style={[styles.title, { color: theme.text }]}>

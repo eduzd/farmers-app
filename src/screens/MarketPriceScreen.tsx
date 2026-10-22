@@ -16,6 +16,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface PriceItem {
   id: string;
   name: string;
@@ -148,7 +149,7 @@ export default function MarketPriceScreen() {
                   { backgroundColor: trendColor + "15" },
                 ]}
               >
-                <Feather
+                <AppIcon
                   name={
                     item.trend === "up"
                       ? "trending-up"

@@ -10,6 +10,7 @@ import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from "expo-aud
 import { ThemedText } from "@/components/ThemedText";
 import { voicePlaybackUri } from "@/lib/dmApi";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type Handle = { stop: () => void };
 let nowPlaying: Handle | null = null;
 
@@ -150,7 +151,7 @@ export function VoiceMessagePlayer({ mediaId, localUri, durationMs, isMe, tint, 
       accessibilityLabel={state === "playing" ? "Pause voice message" : "Play voice message"}
     >
       <View style={[styles.button, { borderColor: tint }]}>
-        {state === "loading" ? <ActivityIndicator size="small" color={tint} /> : <Feather name={icon} size={16} color={tint} style={icon === "play" ? { marginLeft: 2 } : undefined} />}
+        {state === "loading" ? <ActivityIndicator size="small" color={tint} /> : <AppIcon name={icon} size={16} color={tint} style={icon === "play" ? { marginLeft: 2 } : undefined} />}
       </View>
       <View style={styles.middle}>
         <View style={[styles.track, { backgroundColor: trackColor }]}>

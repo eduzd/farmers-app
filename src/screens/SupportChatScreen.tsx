@@ -7,6 +7,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
 import { apiGet, apiPost } from "@/lib/api";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
 /** The signed-in user's own conversation with Farmers admins (Help). */
 export default function SupportChatScreen() {
   const { theme } = useTheme();
@@ -74,7 +75,7 @@ export default function SupportChatScreen() {
         {loading ? <ActivityIndicator color={theme.primary} style={{ marginTop: 30 }} /> : null}
         {!loading && !msgs.length ? (
           <View style={{ alignItems: "center", paddingTop: 40, gap: 10, paddingHorizontal: 20 }}>
-            <Feather name="message-circle" size={34} color={theme.textTertiary} />
+            <ChatIcon size={34} color={theme.textTertiary} />
             <Text style={{ color: theme.text, fontWeight: "700", fontSize: 15, textAlign: "center" }}>{L("How can we help?", "আমরা কীভাবে সাহায্য করতে পারি?")}</Text>
             <Text style={{ color: theme.textSecondary, textAlign: "center" }}>{L("Write your question below. An admin will reply in this chat.", "নিচে আপনার প্রশ্ন লিখুন। অ্যাডমিন এই চ্যাটে উত্তর দেবেন।")}</Text>
           </View>

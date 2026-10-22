@@ -20,6 +20,7 @@ import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
 import { DIVISIONS, divisionOf, divisionLabel } from "@/lib/bdLocations";
 import { useTr } from "@/lib/tr";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Method = "home" | "express" | "pickup";
 type Payment = "cod" | "bkash";
@@ -347,7 +348,7 @@ export default function CheckoutScreen() {
   const chipText = (active: boolean) => [styles.chipText, { color: active ? "#FFFFFF" : theme.text }];
   const Header = ({ icon, title }: { icon: any; title: string }) => (
     <View style={styles.sectionHeader}>
-      <Feather name={icon} size={18} color={theme.primary} />
+      <AppIcon name={icon} size={18} color={theme.primary} />
       <ThemedText type="h4" style={{ color: theme.text, flex: 1 }}>
         {title}
       </ThemedText>
@@ -422,7 +423,7 @@ export default function CheckoutScreen() {
                 <TextInput style={[input, styles.textArea]} value={form.address} onChangeText={(v) => setForm({ ...form, address: v })} placeholder={tr("Village, road, house number")} placeholderTextColor={theme.textSecondary} multiline textAlignVertical="top" />
                 {loggedIn ? (
                   <Pressable style={styles.checkRow} onPress={() => setSaveAddress((v) => !v)}>
-                    <Feather name={saveAddress ? "check-square" : "square"} size={18} color={theme.primary} />
+                    <AppIcon name={saveAddress ? "check-square" : "square"} size={18} color={theme.primary} />
                     <ThemedText style={{ color: theme.text, fontSize: 14 }}>{tr("Save this address for next time")}</ThemedText>
                   </Pressable>
                 ) : null}
@@ -505,7 +506,7 @@ export default function CheckoutScreen() {
                   <View style={[styles.radioOuter, { borderColor: active ? theme.primary : theme.textSecondary }]}>
                     {active ? <View style={[styles.radioInner, { backgroundColor: theme.primary }]} /> : null}
                   </View>
-                  <Feather name={METHOD_ICON[m.id]} size={20} color={theme.text} />
+                  <AppIcon name={METHOD_ICON[m.id]} size={20} color={theme.text} />
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <ThemedText style={[styles.bold, { color: theme.text }]}>{tr(m.label)}</ThemedText>
                     <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>{tr(m.days)}</ThemedText>
@@ -668,7 +669,7 @@ export default function CheckoutScreen() {
                     <ThemedText style={{ color: theme.text, fontWeight: "600" }}>{money(i.price * i.quantity)}</ThemedText>
                     <View style={[styles.stepper, { borderColor: theme.inputBorder }]}>
                       <Pressable testID={`qty-minus-${i.productId}`} hitSlop={6} style={styles.stepBtn} onPress={() => (i.quantity <= 1 ? removeItem(i.id) : updateQuantity(i.id, i.quantity - 1))}>
-                        <Feather name={i.quantity <= 1 ? "trash-2" : "minus"} size={14} color={i.quantity <= 1 ? "#DC2626" : theme.text} />
+                        <AppIcon name={i.quantity <= 1 ? "trash-2" : "minus"} size={14} color={i.quantity <= 1 ? "#DC2626" : theme.text} />
                       </Pressable>
                       <ThemedText testID={`qty-${i.productId}`} style={{ color: theme.text, minWidth: 26, textAlign: "center", fontWeight: "600" }}>{i.quantity}</ThemedText>
                       <Pressable testID={`qty-plus-${i.productId}`} hitSlop={6} style={styles.stepBtn} disabled={!!err} onPress={() => updateQuantity(i.id, i.quantity + 1)}>

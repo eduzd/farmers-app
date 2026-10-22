@@ -22,6 +22,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get("window");
 
 interface FeaturedFarmer {
@@ -148,7 +149,7 @@ export default function FeaturedFarmersScreen() {
           style={[styles.risingFollowBtn, { backgroundColor: item.isFollowing ? theme.card : theme.primary }]}
           onPress={() => handleFollow(item.id)}
         >
-          <Feather name={item.isFollowing ? "check" : "plus"} size={16} color={item.isFollowing ? theme.primary : "#fff"} />
+          <AppIcon name={item.isFollowing ? "check" : "plus"} size={16} color={item.isFollowing ? theme.primary : "#fff"} />
         </Pressable>
       </Pressable>
     </Animated.View>

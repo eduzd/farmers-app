@@ -24,6 +24,8 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 type RouteProps = RouteProp<RootStackParamList, "GroupDetail">;
 
 interface GroupPost {
@@ -184,7 +186,7 @@ export default function GroupDetailScreen() {
             ]}
             onPress={handleJoinToggle}
           >
-            <Feather
+            <AppIcon
               name={isJoined ? "check" : "user-plus"}
               size={18}
               color={isJoined ? theme.primary : theme.white}
@@ -275,7 +277,7 @@ export default function GroupDetailScreen() {
         </Pressable>
 
         <Pressable style={styles.actionButton}>
-          <Feather name="message-circle" size={20} color={theme.textSecondary} />
+          <ChatIcon size={20} color={theme.textSecondary} />
           <ThemedText style={[styles.actionText, { color: theme.textSecondary }]}>
             {item.comments}
           </ThemedText>

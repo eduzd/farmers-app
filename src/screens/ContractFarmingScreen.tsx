@@ -11,6 +11,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
 const CONTRACTS: any[] = [];
 
 const AVAILABLE_CONTRACTS: any[] = [];
@@ -114,7 +115,7 @@ export default function ContractFarmingScreen() {
                       <ThemedText style={[styles.actionText, { color: theme.primary }]}>বিস্তারিত</ThemedText>
                     </Pressable>
                     <Pressable style={[styles.actionBtn, { backgroundColor: theme.primary }]}>
-                      <Feather name="message-circle" size={18} color="#fff" />
+                      <ChatIcon size={18} color="#fff" />
                       <ThemedText style={[styles.actionText, { color: "#fff" }]}>যোগাযোগ</ThemedText>
                     </Pressable>
                   </View>

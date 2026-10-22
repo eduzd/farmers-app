@@ -16,6 +16,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface EmergencyContact {
   id: string;
   name: string;
@@ -85,7 +86,7 @@ export default function EmergencyServicesScreen() {
               onPress={() => handleCall(contact)}
             >
               <View style={[styles.contactIcon, { backgroundColor: contact.color + "20" }]}>
-                <Feather name={contact.icon as any} size={24} color={contact.color} />
+                <AppIcon name={contact.icon as any} size={24} color={contact.color} />
               </View>
               <View style={styles.contactInfo}>
                 <ThemedText style={[styles.contactName, { color: theme.text }]}>{contact.name}</ThemedText>

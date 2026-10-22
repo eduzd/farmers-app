@@ -6,6 +6,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
 import { mediaUrl, uploadImage } from "@/lib/api";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 /** Shared building blocks for the Farmers Admin app (src/admin). */
 
 export type Route =
@@ -191,7 +192,7 @@ export function Btn({ label, onPress, icon, kind = "primary", busy, disabled, te
       disabled={disabled || busy}
       style={({ pressed }) => [st.btn, small && st.btnSmall, { backgroundColor: bg, borderColor: kind === "ghost" ? theme.cardBorder : bg, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 }, style]}
     >
-      {busy ? <ActivityIndicator size="small" color={fg} /> : icon ? <Feather name={icon} size={small ? 14 : 16} color={fg} /> : null}
+      {busy ? <ActivityIndicator size="small" color={fg} /> : icon ? <AppIcon name={icon} size={small ? 14 : 16} color={fg} /> : null}
       <Text style={{ color: fg, fontWeight: "700", fontSize: small ? 12.5 : 14 }} numberOfLines={1}>{label}</Text>
     </Pressable>
   );
@@ -236,7 +237,7 @@ export function Empty({ icon = "inbox", text }: { icon?: keyof typeof Feather.gl
   const { theme } = useTheme();
   return (
     <View style={{ alignItems: "center", paddingVertical: 36, gap: 10 }}>
-      <Feather name={icon} size={30} color={theme.textTertiary} />
+      <AppIcon name={icon} size={30} color={theme.textTertiary} />
       <Text style={{ color: theme.textSecondary, fontSize: 14, textAlign: "center" }}>{text}</Text>
     </View>
   );
@@ -264,7 +265,7 @@ export function Thumb({ uri, size = 52, icon = "package" }: { uri?: string | nul
     <Image source={{ uri: mediaUrl(uri) }} style={{ width: size, height: size, borderRadius: 10, backgroundColor: theme.backgroundSecondary }} contentFit="cover" />
   ) : (
     <View style={{ width: size, height: size, borderRadius: 10, backgroundColor: theme.backgroundSecondary, alignItems: "center", justifyContent: "center" }}>
-      <Feather name={icon} size={size * 0.4} color={theme.textTertiary} />
+      <AppIcon name={icon} size={size * 0.4} color={theme.textTertiary} />
     </View>
   );
 }
@@ -274,7 +275,7 @@ export function Stat({ label, value, icon, color, onPress, testID }: { label: st
   return (
     <Pressable testID={testID} onPress={onPress} disabled={!onPress} style={({ pressed }) => [st.stat, { backgroundColor: theme.card, borderColor: theme.cardBorder, opacity: pressed ? 0.8 : 1 }]}>
       <View style={[st.statIcon, { backgroundColor: color + "18" }]}>
-        <Feather name={icon} size={17} color={color} />
+        <AppIcon name={icon} size={17} color={color} />
       </View>
       <Text style={{ color: theme.text, fontSize: 20, fontWeight: "800" }} numberOfLines={1}>{value}</Text>
       <Text style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={1}>{label}</Text>

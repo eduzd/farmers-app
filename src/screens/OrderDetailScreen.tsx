@@ -29,6 +29,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useOrdersStore, Order, OrderStatus } from "@/lib/ordersStore";
 
 import { tr, useTr } from "@/lib/tr";
+import { AppIcon } from "@/components/icons/AppIcon";
 type OrderDetailRouteProp = RouteProp<RootStackParamList, "OrderDetail">;
 
 const TRACKING_STEPS: { status: OrderStatus; label: string; icon: string }[] = [
@@ -124,7 +125,7 @@ function AnimatedTrackingStep({
             circleAnimatedStyle,
           ]}
         >
-          <Feather
+          <AppIcon
             name={step.icon as any}
             size={16}
             color={isCompleted ? theme.white : theme.textSecondary}
@@ -393,7 +394,7 @@ export default function OrderDetailScreen() {
             {tr("Delivery")}
           </ThemedText>
           <View style={styles.addressInfo}>
-            <Feather name={order.checkout.deliveryMethod === "pickup" ? "map-pin" : order.checkout.deliveryMethod === "express" ? "zap" : "truck"} size={20} color={theme.primary} />
+            <AppIcon name={order.checkout.deliveryMethod === "pickup" ? "map-pin" : order.checkout.deliveryMethod === "express" ? "zap" : "truck"} size={20} color={theme.primary} />
             <View style={styles.addressText}>
               <ThemedText style={[styles.addressName, { color: theme.text }]}>
                 {tr(order.checkout.deliveryMethod === "pickup" ? "Pick up from seller" : order.checkout.deliveryMethod === "express" ? "Express delivery" : "Home delivery")}
@@ -426,7 +427,7 @@ export default function OrderDetailScreen() {
         </ThemedText>
         
         <View style={styles.paymentInfo}>
-          <Feather
+          <AppIcon
             name={order.paymentMethod === "cod" ? "dollar-sign" : "credit-card"}
             size={20}
             color={theme.primary}

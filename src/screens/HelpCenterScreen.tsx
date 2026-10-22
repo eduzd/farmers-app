@@ -17,6 +17,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface HelpCategory {
   id: string;
   title: string;
@@ -118,7 +120,7 @@ export default function HelpCenterScreen() {
           <ThemedText style={[styles.quickActionsTitle, { color: theme.text }]}>{tr("দ্রুত সাহায্য")}</ThemedText>
           <View style={styles.quickActionsRow}>
             <Pressable style={[styles.quickAction, { backgroundColor: theme.card }]}>
-              <Feather name="message-circle" size={20} color={theme.primary} />
+              <ChatIcon size={20} color={theme.primary} />
               <ThemedText style={[styles.quickActionText, { color: theme.text }]}>{tr("চ্যাট সাপোর্ট")}</ThemedText>
             </Pressable>
             <Pressable style={[styles.quickAction, { backgroundColor: theme.card }]}>
@@ -142,7 +144,7 @@ export default function HelpCenterScreen() {
                   onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
                 >
                   <View style={[styles.categoryIcon, { backgroundColor: cat.color + "15" }]}>
-                    <Feather name={cat.icon} size={20} color={cat.color} />
+                    <AppIcon name={cat.icon} size={20} color={cat.color} />
                   </View>
                   <ThemedText style={[styles.categoryTitle, { color: theme.text }]}>{cat.title}</ThemedText>
                   <ThemedText style={[styles.categoryCount, { color: theme.textSecondary }]}>
@@ -165,7 +167,7 @@ export default function HelpCenterScreen() {
                 >
                   <View style={styles.faqHeader}>
                     <ThemedText style={[styles.faqQuestion, { color: theme.text }]}>{faq.question}</ThemedText>
-                    <Feather name={faq.isExpanded ? "chevron-up" : "chevron-down"} size={20} color={theme.textSecondary} />
+                    <AppIcon name={faq.isExpanded ? "chevron-up" : "chevron-down"} size={20} color={theme.textSecondary} />
                   </View>
                   {faq.isExpanded ? (
                     <ThemedText style={[styles.faqAnswer, { color: theme.textSecondary }]}>{faq.answer}</ThemedText>
@@ -177,7 +179,7 @@ export default function HelpCenterScreen() {
         </View>
 
         <Animated.View entering={FadeInUp.delay(500)} style={[styles.feedbackCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <Feather name="message-square" size={24} color={theme.primary} />
+          <ChatIcon size={24} color={theme.primary} />
           <View style={styles.feedbackContent}>
             <ThemedText style={[styles.feedbackTitle, { color: theme.text }]}>{tr("সমস্যার সমাধান হয়নি?")}</ThemedText>
             <ThemedText style={[styles.feedbackDescription, { color: theme.textSecondary }]}>

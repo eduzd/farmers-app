@@ -16,6 +16,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface TestCenter {
   id: string;
   name: string;
@@ -123,7 +124,7 @@ export default function SoilTestingScreen() {
                   style={[styles.paramCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
                 >
                   <View style={[styles.paramIcon, { backgroundColor: param.color + "20" }]}>
-                    <Feather name={param.icon as any} size={20} color={param.color} />
+                    <AppIcon name={param.icon as any} size={20} color={param.color} />
                   </View>
                   <ThemedText style={[styles.paramName, { color: theme.text }]}>{param.name}</ThemedText>
                   <ThemedText style={[styles.paramIdeal, { color: theme.textSecondary }]}>

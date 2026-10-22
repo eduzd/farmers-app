@@ -16,6 +16,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Announcement {
   id: string;
   title: string;
@@ -83,7 +84,7 @@ export default function AnnouncementsScreen() {
         >
           <View style={styles.cardHeader}>
             <View style={[styles.typeIcon, { backgroundColor: config.color + "20" }]}>
-              <Feather name={config.icon} size={18} color={config.color} />
+              <AppIcon name={config.icon} size={18} color={config.color} />
             </View>
             <View style={styles.cardHeaderInfo}>
               <View style={styles.titleRow}>

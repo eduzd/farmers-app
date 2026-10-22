@@ -10,6 +10,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const SCAN_FEATURES = [
   { id: "product", icon: "package", title: "পণ্য যাচাই", desc: "আসল পণ্য চিনুন" },
   { id: "seller", icon: "user-check", title: "বিক্রেতা যাচাই", desc: "বিশ্বস্ত বিক্রেতা" },
@@ -67,7 +68,7 @@ export default function QRScannerScreen() {
                 }}
               >
                 <View style={[styles.featureIcon, { backgroundColor: theme.primary + "20" }]}>
-                  <Feather
+                  <AppIcon
                     name={feature.icon as any}
                     size={24}
                     color={selectedFeature === feature.id ? theme.primary : theme.textSecondary}

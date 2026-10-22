@@ -5,6 +5,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 
+import { AppIcon } from "@/components/icons/AppIcon";
 function useColors() {
   const { theme } = useTheme();
   return {
@@ -84,7 +85,7 @@ export function StickyActionBar({ actions }: StickyActionBarProps) {
             disabled={action.disabled}
           >
             {action.icon ? (
-              <Feather name={action.icon} size={18} color={buttonStyles.textColor} style={styles.icon} />
+              <AppIcon name={action.icon} size={18} color={buttonStyles.textColor} style={styles.icon} />
             ) : null}
             <Text style={[styles.buttonText, { color: buttonStyles.textColor }]}>
               {action.label}

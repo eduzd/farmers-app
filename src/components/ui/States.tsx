@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, Spacing } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface StateProps {
   icon?: keyof typeof Feather.glyphMap;
   title: string;
@@ -29,7 +30,7 @@ export function EmptyState({ icon = "inbox", title, message, actionLabel, onActi
   return (
     <View style={[styles.wrap, style]}>
       <View style={[styles.iconCircle, { backgroundColor: theme.primarySoft }]}>
-        <Feather name={icon} size={28} color={theme.primary} />
+        <AppIcon name={icon} size={28} color={theme.primary} />
       </View>
       <ThemedText type="h4" style={styles.center}>
         {title}
@@ -52,7 +53,7 @@ export function ErrorState({ icon = "wifi-off", title, message, actionLabel, onA
   return (
     <View style={[styles.wrap, style]}>
       <View style={[styles.iconCircle, { backgroundColor: theme.error + "18" }]}>
-        <Feather name={icon} size={28} color={theme.error} />
+        <AppIcon name={icon} size={28} color={theme.error} />
       </View>
       <ThemedText type="h4" style={styles.center}>
         {title}

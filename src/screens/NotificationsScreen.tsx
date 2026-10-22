@@ -30,6 +30,7 @@ import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
 import { fetchServerPost } from "@/lib/feedApi";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Notification {
   id: string;
   type: "like" | "comment" | "new_post" | "follow" | "mention" | "order" | "system" | "voice_room" | "badge" | "message" | "review" | "answer" | "rfq" | "price" | "reminder";
@@ -254,12 +255,12 @@ export default function NotificationsScreen() {
                 isWelfareMember={item.isWelfareMember}
               />
               <View style={[styles.iconBadge, { backgroundColor: getNotificationColor(item.type) }]}>
-                <Feather name={getNotificationIcon(item.type)} size={10} color="#fff" />
+                <AppIcon name={getNotificationIcon(item.type)} size={10} color="#fff" />
               </View>
             </View>
           ) : (
             <View style={[styles.iconContainer, { backgroundColor: getNotificationColor(item.type) + "20" }]}>
-              <Feather name={getNotificationIcon(item.type)} size={20} color={getNotificationColor(item.type)} />
+              <AppIcon name={getNotificationIcon(item.type)} size={20} color={getNotificationColor(item.type)} />
             </View>
           )}
         </View>

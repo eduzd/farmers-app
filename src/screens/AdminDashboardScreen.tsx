@@ -35,6 +35,7 @@ import {
 } from "@/components/admin";
 import { AdminOrdersTab, AdminStoresTab, AdminCatalogTab, AdminNotifyTab, AdminUserSheet, AdminDeliveryTab, AdminMarketplacePanel } from "@/components/admin/ManageTabs";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type AdminTab =
   | "overview"
   | "users"
@@ -656,7 +657,7 @@ export default function AdminDashboardScreen() {
                     });
                   }}
                 >
-                  <Feather
+                  <AppIcon
                     name={item.status === "banned" ? "user-check" : "user-x"}
                     size={16}
                     color={item.status === "banned" ? "#16A34A" : "#DC2626"}
@@ -705,7 +706,7 @@ export default function AdminDashboardScreen() {
               ]}
               onPress={() => setNewAnnouncement({ ...newAnnouncement, type })}
             >
-              <Feather
+              <AppIcon
                 name={type === "info" ? "info" : type === "warning" ? "alert-triangle" : "check-circle"}
                 size={16}
                 color={newAnnouncement.type === type ? "#FFF" : theme.text}
@@ -736,7 +737,7 @@ export default function AdminDashboardScreen() {
           announcements.map((announcement) => (
             <View key={announcement.id} style={[styles.announcementItem, { borderColor: theme.divider }]}>
               <View style={styles.announcementHeader}>
-                <Feather
+                <AppIcon
                   name={announcement.type === "info" ? "info" : announcement.type === "warning" ? "alert-triangle" : "check-circle"}
                   size={16}
                   color={announcement.type === "info" ? "#2563EB" : announcement.type === "warning" ? "#EA8A0C" : "#16A34A"}
@@ -846,7 +847,7 @@ export default function AdminDashboardScreen() {
         ].map((feature) => (
           <View key={feature.key} style={styles.toggleRow}>
             <View style={styles.toggleInfo}>
-              <Feather name={feature.icon as any} size={18} color={theme.textSecondary} />
+              <AppIcon name={feature.icon as any} size={18} color={theme.textSecondary} />
               <ThemedText style={{ color: theme.text, marginLeft: Spacing.sm }}>
                 {feature.label}
               </ThemedText>
@@ -1109,7 +1110,7 @@ export default function AdminDashboardScreen() {
               ]}
               onPress={() => setActiveTab(tab.id)}
             >
-              <Feather
+              <AppIcon
                 name={tab.icon}
                 size={18}
                 color={isActive ? theme.primary : theme.textSecondary}

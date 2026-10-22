@@ -18,6 +18,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius } from '@/constants/theme';
 
 import { tr, useTr } from "@/lib/tr";
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get('window');
 
 interface CropPrice {
@@ -160,7 +161,7 @@ export default function MarketPricesScreen() {
                 },
               ]}
             >
-              <Feather
+              <AppIcon
                 name={category.icon as any}
                 size={14}
                 color={selectedCategory === category.id ? '#fff' : theme.text}
@@ -248,7 +249,7 @@ export default function MarketPricesScreen() {
               <View style={styles.priceRight}>
                 <ThemedText style={styles.currentPrice}>৳{item.currentPrice}</ThemedText>
                 <View style={[styles.changeRow, { backgroundColor: getTrendColor(item.trend) + '15' }]}>
-                  <Feather
+                  <AppIcon
                     name={getTrendIcon(item.trend)}
                     size={12}
                     color={getTrendColor(item.trend)}

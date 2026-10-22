@@ -19,6 +19,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Fish } from "@/screens/FishEncyclopediaScreen";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type FishDetailRouteProp = RouteProp<RootStackParamList, "FishDetail">;
 
 const getDifficultyConfig = (difficulty: string) => {
@@ -66,7 +67,7 @@ function Section({ title, icon, iconColor, children, delay = 0 }: SectionProps) 
     >
       <View style={styles.sectionHeader}>
         <View style={[styles.sectionIconContainer, { backgroundColor: iconColor + "20" }]}>
-          <Feather name={icon} size={18} color={iconColor} />
+          <AppIcon name={icon} size={18} color={iconColor} />
         </View>
         <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>{title}</ThemedText>
       </View>
@@ -110,7 +111,7 @@ export default function FishDetailScreen() {
 
         <View style={styles.badgesContainer}>
           <View style={[styles.badge, { backgroundColor: fishType.color + "20" }]}>
-            <Feather name={fishType.icon} size={14} color={fishType.color} />
+            <AppIcon name={fishType.icon} size={14} color={fishType.color} />
             <ThemedText style={[styles.badgeText, { color: fishType.color }]}>{fishType.label}</ThemedText>
           </View>
           <View style={[styles.badge, { backgroundColor: difficulty.color + "20" }]}>
@@ -139,7 +140,7 @@ export default function FishDetailScreen() {
                 setActiveTab(tab.id);
               }}
             >
-              <Feather 
+              <AppIcon 
                 name={tab.icon} 
                 size={16} 
                 color={activeTab === tab.id ? "#FFFFFF" : theme.textSecondary} 

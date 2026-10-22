@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Podcast {
   id: string;
   title: string;
@@ -71,7 +72,7 @@ export default function PodcastsScreen() {
               style={[styles.playButton, { backgroundColor: isPlaying ? "#DC2626" : theme.primary }]}
               onPress={() => handlePlay(item)}
             >
-              <Feather name={isPlaying ? "pause" : "play"} size={24} color="#fff" />
+              <AppIcon name={isPlaying ? "pause" : "play"} size={24} color="#fff" />
             </Pressable>
           </View>
 

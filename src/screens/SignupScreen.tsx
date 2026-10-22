@@ -20,6 +20,7 @@ import {
   googleSignInAvailable,
 } from "@/lib/firebaseSignIn";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const COPY = {
@@ -233,7 +234,7 @@ export default function SignupScreen() {
               showPassword ? "Hide password" : "Show password"
             }
           >
-            <Feather
+            <AppIcon
               name={showPassword ? "eye-off" : "eye"}
               size={18}
               color={theme.textTertiary}

@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -37,7 +38,7 @@ export function StatCard({
     >
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: color + "15" }]}>
-          <Feather name={icon} size={20} color={color} />
+          <AppIcon name={icon} size={20} color={color} />
         </View>
         {trend && (
           <View
@@ -48,7 +49,7 @@ export function StatCard({
               },
             ]}
           >
-            <Feather
+            <AppIcon
               name={trend.isPositive ? "trending-up" : "trending-down"}
               size={12}
               color={trend.isPositive ? "#16A34A" : "#DC2626"}

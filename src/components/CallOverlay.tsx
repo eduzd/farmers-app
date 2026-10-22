@@ -10,6 +10,7 @@ import { tr } from "@/lib/tr";
 import { resolveAvatarUri } from "@/lib/avatarUri";
 import type { CallUi } from "@/contexts/VoiceCallContext";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Props {
   call: CallUi | null;
   onAccept: () => void;
@@ -76,7 +77,7 @@ function RoundButton({ icon, label, color, onPress, active, testID }: { icon: an
         onPress={onPress}
         style={({ pressed }) => [styles.btn, { backgroundColor: color, opacity: pressed ? 0.8 : 1 }, active && styles.btnActive]}
       >
-        <Feather name={icon} size={26} color={active ? BG : "#fff"} />
+        <AppIcon name={icon} size={26} color={active ? BG : "#fff"} />
       </Pressable>
       <ThemedText style={styles.btnLabel}>{label}</ThemedText>
     </View>

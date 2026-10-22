@@ -8,6 +8,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 
 import { tr, useTr } from "@/lib/tr";
+import { AppIcon } from "@/components/icons/AppIcon";
 const ANIMAL_TYPES = [
   {
     id: 'fish_carp',
@@ -362,7 +363,7 @@ export default function FeedCalculatorScreen() {
             onPress={() => setSelectedAnimal(a.id)}
           >
             <View style={[styles.animalIcon, { backgroundColor: theme.primary + '20' }]}>
-              <Feather name={a.icon as any} size={20} color={theme.primary} />
+              <AppIcon name={a.icon as any} size={20} color={theme.primary} />
             </View>
             <Text
               style={[

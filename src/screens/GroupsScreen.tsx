@@ -23,6 +23,8 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface Group {
@@ -168,7 +170,7 @@ export default function GroupsScreen() {
               <ThemedText style={[styles.dotSeparator, { color: theme.textSecondary }]}>
                 •
               </ThemedText>
-              <Feather name="message-square" size={12} color={theme.textSecondary} />
+              <ChatIcon size={12} color={theme.textSecondary} />
               <ThemedText style={[styles.statText, { color: theme.textSecondary }]}>
                 {formatMemberCount(item.postCount)}
               </ThemedText>
@@ -199,7 +201,7 @@ export default function GroupsScreen() {
             ]}
             onPress={() => handleJoinToggle(item.id)}
           >
-            <Feather
+            <AppIcon
               name={item.isJoined ? "check" : "plus"}
               size={14}
               color={item.isJoined ? theme.primary : theme.white}

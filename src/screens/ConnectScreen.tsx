@@ -28,6 +28,8 @@ import { apiGet, apiPut, isLoggedIn } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { useIsOnline } from "@/lib/liveStatus";
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 interface Field {
@@ -171,6 +173,7 @@ export default function ConnectScreen() {
           </ThemedText>
           {item.verified ? <Feather name="check-circle" size={14} color={theme.primary} style={{ marginLeft: 4 }} /> : null}
         </View>
+        <ActiveNow userId={item.id} label={L("Active now", "এখন সক্রিয়")} />
         <ThemedText style={[styles.field, { color: theme.primary }]} numberOfLines={1}>
           {fieldLabel(item.field)}
         </ThemedText>
@@ -193,10 +196,7 @@ export default function ConnectScreen() {
         style={[styles.msgBtn, { backgroundColor: theme.primary }]}
         testID="connect-message"
       >
-        <Feather name="message-circle" size={16} color="#fff" />
-        <ThemedText style={styles.msgText} numberOfLines={1}>
-          {L("Message", "মেসেজ")}
-        </ThemedText>
+        <ChatIcon size={20} color="#fff" />
       </Pressable>
     </Pressable>
   );
@@ -489,16 +489,18 @@ const styles = StyleSheet.create({
   name: { fontSize: 15, fontWeight: "700", flexShrink: 1 },
   field: { fontSize: 13, fontWeight: "600", marginTop: 1 },
   sub: { fontSize: 12, lineHeight: 17, marginTop: 1 },
+  // Icon-only round chat button (same ChatIcon as the Chats tab).
   msgBtn: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: Spacing.md,
-    height: 34,
-    borderRadius: BorderRadius.full,
+    justifyContent: "center",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     flexShrink: 0,
   },
-  msgText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+  activeRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 1 },
+  activeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#22C55E" },
+  activeText: { fontSize: 12, fontWeight: "600", color: "#16A34A" },
   empty: { alignItems: "center", paddingTop: Spacing["3xl"], paddingHorizontal: Spacing.xl, gap: Spacing.md },
   emptyText: { textAlign: "center", fontSize: 14, lineHeight: 20 },
   retry: { borderWidth: 1, borderRadius: BorderRadius.full, paddingHorizontal: Spacing.lg, paddingVertical: 8 },
@@ -518,3 +520,18 @@ const styles = StyleSheet.create({
   saveBtn: { height: 48, borderRadius: BorderRadius.md, alignItems: "center", justifyContent: "center", marginTop: Spacing.sm, marginBottom: Spacing.sm },
   saveText: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });
+
+/** "Active now" under the specialist's name while the server says they have the app open.
+ * The green dot on the avatar comes from UserAvatar (userId). Nothing shows while offline. */
+function ActiveNow({ userId, label }: { userId: string; label: string }) {
+  const online = useIsOnline(userId);
+  if (!online) return null;
+  return (
+    <View style={styles.activeRow} testID="connect-active-now">
+      <View style={styles.activeDot} />
+      <ThemedText style={styles.activeText} numberOfLines={1}>
+        {label}
+      </ThemedText>
+    </View>
+  );
+}

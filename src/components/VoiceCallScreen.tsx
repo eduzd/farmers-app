@@ -23,6 +23,7 @@ import Animated, {
   FadeOut,
 } from "react-native-reanimated";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get("window");
 
 interface VoiceCallScreenProps {
@@ -241,7 +242,7 @@ export function VoiceCallScreen({
                 }}
               >
                 <View style={[styles.controlIconBg, isMuted && styles.controlIconBgActive]}>
-                  <Feather
+                  <AppIcon
                     name={isMuted ? "mic-off" : "mic"}
                     size={24}
                     color={isMuted ? "#DC2626" : "white"}
@@ -270,7 +271,7 @@ export function VoiceCallScreen({
                 }}
               >
                 <View style={[styles.controlIconBg, isSpeakerOn && styles.controlIconBgActive]}>
-                  <Feather
+                  <AppIcon
                     name={isSpeakerOn ? "volume-2" : "volume"}
                     size={24}
                     color={isSpeakerOn ? "#16A34A" : "white"}
@@ -304,7 +305,7 @@ export function VoiceCallScreen({
                 onPress={handleToggleVideo}
               >
                 <View style={[styles.controlIconBg, isVideoOn && styles.controlIconBgActive]}>
-                  <Feather
+                  <AppIcon
                     name={isVideoOn ? "video" : "video-off"}
                     size={24}
                     color={isVideoOn ? "#2563EB" : "white"}

@@ -27,6 +27,7 @@ import { useI18n } from "@/lib/i18n";
 import { getAppVariant, openVariantOnWeb } from "@/lib/appVariant";
 import { S, STATUS_COLORS, NEXT_STATUS, THEME_SWATCHES } from "./sellerTheme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type Store = {
   id: string; name: string; slug: string; tagline: string; description: string; logo: string; banner: string;
   themeColor: string; phone: string; location: string; category: string; status: string; statusReason: string;
@@ -171,7 +172,7 @@ export default function SellerAppScreen() {
             </View>
             {NAV.map((n) => (
               <Pressable key={n.id} testID={`seller-nav-${n.id}`} onPress={() => setSection(n.id)} style={[st.sideItem, section === n.id && st.sideItemActive]}>
-                <Feather name={n.icon} size={17} color={section === n.id ? "#fff" : S.sidebarText} />
+                <AppIcon name={n.icon} size={17} color={section === n.id ? "#fff" : S.sidebarText} />
                 <Text style={[st.sideLabel, section === n.id && { color: "#fff" }]}>{n.label}</Text>
                 {n.badge ? <View style={st.badge}><Text style={st.badgeText}>{n.badge}</Text></View> : null}
               </Pressable>
@@ -209,7 +210,7 @@ export default function SellerAppScreen() {
             {NAV.map((n) => (
               <Pressable key={n.id} testID={`seller-nav-${n.id}`} onPress={() => setSection(n.id)} style={st.tabItem}>
                 <View>
-                  <Feather name={n.icon} size={20} color={section === n.id ? S.primary : S.faint} />
+                  <AppIcon name={n.icon} size={20} color={section === n.id ? S.primary : S.faint} />
                   {n.badge ? <View style={st.tabBadge}><Text style={st.badgeText}>{n.badge}</Text></View> : null}
                 </View>
                 <Text style={[st.tabLabel, section === n.id && { color: S.primary }]} numberOfLines={1}>{n.label}</Text>
@@ -239,7 +240,7 @@ function Btn({ label, icon, onPress, kind = "primary", disabled, testID, small }
   const fg = kind === "primary" ? "#fff" : kind === "danger" ? S.danger : S.text;
   return (
     <Pressable testID={testID} disabled={disabled} onPress={onPress} style={[st.btn, small && st.btnSm, { backgroundColor: bg, borderColor: kind === "ghost" ? S.border : bg, opacity: disabled ? 0.5 : 1 }]}>
-      {icon ? <Feather name={icon} size={small ? 14 : 16} color={fg} /> : null}
+      {icon ? <AppIcon name={icon} size={small ? 14 : 16} color={fg} /> : null}
       <Text style={[st.btnText, small && { fontSize: 13 }, { color: fg }]}>{label}</Text>
     </Pressable>
   );
@@ -376,7 +377,7 @@ function Dashboard({ L, store, stats, orders, products, go, wide }: { L: any; st
       <View style={st.kpiGrid}>
         {kpis.map((k) => (
           <View key={k.label} style={[st.kpi, { flexBasis: wide ? "18%" : "46%" }]}>
-            <View style={[st.kpiIcon, { backgroundColor: k.color + "14" }]}><Feather name={k.icon} size={16} color={k.color} /></View>
+            <View style={[st.kpiIcon, { backgroundColor: k.color + "14" }]}><AppIcon name={k.icon} size={16} color={k.color} /></View>
             <Text style={st.kpiValue}>{k.value}</Text>
             <Text style={st.kpiLabel}>{k.label}</Text>
           </View>

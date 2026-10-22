@@ -11,6 +11,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get("window");
 
 const STATS: any[] = [];
@@ -61,12 +62,12 @@ export default function FarmAnalyticsScreen() {
               style={styles.statCard}
             >
               <View style={[styles.statIcon, { backgroundColor: stat.color + "30" }]}>
-                <Feather name={stat.icon as any} size={20} color={stat.color} />
+                <AppIcon name={stat.icon as any} size={20} color={stat.color} />
               </View>
               <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>{stat.label}</ThemedText>
               <ThemedText style={[styles.statValue, { color: theme.text }]}>{stat.value}</ThemedText>
               <View style={styles.statChange}>
-                <Feather
+                <AppIcon
                   name={stat.change.startsWith("+") ? "arrow-up" : "arrow-down"}
                   size={12}
                   color={stat.change.startsWith("+") ? "#16A34A" : "#DC2626"}
@@ -141,7 +142,7 @@ export default function FarmAnalyticsScreen() {
                 style={[styles.insightCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
               >
                 <View style={[styles.insightIcon, { backgroundColor: theme.primary + "20" }]}>
-                  <Feather name={insight.icon as any} size={18} color={theme.primary} />
+                  <AppIcon name={insight.icon as any} size={18} color={theme.primary} />
                 </View>
                 <ThemedText style={[styles.insightTitle, { color: theme.textSecondary }]}>{insight.title}</ThemedText>
                 <ThemedText style={[styles.insightValue, { color: theme.text }]}>{insight.value}</ThemedText>

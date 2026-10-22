@@ -22,6 +22,8 @@ import { PublicUser } from "@/lib/storage";
 
 import { tr, useTr } from "@/lib/tr";
 import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface UserPost {
   id: string;
   content: string;
@@ -181,7 +183,7 @@ export default function UserProfileScreen() {
         ) : null}
 
         <View style={[styles.sectorBadge, { backgroundColor: theme.primary + "20" }]}>
-          <Feather 
+          <AppIcon 
             name={user.farmingCategory === "fish" ? "droplet" : user.role === "expert" ? "award" : "user"} 
             size={14} 
             color={theme.primary} 
@@ -260,7 +262,7 @@ export default function UserProfileScreen() {
           ]}
           onPress={handleFollow}
         >
-          <Feather 
+          <AppIcon 
             name={isFollowing ? "user-check" : "user-plus"} 
             size={18} 
             color={isFollowing ? theme.text : "#FFFFFF"} 
@@ -281,7 +283,7 @@ export default function UserProfileScreen() {
           ]}
           onPress={handleMessage}
         >
-          <Feather name="message-circle" size={18} color={theme.text} />
+          <ChatIcon size={18} color={theme.text} />
           <ThemedText style={[styles.messageButtonText, { color: theme.text }]}>
             {tr("মেসেজ")}
           </ThemedText>
@@ -343,7 +345,7 @@ export default function UserProfileScreen() {
 
           <Pressable style={styles.postAction}>
             <View style={styles.actionIconCircle}>
-              <Feather name="message-circle" size={18} color={theme.textSecondary} />
+              <ChatIcon size={18} color={theme.textSecondary} />
             </View>
             <ThemedText style={[styles.postActionText, { color: theme.textSecondary }]}>
               {item.comments}

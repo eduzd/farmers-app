@@ -28,6 +28,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
 import { getApiUrl } from "@/lib/query-client";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface FormData {
@@ -713,7 +714,7 @@ export default function InternationalFishSummitScreen() {
         </View>
         <View style={styles.verifyingSteps}>
           <View style={styles.verifyStep}>
-            <Feather
+            <AppIcon
               name={submissionProgress >= 30 ? "check-circle" : "circle"}
               size={18}
               color={submissionProgress >= 30 ? "#16A34A" : theme.textSecondary}
@@ -723,7 +724,7 @@ export default function InternationalFishSummitScreen() {
             </ThemedText>
           </View>
           <View style={styles.verifyStep}>
-            <Feather
+            <AppIcon
               name={submissionProgress >= 60 ? "check-circle" : "circle"}
               size={18}
               color={submissionProgress >= 60 ? "#16A34A" : theme.textSecondary}
@@ -733,7 +734,7 @@ export default function InternationalFishSummitScreen() {
             </ThemedText>
           </View>
           <View style={styles.verifyStep}>
-            <Feather
+            <AppIcon
               name={submissionProgress >= 100 ? "check-circle" : "circle"}
               size={18}
               color={submissionProgress >= 100 ? "#16A34A" : theme.textSecondary}

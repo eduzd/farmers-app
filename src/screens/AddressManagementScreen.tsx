@@ -23,6 +23,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { UserAddress } from "@/lib/storage";
 
 import { tr, useTr } from "@/lib/tr";
+import { AppIcon } from "@/components/icons/AppIcon";
 const DISTRICTS = [
   "ঢাকা", "চট্টগ্রাম", "রাজশাহী", "খুলনা", "বরিশাল", 
   "সিলেট", "রংপুর", "ময়মনসিংহ", "কুমিল্লা", "গাজীপুর",
@@ -207,7 +208,7 @@ export default function AddressManagementScreen() {
               <View style={styles.addressCardHeader}>
                 <View style={styles.addressLabelRow}>
                   <View style={[styles.labelBadge, { backgroundColor: theme.primary + "15" }]}>
-                    <Feather 
+                    <AppIcon 
                       name={address.label === "অফিস" ? "briefcase" : address.label === "বাড়ি" ? "home" : "map-pin"} 
                       size={14} 
                       color={theme.primary} 
@@ -330,7 +331,7 @@ export default function AddressManagementScreen() {
                     ]}
                     onPress={() => setFormData({ ...formData, label })}
                   >
-                    <Feather 
+                    <AppIcon 
                       name={label === "অফিস" ? "briefcase" : label === "বাড়ি" ? "home" : "map-pin"} 
                       size={16} 
                       color={formData.label === label ? "#FFFFFF" : theme.text} 

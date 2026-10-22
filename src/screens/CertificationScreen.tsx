@@ -16,6 +16,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Certificate {
   id: string;
   title: string;
@@ -185,7 +186,7 @@ export default function CertificationScreen() {
         onPress={() => handleCertificatePress(item)}
       >
         <View style={[styles.certBadge, { backgroundColor: item.color + "20" }]}>
-          <Feather name={item.badge as any} size={28} color={item.color} />
+          <AppIcon name={item.badge as any} size={28} color={item.color} />
         </View>
 
         <View style={styles.certContent}>

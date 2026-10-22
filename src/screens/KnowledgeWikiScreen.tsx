@@ -18,6 +18,7 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface WikiCategory {
   id: string;
   title: string;
@@ -117,7 +118,7 @@ export default function KnowledgeWikiScreen() {
         onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
       >
         <View style={[styles.categoryIcon, { backgroundColor: item.color }]}>
-          <Feather name={item.icon} size={20} color="#fff" />
+          <AppIcon name={item.icon} size={20} color="#fff" />
         </View>
         <ThemedText style={[styles.categoryTitle, { color: theme.text }]}>{item.title}</ThemedText>
         <ThemedText style={[styles.categoryCount, { color: theme.textSecondary }]}>
@@ -146,7 +147,7 @@ export default function KnowledgeWikiScreen() {
               <ThemedText style={[styles.categoryBadgeText, { color: theme.primary }]}>{item.category}</ThemedText>
             </View>
             <Pressable onPress={() => handleBookmark(item.id)}>
-              <Feather name={item.isBookmarked ? "bookmark" : "bookmark"} size={18} color={item.isBookmarked ? theme.primary : theme.textSecondary} />
+              <AppIcon name={item.isBookmarked ? "bookmark" : "bookmark"} size={18} color={item.isBookmarked ? theme.primary : theme.textSecondary} />
             </Pressable>
           </View>
           <ThemedText style={[styles.articleTitle, { color: theme.text }]} numberOfLines={2}>

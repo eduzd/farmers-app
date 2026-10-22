@@ -16,6 +16,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get("window");
 
 const COMMUNITY_STATS = {
@@ -82,7 +83,7 @@ export default function CommunityStatsScreen() {
           ].map((stat, index) => (
             <View key={index} style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
               <View style={[styles.statIcon, { backgroundColor: stat.color + "15" }]}>
-                <Feather name={stat.icon} size={20} color={stat.color} />
+                <AppIcon name={stat.icon} size={20} color={stat.color} />
               </View>
               <ThemedText style={[styles.statValue, { color: theme.text }]}>{stat.value.toLocaleString()}</ThemedText>
               <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>{stat.label}</ThemedText>

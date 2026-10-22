@@ -17,6 +17,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Tip {
   id: string;
   title: string;
@@ -233,7 +234,7 @@ export default function DailyTipsScreen() {
             </Pressable>
 
             <Pressable style={styles.actionButton} onPress={() => handleSave(item.id)}>
-              <Feather
+              <AppIcon
                 name={item.isSaved ? "bookmark" : "bookmark"}
                 size={18}
                 color={item.isSaved ? theme.primary : theme.textSecondary}

@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n";
 import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
 import { useAuthStore } from "@/lib/authStore";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
 /** Unread admin replies in the user's Help chat (re-checks every 30 s once signed in). */
 export function useSupportUnread(): [number, (n: number) => void] {
   const [unread, setUnread] = useState(0);
@@ -41,7 +42,7 @@ export function HelpFab({ bottom = 16, testID = "help-fab" }: { bottom?: number;
         shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6,
       })}
     >
-      <Feather name="message-circle" size={20} color="#fff" />
+      <ChatIcon size={20} color="#fff" />
       <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>{label}</Text>
       {unread ? <View testID={`${testID}-unread`} style={{ position: "absolute", top: 4, right: 6, width: 11, height: 11, borderRadius: 6, backgroundColor: "#DC2626", borderWidth: 2, borderColor: theme.primary }} /> : null}
     </Pressable>

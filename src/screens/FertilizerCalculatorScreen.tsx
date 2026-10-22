@@ -7,6 +7,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const CROPS = [
   { 
     id: 'rice_boro', 
@@ -296,7 +297,7 @@ export default function FertilizerCalculatorScreen() {
               ]}
               onPress={() => setSelectedCrop(crop.id)}
             >
-              <Feather 
+              <AppIcon 
                 name={crop.icon as any} 
                 size={14} 
                 color={selectedCrop === crop.id ? '#fff' : theme.textSecondary} 

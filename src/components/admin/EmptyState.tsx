@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface EmptyStateProps {
   icon?: keyof typeof Feather.glyphMap;
   title: string;
@@ -27,7 +28,7 @@ export function EmptyState({
       <View
         style={[styles.iconContainer, { backgroundColor: theme.primary + "15" }]}
       >
-        <Feather name={icon} size={40} color={theme.primary} />
+        <AppIcon name={icon} size={40} color={theme.primary} />
       </View>
       <ThemedText type="h4" style={[styles.title, { color: theme.text }]}>
         {title}

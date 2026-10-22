@@ -10,6 +10,8 @@ import { AdminNav, Route, TabName, ShopSection, useL, Btn } from "./ui";
 import { ShopTab, ProductDetail, ProductForm, StoreDetail, StoreForm, CategoryForm } from "./shop";
 import { HomeTab, OrdersTab, OrderDetail, SupportTab, ThreadView, UsersList, UserDetail, MoreTab } from "./ops";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 /**
  * Farmers Admin app: its own bottom navigation (Home, Shop, Orders, Support, More) over the
  * shared backend. Every call goes to /api/admin/manage/*, which the server checks for an
@@ -131,7 +133,7 @@ export default function AdminAppScreen() {
             </Text>
             {!top && tab === "home" ? (
               <Pressable testID="header-support" onPress={() => nav.goTab("support")} hitSlop={8} style={{ padding: 8 }}>
-                <Feather name="message-circle" size={21} color={theme.text} />
+                <ChatIcon size={21} color={theme.text} />
                 {supportUnread ? <View style={{ position: "absolute", top: 6, right: 6, width: 9, height: 9, borderRadius: 5, backgroundColor: "#DC2626" }} /> : null}
               </Pressable>
             ) : null}
@@ -147,7 +149,7 @@ export default function AdminAppScreen() {
             return (
               <Pressable key={k} testID={`admin-tab-${k}`} onPress={() => { if (on && !stack.length) return; nav.goTab(k); }} style={{ flex: 1, alignItems: "center", gap: 3, paddingVertical: 4 }}>
                 <View>
-                  <Feather name={icon} size={22} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
+                  <AppIcon name={icon} size={22} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
                   {badge ? (
                     <View style={{ position: "absolute", top: -6, right: -12, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.card }}>
                       <Text style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}>{badge > 99 ? "99+" : badge}</Text>

@@ -7,6 +7,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, FontFamily, Spacing } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -87,7 +88,7 @@ export function Button({
         <ActivityIndicator color={c.fg} />
       ) : (
         <View style={styles.row}>
-          {icon ? <Feather name={icon} size={FONT[size] + 3} color={c.fg} /> : null}
+          {icon ? <AppIcon name={icon} size={FONT[size] + 3} color={c.fg} /> : null}
           {label ? (
             <ThemedText style={{ color: c.fg, fontSize: FONT[size], fontFamily: FontFamily.semibold, lineHeight: FONT[size] + 6 }}>
               {label}
@@ -95,7 +96,7 @@ export function Button({
           ) : (
             children
           )}
-          {iconRight ? <Feather name={iconRight} size={FONT[size] + 3} color={c.fg} /> : null}
+          {iconRight ? <AppIcon name={iconRight} size={FONT[size] + 3} color={c.fg} /> : null}
         </View>
       )}
     </Pressable>

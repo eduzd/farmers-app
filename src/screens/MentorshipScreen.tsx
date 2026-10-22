@@ -19,6 +19,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { EmptyState } from "@/components/ui";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Mentor {
   id: string;
   name: string;
@@ -100,7 +102,7 @@ export default function MentorshipScreen() {
 
         <View style={styles.mentorActions}>
           <Pressable style={[styles.messageBtn, { borderColor: theme.primary }]}>
-            <Feather name="message-circle" size={16} color={theme.primary} />
+            <ChatIcon size={16} color={theme.primary} />
             <ThemedText style={[styles.messageBtnText, { color: theme.primary }]}>মেসেজ</ThemedText>
           </Pressable>
           <Pressable style={[styles.requestBtn, { backgroundColor: theme.primary }]}>
@@ -136,7 +138,7 @@ export default function MentorshipScreen() {
               setActiveTab(tab.id as any);
             }}
           >
-            <Feather name={tab.icon} size={16} color={activeTab === tab.id ? "#fff" : theme.text} />
+            <AppIcon name={tab.icon} size={16} color={activeTab === tab.id ? "#fff" : theme.text} />
             <ThemedText style={[styles.tabText, { color: activeTab === tab.id ? "#fff" : theme.text }]}>
               {tab.label}
             </ThemedText>

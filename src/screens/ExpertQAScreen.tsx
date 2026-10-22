@@ -31,6 +31,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 import { useHeaderAddButton } from "@/components/HeaderAddButton";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
+import { ChatIcon } from "@/components/icons/ChatIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface Expert {
@@ -329,7 +330,7 @@ export default function ExpertQAScreen() {
           onPress={() => (isLoggedIn() ? setAnswerFor(item.id) : Alert.alert(tr("Log in to answer")))}
           accessibilityLabel={tr("Answer")}
         >
-          <Feather name="message-circle" size={18} color={theme.textSecondary} />
+          <ChatIcon size={18} color={theme.textSecondary} />
           <ThemedText style={[styles.actionText, { color: theme.textSecondary }]}>
             {item.answers} {tr("উত্তর")}
           </ThemedText>

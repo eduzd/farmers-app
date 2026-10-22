@@ -20,6 +20,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius } from '@/constants/theme';
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get('window');
 
 interface QuickAction {
@@ -285,7 +286,7 @@ export default function SmartFarmingScreen() {
                       isListening && styles.voiceButtonActive,
                     ]}
                   >
-                    <Feather
+                    <AppIcon
                       name={isListening ? 'mic' : 'mic-off'}
                       size={24}
                       color={isListening ? '#fff' : '#16A34A'}
@@ -312,7 +313,7 @@ export default function SmartFarmingScreen() {
                   style={[styles.insightCard, { backgroundColor: colors.bg }]}
                 >
                   <View style={[styles.insightIcon, { backgroundColor: colors.icon + '20' }]}>
-                    <Feather name={insight.icon} size={20} color={colors.icon} />
+                    <AppIcon name={insight.icon} size={20} color={colors.icon} />
                   </View>
                   <ThemedText style={[styles.insightTitle, { color: colors.text }]}>
                     {insight.title}
@@ -345,7 +346,7 @@ export default function SmartFarmingScreen() {
                   end={{ x: 1, y: 1 }}
                 >
                   <View style={[styles.actionIconContainer, { backgroundColor: action.color + '20' }]}>
-                    <Feather name={action.icon} size={24} color={action.color} />
+                    <AppIcon name={action.icon} size={24} color={action.color} />
                   </View>
                   <ThemedText style={[styles.actionTitle, { color: '#1F2937' }]}>
                     {action.titleBn}

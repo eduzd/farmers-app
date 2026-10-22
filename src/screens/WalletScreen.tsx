@@ -22,6 +22,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Transaction {
   id: string;
   type: "credit" | "debit";
@@ -137,7 +138,7 @@ export default function WalletScreen() {
             },
           ]}
         >
-          <Feather
+          <AppIcon
             name={transaction.type === "credit" ? "arrow-down-left" : "arrow-up-right"}
             size={20}
             color={transaction.type === "credit" ? theme.primary : "#DC2626"}
@@ -288,7 +289,7 @@ export default function WalletScreen() {
                       { backgroundColor: method.color + "20" },
                     ]}
                   >
-                    <Feather name={method.icon as any} size={20} color={method.color} />
+                    <AppIcon name={method.icon as any} size={20} color={method.color} />
                   </View>
                   <ThemedText style={[styles.methodName, { color: theme.text }]}>
                     {method.name}

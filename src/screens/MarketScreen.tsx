@@ -37,6 +37,7 @@ import { useCommunityStore, CommunityType } from "@/lib/communityStore";
 import { tr, useTr } from "@/lib/tr";
 import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
 import { DIVISIONS, divisionOf, divisionLabel } from "@/lib/bdLocations";
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md) / 2;
 
@@ -511,7 +512,7 @@ export default function MarketScreen() {
                 onPress={() => setInStockOnly((v) => !v)}
                 style={[styles.smallChip, { backgroundColor: inStockOnly ? theme.primary : theme.card, borderColor: inStockOnly ? theme.primary : theme.cardBorder }]}
               >
-                <Feather name={inStockOnly ? "check-square" : "square"} size={13} color={inStockOnly ? "#FFFFFF" : theme.text} />
+                <AppIcon name={inStockOnly ? "check-square" : "square"} size={13} color={inStockOnly ? "#FFFFFF" : theme.text} />
                 <ThemedText style={[styles.smallChipText, { color: inStockOnly ? "#FFFFFF" : theme.text }]}>{tr("In stock only")}</ThemedText>
               </Pressable>
               <Pressable onPress={clearFilters} style={styles.clearBtn}>
@@ -542,7 +543,7 @@ export default function MarketScreen() {
               ]}
               onPress={() => handleCategoryPress(item.id)}
             >
-              <Feather 
+              <AppIcon 
                 name={item.icon as any} 
                 size={14} 
                 color={selectedCategory === item.id ? "#FFFFFF" : theme.text} 
@@ -576,7 +577,7 @@ export default function MarketScreen() {
                 onPress={() => setSortBy(item.id)}
                 accessibilityLabel={item.label}
               >
-                <Feather name={item.icon} size={13} color={active ? theme.primary : theme.textSecondary} />
+                <AppIcon name={item.icon} size={13} color={active ? theme.primary : theme.textSecondary} />
                 <ThemedText style={[styles.categoryText, { color: active ? theme.primary : theme.textSecondary }]}>{item.label}</ThemedText>
               </Pressable>
             );

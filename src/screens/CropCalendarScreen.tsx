@@ -6,6 +6,7 @@ import { Feather } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const MONTHS = ['বৈশাখ', 'জ্যৈষ্ঠ', 'আষাঢ়', 'শ্রাবণ', 'ভাদ্র', 'আশ্বিন', 'কার্তিক', 'অগ্রহায়ণ', 'পৌষ', 'মাঘ', 'ফাল্গুন', 'চৈত্র'];
 const ENGLISH_MONTHS = ['এপ্রিল-মে', 'মে-জুন', 'জুন-জুলাই', 'জুলাই-আগস্ট', 'আগস্ট-সেপ্টে', 'সেপ্টে-অক্টো', 'অক্টো-নভে', 'নভে-ডিসে', 'ডিসে-জানু', 'জানু-ফেব্রু', 'ফেব্রু-মার্চ', 'মার্চ-এপ্রিল'];
 
@@ -351,7 +352,7 @@ export default function CropCalendarScreen() {
                 <Text style={styles.cropName}>{crop.name}</Text>
                 <Text style={styles.cropCategory}>{crop.category}</Text>
               </View>
-              <Feather 
+              <AppIcon 
                 name={expandedCrop === crop.id ? 'chevron-up' : 'chevron-down'} 
                 size={20} 
                 color={theme.textSecondary} 

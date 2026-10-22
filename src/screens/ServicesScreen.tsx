@@ -19,6 +19,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const { width } = Dimensions.get("window");
@@ -424,7 +425,7 @@ export default function ServicesScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.iconGradient}
         >
-          <Feather name={service.icon} size={24} color="#FFF" />
+          <AppIcon name={service.icon} size={24} color="#FFF" />
         </LinearGradient>
         
         <ThemedText style={[styles.cardTitle, { color: theme.text }]} numberOfLines={1}>

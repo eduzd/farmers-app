@@ -21,6 +21,7 @@ import { fetchCatalog, createCatalogItem, updateCatalogItem, deleteCatalogItem, 
 import { CatalogFormModal, FormField } from "@/components/CatalogFormModal";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
 interface Expert {
   id: string;
   name: string;
@@ -197,7 +198,7 @@ export default function ExpertsScreen() {
           ]}
           onPress={() => handleMessage(item)}
         >
-          <Feather name="message-circle" size={18} color={theme.primary} />
+          <ChatIcon size={18} color={theme.primary} />
           <ThemedText style={[styles.actionButtonText, { color: theme.primary }]}>
             {t("experts.message")}
           </ThemedText>

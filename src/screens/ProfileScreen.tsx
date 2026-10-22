@@ -38,6 +38,7 @@ import { useCompanyStore } from "@/lib/companyStore";
 import { CommunitySwitcher, CommunitySwitcherRef } from "@/components/CommunitySwitcher";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const MENU_ITEMS = [
@@ -378,7 +379,7 @@ export default function ProfileScreen() {
           }}
         >
           <View style={styles.menuLeft}>
-            <Feather name={user?.verified ? "grid" : "shopping-bag"} size={20} color={theme.iconDefault || theme.text} />
+            <AppIcon name={user?.verified ? "grid" : "shopping-bag"} size={20} color={theme.iconDefault || theme.text} />
             <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
               {user?.verified ? t("profile.vendorDashboard") : t("profile.becomeSeller")}
             </ThemedText>
@@ -489,7 +490,7 @@ export default function ProfileScreen() {
                   onPress={toggleSavedPosts}
                 >
                   <View style={styles.menuLeft}>
-                    <Feather name={item.icon} size={20} color={theme.iconDefault || theme.text} />
+                    <AppIcon name={item.icon} size={20} color={theme.iconDefault || theme.text} />
                     <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
                       {t(item.labelKey)}
                     </ThemedText>
@@ -561,7 +562,7 @@ export default function ProfileScreen() {
                 onPress={() => handleMenuPress(item)}
               >
                 <View style={styles.menuLeft}>
-                  <Feather name={item.icon} size={20} color={theme.iconDefault || theme.text} />
+                  <AppIcon name={item.icon} size={20} color={theme.iconDefault || theme.text} />
                   <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
                     {t(item.labelKey)}
                   </ThemedText>
@@ -595,7 +596,7 @@ export default function ProfileScreen() {
               }}
             >
               <View style={styles.menuLeft}>
-                <Feather name={item.icon} size={20} color={theme.iconDefault || theme.text} />
+                <AppIcon name={item.icon} size={20} color={theme.iconDefault || theme.text} />
                 <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
                   {t(item.labelKey)}
                 </ThemedText>

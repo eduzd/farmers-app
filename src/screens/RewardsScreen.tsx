@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Reward {
   id: string;
   title: string;
@@ -127,7 +128,7 @@ export default function RewardsScreen() {
                 setActiveTab(tab.id as any);
               }}
             >
-              <Feather name={tab.icon} size={16} color={activeTab === tab.id ? "#fff" : theme.text} />
+              <AppIcon name={tab.icon} size={16} color={activeTab === tab.id ? "#fff" : theme.text} />
               <ThemedText style={[styles.tabText, { color: activeTab === tab.id ? "#fff" : theme.text }]}>
                 {tab.label}
               </ThemedText>
@@ -150,7 +151,7 @@ export default function RewardsScreen() {
                     onPress={() => handleRedeem(reward)}
                   >
                     <View style={[styles.rewardIcon, { backgroundColor: config.color + "15" }]}>
-                      <Feather name={config.icon} size={24} color={config.color} />
+                      <AppIcon name={config.icon} size={24} color={config.color} />
                     </View>
                     <ThemedText style={[styles.rewardTitle, { color: theme.text }]} numberOfLines={1}>
                       {reward.title}
@@ -192,7 +193,7 @@ export default function RewardsScreen() {
               <Animated.View key={method.id} entering={FadeInUp.delay(150 + index * 50)}>
                 <View style={[styles.earnItem, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={[styles.earnIcon, { backgroundColor: theme.primary + "15" }]}>
-                    <Feather name={method.icon} size={20} color={theme.primary} />
+                    <AppIcon name={method.icon} size={20} color={theme.primary} />
                   </View>
                   <ThemedText style={[styles.earnAction, { color: theme.text }]}>{method.action}</ThemedText>
                   <View style={[styles.earnPoints, { backgroundColor: "#2FA36B15" }]}>
@@ -210,7 +211,7 @@ export default function RewardsScreen() {
               <Animated.View key={activity.id} entering={FadeInUp.delay(150 + index * 50)}>
                 <View style={[styles.activityItem, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={[styles.activityIcon, { backgroundColor: activity.type === "earn" ? "#2FA36B15" : "#DC262615" }]}>
-                    <Feather
+                    <AppIcon
                       name={activity.type === "earn" ? "plus" : "minus"}
                       size={16}
                       color={activity.type === "earn" ? "#2FA36B" : "#DC2626"}

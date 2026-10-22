@@ -11,6 +11,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 const SERVICE_TYPES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "irrigation", label: "সেচ", icon: "droplet" },
@@ -53,7 +55,7 @@ export default function WaterServicesScreen() {
               style={[styles.emergencyCard, { backgroundColor: item.color + "20", borderColor: item.color }]}
               onPress={() => handleCall(item.number)}
             >
-              <Feather name={item.icon as any} size={20} color={item.color} />
+              <AppIcon name={item.icon as any} size={20} color={item.color} />
               <ThemedText style={[styles.emergencyTitle, { color: theme.text }]}>{item.title}</ThemedText>
               <ThemedText style={[styles.emergencyNumber, { color: item.color }]}>{item.number}</ThemedText>
             </Pressable>
@@ -81,7 +83,7 @@ export default function WaterServicesScreen() {
             setActiveTab("discussions");
           }}
         >
-          <Feather name="message-circle" size={18} color={activeTab === "discussions" ? "#fff" : theme.text} />
+          <ChatIcon size={18} color={activeTab === "discussions" ? "#fff" : theme.text} />
           <ThemedText style={[styles.tabText, { color: activeTab === "discussions" ? "#fff" : theme.text }]}>
             আলোচনা
           </ThemedText>
@@ -110,7 +112,7 @@ export default function WaterServicesScreen() {
                     setSelectedType(type.id);
                   }}
                 >
-                  <Feather
+                  <AppIcon
                     name={type.icon as any}
                     size={14}
                     color={selectedType === type.id ? "#fff" : theme.textSecondary}
@@ -218,7 +220,7 @@ export default function WaterServicesScreen() {
                   </View>
                   <View style={[styles.discussionFooter, { borderTopColor: theme.cardBorder }]}>
                     <View style={styles.statItem}>
-                      <Feather name="message-circle" size={16} color={theme.textSecondary} />
+                      <ChatIcon size={16} color={theme.textSecondary} />
                       <ThemedText style={[styles.statText, { color: theme.textSecondary }]}>{discussion.replies}</ThemedText>
                     </View>
                     <View style={styles.statItem}>

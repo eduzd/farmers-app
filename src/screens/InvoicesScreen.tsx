@@ -23,6 +23,7 @@ import { useInvoiceStore, Invoice } from "@/lib/invoiceStore";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const getPaymentStatusConfig = (status: Invoice["paymentStatus"]) => {
   const configs: Record<string, { color: string; labelBn: string; labelEn: string; icon: string }> = {
     paid: { color: "#2FA36B", labelBn: "পেইড", labelEn: "Paid", icon: "check-circle" },
@@ -143,7 +144,7 @@ ${invoice.notes ? `\n${isBn ? "নোট" : "Note"}: ${invoice.notes}` : ""}
               </ThemedText>
             </View>
             <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + "20" }]}>
-              <Feather name={statusConfig.icon as any} size={12} color={statusConfig.color} />
+              <AppIcon name={statusConfig.icon as any} size={12} color={statusConfig.color} />
               <ThemedText style={[styles.statusText, { color: statusConfig.color }]}>
                 {isBn ? statusConfig.labelBn : statusConfig.labelEn}
               </ThemedText>
@@ -238,7 +239,7 @@ ${invoice.notes ? `\n${isBn ? "নোট" : "Note"}: ${invoice.notes}` : ""}
               setViewMode(tab.id as any);
             }}
           >
-            <Feather
+            <AppIcon
               name={tab.icon as any}
               size={16}
               color={viewMode === tab.id ? "#FFF" : theme.textSecondary}

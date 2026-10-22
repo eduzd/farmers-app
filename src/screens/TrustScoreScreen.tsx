@@ -19,6 +19,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTrustScoreStore, TRUST_LEVELS } from "@/lib/trustScoreStore";
 import { useI18n } from "@/lib/i18n";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const CircularProgress = ({ score, size, strokeWidth, color }: { score: number; size: number; strokeWidth: number; color: string }) => {
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -89,7 +90,7 @@ export default function TrustScoreScreen() {
               <CircularProgress score={trustScore} size={160} strokeWidth={12} color="#FFF" />
               <View style={styles.levelInfo}>
                 <View style={styles.levelBadge}>
-                  <Feather name={trustLevel.icon as any} size={20} color="#FFF" />
+                  <AppIcon name={trustLevel.icon as any} size={20} color="#FFF" />
                   <ThemedText style={styles.levelName}>
                     {isBn ? trustLevel.nameBn : trustLevel.nameEn}
                   </ThemedText>
@@ -119,7 +120,7 @@ export default function TrustScoreScreen() {
                   <View style={styles.factorItem}>
                     <View style={styles.factorHeader}>
                       <View style={[styles.factorIcon, { backgroundColor: theme.primary + "15" }]}>
-                        <Feather name={factor.icon as any} size={18} color={theme.primary} />
+                        <AppIcon name={factor.icon as any} size={18} color={theme.primary} />
                       </View>
                       <View style={styles.factorInfo}>
                         <ThemedText style={[styles.factorName, { color: theme.text }]}>
@@ -169,7 +170,7 @@ export default function TrustScoreScreen() {
                   ]}
                 >
                   <View style={[styles.levelIcon, { backgroundColor: level.color }]}>
-                    <Feather name={level.icon as any} size={20} color="#FFF" />
+                    <AppIcon name={level.icon as any} size={20} color="#FFF" />
                   </View>
                   <View style={styles.levelDetails}>
                     <ThemedText style={[styles.levelItemName, { color: theme.text }]}>

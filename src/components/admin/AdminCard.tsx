@@ -5,6 +5,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface AdminCardProps {
   title?: string;
   subtitle?: string;
@@ -46,7 +47,7 @@ export function AdminCard({
                   { backgroundColor: (iconColor || theme.primary) + "15" },
                 ]}
               >
-                <Feather
+                <AppIcon
                   name={icon}
                   size={18}
                   color={iconColor || theme.primary}

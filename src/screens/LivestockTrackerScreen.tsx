@@ -22,6 +22,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get("window");
 
 interface HealthRecord {
@@ -225,7 +226,7 @@ export default function LivestockTrackerScreen() {
     return (
       <View key={record.id} style={[styles.recordCard, { backgroundColor: theme.backgroundSecondary }]}>
         <View style={[styles.recordIcon, { backgroundColor: typeConfig.color + "20" }]}>
-          <Feather name={typeConfig.icon} size={16} color={typeConfig.color} />
+          <AppIcon name={typeConfig.icon} size={16} color={typeConfig.color} />
         </View>
         <View style={styles.recordInfo}>
           <View style={styles.recordHeader}>

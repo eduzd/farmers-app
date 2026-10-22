@@ -28,6 +28,8 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Message {
   id: string;
   role: "user" | "assistant";
@@ -272,7 +274,7 @@ export default function AIAssistantScreen() {
               ]}
               onPress={() => speakMessage(item)}
             >
-              <Feather 
+              <AppIcon 
                 name={isCurrentlySpeaking ? "volume-x" : "volume-2"} 
                 size={16} 
                 color={isCurrentlySpeaking ? "#FFFFFF" : theme.primary} 
@@ -286,7 +288,7 @@ export default function AIAssistantScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Feather name="message-circle" size={48} color={theme.textSecondary} />
+      <ChatIcon size={48} color={theme.textSecondary} />
       <ThemedText style={[styles.emptyStateText, { color: theme.textSecondary }]}>
         কৃষি বিষয়ে যেকোনো প্রশ্ন করুন!
       </ThemedText>

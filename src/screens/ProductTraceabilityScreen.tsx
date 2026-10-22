@@ -22,6 +22,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width } = Dimensions.get("window");
 
 interface TracePoint {
@@ -142,7 +143,7 @@ export default function ProductTraceabilityScreen() {
                 { backgroundColor: point.verified ? "#2FA36B" : theme.textSecondary },
               ]}
             >
-              <Feather
+              <AppIcon
                 name={STAGE_ICONS[point.stage] || "circle"}
                 size={12}
                 color="#FFF"
@@ -335,7 +336,7 @@ export default function ProductTraceabilityScreen() {
               ].map((benefit, index) => (
                 <View key={index} style={styles.benefitItem}>
                   <View style={[styles.benefitIcon, { backgroundColor: theme.primary + "15" }]}>
-                    <Feather name={benefit.icon} size={20} color={theme.primary} />
+                    <AppIcon name={benefit.icon} size={20} color={theme.primary} />
                   </View>
                   <View style={styles.benefitContent}>
                     <ThemedText style={styles.benefitTitle}>{benefit.title}</ThemedText>

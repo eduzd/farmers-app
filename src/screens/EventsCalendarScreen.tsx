@@ -21,6 +21,7 @@ import { CatalogFormModal, FormField } from "@/components/CatalogFormModal";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface AgriEvent {
   id: string;
   title: string;
@@ -233,7 +234,7 @@ export default function EventsCalendarScreen() {
               ]}
               onPress={() => handleRegister(item)}
             >
-              <Feather
+              <AppIcon
                 name={item.registered ? "check" : "calendar"}
                 size={16}
                 color="#fff"

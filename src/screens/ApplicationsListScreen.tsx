@@ -18,6 +18,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ApplicationsListScreen() {
@@ -102,7 +103,7 @@ export default function ApplicationsListScreen() {
                     { backgroundColor: app.type === "welfare" ? "#1D4ED820" : "#0D47A120" },
                   ]}
                 >
-                  <Feather
+                  <AppIcon
                     name={app.type === "welfare" ? "award" : "globe"}
                     size={22}
                     color={app.type === "welfare" ? "#1D4ED8" : "#0D47A1"}
@@ -129,7 +130,7 @@ export default function ApplicationsListScreen() {
               </View>
               <View style={styles.applicationItemRight}>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusBgColor(app.status) }]}>
-                  <Feather name={getStatusIcon(app.status) as any} size={14} color={getStatusColor(app.status)} />
+                  <AppIcon name={getStatusIcon(app.status) as any} size={14} color={getStatusColor(app.status)} />
                   <ThemedText style={[styles.statusText, { color: getStatusColor(app.status) }]}>
                     {getStatusLabel(app.status)}
                   </ThemedText>

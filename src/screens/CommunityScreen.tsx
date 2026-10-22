@@ -54,6 +54,7 @@ import {
   resolveServerCommunityId,
 } from "@/lib/feedApi";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Post = FeedPost;
 
@@ -467,7 +468,7 @@ export default function CommunityScreen() {
             <LinearGradient colors={f.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.featureCard}>
               <View style={styles.featureDecor} />
               <View style={styles.featureIcon}>
-                <Feather name={f.icon} size={22} color="#FFFFFF" />
+                <AppIcon name={f.icon} size={22} color="#FFFFFF" />
               </View>
               <View style={{ flex: 1, justifyContent: "flex-end" }}>
                 <ThemedText type="h3" style={styles.featureTitle} numberOfLines={1}>
@@ -517,7 +518,7 @@ export default function CommunityScreen() {
               style={({ pressed }) => [styles.quickItem, { opacity: pressed ? 0.6 : 1 }]}
             >
               <View style={[styles.quickIcon, { backgroundColor: isDark ? a.color + "26" : a.soft }]}>
-                <Feather name={a.icon} size={20} color={a.color} />
+                <AppIcon name={a.icon} size={20} color={a.color} />
               </View>
               <ThemedText type="caption" style={styles.quickLabel} numberOfLines={1}>
                 {a.label}
@@ -540,7 +541,7 @@ export default function CommunityScreen() {
               <ThemedText type="caption" style={{ color: theme.primary, fontFamily: FontFamily.semibold }}>
                 {quickExpanded ? (isBn ? "কম দেখান" : "Show less") : isBn ? "আরও টুলস" : "More tools"}
               </ThemedText>
-              <Feather name={quickExpanded ? "chevron-up" : "chevron-down"} size={16} color={theme.primary} />
+              <AppIcon name={quickExpanded ? "chevron-up" : "chevron-down"} size={16} color={theme.primary} />
             </Pressable>
           ) : null}
         </Card>
@@ -816,7 +817,7 @@ function PostAction({
       accessibilityState={{ selected: !!active }}
       style={({ pressed }) => [styles.actionBtn, { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" }]}
     >
-      <Feather name={icon} size={18} color={color} />
+      <AppIcon name={icon} size={18} color={color} />
       <ThemedText style={[styles.actionLabel, { color }]}>{label}</ThemedText>
     </Pressable>
   );

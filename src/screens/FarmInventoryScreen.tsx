@@ -22,6 +22,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface InventoryItem {
   id: string;
   name: string;
@@ -221,7 +222,7 @@ export default function FarmInventoryScreen() {
         }}
       >
         <View style={[styles.categoryIcon, { backgroundColor: category.color + "20" }]}>
-          <Feather name={category.icon} size={24} color={category.color} />
+          <AppIcon name={category.icon} size={24} color={category.color} />
         </View>
         <View style={styles.categoryInfo}>
           <ThemedText style={styles.categoryName}>{category.nameBn}</ThemedText>
@@ -235,7 +236,7 @@ export default function FarmInventoryScreen() {
           </ThemedText>
           <ThemedText style={[styles.valueLabel, { color: theme.textSecondary }]}>টাকা</ThemedText>
         </View>
-        <Feather
+        <AppIcon
           name={selectedCategory === category.id ? "chevron-up" : "chevron-down"}
           size={20}
           color={theme.textSecondary}

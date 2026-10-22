@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/hooks/useTheme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 /**
  * Puts a round "+" action in the stack header (replaces floating buttons that covered list text).
  * Call inside a stack screen: useHeaderAddButton(() => setOpen(true), "New poll").
@@ -33,7 +34,7 @@ export function useHeaderAddButton(onPress: () => void, label: string, icon: key
             marginRight: 4,
           }}
         >
-          <Feather name={icon} size={20} color="#FFFFFF" />
+          <AppIcon name={icon} size={20} color="#FFFFFF" />
         </Pressable>
       ),
     });

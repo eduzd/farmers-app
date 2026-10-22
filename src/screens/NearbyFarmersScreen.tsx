@@ -19,6 +19,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
 interface Farmer {
   id: string;
   name: string;
@@ -139,7 +140,7 @@ export default function NearbyFarmersScreen() {
             style={[styles.messageButton, { borderColor: theme.inputBorder }]}
             onPress={() => handleMessage(item.phone)}
           >
-            <Feather name="message-circle" size={16} color={theme.text} />
+            <ChatIcon size={16} color={theme.text} />
             <ThemedText style={[styles.messageButtonText, { color: theme.text }]}>
               মেসেজ
             </ThemedText>

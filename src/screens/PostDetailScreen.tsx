@@ -42,6 +42,7 @@ import {
 } from "@/lib/feedApi";
 import { PostActionsSheet } from "@/components/PostActionsSheet";
 import { PostPhoto } from "@/components/PhotoViewer";
+import { ChatIcon } from "@/components/icons/ChatIcon";
 type PostDetailRouteProp = RouteProp<RootStackParamList, "PostDetail">;
 
 interface Reply {
@@ -607,7 +608,7 @@ export default function PostDetailScreen() {
 
           <Pressable style={styles.iconActionButton}>
             <View style={styles.actionIconCircle}>
-              <Feather name="message-circle" size={18} color={theme.textSecondary} />
+              <ChatIcon size={18} color={theme.textSecondary} />
             </View>
             <ThemedText style={[styles.iconActionCount, { color: theme.textSecondary }]}>
               {comments.length}

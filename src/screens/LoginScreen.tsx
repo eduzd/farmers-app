@@ -20,6 +20,7 @@ import {
 } from "@/lib/firebaseSignIn";
 import { VerifyEmailPanel } from "@/components/VerifyEmailPanel";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const COPY = {
@@ -220,7 +221,7 @@ export default function LoginScreen() {
               showPassword ? "Hide password" : "Show password"
             }
           >
-            <Feather
+            <AppIcon
               name={showPassword ? "eye-off" : "eye"}
               size={18}
               color={theme.textTertiary}

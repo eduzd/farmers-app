@@ -24,6 +24,8 @@ import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 const getStatusConfig = (status: Dispute["status"]) => {
   const configs: Record<string, { color: string; labelBn: string; labelEn: string; icon: string }> = {
     open: { color: "#EA8A0C", labelBn: "খোলা", labelEn: "Open", icon: "alert-circle" },
@@ -118,7 +120,7 @@ export default function DisputeScreen() {
               </ThemedText>
             </View>
             <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + "20" }]}>
-              <Feather name={statusConfig.icon as any} size={12} color={statusConfig.color} />
+              <AppIcon name={statusConfig.icon as any} size={12} color={statusConfig.color} />
               <ThemedText style={[styles.statusText, { color: statusConfig.color }]}>
                 {isBn ? statusConfig.labelBn : statusConfig.labelEn}
               </ThemedText>
@@ -127,7 +129,7 @@ export default function DisputeScreen() {
 
           <View style={styles.reasonRow}>
             <View style={[styles.reasonIcon, { backgroundColor: theme.primary + "15" }]}>
-              <Feather name={reasonConfig?.icon as any} size={16} color={theme.primary} />
+              <AppIcon name={reasonConfig?.icon as any} size={16} color={theme.primary} />
             </View>
             <ThemedText style={[styles.reasonText, { color: theme.text }]}>
               {isBn ? reasonConfig?.labelBn : reasonConfig?.labelEn}
@@ -154,7 +156,7 @@ export default function DisputeScreen() {
           ) : null}
 
           <View style={styles.messagesInfo}>
-            <Feather name="message-circle" size={14} color={theme.textSecondary} />
+            <ChatIcon size={14} color={theme.textSecondary} />
             <ThemedText style={[styles.messagesCount, { color: theme.textSecondary }]}>
               {dispute.messages.length} {isBn ? "মেসেজ" : "messages"}
             </ThemedText>
@@ -236,7 +238,7 @@ export default function DisputeScreen() {
                       setSelectedReason(reason.id);
                     }}
                   >
-                    <Feather
+                    <AppIcon
                       name={reason.icon as any}
                       size={18}
                       color={selectedReason === reason.id ? theme.primary : theme.textSecondary}

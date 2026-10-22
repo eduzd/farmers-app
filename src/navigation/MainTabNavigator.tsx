@@ -19,6 +19,7 @@ import { ChatIcon } from "@/components/icons/ChatIcon";
 import { CountBadge } from "@/components/CountBadge";
 import { useLiveStatus, useUnreadCounts } from "@/lib/liveStatus";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 export type MainTabParamList = {
   Community: undefined;
   Connect: undefined;
@@ -80,7 +81,7 @@ export default function MainTabNavigator() {
     (name: keyof typeof Feather.glyphMap) =>
     ({ color, focused }: { color: string; focused: boolean }) => (
       <View style={[styles.iconPill, focused && { backgroundColor: theme.primarySoft }]}>
-        <Feather name={name} size={20} color={color} />
+        <AppIcon name={name} size={20} color={color} />
       </View>
     );
 

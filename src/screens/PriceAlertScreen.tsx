@@ -17,6 +17,7 @@ import { useHeaderAddButton } from "@/components/HeaderAddButton";
 import { apiGet, apiPost, apiPut, apiDelete, isLoggedIn } from "@/lib/api";
 import { tr, useTr } from "@/lib/tr";
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 const MY_ALERTS: any[] = [];
 
 const POPULAR_PRODUCTS: any[] = [];
@@ -144,7 +145,7 @@ export default function PriceAlertScreen() {
                   <View style={styles.alertInfo}>
                     <ThemedText style={[styles.alertProduct, { color: theme.text }]}>{alert.product}</ThemedText>
                     <View style={styles.alertCondition}>
-                      <Feather
+                      <AppIcon
                         name={alert.condition === "উপরে" ? "arrow-up" : "arrow-down"}
                         size={14}
                         color={alert.condition === "উপরে" ? "#16A34A" : "#DC2626"}
@@ -203,7 +204,7 @@ export default function PriceAlertScreen() {
                     },
                   ]}
                 >
-                  <Feather
+                  <AppIcon
                     name={product.trend === "up" ? "trending-up" : product.trend === "down" ? "trending-down" : "minus"}
                     size={12}
                     color={product.trend === "up" ? "#16A34A" : product.trend === "down" ? "#DC2626" : "#71717a"}

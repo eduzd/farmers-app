@@ -26,6 +26,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 
 import { EmptyState } from "@/components/ui";
+import { AppIcon } from "@/components/icons/AppIcon";
 export default function ReferralScreen() {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useTheme();
@@ -87,7 +88,7 @@ export default function ReferralScreen() {
     
     return (
       <View style={[styles.tierBadge, { backgroundColor: tier.badgeColor + "20", padding }]}>
-        <Feather name={tier.icon as any} size={iconSize} color={tier.badgeColor} />
+        <AppIcon name={tier.icon as any} size={iconSize} color={tier.badgeColor} />
         <ThemedText style={[styles.tierBadgeText, { color: tier.badgeColor, fontSize: size === "large" ? 14 : 12 }]}>
           {getTierName(tier)}
         </ThemedText>
@@ -192,7 +193,7 @@ export default function ReferralScreen() {
               </View>
               <View style={styles.codeActions}>
                 <Pressable style={styles.codeButton} onPress={handleCopyCode}>
-                  <Feather name={showCodeCopied ? "check" : "copy"} size={20} color="#FFF" />
+                  <AppIcon name={showCodeCopied ? "check" : "copy"} size={20} color="#FFF" />
                 </Pressable>
                 <Pressable style={styles.codeButton} onPress={handleShare}>
                   <Feather name="share-2" size={20} color="#FFF" />
@@ -244,7 +245,7 @@ export default function ReferralScreen() {
                 setActiveTab(tab.id as any);
               }}
             >
-              <Feather
+              <AppIcon
                 name={tab.icon as any}
                 size={16}
                 color={activeTab === tab.id ? "#FFF" : theme.textSecondary}
@@ -276,7 +277,7 @@ export default function ReferralScreen() {
                   <View style={[styles.stepNumber, { backgroundColor: theme.primary }]}>
                     <ThemedText style={styles.stepNumberText}>{item.step}</ThemedText>
                   </View>
-                  <Feather name={item.icon as any} size={20} color={theme.primary} style={styles.stepIcon} />
+                  <AppIcon name={item.icon as any} size={20} color={theme.primary} style={styles.stepIcon} />
                   <ThemedText style={[styles.stepText, { color: theme.text }]}>
                     {isBn ? item.textBn : item.textEn}
                   </ThemedText>
@@ -328,7 +329,7 @@ export default function ReferralScreen() {
                     ]}
                   >
                     <View style={[styles.tierIcon, { backgroundColor: tier.badgeColor }]}>
-                      <Feather name={tier.icon as any} size={20} color="#FFF" />
+                      <AppIcon name={tier.icon as any} size={20} color="#FFF" />
                     </View>
                     <View style={styles.tierInfo}>
                       <ThemedText style={[styles.tierName, { color: theme.text }]}>

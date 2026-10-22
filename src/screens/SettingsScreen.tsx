@@ -33,6 +33,7 @@ import { useI18n, Language } from "@/lib/i18n";
 import { useThemeStore, ThemePreference } from "@/lib/themeStore";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const LANGUAGES = [
@@ -309,7 +310,7 @@ export default function SettingsScreen() {
             onPress={() => setShowThemeModal(true)}
           >
             <View style={styles.settingLeft}>
-              <Feather name={themePreference === "dark" ? "moon" : themePreference === "light" ? "sun" : "smartphone"} size={20} color={theme.iconDefault || theme.text} />
+              <AppIcon name={themePreference === "dark" ? "moon" : themePreference === "light" ? "sun" : "smartphone"} size={20} color={theme.iconDefault || theme.text} />
               <ThemedText style={[styles.settingLabel, { color: theme.text }]}>
                 {t("settings.theme")}
               </ThemedText>
@@ -535,7 +536,7 @@ export default function SettingsScreen() {
                 onPress={() => handleThemeSelect(option.value)}
               >
                 <View style={styles.themeOption}>
-                  <Feather name={option.icon as any} size={20} color={theme.text} />
+                  <AppIcon name={option.icon as any} size={20} color={theme.text} />
                   <ThemedText style={[styles.optionName, { color: theme.text }]}>
                     {option.label}
                   </ThemedText>

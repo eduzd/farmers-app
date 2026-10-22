@@ -6,6 +6,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
 import Animated, { useAnimatedStyle, withRepeat, withSequence, withTiming, useSharedValue, withDelay } from 'react-native-reanimated';
 
+import { AppIcon } from "@/components/icons/AppIcon";
 export function SyncIndicator() {
   const { syncState, pendingCount, triggerSync, isOnline } = useSyncContext();
   const { theme } = useTheme();
@@ -90,7 +91,7 @@ export function SyncIndicator() {
       }}
     >
       <Animated.View style={syncState === 'syncing' ? animatedStyle : undefined}>
-        <Feather name={getStatusIcon()} size={14} color={getStatusColor()} />
+        <AppIcon name={getStatusIcon()} size={14} color={getStatusColor()} />
       </Animated.View>
       <Text style={[styles.text, { color: getStatusColor() }]}>
         {getStatusText()}

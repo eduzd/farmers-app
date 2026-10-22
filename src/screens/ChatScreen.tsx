@@ -62,6 +62,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { useOptionalVoiceCall } from "@/contexts/VoiceCallContext";
 import { tr, useTr } from "@/lib/tr";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type ChatRouteProp = RouteProp<RootStackParamList, "Chat">;
 
 interface Message {
@@ -1011,7 +1012,7 @@ export default function ChatScreen() {
             onPress={mode === "live" || mode === "checking" ? fetchLive : undefined}
             style={[styles.chatBanner, { backgroundColor: theme.surface, borderTopColor: theme.divider }]}
           >
-            <Feather name={mode === "live" || mode === "checking" ? "wifi-off" : "info"} size={14} color={theme.textSecondary} />
+            <AppIcon name={mode === "live" || mode === "checking" ? "wifi-off" : "info"} size={14} color={theme.textSecondary} />
             <ThemedText style={[styles.chatBannerText, { color: theme.textSecondary }]}>{banner}</ThemedText>
           </Pressable>
         ) : null}

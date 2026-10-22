@@ -21,6 +21,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md) / 2;
 
@@ -234,7 +235,7 @@ export default function FarmNotesScreen() {
           onPress={() => handleTogglePin(item.id)}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Feather
+          <AppIcon
             name={item.isPinned ? "bookmark" : "bookmark"}
             size={16}
             color={item.isPinned ? "#FF6B6B" : "#999"}

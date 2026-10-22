@@ -20,6 +20,7 @@ import { useSubscriptionStore, Subscription, FREQUENCY_OPTIONS } from "@/lib/sub
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const getStatusConfig = (status: Subscription["status"]) => {
   const configs: Record<string, { color: string; labelBn: string; labelEn: string; icon: string }> = {
     active: { color: "#2FA36B", labelBn: "সক্রিয়", labelEn: "Active", icon: "check-circle" },
@@ -121,7 +122,7 @@ export default function SubscriptionsScreen() {
               </ThemedText>
             </View>
             <View style={[styles.statusBadge, { backgroundColor: statusConfig.color + "20" }]}>
-              <Feather name={statusConfig.icon as any} size={12} color={statusConfig.color} />
+              <AppIcon name={statusConfig.icon as any} size={12} color={statusConfig.color} />
               <ThemedText style={[styles.statusText, { color: statusConfig.color }]}>
                 {isBn ? statusConfig.labelBn : statusConfig.labelEn}
               </ThemedText>
@@ -248,7 +249,7 @@ export default function SubscriptionsScreen() {
               setActiveTab(tab.id as any);
             }}
           >
-            <Feather
+            <AppIcon
               name={tab.icon as any}
               size={16}
               color={activeTab === tab.id ? "#FFF" : theme.textSecondary}

@@ -24,6 +24,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { useCompanyStore } from "@/lib/companyStore";
 import { CompanyProduct } from "@/lib/storage";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const PRODUCT_CARD_WIDTH = (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md) / 2;
 
@@ -366,7 +367,7 @@ export default function CompanyProductsScreen() {
               ]}
               onPress={() => setSelectedCategory(cat.id)}
             >
-              <Feather 
+              <AppIcon 
                 name={cat.icon as any} 
                 size={14} 
                 color={selectedCategory === cat.id ? "#FFFFFF" : theme.textSecondary} 
@@ -594,7 +595,7 @@ export default function CompanyProductsScreen() {
                     ]}
                     onPress={() => setFormData({ ...formData, category: cat.id })}
                   >
-                    <Feather 
+                    <AppIcon 
                       name={cat.icon as any} 
                       size={14} 
                       color={formData.category === cat.id ? "#FFFFFF" : theme.textSecondary} 
@@ -747,7 +748,7 @@ export default function CompanyProductsScreen() {
                     ]}
                     onPress={() => setFormData({ ...formData, condition: option.id })}
                   >
-                    <Feather 
+                    <AppIcon 
                       name={option.icon as any} 
                       size={14} 
                       color={formData.condition === option.id ? "#FFFFFF" : theme.textSecondary} 
@@ -878,7 +879,7 @@ export default function CompanyProductsScreen() {
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Feather name={editingProduct ? "check" : "plus"} size={18} color="#FFFFFF" />
+                  <AppIcon name={editingProduct ? "check" : "plus"} size={18} color="#FFFFFF" />
                   <ThemedText style={styles.saveButtonText}>
                     {editingProduct ? "আপডেট করুন" : "পণ্য যোগ করুন"}
                   </ThemedText>

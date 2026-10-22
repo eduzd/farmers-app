@@ -22,6 +22,8 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface TrendingHashtag {
@@ -117,7 +119,7 @@ export default function TrendingScreen() {
         onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
       >
         <View style={[styles.topicIcon, { backgroundColor: item.color + "15" }]}>
-          <Feather name={item.icon} size={24} color={item.color} />
+          <AppIcon name={item.icon} size={24} color={item.color} />
         </View>
         <View style={styles.topicInfo}>
           <ThemedText style={[styles.topicTitle, { color: theme.text }]}>{item.title}</ThemedText>
@@ -159,7 +161,7 @@ export default function TrendingScreen() {
             <ThemedText style={[styles.statText, { color: theme.textSecondary }]}>{item.likes}</ThemedText>
           </View>
           <View style={styles.statItem}>
-            <Feather name="message-circle" size={14} color={theme.textSecondary} />
+            <ChatIcon size={14} color={theme.textSecondary} />
             <ThemedText style={[styles.statText, { color: theme.textSecondary }]}>{item.comments}</ThemedText>
           </View>
         </View>
@@ -193,7 +195,7 @@ export default function TrendingScreen() {
               setActiveTab(tab.id as any);
             }}
           >
-            <Feather name={tab.icon} size={14} color={activeTab === tab.id ? "#fff" : theme.text} />
+            <AppIcon name={tab.icon} size={14} color={activeTab === tab.id ? "#fff" : theme.text} />
             <ThemedText style={[styles.tabText, { color: activeTab === tab.id ? "#fff" : theme.text }]}>
               {tab.label}
             </ThemedText>

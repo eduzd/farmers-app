@@ -23,6 +23,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { getApiUrl } from "@/lib/query-client";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 type CallState = "idle" | "connecting" | "ready" | "listening" | "processing" | "speaking";
 
 const GREETINGS = [
@@ -601,7 +602,7 @@ export default function VoiceCallScreen() {
                 ]} 
                 onPress={handleMicTap}
               >
-                <Feather 
+                <AppIcon 
                   name={callState === "listening" ? "mic-off" : "mic"} 
                   size={36} 
                   color="#FFFFFF" 

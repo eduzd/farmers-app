@@ -6,6 +6,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 export type ToastType = "success" | "error" | "warning" | "info";
 
 interface AdminToastProps {
@@ -99,7 +100,7 @@ export function AdminToast({
         onPress={hideToast}
       >
         <View style={[styles.iconContainer, { backgroundColor: config.bgColor }]}>
-          <Feather name={config.icon} size={18} color={config.color} />
+          <AppIcon name={config.icon} size={18} color={config.color} />
         </View>
         <ThemedText
           style={[styles.message, { color: theme.text }]}

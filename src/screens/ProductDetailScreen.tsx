@@ -38,6 +38,8 @@ import { apiGet, apiPost, isLoggedIn, currentUserId, timeAgo } from "@/lib/api";
 import { CatalogFormModal } from "@/components/CatalogFormModal";
 import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
 import { fetchCatalog } from "@/lib/catalog";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const IMAGE_HEIGHT = SCREEN_HEIGHT * 0.42;
 
@@ -410,7 +412,7 @@ export default function ProductDetailScreen() {
                 key={index}
                 style={[styles.featureItem, { backgroundColor: `${feature.color}15` }]}
               >
-                <Feather name={feature.icon as any} size={16} color={feature.color} />
+                <AppIcon name={feature.icon as any} size={16} color={feature.color} />
                 <ThemedText style={[styles.featureText, { color: feature.color }]}>
                   {feature.label}
                 </ThemedText>
@@ -473,14 +475,14 @@ export default function ProductDetailScreen() {
                   onPress={handleFollow}
                   accessibilityLabel={following ? tr("Following") : tr("Follow")}
                 >
-                  <Feather name={following ? "user-check" : "user-plus"} size={18} color={following ? "#FFFFFF" : theme.primary} />
+                  <AppIcon name={following ? "user-check" : "user-plus"} size={18} color={following ? "#FFFFFF" : theme.primary} />
                 </Pressable>
               ) : null}
               <Pressable
                 style={[styles.chatButton, { borderColor: theme.primary }]}
                 onPress={handleContactSeller}
               >
-                <Feather name="message-circle" size={18} color={theme.primary} />
+                <ChatIcon size={18} color={theme.primary} />
               </Pressable>
               <Pressable
                 style={[styles.callButton, { backgroundColor: theme.primary }]}
@@ -557,7 +559,7 @@ export default function ProductDetailScreen() {
               {specs.map((spec, index) => (
                 <View key={index} style={[styles.specItem, { backgroundColor: theme.backgroundDefault }]}>
                   <View style={[styles.specIcon, { backgroundColor: `${theme.primary}15` }]}>
-                    <Feather name={spec.icon as any} size={18} color={theme.primary} />
+                    <AppIcon name={spec.icon as any} size={18} color={theme.primary} />
                   </View>
                   <View style={styles.specContent}>
                     <ThemedText style={[styles.specLabel, { color: theme.textSecondary }]}>

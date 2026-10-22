@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
 import { tr, useTr } from "@/lib/tr";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface WeatherData {
   current: {
     temperature: number;
@@ -225,7 +226,7 @@ export default function WeatherScreen() {
         </View>
 
         <View style={styles.mainTempRow}>
-          <Feather name={currentWeather.icon} size={64} color="#FFFFFF" />
+          <AppIcon name={currentWeather.icon} size={64} color="#FFFFFF" />
           <ThemedText style={styles.temperature}>
             {weather.current.temperature}°
           </ThemedText>
@@ -279,7 +280,7 @@ export default function WeatherScreen() {
               </View>
 
               <View style={styles.forecastMiddle}>
-                <Feather name={dayWeather.icon} size={24} color={theme.primary} />
+                <AppIcon name={dayWeather.icon} size={24} color={theme.primary} />
                 {day.precipitation > 0 ? (
                   <View style={styles.precipitationBadge}>
                     <Feather name="droplet" size={10} color="#2563EB" />

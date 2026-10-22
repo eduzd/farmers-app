@@ -19,6 +19,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 interface DeliveryStep {
   id: string;
   title: string;
@@ -158,7 +160,7 @@ export default function DeliveryTrackingScreen() {
               <ThemedText style={styles.callDriverText}>কল করুন</ThemedText>
             </Pressable>
             <Pressable style={[styles.messageDriverBtn, { borderColor: theme.inputBorder }]}>
-              <Feather name="message-circle" size={18} color={theme.text} />
+              <ChatIcon size={18} color={theme.text} />
             </Pressable>
           </View>
         </View>
@@ -193,7 +195,7 @@ export default function DeliveryTrackingScreen() {
                         },
                       ]}
                     >
-                      <Feather
+                      <AppIcon
                         name={step.icon as any}
                         size={16}
                         color={

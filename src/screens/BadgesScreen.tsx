@@ -20,6 +20,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 interface Badge {
   id: string;
   name: string;
@@ -204,7 +205,7 @@ export default function BadgesScreen() {
             },
           ]}
         >
-          <Feather
+          <AppIcon
             name={badge.icon as any}
             size={24}
             color={badge.earned ? badge.color : theme.textSecondary}

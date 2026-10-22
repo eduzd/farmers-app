@@ -12,6 +12,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 const WASTE_TYPES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "organic", label: "জৈব", icon: "feather" },
@@ -78,7 +80,7 @@ export default function WasteManagementScreen() {
               setActiveTab(tab.id as any);
             }}
           >
-            <Feather name={tab.icon as any} size={16} color={activeTab === tab.id ? "#fff" : theme.text} />
+            <AppIcon name={tab.icon as any} size={16} color={activeTab === tab.id ? "#fff" : theme.text} />
             <ThemedText style={[styles.tabText, { color: activeTab === tab.id ? "#fff" : theme.text }]}>
               {tab.label}
             </ThemedText>
@@ -108,7 +110,7 @@ export default function WasteManagementScreen() {
                     setSelectedType(type.id);
                   }}
                 >
-                  <Feather
+                  <AppIcon
                     name={type.icon as any}
                     size={14}
                     color={selectedType === type.id ? "#fff" : theme.textSecondary}
@@ -210,7 +212,7 @@ export default function WasteManagementScreen() {
                   </View>
                   <View style={[styles.discussionFooter, { borderTopColor: theme.cardBorder }]}>
                     <View style={styles.statItem}>
-                      <Feather name="message-circle" size={16} color={theme.textSecondary} />
+                      <ChatIcon size={16} color={theme.textSecondary} />
                       <ThemedText style={[styles.statText, { color: theme.textSecondary }]}>{discussion.replies}</ThemedText>
                     </View>
                     <View style={styles.statItem}>
@@ -235,7 +237,7 @@ export default function WasteManagementScreen() {
                 <Animated.View key={index} entering={FadeInUp.delay(index * 80).duration(400)}>
                   <View style={[styles.tipCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                     <View style={[styles.tipIcon, { backgroundColor: tip.color + "20" }]}>
-                      <Feather name={tip.icon as any} size={28} color={tip.color} />
+                      <AppIcon name={tip.icon as any} size={28} color={tip.color} />
                     </View>
                     <ThemedText style={[styles.tipTitle, { color: theme.text }]}>{tip.title}</ThemedText>
                     <ThemedText style={[styles.tipDesc, { color: theme.textSecondary }]}>{tip.desc}</ThemedText>

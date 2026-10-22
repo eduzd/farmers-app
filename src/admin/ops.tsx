@@ -10,6 +10,7 @@ import {
 } from "./ui";
 import { OrderRow } from "./shop";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 /* ======================= HOME ======================= */
 export function HomeTab({ supportUnread }: { supportUnread: number }) {
   const nav = useAdminNav();
@@ -40,7 +41,7 @@ export function HomeTab({ supportUnread }: { supportUnread: number }) {
           ["notify", L("Send notification", "নোটিফিকেশন পাঠান"), "bell", () => nav.goTab("more")],
         ] as [string, string, any, () => void][]).map(([k, label, icon, fn]) => (
           <Pressable key={k} testID={`shortcut-${k}`} onPress={fn} style={({ pressed }) => [{ flexBasis: "47%", flexGrow: 1, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: theme.cardBorder, backgroundColor: theme.card, opacity: pressed ? 0.8 : 1 }]}>
-            <Feather name={icon} size={18} color={theme.primary} />
+            <AppIcon name={icon} size={18} color={theme.primary} />
             <Text style={{ color: theme.text, fontWeight: "700", fontSize: 13.5, flex: 1 }} numberOfLines={1}>{label}</Text>
           </Pressable>
         ))}
@@ -417,7 +418,7 @@ export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminNa
       {items.map(([k, title, sub, icon, fn]) => (
         <Card key={k} testID={`more-${k}`} onPress={fn} style={{ paddingVertical: 12 }}>
           <View style={st.row}>
-            <Feather name={icon} size={19} color={theme.primary} />
+            <AppIcon name={icon} size={19} color={theme.primary} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: theme.text, fontWeight: "700" }}>{title}</Text>
               <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>{sub}</Text>

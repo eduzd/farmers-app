@@ -12,6 +12,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
 import { EmptyState } from "@/components/ui";
+import { ChatIcon } from "@/components/icons/ChatIcon";
+import { AppIcon } from "@/components/icons/AppIcon";
 const SERVICE_TYPES = [
   { id: "all", label: "সব", icon: "grid" },
   { id: "survey", label: "জরিপ", icon: "map" },
@@ -60,7 +62,7 @@ export default function LandServicesScreen() {
               onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             >
               <View style={[styles.quickIcon, { backgroundColor: service.color }]}>
-                <Feather name={service.icon as any} size={18} color="#fff" />
+                <AppIcon name={service.icon as any} size={18} color="#fff" />
               </View>
               <ThemedText style={[styles.quickTitle, { color: theme.text }]}>{service.title}</ThemedText>
             </Pressable>
@@ -88,7 +90,7 @@ export default function LandServicesScreen() {
             setActiveTab("discussions");
           }}
         >
-          <Feather name="message-square" size={18} color={activeTab === "discussions" ? "#fff" : theme.text} />
+          <ChatIcon size={18} color={activeTab === "discussions" ? "#fff" : theme.text} />
           <ThemedText style={[styles.tabText, { color: activeTab === "discussions" ? "#fff" : theme.text }]}>
             আলোচনা
           </ThemedText>
@@ -128,7 +130,7 @@ export default function LandServicesScreen() {
                     setSelectedType(type.id);
                   }}
                 >
-                  <Feather
+                  <AppIcon
                     name={type.icon as any}
                     size={14}
                     color={selectedType === type.id ? "#fff" : theme.textSecondary}
@@ -243,7 +245,7 @@ export default function LandServicesScreen() {
                   </View>
                   <View style={[styles.discussionFooter, { borderTopColor: theme.cardBorder }]}>
                     <View style={styles.statItem}>
-                      <Feather name="message-circle" size={16} color={theme.textSecondary} />
+                      <ChatIcon size={16} color={theme.textSecondary} />
                       <ThemedText style={[styles.statText, { color: theme.textSecondary }]}>{discussion.replies} উত্তর</ThemedText>
                     </View>
                     <View style={styles.statItem}>

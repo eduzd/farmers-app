@@ -15,6 +15,7 @@ import {
   CompanyOrdersScreen,
 } from "@/screens/company";
 
+import { AppIcon } from "@/components/icons/AppIcon";
 export type CompanyTabParamList = {
   CompanyProfile: undefined;
   CompanyProducts: undefined;
@@ -54,7 +55,7 @@ export default function CompanyTabNavigator() {
               break;
           }
 
-          return <Feather name={iconName} size={22} color={color} />;
+          return <AppIcon name={iconName} size={22} color={color} />;
         },
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.textSecondary,
