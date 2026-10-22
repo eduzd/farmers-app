@@ -11,16 +11,7 @@ import { useRoute, RouteProp } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSpring,
-  withTiming,
-  interpolate,
-  Easing,
-  withSequence,
-} from "react-native-reanimated";
+import { StepFill, StepPop, CurrentHalo, FadeSlideIn, OrderProgressBar, useStepStagger, bnDigits } from "@/components/OrderProgressMotion";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -34,18 +25,18 @@ import { useI18n } from "@/lib/i18n";
 import { orderLineText } from "@shared/selling";
 type OrderDetailRouteProp = RouteProp<RootStackParamList, "OrderDetail">;
 
-const TRACKING_STEPS: { status: OrderStatus; label: string; icon: string }[] = [
-  { status: "pending", label: "Order Placed", icon: "file-text" },
-  { status: "confirmed", label: "Confirmed", icon: "check-circle" },
-  { status: "processing", label: "Processing", icon: "package" },
-  { status: "shipped", label: "Shipped", icon: "truck" },
-  { status: "delivered", label: "Delivered", icon: "check" },
+const TRACKING_STEPS: { status: OrderStatus; label: string; labelBn: string; icon: string }[] = [
+  { status: "pending", label: "Order Placed", labelBn: "অর্ডার করা হয়েছে", icon: "file-text" },
+  { status: "confirmed", label: "Confirmed", labelBn: "নিশ্চিত", icon: "check-circle" },
+  { status: "processing", label: "Processing", labelBn: "প্রস্তুত হচ্ছে", icon: "package" },
+  { status: "shipped", label: "Shipped", labelBn: "পাঠানো হয়েছে", icon: "truck" },
+  { status: "delivered", label: "Delivered", labelBn: "ডেলিভারি হয়েছে", icon: "check" },
 ];
 
 const STATUS_ORDER: OrderStatus[] = ["pending", "confirmed", "processing", "shipped", "delivered"];
 
 interface AnimatedStepProps {
-  step: { status: OrderStatus; label: string; icon: string };
+  step: { status: OrderStatus; label: string; labelBn: string; icon: string };
   index: number;
   isCompleted: boolean;
   isCurrent: boolean;
@@ -53,8 +44,17 @@ interface AnimatedStepProps {
   currentStepIndex: number;
   theme: any;
   estimatedDelivery?: string;
+  bn: boolean;
+  /** stagger from useStepStagger: only steps the order newly reached get a delay */
+  delay: number;
+  lineDelay: number;
 }
 
+/**
+ * One step of the buyer's tracker. All motion follows the real order status:
+ * the line fills and the circle pops only when that step is done, the current step gets a short halo
+ * (twice, then still), and reduce-motion turns all of it off (see OrderProgressMotion).
+ */
 function AnimatedTrackingStep({
   step,
   index,
@@ -64,85 +64,37 @@ function AnimatedTrackingStep({
   currentStepIndex,
   theme,
   estimatedDelivery,
+  bn,
+  delay,
+  lineDelay,
 }: AnimatedStepProps) {
-  const translateY = useSharedValue(-50);
-  const opacity = useSharedValue(0);
-  const lineHeight = useSharedValue(0);
-  const pulseScale = useSharedValue(1);
-
-  useEffect(() => {
-    const baseDelay = index * 200;
-    
-    opacity.value = withDelay(
-      baseDelay,
-      withTiming(1, { duration: 400, easing: Easing.out(Easing.cubic) })
-    );
-    translateY.value = withDelay(
-      baseDelay,
-      withSpring(0, { damping: 14, stiffness: 120 })
-    );
-    
-    if (!isLast) {
-      lineHeight.value = withDelay(
-        baseDelay + 250,
-        withTiming(1, { duration: 350, easing: Easing.out(Easing.cubic) })
-      );
-    }
-    
-    if (isCurrent) {
-      pulseScale.value = withDelay(
-        baseDelay + 400,
-        withSequence(
-          withSpring(1.2, { damping: 6, stiffness: 150 }),
-          withSpring(1, { damping: 10, stiffness: 200 })
-        )
-      );
-    }
-  }, [index, isCurrent, isLast]);
-
-  const stepAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  const circleAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
-
-  const lineAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleY: lineHeight.value }],
-    opacity: lineHeight.value,
-  }));
-
   return (
-    <Animated.View style={[styles.trackingStep, stepAnimatedStyle]}>
-      <View style={styles.stepIndicator}>
-        <Animated.View
-          style={[
-            styles.stepCircle,
-            {
-              backgroundColor: isCompleted ? theme.primary : theme.backgroundDefault,
-              borderColor: isCompleted ? theme.primary : theme.inputBorder,
-            },
-            circleAnimatedStyle,
-          ]}
-        >
-          <AppIcon
-            name={step.icon as any}
-            size={16}
-            color={isCompleted ? theme.white : theme.textSecondary}
-          />
-        </Animated.View>
+    <FadeSlideIn delay={index * 60} style={styles.trackingStep}>
+      <View testID={`track-step-${step.status}`} accessibilityLabel={`${bn ? step.labelBn : step.label}: ${isCompleted ? (bn ? "সম্পন্ন" : "done") : bn ? "এখনও নয়" : "not yet"}`} style={styles.stepIndicator}>
+        <View style={styles.stepCircleWrap}>
+          {isCurrent ? <CurrentHalo runKey={step.status} color={theme.primary} size={36} delay={delay} /> : null}
+          <StepPop done={isCompleted} delay={delay}>
+            <View
+              style={[
+                styles.stepCircle,
+                {
+                  backgroundColor: isCompleted ? theme.primary : theme.backgroundDefault,
+                  borderColor: isCompleted ? theme.primary : theme.inputBorder,
+                },
+              ]}
+            >
+              <AppIcon
+                name={step.icon as any}
+                size={16}
+                color={isCompleted ? theme.white : theme.textSecondary}
+              />
+            </View>
+          </StepPop>
+        </View>
         {!isLast ? (
-          <Animated.View
-            style={[
-              styles.stepLine,
-              {
-                backgroundColor: index < currentStepIndex ? theme.primary : theme.inputBorder,
-              },
-              lineAnimatedStyle,
-            ]}
-          />
+          <View style={[styles.stepLine, { backgroundColor: theme.inputBorder }]}>
+            <StepFill testID={`track-line-${step.status}`} filled={index < currentStepIndex} color={theme.primary} delay={lineDelay} />
+          </View>
         ) : null}
       </View>
       <View style={styles.stepContent}>
@@ -155,15 +107,17 @@ function AnimatedTrackingStep({
             },
           ]}
         >
-          {step.label}
+          {bn ? step.labelBn : step.label}
         </ThemedText>
         {isCurrent && estimatedDelivery ? (
-          <ThemedText style={[styles.estimatedDate, { color: theme.primary }]}>
-            Est. {estimatedDelivery}
-          </ThemedText>
+          <FadeSlideIn runKey={step.status} delay={delay + 200}>
+            <ThemedText style={[styles.estimatedDate, { color: theme.primary }]}>
+              {bn ? "আনুমানিক" : "Est."} {estimatedDelivery}
+            </ThemedText>
+          </FadeSlideIn>
         ) : null}
       </View>
-    </Animated.View>
+    </FadeSlideIn>
   );
 }
 
@@ -177,6 +131,8 @@ export default function OrderDetailScreen() {
   const { getOrderById, updateOrderStatus } = useOrdersStore();
   
   const [order, setOrder] = useState<Order | undefined>(getOrderById(orderId));
+  // How far the order really is (-1 when cancelled); the tracker animates only steps newly reached.
+  const delayFor = useStepStagger(order && order.status !== "cancelled" ? STATUS_ORDER.indexOf(order.status) : -1);
 
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -275,18 +231,32 @@ export default function OrderDetailScreen() {
         </View>
 
         {order.status === "cancelled" ? (
-          <View style={[styles.cancelledBanner, { backgroundColor: "#DC262615" }]}>
+          <FadeSlideIn runKey="cancelled" style={[styles.cancelledBanner, { backgroundColor: "#DC262615" }]}>
             <Feather name="x-circle" size={20} color="#DC2626" />
             <ThemedText style={[styles.cancelledText, { color: "#DC2626" }]}>
               {tr("This order has been cancelled")}
             </ThemedText>
-          </View>
+          </FadeSlideIn>
         ) : (
           <>
             <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.text }]}>
               {tr("Order Tracking")}
             </ThemedText>
-            
+            <View style={styles.trackingBarRow}>
+              <View style={{ flex: 1 }}>
+                <OrderProgressBar
+                  testID="track-progress-bar"
+                  fraction={(currentStep + 1) / TRACKING_STEPS.length}
+                  color={theme.primary}
+                  trackColor={theme.inputBorder}
+                  label={bnOrder ? `ধাপ ${bnDigits(currentStep + 1)} / ৫` : `Step ${currentStep + 1} of 5`}
+                />
+              </View>
+              <ThemedText testID="track-step-count" style={[styles.trackingBarText, { color: theme.textSecondary }]}>
+                {bnOrder ? `ধাপ ${bnDigits(currentStep + 1)} / ৫` : `Step ${currentStep + 1} of 5`}
+              </ThemedText>
+            </View>
+
             <View style={styles.trackingSteps}>
               {TRACKING_STEPS.map((step, index) => {
                 const isCompleted = index <= currentStep;
@@ -303,6 +273,9 @@ export default function OrderDetailScreen() {
                     currentStepIndex={currentStep}
                     theme={theme}
                     estimatedDelivery={order.estimatedDelivery}
+                    bn={bnOrder}
+                    delay={delayFor(index)}
+                    lineDelay={delayFor(index + 1)}
                   />
                 );
               })}
@@ -557,6 +530,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 40,
   },
+  trackingBarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: -Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  trackingBarText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  stepCircleWrap: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   stepCircle: {
     width: 36,
     height: 36,
@@ -569,6 +559,8 @@ const styles = StyleSheet.create({
     width: 2,
     flex: 1,
     marginVertical: 4,
+    borderRadius: 1,
+    overflow: "hidden",
   },
   stepContent: {
     flex: 1,

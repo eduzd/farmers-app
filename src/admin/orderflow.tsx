@@ -7,6 +7,7 @@ import {
   useL, useLoader, Page, Card, SectionTitle, Btn, Field, KV, Loading, ErrorBox, Text, ToggleRow, Pill,
   taka, fmtDate, statusLabel, STATUS_COLOR, confirmAsk, st,
 } from "./ui";
+import { StepFill, StepPop, CurrentHalo, FadeSlideIn, OrderProgressBar, useStepStagger, bnDigits } from "@/components/OrderProgressMotion";
 
 /**
  * Orders move one way only, one step at a time:
@@ -105,17 +106,31 @@ export function OrderProgress({ order, onChanged }: { order: any; onChanged: () 
   };
 
   const stepIdx = cancelled ? reached : (ORDER_FLOW as readonly string[]).indexOf(status);
+  // Animations follow the real status only: new steps fill in order, done steps never go back.
+  const delayFor = useStepStagger(reached);
+  const doneColor = cancelled ? "#94A3B8" : theme.primary;
   return (
     <Card testID="order-progress">
       <View style={[st.row, { justifyContent: "space-between", marginBottom: 12 }]}>
         <Text style={{ color: theme.text, fontWeight: "800", fontSize: 16 }}>{L("Order progress", "অর্ডারের অগ্রগতি")}</Text>
         {cancelled ? (
-          <Pill label={L("Cancelled", "বাতিল")} color={STATUS_COLOR.cancelled} icon="x-circle" />
+          <FadeSlideIn runKey="cancelled">
+            <Pill label={L("Cancelled", "বাতিল")} color={STATUS_COLOR.cancelled} icon="x-circle" />
+          </FadeSlideIn>
         ) : (
-          <Text style={{ color: theme.textSecondary, fontSize: 12.5, fontWeight: "600" }}>
-            {L(`Step ${stepIdx + 1} of 5`, `ধাপ ${stepIdx + 1} / ৫`)}
+          <Text testID="order-step-count" style={{ color: theme.textSecondary, fontSize: 12.5, fontWeight: "600" }}>
+            {L(`Step ${stepIdx + 1} of 5`, `ধাপ ${bnDigits(stepIdx + 1)} / ৫`)}
           </Text>
         )}
+      </View>
+      <View style={{ marginTop: -4, marginBottom: 14 }}>
+        <OrderProgressBar
+          testID="order-progress-bar"
+          fraction={(reached + 1) / ORDER_FLOW.length}
+          color={doneColor}
+          trackColor={theme.cardBorder}
+          label={cancelled ? L("Order cancelled", "অর্ডার বাতিল") : L(`Step ${stepIdx + 1} of 5`, `ধাপ ${bnDigits(stepIdx + 1)} / ৫`)}
+        />
       </View>
       {ORDER_FLOW.map((s, i) => {
         const done = i <= reached;
@@ -129,6 +144,9 @@ export function OrderProgress({ order, onChanged }: { order: any; onChanged: () 
         return (
           <View key={s} testID={`step-${s}`} accessibilityLabel={`${t.title}: ${done ? L("done", "সম্পন্ন") : L("not yet", "এখনও নয়")}`} style={{ flexDirection: "row", gap: 12 }}>
             <View style={{ alignItems: "center", width: 30 }}>
+              <View style={{ width: 30, height: 30, alignItems: "center", justifyContent: "center" }}>
+              {isNow ? <CurrentHalo runKey={status} color={color} size={30} delay={delayFor(i)} /> : null}
+              <StepPop done={done} delay={delayFor(i)}>
               <View
                 style={[
                   {
@@ -140,14 +158,20 @@ export function OrderProgress({ order, onChanged }: { order: any; onChanged: () 
                   Platform.OS === "web" ? ({ transitionProperty: "background-color, transform", transitionDuration: "220ms" } as any) : null,
                 ]}
               >
-                {done ? <Feather name="check" size={16} color="#fff" /> : <Text style={{ color: isNext ? theme.primary : theme.textTertiary, fontWeight: "800", fontSize: 12.5 }}>{i + 1}</Text>}
+                {done ? <Feather name="check" size={16} color="#fff" /> : <Text style={{ color: isNext ? theme.primary : theme.textTertiary, fontWeight: "800", fontSize: 12.5 }}>{L(String(i + 1), bnDigits(i + 1))}</Text>}
               </View>
-              {!last ? <View style={{ width: 2, flex: 1, minHeight: 22, backgroundColor: i < reached ? color : theme.cardBorder, marginVertical: 2 }} /> : null}
+              </StepPop>
+              </View>
+              {!last ? (
+                <View style={{ width: 2, flex: 1, minHeight: 22, backgroundColor: theme.cardBorder, marginVertical: 2, borderRadius: 1, overflow: "hidden" }}>
+                  <StepFill testID={`step-line-${s}`} filled={i < reached} color={doneColor} delay={delayFor(i + 1)} />
+                </View>
+              ) : null}
             </View>
             <View style={{ flex: 1, paddingBottom: last ? 0 : 14, paddingTop: 4 }}>
               <View style={[st.row, { gap: 8 }]}>
                 <Text style={{ color: done || isNext ? theme.text : theme.textTertiary, fontWeight: isNow ? "800" : "700", fontSize: 14.5 }}>{t.title}</Text>
-                {isNow ? <Pill label={L("Now", "এখন")} color={STATUS_COLOR[status] || theme.primary} /> : null}
+                {isNow ? <FadeSlideIn runKey={status} delay={delayFor(i) + 200}><Pill label={L("Now", "এখন")} color={STATUS_COLOR[status] || theme.primary} /></FadeSlideIn> : null}
                 {isNext ? <Pill label={L("Next", "পরের ধাপ")} color="#64748B" /> : null}
               </View>
               <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 2 }}>
