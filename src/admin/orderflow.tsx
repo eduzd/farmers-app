@@ -160,7 +160,7 @@ export function OrderProgress({ order, onChanged }: { order: any; onChanged: () 
       {cancelled ? (
         <View style={{ flexDirection: "row", gap: 10, alignItems: "center", marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: "#DC262612" }}>
           <Feather name="x-circle" size={18} color="#DC2626" />
-          <Text style={{ color: "#B91C1C", fontWeight: "700", flex: 1 }}>
+          <Text style={{ color: theme.error, fontWeight: "700", flex: 1 }}>
             {L("This order was cancelled", "এই অর্ডার বাতিল হয়েছে")}{when("cancelled") ? ` · ${fmtDate(when("cancelled"))}` : ""}
           </Text>
         </View>
@@ -353,7 +353,7 @@ export function DeliverySettings() {
           </View>
         ))}
       </Card>
-      {errors.length ? <View style={{ gap: 4 }}>{errors.map((e) => <Text key={e} style={{ color: "#B91C1C", fontSize: 12.5 }}>• {e}</Text>)}</View> : null}
+      {errors.length ? <View style={{ gap: 4 }}>{errors.map((e) => <Text key={e} style={{ color: theme.error, fontSize: 12.5 }}>• {e}</Text>)}</View> : null}
       {msg ? <Text style={{ color: msg.ok ? "#047857" : "#B91C1C", fontWeight: "600" }}>{msg.text}</Text> : null}
       <View style={{ flexDirection: "row", gap: 10 }}>
         {changed ? <Btn kind="ghost" label={L("Undo changes", "পরিবর্তন বাদ দিন")} onPress={() => reset(d)} /> : null}

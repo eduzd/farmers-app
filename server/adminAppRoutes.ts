@@ -79,6 +79,9 @@ export function ensureAdminApp() {
       await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS width integer`);
       await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS height integer`);
       await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS duration_ms integer`);
+      await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS reply_to_id varchar`);
+      await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS reply_to_text varchar`);
+      await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS reply_to_admin boolean`);
       await q(sql`CREATE TABLE IF NOT EXISTS support_media (
         id varchar PRIMARY KEY, thread_id varchar NOT NULL, sender_id varchar NOT NULL, mime varchar NOT NULL,
         size integer NOT NULL DEFAULT 0, data bytea NOT NULL, created_at timestamp NOT NULL DEFAULT now())`);
@@ -164,7 +167,15 @@ const msgOut = (m: any) => ({
   width: m.width ? Number(m.width) : undefined, height: m.height ? Number(m.height) : undefined,
   durationMs: m.duration_ms ? Number(m.duration_ms) : undefined,
   fromAdmin: !!m.from_admin, senderId: m.sender_id, senderName: m.sender_name || "", clientId: m.client_id || null, createdAt: iso(m.created_at),
+  replyTo: m.reply_to_id ? { id: m.reply_to_id, text: m.reply_to_text || "", fromAdmin: !!m.reply_to_admin } : null,
 });
+/** The message being replied to, only if it is in the same conversation. The quote is taken from the server copy. */
+async function replyTarget(threadId: string, id: any): Promise<{ id: string; text: string; fromAdmin: boolean } | null> {
+  const rid = typeof id === "string" ? id.slice(0, 80) : "";
+  if (!rid) return null;
+  const r = rows(await db.execute(sql`SELECT id, body, from_admin FROM support_messages WHERE id = ${rid} AND thread_id = ${threadId} LIMIT 1`))[0];
+  return r ? { id: r.id, text: String(r.body || "").slice(0, 200), fromAdmin: !!r.from_admin } : null;
+}
 const PHOTO_LABEL = "\u{1F4F7} Photo";
 const VOICE_LABEL = "\u{1F3A4} Voice message";
 /** true while at least one Farmers admin has the app open (real presence, same as the green dots). */
@@ -462,7 +473,7 @@ export function registerAdminAppRoutes(app: Express) {
   /** Add one message from the user to their own conversation (opens it if needed). Same clientId = same message. */
   const addUserMessage = async (
     uid: string,
-    m: { body: string; kind: "text" | "image" | "voice"; clientId: string | null; media?: { b64: string; mime: string; size: number }; width?: number; height?: number; durationMs?: number },
+    m: { body: string; kind: "text" | "image" | "voice"; clientId: string | null; media?: { b64: string; mime: string; size: number }; width?: number; height?: number; durationMs?: number; replyToId?: string },
   ) => {
     let t = await myThread(uid);
     if (m.clientId && t) {
@@ -481,8 +492,9 @@ export function registerAdminAppRoutes(app: Express) {
         VALUES (${mediaId}, ${t.id}, ${uid}, ${m.media.mime}, ${m.media.size}, decode(${m.media.b64}, 'base64'))`);
     }
     const mid = `sm-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, client_id, kind, media_id, width, height, duration_ms)
-      VALUES (${mid}, ${t.id}, ${uid}, false, ${m.body}, ${m.clientId}, ${m.kind}, ${mediaId}, ${m.width || null}, ${m.height || null}, ${m.durationMs || null})`);
+    const rt = m.replyToId ? await replyTarget(t.id, m.replyToId) : null;
+    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, client_id, kind, media_id, width, height, duration_ms, reply_to_id, reply_to_text, reply_to_admin)
+      VALUES (${mid}, ${t.id}, ${uid}, false, ${m.body}, ${m.clientId}, ${m.kind}, ${mediaId}, ${m.width || null}, ${m.height || null}, ${m.durationMs || null}, ${rt?.id || null}, ${rt?.text || null}, ${rt ? rt.fromAdmin : null})`);
     await db.execute(sql`UPDATE support_threads SET status = 'open', last_message = ${m.body.slice(0, 200)}, last_from_admin = false,
       admin_unread = admin_unread + 1, last_message_at = now() WHERE id = ${t.id}`);
     const me = rows(await db.execute(sql`SELECT name, username FROM users WHERE id = ${uid} LIMIT 1`))[0] || {};
@@ -497,7 +509,7 @@ export function registerAdminAppRoutes(app: Express) {
   app.post("/api/support/messages", requireUser, w(async (req, res) => {
     const body = str(req.body?.body, 2000);
     if (!body) return res.status(400).json({ error: "Write a message first" });
-    const r = await addUserMessage((req as any).uid, { body, kind: "text", clientId: str(req.body?.clientId, 80) || null });
+    const r = await addUserMessage((req as any).uid, { body, kind: "text", clientId: str(req.body?.clientId, 80) || null, replyToId: str(req.body?.replyToId, 80) || undefined });
     res.status(r.existing ? 200 : 201).json({ message: r.message, thread: r.thread });
   }));
 
@@ -585,7 +597,9 @@ export function registerAdminAppRoutes(app: Express) {
       if (dup) return res.json({ message: msgOut(dup) });
     }
     const mid = `sm-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, client_id) VALUES (${mid}, ${t.id}, ${(req as any).uid}, true, ${body}, ${clientId})`);
+    const rt = await replyTarget(t.id, req.body?.replyToId);
+    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, client_id, reply_to_id, reply_to_text, reply_to_admin)
+      VALUES (${mid}, ${t.id}, ${(req as any).uid}, true, ${body}, ${clientId}, ${rt?.id || null}, ${rt?.text || null}, ${rt ? rt.fromAdmin : null})`);
     await db.execute(sql`UPDATE support_threads SET last_message = ${body.slice(0, 200)}, last_from_admin = true, user_unread = user_unread + 1,
       admin_unread = 0, last_message_at = now(), status = ${req.body?.close ? "closed" : "open"} WHERE id = ${t.id}`);
     await notify(t.user_id, "support", "Farmers Support replied", body.slice(0, 200), { screen: "Support", supportThreadId: t.id });

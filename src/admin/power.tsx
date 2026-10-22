@@ -183,7 +183,7 @@ export function ModerationPanel({ user, onChanged }: { user: any; onChanged: () 
 
       <SectionTitle title={L("Danger zone", "বিপজ্জনক")} />
       <Card style={{ borderWidth: 1, borderColor: "#FCA5A5" }}>
-        <Text style={{ color: "#B91C1C", fontWeight: "800", fontSize: 15 }}>{L("Delete account", "অ্যাকাউন্ট মুছুন")}</Text>
+        <Text style={{ color: theme.error, fontWeight: "800", fontSize: 15 }}>{L("Delete account", "অ্যাকাউন্ট মুছুন")}</Text>
         <Text style={{ color: theme.textSecondary, fontSize: 13, lineHeight: 19, marginTop: 4, marginBottom: 12 }}>
           {L("Removes their profile, posts, comments, listings, shop, chats and follows, and signs them out. Orders stay for the records as \"Deleted user\". This can't be undone.",
             "প্রোফাইল, পোস্ট, মন্তব্য, লিস্টিং, দোকান, চ্যাট ও ফলো মুছে যাবে এবং সাইন আউট হবে। অর্ডারগুলো রেকর্ডের জন্য \"Deleted user\" নামে থাকবে। এটি ফেরানো যাবে না।")}

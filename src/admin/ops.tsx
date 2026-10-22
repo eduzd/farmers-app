@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { View, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
+import { useThemeStore, type ThemePreference } from "@/lib/themeStore";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import { AdminCatalogTab, AdminNotifyTab } from "@/components/admin/ManageTabs";
 import { OrderProgress, DeliveryInfo, PaymentInfo, DeliverySettings, payLabel } from "./orderflow";
@@ -360,6 +361,35 @@ export function UsersList() {
 
 export { UserDetail } from "./people";
 
+/** Light / dark / follow the phone. Saved on this device, the same setting the main app uses. */
+function ThemeCard() {
+  const { theme } = useTheme();
+  const L = useL();
+  const pref = useThemeStore((x) => x.preference);
+  const setPref = useThemeStore((x) => x.setPreference);
+  const opts: [ThemePreference, string, keyof typeof Feather.glyphMap][] = [
+    ["light", L("Light", "লাইট"), "sun"], ["dark", L("Dark", "ডার্ক"), "moon"], ["system", L("Auto", "অটো"), "smartphone"],
+  ];
+  return (
+    <Card testID="theme-card">
+      <Text style={{ color: theme.text, fontWeight: "800", fontSize: 15, marginBottom: 2 }}>{L("Appearance", "চেহারা")}</Text>
+      <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginBottom: 10 }}>{L("Auto follows your phone's setting", "অটো আপনার ফোনের সেটিং অনুসরণ করে")}</Text>
+      <View accessibilityRole="radiogroup" style={{ flexDirection: "row", gap: 8 }}>
+        {opts.map(([k, label, icon]) => {
+          const on = pref === k;
+          return (
+            <Pressable key={k} testID={`theme-${k}`} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={label} onPress={() => setPref(k)}
+              style={({ pressed }) => ({ flex: 1, alignItems: "center", gap: 6, paddingVertical: 12, borderRadius: 14, borderWidth: 2, borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primary + "14" : "transparent", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+              <Feather name={icon} size={20} color={on ? theme.primary : theme.textSecondary} />
+              <Text style={{ color: on ? theme.primary : theme.text, fontWeight: on ? "800" : "600", fontSize: 13 }}>{label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </Card>
+  );
+}
+
 export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminName: string }) {
   const nav = useAdminNav();
   const { theme } = useTheme();
@@ -413,6 +443,7 @@ export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminNa
           </View>
         </View>
       </Card>
+      <ThemeCard />
       {items.map(([k, title, sub, icon, fn]) => (
         <Card key={k} testID={`more-${k}`} onPress={fn} style={{ paddingVertical: 12 }}>
           <View style={st.row}>

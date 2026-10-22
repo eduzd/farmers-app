@@ -217,6 +217,7 @@ export interface SupportMessage {
   senderName: string;
   clientId: string | null;
   createdAt: string;
+  replyTo?: { id: string; text: string; fromAdmin: boolean } | null;
 }
 export interface SupportThreadPage {
   thread: { id: string; userUnread: number } | null;
@@ -226,8 +227,8 @@ export interface SupportThreadPage {
 export function fetchSupportThread(): Promise<SupportThreadPage> {
   return request<SupportThreadPage>("GET", "/api/support/thread");
 }
-export function sendSupportText(body: string, clientId: string): Promise<{ message: SupportMessage }> {
-  return request("POST", "/api/support/messages", { body, clientId });
+export function sendSupportText(body: string, clientId: string, replyToId?: string): Promise<{ message: SupportMessage }> {
+  return request("POST", "/api/support/messages", { body, clientId, replyToId });
 }
 // ---- the same conversation from the admin side (Farmers Admin app; the server checks the admin rights) ----
 export interface AdminSupportThreadPage {
@@ -238,8 +239,8 @@ const adminThread = (id: string) => `/api/admin/manage/support/threads/${encodeU
 export function fetchAdminSupportThread(threadId: string): Promise<AdminSupportThreadPage> {
   return request<AdminSupportThreadPage>("GET", adminThread(threadId));
 }
-export function sendAdminSupportText(threadId: string, body: string, clientId: string): Promise<{ message: SupportMessage }> {
-  return request("POST", `${adminThread(threadId)}/reply`, { body, clientId });
+export function sendAdminSupportText(threadId: string, body: string, clientId: string, replyToId?: string): Promise<{ message: SupportMessage }> {
+  return request("POST", `${adminThread(threadId)}/reply`, { body, clientId, replyToId });
 }
 export function sendAdminSupportPhoto(threadId: string, photo: { base64: string; mime: string; width?: number; height?: number }, clientId: string): Promise<{ message: SupportMessage }> {
   return request("POST", `${adminThread(threadId)}/photo`, { image: photo.base64, mime: photo.mime, width: photo.width, height: photo.height, clientId }, PHOTO_TIMEOUT_MS);

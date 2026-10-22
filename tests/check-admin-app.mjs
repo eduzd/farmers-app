@@ -112,6 +112,16 @@ try {
   ok(badCat.status === 400, "product with an unknown category refused");
   const p1 = await call("POST", "/api/admin/manage/products", admin.token, { storeId: st.data.id, name: "Tilapia feed 25kg", price: 900, quantity: 40, unit: "bag", category: "fish-feed", description: "Floating feed" });
   const p2 = await call("POST", "/api/admin/manage/products", admin.token, { storeId: st.data.id, name: "BRRI dhan seed", price: 150, quantity: 3, unit: "kg", category: "seeds" });
+  const pk = await call("POST", "/api/admin/manage/products", admin.token, { storeId: st.data.id, name: "Mustard oil", price: 950, quantity: 20, unit: "bottle", sellAs: "pack", packSize: 5, packUnit: "litre", grade: "Premium", origin: "Sirajganj", harvestDate: "2026-10-01", organic: true, minOrder: 1, maxOrder: 10, category: "seeds" });
+  const pkGet = pk.data?.id ? await call("GET", `/api/admin/manage/products/${pk.data.id}`, admin.token) : { data: {} };
+  ok(pk.status === 201 && pkGet.data.sellAs === "pack" && pkGet.data.packSize === 5 && pkGet.data.packUnit === "litre" && pkGet.data.organic === true && pkGet.data.maxOrder === 10 && pkGet.data.origin === "Sirajganj", "product sold in packs keeps its details", pkGet.data);
+  const noPack = await call("POST", "/api/admin/manage/products", admin.token, { storeId: st.data.id, name: "Rice", price: 500, sellAs: "pack", category: "seeds" });
+  const badSell = await call("POST", "/api/admin/manage/products", admin.token, { storeId: st.data.id, name: "Rice", price: 500, sellAs: "bucket", category: "seeds" });
+  const badRange = await call("POST", "/api/admin/manage/products", admin.token, { storeId: st.data.id, name: "Rice", price: 500, minOrder: 5, maxOrder: 2, category: "seeds" });
+  ok(noPack.status === 400 && badSell.status === 400 && badRange.status === 400, "pack without size, unknown sell type and min>max are refused", [noPack.status, badSell.status, badRange.status]);
+  const lit = await call("POST", "/api/admin/manage/products", admin.token, { storeId: st.data.id, name: "Milk", price: 90, quantity: 50, unit: "litre", sellAs: "volume", category: "seeds" });
+  ok(lit.status === 201, "product sold by the litre", lit.data);
+  for (const x of [pk, lit]) if (x.data?.id) await call("DELETE", `/api/admin/manage/products/${x.data.id}`, admin.token);
   ok(p1.status === 201 && p1.data.storeId === st.data.id && p1.data.ownerId === seller.id, "admin adds product into the seller's shop", p1);
   ok(p2.status === 201, "admin adds a second product", p2);
   const sellerView = await call("GET", "/api/seller/products", seller.token);
@@ -218,6 +228,17 @@ try {
   await call("POST", "/api/support/messages", buyer.token, { body: "Thanks!" });
   const reopened = await call("GET", "/api/admin/manage/support/threads?status=open", admin.token);
   ok(reopened.data.some((t) => t.userId === buyer.id), "a new message reopens it");
+  // Hold a message -> Reply: the quote is stored with the message, taken from the server copy.
+  const tid = found.data[0].id;
+  const q1 = await call("POST", `/api/admin/manage/support/threads/${tid}/reply`, admin.token, { body: "Glad to help", replyToId: m1.data.message.id });
+  ok(q1.status === 201 && q1.data.message.replyTo?.id === m1.data.message.id && q1.data.message.replyTo.text.includes("hasn't arrived") && q1.data.message.replyTo.fromAdmin === false, "admin replies to a held message (quote saved)", q1.data);
+  const q2 = await call("POST", "/api/support/messages", buyer.token, { body: "Ok", replyToId: q1.data.message.id });
+  ok(q2.data.message.replyTo?.fromAdmin === true && q2.data.message.replyTo.text === "Glad to help", "user replies to the admin's message");
+  const otherMsg = (await call("GET", "/api/support/thread", other.token)).data.messages[0];
+  const q3 = await call("POST", "/api/support/messages", buyer.token, { body: "sneaky", replyToId: otherMsg.id });
+  ok(q3.status === 201 && !q3.data.message.replyTo, "can't quote a message from someone else's conversation");
+  const reread = await call("GET", "/api/support/thread", buyer.token);
+  ok(reread.data.messages.some((m) => m.replyTo?.id === q1.data.message.id), "quote shows after reload");
 } catch (e) {
   failed++;
   console.log("FAIL  crashed:", e?.message);

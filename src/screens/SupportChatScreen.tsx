@@ -17,6 +17,7 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
+import * as Clipboard from "expo-clipboard";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 
@@ -100,6 +101,7 @@ type Item = {
   fromAdmin: boolean;
   createdAt: string;
   status?: "sending" | "failed";
+  replyTo?: { id: string; text: string; fromAdmin: boolean } | null;
   // what to upload again on "Tap to retry"
   photo?: { base64: string; mime: string; width?: number; height?: number };
 };
@@ -115,6 +117,7 @@ const fromServer = (m: SupportMessage): Item => ({
   durationMs: m.durationMs,
   fromAdmin: m.fromAdmin,
   createdAt: m.createdAt,
+  replyTo: m.replyTo || null,
 });
 
 const timeOf = (iso: string) => {
@@ -151,6 +154,9 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [inputText, setInputText] = useState("");
+  // Hold a message for Reply / Copy, the same menu as the main chat.
+  const [selected, setSelected] = useState<Item | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Item | null>(null);
   const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
   const [showMediaMenu, setShowMediaMenu] = useState(false);
   const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
@@ -224,7 +230,7 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
           ? await (tid ? sendAdminSupportPhoto(tid, item.photo, cid) : sendSupportPhoto(item.photo, cid))
           : item.kind === "voice" && item.localUri
             ? await (tid ? sendAdminSupportVoice(tid, item.localUri, item.durationMs || 0, cid) : sendSupportVoice(item.localUri, item.durationMs || 0, cid))
-            : await (tid ? sendAdminSupportText(tid, item.text, cid) : sendSupportText(item.text, cid));
+            : await (tid ? sendAdminSupportText(tid, item.text, cid, item.replyTo?.id) : sendSupportText(item.text, cid, item.replyTo?.id));
       const m = fromServer(r.message);
       if (m.mediaId && item.localUri && item.kind === "image") rememberLocalPhoto(m.mediaId, item.localUri);
       setServer((s) => (s.some((x) => x.id === m.id) ? s : [...s, m]));
@@ -259,8 +265,26 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
       setInputText("");
       setInputHeight(MIN_INPUT_HEIGHT);
     }
-    queue({ kind: "text", text });
+    const rt = replyingTo && !replyingTo.id.startsWith("local-")
+      ? { id: replyingTo.id, text: replyingTo.kind === "image" ? L("Photo", "ছবি") : replyingTo.kind === "voice" ? L("Voice message", "ভয়েস মেসেজ") : replyingTo.text, fromAdmin: replyingTo.fromAdmin }
+      : null;
+    setReplyingTo(null);
+    queue({ kind: "text", text, replyTo: rt });
   };
+  const handleLongPress = (item: Item) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+    setSelected(item);
+  };
+  const handleReply = () => {
+    if (selected) setReplyingTo(selected);
+    setSelected(null);
+  };
+  const handleCopy = () => {
+    if (selected) Clipboard.setStringAsync(selected.text || "").catch(() => {});
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    setSelected(null);
+  };
+  const quoteName = (r: { fromAdmin: boolean }) => (mine(r) ? L("You", "আপনি") : admin ? admin.userName || L("User", "ইউজার") : supportName);
 
   // ---- voice ----
   const sendRecording = (r: FinishedRecording | null) => {
@@ -424,13 +448,19 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
         {!isMe ? (
           <View style={styles.avatarSpace}>{showAvatar ? <UserAvatar name={supportName} avatar={otherAvatar} size="small" presence={presence} /> : null}</View>
         ) : null}
-        <View style={[styles.messageContainer, isMe ? styles.myMessage : styles.theirMessage]}>
+        <Pressable style={[styles.messageContainer, isMe ? styles.myMessage : styles.theirMessage]} onLongPress={() => handleLongPress(item)} delayLongPress={300} testID="support-msg-hold">
+          {item.replyTo ? (
+            <View style={[styles.replyPreview, { backgroundColor: theme.backgroundSecondary }]} testID="support-msg-quote">
+              <ThemedText style={[styles.replyName, { color: theme.primary }]}>{quoteName(item.replyTo)}</ThemedText>
+              <ThemedText style={[styles.replyText, { color: theme.textSecondary }]} numberOfLines={1}>{item.replyTo.text}</ThemedText>
+            </View>
+          ) : null}
           <View style={styles.bubbleWrapper}>{body}</View>
           <View style={styles.messageFooter}>
             {showTime ? <ThemedText style={[styles.messageTime, { color: theme.textSecondary }, isMe && styles.myTime]}>{timeOf(item.createdAt)}</ThemedText> : null}
             {renderStatus(item, isLastInGroup)}
           </View>
-        </View>
+        </Pressable>
       </View>
     );
   };
@@ -523,6 +553,22 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
             ))}
           </ScrollView>
         ) : null}
+        {replyingTo ? (
+          <View style={[styles.replyBar, { backgroundColor: theme.surface, borderTopColor: theme.divider }]} testID="support-reply-bar">
+            <View style={styles.replyBarContent}>
+              <View style={[styles.replyIndicator, { backgroundColor: theme.primary }]} />
+              <View style={styles.replyInfo}>
+                <ThemedText style={[styles.replyBarName, { color: theme.primary }]}>{L("Replying to", "উত্তর দিচ্ছেন")} {quoteName(replyingTo)}</ThemedText>
+                <ThemedText style={[styles.replyBarText, { color: theme.textSecondary }]} numberOfLines={1}>
+                  {replyingTo.kind === "image" ? L("Photo", "ছবি") : replyingTo.kind === "voice" ? L("Voice message", "ভয়েস মেসেজ") : replyingTo.text}
+                </ThemedText>
+              </View>
+            </View>
+            <Pressable onPress={() => setReplyingTo(null)} style={styles.replyCloseButton} accessibilityLabel={L("Cancel reply", "উত্তর বাতিল")} testID="support-reply-cancel">
+              <Feather name="x" size={20} color={theme.textSecondary} />
+            </Pressable>
+          </View>
+        ) : null}
         <View style={[styles.inputContainer, { backgroundColor: theme.backgroundRoot }]}>
           {isRecording ? (
             <View style={styles.recordingContainer}>
@@ -579,6 +625,36 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
       </Animated.View>
 
       <PhotoViewer images={viewerPhoto ? [viewerPhoto] : []} visible={!!viewerPhoto} onClose={() => setViewerPhoto(null)} />
+      <Modal visible={!!selected} transparent animationType="fade" onRequestClose={() => setSelected(null)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setSelected(null)}>
+          <View style={styles.instagramReactionContainer}>
+            <View style={[styles.messageActionsMenu, { backgroundColor: theme.surface }]} testID="support-msg-menu">
+              {selected && !selected.id.startsWith("local-") ? (
+                <Pressable style={styles.menuItem} onPress={handleReply} testID="support-menu-reply">
+                  <Feather name="corner-up-left" size={22} color={theme.text} />
+                  <ThemedText style={[styles.menuItemText, { color: theme.text }]}>{L("Reply", "উত্তর")}</ThemedText>
+                </Pressable>
+              ) : null}
+              {selected?.kind === "text" ? (
+                <Pressable style={styles.menuItem} onPress={handleCopy} testID="support-menu-copy">
+                  <Feather name="copy" size={22} color={theme.text} />
+                  <ThemedText style={[styles.menuItemText, { color: theme.text }]}>{L("Copy", "কপি")}</ThemedText>
+                </Pressable>
+              ) : null}
+              {selected?.status === "failed" ? (
+                <Pressable style={styles.menuItem} onPress={() => { const it = selected; setSelected(null); if (it) retry(it); }}>
+                  <Feather name="rotate-cw" size={22} color={theme.text} />
+                  <ThemedText style={[styles.menuItemText, { color: theme.text }]}>{L("Try again", "আবার চেষ্টা")}</ThemedText>
+                </Pressable>
+              ) : null}
+              <Pressable style={styles.menuItem} onPress={() => setSelected(null)}>
+                <Feather name="x" size={22} color={theme.text} />
+                <ThemedText style={[styles.menuItemText, { color: theme.text }]}>{L("Close", "বন্ধ")}</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
       <Modal visible={showMediaMenu} transparent animationType="fade" onRequestClose={() => setShowMediaMenu(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowMediaMenu(false)}>
           <View style={[styles.mediaMenuContainer, { backgroundColor: theme.surface }]}>

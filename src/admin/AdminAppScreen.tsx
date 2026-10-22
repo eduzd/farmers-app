@@ -15,6 +15,8 @@ import { HomeTab, OrdersTab, OrderDetail, SupportTab, ThreadView, UsersList, Use
 
 import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { HomeIcon } from "@/components/icons/HomeIcon";
+import { useThemeStore } from "@/lib/themeStore";
 /**
  * Farmers Admin app: its own bottom navigation (Home, Shop, Orders, Support, More) over the
  * shared backend. Every call goes to /api/admin/manage/*, which the server checks for an
@@ -35,6 +37,7 @@ function FadeIn({ children }: { children: React.ReactNode }) {
 
 export default function AdminAppScreen() {
   const { theme, isDark } = useTheme();
+  const setThemePref = useThemeStore((x) => x.setPreference);
   const insets = useSafeAreaInsets();
   const L = useL();
   const navigation = useNavigation<any>();
@@ -176,6 +179,7 @@ export default function AdminAppScreen() {
                   </Text>
                 )}
               </View>
+              {!top && tab === "home" ? iconBtn("header-theme", () => setThemePref(isDark ? "light" : "dark"), <Feather name={isDark ? "sun" : "moon"} size={20} color={theme.text} />, false, isDark ? L("Switch to light mode", "লাইট মোডে যান") : L("Switch to dark mode", "ডার্ক মোডে যান")) : null}
               {top?.name !== "search" ? iconBtn("header-search", () => nav.push({ name: "search" }), <Feather name="search" size={21} color={theme.text} />, false, L("Search", "খুঁজুন")) : null}
               {!top && tab !== "support" ? iconBtn("header-support", () => nav.goTab("support"), <ChatIcon size={21} color={theme.text} />, !!supportUnread, L("Support chats", "সাপোর্ট চ্যাট")) : null}
             </View>
@@ -195,7 +199,11 @@ export default function AdminAppScreen() {
                 return (
                   <Pressable key={k} testID={`admin-tab-${k}`} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => { if (on && !stack.length) return; nav.goTab(k); }} style={({ pressed }) => ({ flex: 1, alignItems: "center", gap: 3, transform: [{ scale: pressed ? 0.92 : 1 }] })}>
                     <View style={{ width: 56, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: on ? theme.primary + "1F" : "transparent" }}>
-                      <AppIcon name={icon} size={22} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
+                      {k === "home" ? (
+                        <HomeIcon size={20} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
+                      ) : (
+                        <AppIcon name={icon} size={22} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
+                      )}
                       {badge ? (
                         <View style={{ position: "absolute", top: -4, right: 4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.card }}>
                           <Text style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}>{badge > 99 ? "99+" : badge}</Text>

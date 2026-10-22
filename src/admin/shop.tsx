@@ -594,7 +594,7 @@ export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) 
         <Field testID="pf-desc" label={L("Description", "বিবরণ")} value={f.description} onChange={set("description")} multiline maxLength={2000} />
         <Text style={{ color: theme.textTertiary, fontSize: 12 }}>{L("Delivery charges are the same for every product. Change them in More, Delivery charges.", "ডেলিভারি চার্জ সব পণ্যে একই। আরও > ডেলিভারি চার্জ থেকে বদলান।")}</Text>
       </Card>
-      {tried && errors.length ? <View style={{ gap: 4 }}>{errors.map((e) => <Text key={e} style={{ color: "#B91C1C", fontSize: 12.5 }}>• {e}</Text>)}</View> : null}
+      {tried && errors.length ? <View style={{ gap: 4 }}>{errors.map((e) => <Text key={e} style={{ color: theme.error, fontSize: 12.5 }}>• {e}</Text>)}</View> : null}
       <Btn testID="save-product" icon="check" label={id ? L("Save changes", "পরিবর্তন সংরক্ষণ") : L("Add product", "পণ্য যোগ করুন")} busy={busy} onPress={save} />
     </Page>
   );
