@@ -73,3 +73,13 @@ Plan:
        Live Bangla toggle not exercised (localStorage key didn't switch it); Bangla checked locally only. Live support thread not opened (would mark read).
  - check-admin-web.py updated for full-screen chat (support-input/support-send/support-back); local en+bn 320/360/390 all clean; admin reply reached Ann.
  - This commit (tests + notes) pushed to branch admin-redesign only, not main, to avoid another Render deploy.
+
+## Round: product sell-as details, hold-to-reply, dark mode, Home icon (2026-10-22)
+- [x] Product form: How is it sold (weight kg/g/maund, packs bag/box/packet/sack/crate/bottle with amount kg/g/litre/ml/pieces,
+      piece, dozen, litre/ml), price per unit, stock, min/max order, live "Buyers will see" preview, organic, grade, variety,
+      origin, harvest date, shelf life, storage. Server validates (productFields SELL_AS, pack size required, min<=max).
+- [x] Support chat (shared SupportChatScreen, both sides): hold a message -> Reply / Copy / Try again menu (main chat styles),
+      reply bar above composer, quote saved server-side (reply_to_* columns, only same-thread messages).
+- [x] Dark mode: moon/sun on admin Home header + Appearance card in More (Light/Dark/Auto), uses main themeStore (persisted).
+- [x] Home tab uses main app HomeIcon.
+- [x] tests: check-admin-app 70/70, check-moderation 63/63, tests/check-admin-dark-web.py (light/dark en/bn 360, dark 320).

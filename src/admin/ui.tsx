@@ -277,7 +277,7 @@ export function Field({ label, value, onChange, placeholder, multiline, keyboard
           style={[st.input, { color: theme.text, fontFamily: FontFamily.medium }, multiline && { minHeight: 96, textAlignVertical: "top", paddingTop: 12 }, Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : null]}
         />
       </View>
-      {hint ? <Text style={{ color: theme.textTertiary, fontSize: 12, marginTop: 5 }}>{hint}</Text> : null}
+      {hint ? <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 5 }}>{hint}</Text> : null}
     </View>
   );
 }
