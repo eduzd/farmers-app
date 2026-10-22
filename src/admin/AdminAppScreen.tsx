@@ -17,6 +17,7 @@ import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
 import { HomeIcon } from "@/components/icons/HomeIcon";
 import { useThemeStore } from "@/lib/themeStore";
+import { useLiveStatus } from "@/lib/liveStatus";
 /**
  * Farmers Admin app: its own bottom navigation (Home, Shop, Orders, Support, More) over the
  * shared backend. Every call goes to /api/admin/manage/*, which the server checks for an
@@ -53,6 +54,9 @@ export default function AdminAppScreen() {
   // call is still checked on the server.
   const storeAdmin = useAuthStore((s) => s.isSuperAdmin);
   const isAdmin = storeAdmin || !!user?.isSuperAdmin;
+  // Online beat while the admin app is open (the main tabs do this for the app; the admin app never mounted it),
+  // so users see Support as online (green dot) and Support voice calls ring an admin who is actually here.
+  useLiveStatus();
 
   const refreshBadges = useCallback(async () => {
     if (!isAdmin) return;

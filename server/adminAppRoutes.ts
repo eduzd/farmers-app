@@ -465,6 +465,22 @@ export function registerAdminAppRoutes(app: Express) {
     res.json({ thread: { ...threadOut(t), userUnread: 0 }, messages: msgs, adminsOnline: online });
   }));
 
+  // Voice call to Farmers Support: which admin's phone rings. An admin who has the app open comes first,
+  // preferring the one who last answered this person; otherwise the one who last answered, then any admin.
+  app.get("/api/support/call-target", requireUser, w(async (req, res) => {
+    const uid = (req as any).uid;
+    const list = (await admins()).filter((a) => a !== uid);
+    if (!list.length) return res.status(404).json({ error: "Support can't take calls right now" });
+    const t = await myThread(uid);
+    const repliers: string[] = t
+      ? rows(await db.execute(sql`SELECT sender_id, max(created_at) AS at FROM support_messages WHERE thread_id = ${t.id} AND from_admin = true
+          GROUP BY sender_id ORDER BY at DESC`)).map((r: any) => String(r.sender_id)).filter((a: string) => list.includes(a))
+      : [];
+    const online = list.filter((a) => isUserPresent(a));
+    const pick = repliers.find((a) => online.includes(a)) || online[0] || repliers[0] || list[0];
+    res.json({ adminId: pick, online: online.includes(pick), name: "Farmers Support" });
+  }));
+
   app.get("/api/support/unread", requireUser, w(async (req, res) => {
     const t = await myThread((req as any).uid);
     res.json({ unread: t ? Number(t.user_unread || 0) : 0, adminsOnline: await adminsOnline() });

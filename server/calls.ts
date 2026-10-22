@@ -57,12 +57,12 @@ export function initCalls(deps: { sendToUser: SendToUser; userOnline: (userId: s
 
 const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows || []);
 
-async function lookupUser(id: string): Promise<{ id: string; name: string; avatar: string | null } | null> {
+async function lookupUser(id: string): Promise<{ id: string; name: string; avatar: string | null; admin: boolean } | null> {
   if (!db) return null;
   try {
-    const r = rowsOf(await db.execute(sql`SELECT id, name, username, avatar FROM users WHERE id::text = ${id} LIMIT 1`))[0];
+    const r = rowsOf(await db.execute(sql`SELECT id, name, username, avatar, is_super_admin, banned FROM users WHERE id::text = ${id} LIMIT 1`))[0];
     if (!r) return null;
-    return { id: String(r.id), name: String(r.name || r.username || "Member").slice(0, 80), avatar: r.avatar || null };
+    return { id: String(r.id), name: String(r.name || r.username || "Member").slice(0, 80), avatar: r.avatar || null, admin: !!r.is_super_admin && !r.banned };
   } catch {
     return null;
   }
@@ -182,13 +182,27 @@ export async function handleCallMessage(
         reply({ type: "call_failed", reason: "busy", clientRef });
         return true;
       }
+      // Support calls (from the Support chat): a Farmers admin calling a user back shows as "Farmers Support";
+      // a user calling Support shows their name with "Support call" on the admin's phone. Only checked roles count.
+      let callerName = caller.name;
+      let callerAvatar = caller.avatar;
+      let calleeName = callee.name;
+      if (message.support === true) {
+        if (caller.admin) {
+          callerName = "Farmers Support";
+          callerAvatar = null;
+        } else if (callee.admin) {
+          callerName = `Support call · ${caller.name}`.slice(0, 80);
+          calleeName = "Farmers Support";
+        }
+      }
       const call: Call = {
         callId: `call-${crypto.randomUUID()}`,
         callerId: uid,
         calleeId,
-        callerName: caller.name,
-        callerAvatar: caller.avatar,
-        calleeName: callee.name,
+        callerName,
+        callerAvatar,
+        calleeName,
         status: "ringing",
         createdAt: now,
         acked: false,
@@ -215,7 +229,7 @@ export async function handleCallMessage(
         type: "call_ringing",
         callId: call.callId,
         calleeId,
-        calleeName: callee.name,
+        calleeName,
         calleeAvatar: callee.avatar,
         calleeOnline: delivered,
         clientRef,

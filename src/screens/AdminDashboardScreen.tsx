@@ -1084,7 +1084,7 @@ export default function AdminDashboardScreen() {
       />
 
       <View style={[styles.header, { borderBottomColor: theme.divider }]}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={8}>
+        <Pressable onPress={() => (navigation.canGoBack() ? navigation.goBack() : (navigation as any).navigate("AdminApp"))} hitSlop={8} testID="classic-back" accessibilityRole="button" accessibilityLabel={language === "bn" ? "পিছনে" : "Back"}>
           <Feather name="arrow-left" size={24} color={theme.text} />
         </Pressable>
         <ThemedText type="h3" style={{ color: theme.text, marginLeft: Spacing.md }}>

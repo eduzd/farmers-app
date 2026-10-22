@@ -297,6 +297,7 @@ export function ThreadView({ id }: { id: string }) {
         userAvatar: meta?.userAvatar || null,
         onBack: () => { nav.pop(); nav.refreshBadges(); },
         onOpenUser: meta?.userId ? () => nav.push({ name: "user", id: meta.userId }) : undefined,
+        callUserId: meta?.userId || undefined,
         onMeta: setMeta,
         onChanged: nav.refreshBadges,
         headerRight: (

@@ -37,7 +37,7 @@ interface VoiceCallContextValue {
   isConnected: boolean;
   call: CallUi | null;
   /** Start an in-app voice call to another Farmers user (their user id). */
-  startCall: (peerId: string, peerName: string, peerAvatar?: string | null) => Promise<void>;
+  startCall: (peerId: string, peerName: string, peerAvatar?: string | null, opts?: { support?: boolean }) => Promise<void>;
   accept: () => Promise<void>;
   reject: () => void;
   hangup: () => void;
@@ -249,7 +249,7 @@ export function VoiceCallProvider({ children, userId }: Props) {
   // ---------------------------------------------------------------- actions
 
   const startCall = useCallback(
-    async (peerId: string, peerName: string, peerAvatar?: string | null) => {
+    async (peerId: string, peerName: string, peerAvatar?: string | null, opts?: { support?: boolean }) => {
       if (!peerId || peerId === userId) return;
       if (callRef.current && callRef.current.phase !== "ended") return;
       if (!rtcSupported) {
@@ -274,7 +274,7 @@ export function VoiceCallProvider({ children, userId }: Props) {
       }
       if (rtc.current.clientRef !== clientRef) return;
       callAudio.startCall(true);
-      send({ type: "call_initiate", calleeId: peerId, clientRef });
+      send({ type: "call_initiate", calleeId: peerId, clientRef, ...(opts?.support ? { support: true } : {}) });
     },
     [finish, getIceServers, send, setCall, userId, waitForSocket],
   );

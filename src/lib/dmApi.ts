@@ -224,6 +224,10 @@ export interface SupportThreadPage {
   messages: SupportMessage[];
   adminsOnline?: boolean;
 }
+/** Which admin a Support voice call rings (online admins first). */
+export function fetchSupportCallTarget(): Promise<{ adminId: string; online: boolean; name: string }> {
+  return request("GET", "/api/support/call-target");
+}
 export function fetchSupportThread(): Promise<SupportThreadPage> {
   return request<SupportThreadPage>("GET", "/api/support/thread");
 }

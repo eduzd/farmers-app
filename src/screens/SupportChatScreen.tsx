@@ -7,6 +7,7 @@ import {
   ScrollView,
   Platform,
   Alert,
+  ActivityIndicator,
   Modal,
   ActionSheetIOS,
   NativeSyntheticEvent,
@@ -35,6 +36,7 @@ import { Spacing } from "@/constants/theme";
 import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
 import { useSupportStatus } from "@/components/HelpButton";
+import { useOptionalVoiceCall } from "@/contexts/VoiceCallContext";
 import {
   fetchSupportThread,
   sendSupportText,
@@ -43,6 +45,7 @@ import {
   newClientId,
   rememberLocalPhoto,
   fetchAdminSupportThread,
+  fetchSupportCallTarget,
   sendAdminSupportText,
   sendAdminSupportPhoto,
   sendAdminSupportVoice,
@@ -82,6 +85,8 @@ export type SupportChatAdmin = {
   userAvatar?: string | null;
   onBack: () => void;
   onOpenUser?: () => void;
+  /** The user's account id, for the voice call button (admin calls the user back). */
+  callUserId?: string;
   headerRight?: React.ReactNode;
   onChanged?: () => void;
   /** Called with the conversation's details (user, status) each time it loads. */
@@ -146,6 +151,52 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
   const [userOnline, setUserOnline] = useState<boolean | null>(null);
   const [adminMeta, setAdminMeta] = useState<{ name: string; avatar?: string | null } | null>(null);
   const adminsOnline = admin ? userOnline : adminsOnlineUser;
+  // Voice call, the same call as the main chat (VoiceCallContext + call screen): the user calls Farmers Support
+  // (an online admin's phone rings), the admin calls the user back from their conversation.
+  const voiceCall = useOptionalVoiceCall();
+  const [calling, setCalling] = useState(false);
+  const notice = (title: string, msg: string) => {
+    if (Platform.OS === "web" && typeof window !== "undefined") window.alert(`${title}\n\n${msg}`);
+    else Alert.alert(title, msg);
+  };
+  const handleVoiceCall = async () => {
+    if (calling) return;
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+    const title = L("Voice call", "ভয়েস কল");
+    if (!signedIn || !voiceCall) {
+      notice(title, L("Please sign in first so you can call the Farmers team.", "ফার্মার্স টিমকে কল করতে আগে সাইন ইন করুন।"));
+      return;
+    }
+    if (admin) {
+      if (!admin.callUserId) return;
+      void voiceCall.startCall(admin.callUserId, admin.userName || L("Farmers user", "ফার্মার্স ব্যবহারকারী"), admin.userAvatar || null, { support: true });
+      return;
+    }
+    setCalling(true);
+    let target: { adminId: string; online: boolean } | null = null;
+    try {
+      target = await fetchSupportCallTarget();
+    } catch {
+      target = null;
+    }
+    setCalling(false);
+    if (!target?.adminId) {
+      notice(title, L("Support can't take calls right now. Send us a message and we'll reply here.", "সাপোর্ট এখন কল নিতে পারছে না। মেসেজ পাঠান, আমরা এখানেই উত্তর দেব।"));
+      return;
+    }
+    void voiceCall.startCall(target.adminId, L("Farmers Support", "ফার্মার্স সাপোর্ট"), null, { support: true });
+  };
+  const callButton = (admin ? !!admin.callUserId : true) ? (
+    <Pressable
+      style={styles.headerButton}
+      onPress={handleVoiceCall}
+      accessibilityRole="button"
+      accessibilityLabel={admin ? L(`Voice call ${admin.userName}`, `${admin.userName}-কে ভয়েস কল`) : L("Voice call Farmers Support", "ফার্মার্স সাপোর্টে ভয়েস কল")}
+      testID="support-call-button"
+    >
+      {calling ? <ActivityIndicator size="small" color={theme.text} /> : <Feather name="phone" size={22} color={theme.text} />}
+    </Pressable>
+  ) : null;
   /** My own messages sit on the right: the user's in the app, the admins' in the admin app. */
   const mine = (m: { fromAdmin: boolean }) => (admin ? m.fromAdmin : !m.fromAdmin);
 
@@ -501,6 +552,7 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
             <ThemedText style={[styles.headerStatus, { color: theme.textSecondary }]} numberOfLines={1} testID="support-status">{headerStatus}</ThemedText>
           </View>
         </Pressable>
+        {callButton}
         {admin?.headerRight ?? null}
       </View>
 

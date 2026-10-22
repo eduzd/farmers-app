@@ -74,6 +74,21 @@ Plan:
  - check-admin-web.py updated for full-screen chat (support-input/support-send/support-back); local en+bn 320/360/390 all clean; admin reply reached Ann.
  - This commit (tests + notes) pushed to branch admin-redesign only, not main, to avoid another Render deploy.
 
+## Round: admin errors, support chat both ways, Support voice call (2026-10-22 13:58 +06, branch support-call, worktree /home/sprite/farmers-support from c1800f6)
+- [x] Crash fix: admin `Avatar` (src/admin/ui.tsx) used require("@/components/UserAvatar").default, which is undefined (named export)
+      -> React #130 on every screen with a person avatar (user profile from a support thread / Users, search, official). Fixed.
+- [x] Admin app now beats presence (useLiveStatus in AdminAppScreen). Before, admins never counted as online, so users saw
+      Support as offline (gray dot, adminsOnline=false) even with an admin in the dashboard.
+- [x] Classic Control Tower back arrow: testID classic-back, falls back to AdminApp when there is no history (web refresh).
+- [x] Support voice call: phone button in the Support header (user) and in the admin thread header. User -> GET /api/support/call-target
+      (online admin first, preferring the last one who answered) -> VoiceCallContext.startCall(adminId, "Farmers Support", null, {support:true}).
+      Admin -> startCall(thread userId, {support:true}). server/calls.ts: support flag shows admin callers as "Farmers Support" and
+      user callers as "Support call · <name>" on the admin's phone (roles checked from DB).
+- [x] tests/probe-admin-errors.py (clicks every admin tab/stat/shortcut/More item/thread/profile + user Support; console/page/API errors):
+      clean at 360 en, 320 bn, 390 en. User text/photo/voice + admin replies all stored; retry with same clientId = 200 (no dup).
+- [x] tests/check-support-call-web.py 34/34: two-way messages via UI, unread counts, user->Support call and admin call-back both
+      connect (fake mic), headers at 320/360/390 en+bn. check-admin-app 70/70, check-moderation 63/63, check-chat 43/43, tsc 0.
+
 ## Round: product sell-as details, hold-to-reply, dark mode, Home icon (2026-10-22)
 - [x] Product form: How is it sold (weight kg/g/maund, packs bag/box/packet/sack/crate/bottle with amount kg/g/litre/ml/pieces,
       piece, dozen, litre/ml), price per unit, stock, min/max order, live "Buyers will see" preview, organic, grade, variety,

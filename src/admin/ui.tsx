@@ -352,7 +352,8 @@ export function Thumb({ uri, size = 52, icon = "package", round }: { uri?: strin
 
 /** Round initials / photo avatar, like the main app's. */
 export function Avatar({ name, uri, size = 44, dot }: { name?: string; uri?: string | null; size?: number; dot?: "online" | "offline" | null }) {
-  const UserAvatar = require("@/components/UserAvatar").default;
+  // Named export: the old require(...).default was undefined and crashed every screen with a person avatar.
+  const { UserAvatar } = require("@/components/UserAvatar");
   return <UserAvatar name={name || "?"} avatar={uri || undefined} size={size} presence={dot ?? null} />;
 }
 
