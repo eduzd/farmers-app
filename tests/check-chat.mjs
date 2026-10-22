@@ -198,6 +198,27 @@ try {
   r = await call("GET", `/api/dm/${b.id}/messages`, a.token);
   ok((r.json || []).filter((m) => m.kind === "voice").length === 2, "Both voice messages are in the chat history");
 
+  // ---- Hold a message -> Reply: the quote is saved, so both people see it ----
+  r = await call("POST", `/api/dm/${a.id}/messages`, b.token, { content: "Yes, all red", clientId: `q${Date.now().toString(36)}one`, replyToId: textId });
+  const q1 = r.json;
+  ok(r.status === 200 && q1?.replyTo?.id === textId && q1.replyTo.text === "Are the tomatoes ready?" && q1.replyTo.isMe === false, "Bob replies to Alice's message and the quote is saved", );
+  const q1Live = await sa.wait((m) => m.type === "dm" && m.data?.id === q1?.id);
+  ok(q1Live?.data?.replyTo?.id === textId && q1Live.data.replyTo.isMe === true && q1Live.data.isMe === false, "Alice gets the reply live with the quote of her own message (shown as You)");
+  r = await call("GET", `/api/dm/${b.id}/messages?withMeta=1`, a.token);
+  const aSees = (r.json?.messages || []).find((m) => m.id === q1?.id);
+  ok(aSees?.replyTo?.text === "Are the tomatoes ready?" && aSees.replyTo.isMe === true, "Alice's chat history shows the quote");
+  r = await call("GET", `/api/dm/${a.id}/messages?withMeta=1`, b.token);
+  const bSees = (r.json?.messages || []).find((m) => m.id === q1?.id);
+  ok(bSees?.replyTo?.text === "Are the tomatoes ready?" && bSees.replyTo.isMe === false, "Bob's chat history shows the quote too");
+  r = await call("POST", `/api/dm/${b.id}/messages`, a.token, { content: "Lovely voice note", clientId: `q${Date.now().toString(36)}two`, replyToId: voice.id });
+  ok(r.json?.replyTo?.kind === "voice" && r.json.replyTo.text === "Voice message" && r.json.replyTo.isMe === true, "Replying to a voice message quotes it as 'Voice message'");
+  const cMsg = await call("POST", `/api/dm/${b.id}/messages`, c.token, { content: "Carol to Bob", clientId: `q${Date.now().toString(36)}car` });
+  r = await call("POST", `/api/dm/${b.id}/messages`, a.token, { content: "sneaky", clientId: `q${Date.now().toString(36)}snk`, replyToId: cMsg.json?.id });
+  ok(r.status === 200 && !r.json?.replyTo, "A message from another chat can't be quoted (sent without a quote)");
+  const before = q1?.id;
+  r = await call("POST", `/api/dm/${a.id}/messages`, b.token, { content: "Yes, all red", clientId: q1?.id?.replace(/^dm-/, ""), replyToId: textId });
+  ok(r.json?.id === before && r.json?.replyTo?.id === textId, "Retrying a reply keeps its quote and doesn't duplicate it");
+
   // ---- In-app calls (set-up and relay; the sound itself needs two phones) ----
   r = await call("GET", "/api/calls/ice-servers", a.token);
   ok(r.status === 200 && Array.isArray(r.json?.iceServers) && JSON.stringify(r.json.iceServers).includes("stun:"), "The app can get the call connection servers");

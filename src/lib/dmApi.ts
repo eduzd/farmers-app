@@ -22,6 +22,8 @@ export interface DmMessage {
   createdAt: string;
   readAt: string | null;
   isMe: boolean;
+  /** The message this one replies to, saved on the server so both people see the quote. */
+  replyTo?: { id: string; text: string; kind: "text" | "voice" | "image"; senderId: string | null; isMe: boolean } | null;
 }
 
 export interface DmPage {
@@ -92,8 +94,8 @@ export function fetchMessages(otherId: string, since?: string | null): Promise<D
   return request<DmPage>("GET", `/api/dm/${enc(otherId)}/messages?withMeta=1${q}`);
 }
 
-export function sendText(otherId: string, content: string, clientId: string): Promise<DmMessage> {
-  return request<DmMessage>("POST", `/api/dm/${enc(otherId)}/messages`, { content, clientId });
+export function sendText(otherId: string, content: string, clientId: string, replyToId?: string): Promise<DmMessage> {
+  return request<DmMessage>("POST", `/api/dm/${enc(otherId)}/messages`, { content, clientId, ...(replyToId ? { replyToId } : {}) });
 }
 
 export interface DmReaction {

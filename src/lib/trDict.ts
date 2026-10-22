@@ -484,4 +484,8 @@ export const BN_OF_EN: Record<string, string> = {
   "Couldn't open that photo. Please try another one.": "ছবিটি খোলা যায়নি। অন্য একটি ছবি চেষ্টা করুন।",
   "Couldn't load photo · Tap to retry": "ছবি লোড হয়নি · আবার চেষ্টা করতে চাপুন",
   "Post": "পোস্ট",
+  "You": "আপনি",
+  "yourself": "নিজেকে",
+  "Replying to": "উত্তর দিচ্ছেন",
+  "Voice message": "ভয়েস মেসেজ",
 };

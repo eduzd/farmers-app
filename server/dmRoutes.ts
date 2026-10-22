@@ -14,7 +14,8 @@ import { isBlockedBetween } from "./communityRoutes";
  *  GET  /api/dm/unread                     { total } unread messages across all conversations
  *  GET  /api/dm/:otherId/messages          messages between me and that person (?since=ISO, inclusive)
  *                                          header X-Seen-Until: newest of MY messages they have read
- *  POST /api/dm/:otherId/messages          send { content, clientId? }   (clientId makes retries safe)
+ *  POST /api/dm/:otherId/messages          send { content, clientId?, replyToId? }   (clientId makes retries safe;
+ *                                          replyToId quotes an earlier message of this chat, shown to both people)
  *  POST /api/dm/:otherId/voice             send a voice message { audio: base64, mime, durationMs, clientId? }
  *  POST /api/dm/:otherId/image             send a photo { image: base64 or data URL, mime, width?, height?, clientId? }
  *  GET  /api/dm/media/:mediaId             the audio or photo file (only the sender and the recipient)
@@ -58,6 +59,11 @@ function ensureTable() {
       await db.execute(sql`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS kind varchar NOT NULL DEFAULT 'text'`);
       await db.execute(sql`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS media_id varchar`);
       await db.execute(sql`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS duration_ms integer`);
+      // the message this one answers (hold a message -> Reply), saved so both people see the quote
+      await db.execute(sql`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS reply_to_id varchar`);
+      await db.execute(sql`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS reply_to_text varchar`);
+      await db.execute(sql`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS reply_to_sender varchar`);
+      await db.execute(sql`ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS reply_to_kind varchar`);
       await db.execute(sql`CREATE TABLE IF NOT EXISTS dm_media (
         id varchar PRIMARY KEY,
         sender_id varchar NOT NULL,
@@ -170,7 +176,31 @@ function msgOut(m: any, me: string) {
     createdAt: iso(m.created_at),
     readAt: iso(m.read_at),
     isMe: m.sender_id === me,
+    replyTo: m.reply_to_id
+      ? {
+          id: m.reply_to_id,
+          text: m.reply_to_text || "",
+          kind: m.reply_to_kind || "text",
+          senderId: m.reply_to_sender || null,
+          isMe: m.reply_to_sender === me,
+        }
+      : null,
   };
+}
+
+/**
+ * The message being replied to, only if it is in this same conversation.
+ * Returns the id, the sender and a short snippet (photos and voice notes get a label).
+ */
+async function replyTarget(raw: unknown, me: string, other: string) {
+  const id = typeof raw === "string" ? raw.trim().slice(0, 120) : "";
+  if (!id) return null;
+  const m = await first(sql`SELECT id, sender_id, content, kind FROM direct_messages WHERE id = ${id}
+      AND ((sender_id = ${me} AND recipient_id = ${other}) OR (sender_id = ${other} AND recipient_id = ${me})) LIMIT 1`);
+  if (!m) return null;
+  const kind = m.kind || "text";
+  const text = kind === "image" ? "Photo" : kind === "voice" ? "Voice message" : String(m.content || "").replace(/\s+/g, " ").trim().slice(0, 200);
+  return { id: m.id as string, sender: m.sender_id as string, kind, text };
 }
 
 const CLIENT_ID = /^[A-Za-z0-9_-]{8,64}$/;
@@ -220,7 +250,7 @@ export function registerDmRoutes(app: Express, push: Pusher) {
 
   function deliver(me: string, other: string, row: any, preview: string) {
     const msg = msgOut(row, me);
-    push(other, { type: "dm", data: { ...msg, isMe: false } });
+    push(other, { type: "dm", data: msgOut(row, other) }); // seen from their side (isMe false, quote "You" flipped)
     push(me, { type: "dm", data: msg }); // my other phones / tabs
     publicUser(me).then((u) =>
       notify(other, "message", `Message from ${u?.name || "someone"}`, preview.slice(0, 140), { userId: me, userName: u?.name || "Farmer" })
@@ -433,11 +463,16 @@ export function registerDmRoutes(app: Express, push: Pusher) {
       const { id, existing } = await messageId(req.body?.clientId, me);
       if (existing) return res.json(msgOut(existing, me)); // a retry of a send that already went through
       const createdAt = new Date().toISOString();
+      const rt = await replyTarget(req.body?.replyToId, me, other);
       await db.execute(
-        sql`INSERT INTO direct_messages (id, sender_id, recipient_id, content, kind, created_at)
-            VALUES (${id}, ${me}, ${other}, ${content}, 'text', ${createdAt}) ON CONFLICT (id) DO NOTHING`
+        sql`INSERT INTO direct_messages (id, sender_id, recipient_id, content, kind, created_at, reply_to_id, reply_to_text, reply_to_sender, reply_to_kind)
+            VALUES (${id}, ${me}, ${other}, ${content}, 'text', ${createdAt}, ${rt?.id ?? null}, ${rt?.text ?? null}, ${rt?.sender ?? null}, ${rt?.kind ?? null})
+            ON CONFLICT (id) DO NOTHING`
       );
-      const row = { id, sender_id: me, recipient_id: other, content, kind: "text", created_at: createdAt, read_at: null };
+      const row = {
+        id, sender_id: me, recipient_id: other, content, kind: "text", created_at: createdAt, read_at: null,
+        reply_to_id: rt?.id ?? null, reply_to_text: rt?.text ?? null, reply_to_sender: rt?.sender ?? null, reply_to_kind: rt?.kind ?? null,
+      };
       res.json(deliver(me, other, row, content));
     } catch (e: any) {
       console.error("[dm] send error:", e?.message || e);

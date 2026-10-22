@@ -79,7 +79,7 @@ interface Message {
   photo?: { base64: string; mime: string; width?: number; height?: number }; // what gets uploaded
   width?: number;
   height?: number;
-  replyTo?: { id: string; text: string; isMe: boolean };
+  replyTo?: { id: string; text: string; isMe: boolean; kind?: "text" | "voice" | "image" };
   reactions?: string[];
   superReact?: boolean;
   seen?: boolean;
@@ -146,6 +146,10 @@ export default function ChatScreen() {
   const clock = (iso?: string | null) =>
     (iso ? new Date(iso) : new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+  /** What a quote shows: the words, or "Photo" / "Voice message" in the chosen language. */
+  const quoteText = (r: { text: string; kind?: string }) =>
+    r.kind === "image" ? tr("Photo") : r.kind === "voice" ? tr("Voice message") : r.text;
+
   const toMessage = (m: DmMessage): Message => ({
     id: m.id,
     text: m.kind === "voice" || m.kind === "image" ? "" : m.content,
@@ -159,6 +163,8 @@ export default function ChatScreen() {
     createdAt: m.createdAt,
     seen: !!m.readAt,
     status: "sent",
+    // the quote is saved on the server, so the person who gets the reply sees it too
+    replyTo: m.replyTo ? { id: m.replyTo.id, text: m.replyTo.text, isMe: m.replyTo.isMe, kind: m.replyTo.kind } : undefined,
   });
 
   /** Merge server messages into the list (newest first), replacing my pending copies. */
@@ -172,6 +178,8 @@ export default function ChatScreen() {
         // keep the local recording so my own voice message plays without a download
         if (old?.localUri) next.localUri = old.localUri;
         if (old?.imageUri) next.imageUri = old.imageUri; // my photo shows from the phone, no download
+        // an older server that doesn't save quotes yet: keep the quote I attached when sending
+        if (!next.replyTo && old?.replyTo) next.replyTo = old.replyTo;
         byId.set(m.id, old ? { ...old, ...next, reactions: old.reactions } : next);
       }
       return [...byId.values()].sort((a, b) => {
@@ -346,7 +354,7 @@ export default function ChatScreen() {
           ? await sendVoice(otherIdRef.current, msg.localUri!, msg.durationMs || 0, msg.clientId!)
           : msg.type === "image"
             ? await sendImage(otherIdRef.current, msg.photo!, msg.clientId!)
-            : await sendText(otherIdRef.current, msg.text, msg.clientId!);
+            : await sendText(otherIdRef.current, msg.text, msg.clientId!, msg.replyTo?.id);
       if (msg.type === "voice" && sent.mediaId && msg.localUri) rememberLocalVoice(sent.mediaId, msg.localUri);
       if (msg.type === "image" && sent.mediaId && msg.imageUri) rememberLocalPhoto(sent.mediaId, msg.imageUri);
       // the server id is dm-<clientId>, the same id as the pending copy
@@ -391,7 +399,9 @@ export default function ChatScreen() {
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setInputText("");
-    const replyTo = replyingTo ? { id: replyingTo.id, text: replyingTo.text || (replyingTo.type === "image" ? tr("Photo") : tr("Voice message")), isMe: replyingTo.isMe } : undefined;
+    const replyTo = replyingTo
+      ? { id: replyingTo.id, text: replyingTo.type === "text" ? replyingTo.text : replyingTo.type === "image" ? "Photo" : "Voice message", isMe: replyingTo.isMe, kind: replyingTo.type }
+      : undefined;
     setReplyingTo(null);
     queue({ text, type: "text", seen: false, replyTo });
   };
@@ -875,11 +885,11 @@ export default function ChatScreen() {
           <View style={[styles.messageContainer, item.isMe ? styles.myMessage : styles.theirMessage]}>
             {item.replyTo ? (
               <View style={[styles.replyPreview, { backgroundColor: theme.backgroundSecondary }]}>
-                <ThemedText style={[styles.replyName, { color: theme.primary }]}>
-                  {item.replyTo.isMe ? "You" : userName}
+                <ThemedText style={[styles.replyName, { color: theme.primary }]} testID="dm-reply-quote-name">
+                  {item.replyTo.isMe ? tr("You") : userName}
                 </ThemedText>
-                <ThemedText style={[styles.replyText, { color: theme.textSecondary }]} numberOfLines={1}>
-                  {item.replyTo.text}
+                <ThemedText style={[styles.replyText, { color: theme.textSecondary }]} numberOfLines={1} testID="dm-reply-quote-text">
+                  {quoteText(item.replyTo)}
                 </ThemedText>
               </View>
             ) : null}
@@ -1021,11 +1031,11 @@ export default function ChatScreen() {
             <View style={styles.replyBarContent}>
               <View style={[styles.replyIndicator, { backgroundColor: theme.primary }]} />
               <View style={styles.replyInfo}>
-                <ThemedText style={[styles.replyBarName, { color: theme.primary }]}>
-                  Replying to {replyingTo.isMe ? "yourself" : userName}
+                <ThemedText style={[styles.replyBarName, { color: theme.primary }]} numberOfLines={1}>
+                  {tr("Replying to")} {replyingTo.isMe ? tr("yourself") : userName}
                 </ThemedText>
                 <ThemedText style={[styles.replyBarText, { color: theme.textSecondary }]} numberOfLines={1}>
-                  {replyingTo.text}
+                  {replyingTo.type === "text" ? replyingTo.text : replyingTo.type === "image" ? tr("Photo") : tr("Voice message")}
                 </ThemedText>
               </View>
             </View>
