@@ -101,3 +101,13 @@ Plan:
 - [x] Dark mode: moon/sun on admin Home header + Appearance card in More (Light/Dark/Auto), uses main themeStore (persisted).
 - [x] Home tab uses main app HomeIcon.
 - [x] tests: check-admin-app 70/70, check-moderation 63/63, tests/check-admin-dark-web.py (light/dark en/bn 360, dark 320).
+
+## Round: replies show for both sides (2026-10-22, branch reply-both on top of 31c7fb6)
+- [x] Person-to-person chats: the quote was only kept on the sender's phone. Now saved on the server
+      (direct_messages.reply_to_id/_text/_sender/_kind; only messages from the same chat can be quoted; photo/voice
+      quoted as "Photo"/"Voice message"). Live socket push to the recipient uses their own view (quote "You" flipped).
+- [x] ChatScreen: renders the server quote; "You" / "Replying to" / "yourself" / "Voice message" translated (trDict).
+- [x] Support chat (user + admin) already saved quotes server-side (db77f23); now checked in the UI on both screens.
+- [x] tests: check-chat 50/50 (new reply checks), check-admin-app 70/70, check-moderation 63/63, reactions 12/12,
+      photos-connect 31/31; tests/check-reply-both-web.py en/bn at 360 + 320: support admin->user, user->admin,
+      Ann->Cat, Cat->Ann quotes visible on both screens, no page errors, no sideways overflow.
