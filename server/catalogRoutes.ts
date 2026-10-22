@@ -6,6 +6,7 @@ import { db, dbReady } from "./db";
 import { config } from "./config";
 import { onOrderCreated, ensureFeatures } from "./featureRoutes";
 import { quoteOrder, takeStock, ensureCheckout, validateCheckout } from "./checkoutRoutes";
+import { checkPayment, ensurePayments } from "./paymentRoutes";
 
 /**
  * Server-backed catalog for content that used to be hard-coded in the app.
@@ -239,8 +240,18 @@ export function registerCatalogRoutes(app: Express) {
         };
       }
       const itemCount = Math.max(0, parseInt(b.itemCount, 10) || 0);
-      await db.execute(sql`INSERT INTO shop_orders (id, user_id, total, item_count, payment_method, data)
-        VALUES (${id}, ${userFrom(req)}, ${total}, ${itemCount}, ${String(b.paymentMethod || "").slice(0, 20)}, ${JSON.stringify(b.items || [])}::jsonb)
+      // Payment settings (admin > Payment settings): only methods that are on; Rocket needs sender number + TrxID.
+      await ensurePayments();
+      // Same order sent twice (retry after a dropped connection): answer with the saved one, change nothing.
+      const dup = rows(await db.execute(sql`SELECT id, total, checkout, payment_method, payment, data FROM shop_orders WHERE id = ${id} LIMIT 1`))[0];
+      if (dup) {
+        const P = (v: any) => (typeof v === "string" ? JSON.parse(v) : v);
+        return res.status(201).json({ success: true, id, total: Number(dup.total), checkout: P(dup.checkout) || null, paymentMethod: dup.payment_method, payment: P(dup.payment) || null, items: P(dup.data) || [], duplicate: true });
+      }
+      const pay = await checkPayment(b.paymentMethod, b.payment, total);
+      if (!pay.ok) return res.status(pay.status).json({ error: pay.error, code: pay.code });
+      await db.execute(sql`INSERT INTO shop_orders (id, user_id, total, item_count, payment_method, data, payment)
+        VALUES (${id}, ${userFrom(req)}, ${total}, ${itemCount}, ${pay.method}, ${JSON.stringify(b.items || [])}::jsonb, ${pay.payment ? JSON.stringify(pay.payment) : null}::jsonb)
         ON CONFLICT (id) DO NOTHING`);
       await ensureFeatures();
       if (checkout) {
@@ -249,7 +260,7 @@ export function registerCatalogRoutes(app: Express) {
         await takeStock(Array.isArray(b.items) ? b.items : []);
       }
       await onOrderCreated(id, userFrom(req), Array.isArray(b.items) ? b.items : [], b.shippingAddress || null);
-      res.status(201).json({ success: true, id, total, checkout, items: Array.isArray(b.items) ? b.items : [] });
+      res.status(201).json({ success: true, id, total, checkout, paymentMethod: pay.method, payment: pay.payment, items: Array.isArray(b.items) ? b.items : [] });
     } catch (e: any) {
       console.error("[shop-orders]", e?.message);
       res.status(500).json({ error: "Failed to record order" });

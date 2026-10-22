@@ -147,6 +147,7 @@ function orderOut(o: any) {
     adminNote: o.admin_note || "",
     adminNotes: (J(o.admin_notes) || []).length ? J(o.admin_notes) : o.admin_note ? [{ id: "legacy", text: o.admin_note, at: iso(o.updated_at || o.created_at), by: "" }] : [],
     checkout: J(o.checkout) || null,
+    payment: J(o.payment) || null,
     createdAt: iso(o.created_at),
   };
 }

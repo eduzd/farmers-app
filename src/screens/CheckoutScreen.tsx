@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Clipboard from "expo-clipboard";
 
 import { ThemedText } from "@/components/ThemedText";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
@@ -24,7 +25,15 @@ import { useTr } from "@/lib/tr";
 import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type Method = "home" | "express" | "pickup";
-type Payment = "cod" | "bkash";
+type Payment = "cod" | "rocket";
+/** Methods the admin turned on (admin > More > Payment settings). Server: GET /api/checkout/payment-methods. */
+type PayMethod = { id: Payment; accountNumber?: string; accountName?: string; accountType?: "personal" | "merchant" | "agent"; instructionsEn?: string; instructionsBn?: string };
+const ROCKET_COLOR = "#8C3494";
+const rocketNum = (v: string) => {
+  const m = v.replace(/[\s\-()]/g, "").match(/^(?:\+?88)?(01[3-9]\d{8}\d?)$/);
+  return m ? m[1] : null;
+};
+const trxOk = (v: string) => /^[A-Z0-9]{6,20}$/.test(v.replace(/[\s\-]/g, "").toUpperCase());
 type Zone = "inside_dhaka" | "outside_dhaka";
 
 /** Same rule as the server (normalizeBdPhone): 01XXXXXXXXX, optionally with +88 / 88. */
@@ -175,6 +184,24 @@ export default function CheckoutScreen() {
   const [couponCode, setCouponCode] = useState("");
   const [coupons, setCoupons] = useState<{ code: string; description: string; minOrder: number }[]>([]);
   const [payment, setPayment] = useState<Payment>("cod");
+  const [payMethods, setPayMethods] = useState<PayMethod[] | null>(null);
+  const [rocketFrom, setRocketFrom] = useState("");
+  const [rocketTrx, setRocketTrx] = useState("");
+  const [copied, setCopied] = useState(false);
+  const loadPayMethods = () =>
+    apiGet<{ methods: PayMethod[] }>("/api/checkout/payment-methods")
+      .then((r) => {
+        const list = Array.isArray(r?.methods) ? r.methods.filter((m) => m.id === "cod" || m.id === "rocket") : [];
+        setPayMethods(list);
+        setPayment((cur) => (list.some((m) => m.id === cur) ? cur : list[0]?.id || "cod"));
+      })
+      .catch(() => setPayMethods((cur) => cur || [{ id: "cod" }]));
+  useEffect(() => {
+    loadPayMethods();
+  }, []);
+  const rocket = payMethods?.find((m) => m.id === "rocket");
+  const rocketOk = payment !== "rocket" || (!!rocket && !!rocketNum(rocketFrom) && trxOk(rocketTrx));
+  const payOk = !!payMethods && payMethods.some((m) => m.id === payment) && rocketOk;
   const [quote, setQuote] = useState<Quote>(() => localQuote(getTotal(), "home", "inside_dhaka"));
   const [quoting, setQuoting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -219,7 +246,7 @@ export default function CheckoutScreen() {
   const zoneOk = method === "pickup" || zone === "outside_dhaka" || division === "Dhaka";
   const contactOk = !!contact.name.trim() && phoneOk && altOk;
   const canPlace =
-    items.length > 0 && formValid && contactOk && zoneOk && !isProcessing && quote.stockErrors.length === 0 && !(quote.itemErrors || []).length;
+    items.length > 0 && formValid && contactOk && zoneOk && payOk && !isProcessing && quote.stockErrors.length === 0 && !(quote.itemErrors || []).length;
 
   const shipping = () => {
     if (usingSaved && selectedAddr) {
@@ -280,11 +307,29 @@ export default function CheckoutScreen() {
           total: quote.total,
           itemCount: items.reduce((n, i) => n + (Number.isInteger(i.quantity) ? i.quantity || 1 : 1), 0),
           paymentMethod: payment,
+          ...(payment === "rocket" ? { payment: { senderNumber: rocketNum(rocketFrom), trxId: rocketTrx.replace(/[\s\-]/g, "").toUpperCase() } } : {}),
           checkout,
           items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity, image: i.image, unit: i.unit, ...(i.options ? { options: i.options } : {}) })),
         }),
       });
       const data = await r.json().catch(() => null);
+      if (r.status >= 400 && String(data?.code || "").startsWith("payment_method")) {
+        // The admin changed payment settings while the buyer was on this page.
+        setIsProcessing(false);
+        loadPayMethods();
+        Alert.alert(isBn ? "পেমেন্ট পদ্ধতি" : "Payment method", isBn ? "এই পেমেন্ট পদ্ধতি এখন বন্ধ। অন্য একটি বেছে নিন।" : data?.error || "");
+        return;
+      }
+      if (r.status >= 400 && String(data?.code || "").startsWith("rocket")) {
+        setIsProcessing(false);
+        const bn: Record<string, string> = {
+          rocket_sender: "যে রকেট নম্বর থেকে টাকা পাঠিয়েছেন সেটি লিখুন",
+          rocket_trxid: "রকেটের মেসেজ থেকে ট্রানজেকশন আইডি (TrxID) লিখুন",
+          rocket_trxid_used: "এই ট্রানজেকশন আইডি আগেই অন্য একটি অর্ডারে ব্যবহার হয়েছে",
+        };
+        Alert.alert("Rocket", isBn ? bn[data.code] || data?.error : data?.error || "");
+        return;
+      }
       if (r.status === 409) {
         setIsProcessing(false);
         Alert.alert(tr("Not enough stock"), data?.error || "");
@@ -302,7 +347,12 @@ export default function CheckoutScreen() {
         serverCheckout = data?.checkout || null;
       }
     } catch {
-      // offline: keep the local order only
+      // offline: keep the local order only (cash on delivery). A Rocket payment must reach the server with its TrxID.
+      if (payment === "rocket") {
+        setIsProcessing(false);
+        Alert.alert("Rocket", isBn ? "ইন্টারনেট সংযোগ নেই। সংযোগ পেলে আবার অর্ডার করুন; আপনার TrxID রাখা আছে।" : "You're offline. Place the order again when you're connected; your TrxID is still filled in.");
+        return;
+      }
     }
 
     if (loggedIn && !usingSaved && saveAddress) {
@@ -606,27 +656,95 @@ export default function CheckoutScreen() {
           {/* Payment */}
           <View style={card}>
             <Header icon="credit-card" title={tr("Payment Method")} />
-            <Pressable onPress={() => setPayment("cod")} style={[styles.option, { borderColor: payment === "cod" ? theme.primary : theme.inputBorder, backgroundColor: payment === "cod" ? `${theme.primary}10` : "transparent" }]}>
-              <View style={[styles.radioOuter, { borderColor: payment === "cod" ? theme.primary : theme.textSecondary }]}>
-                {payment === "cod" ? <View style={[styles.radioInner, { backgroundColor: theme.primary }]} /> : null}
+            {payMethods === null ? <ActivityIndicator color={theme.primary} style={{ marginVertical: Spacing.sm }} /> : null}
+            {payMethods && payMethods.length === 0 ? (
+              <ThemedText style={{ color: "#DC2626", fontSize: 13 }}>
+                {isBn ? "এই মুহূর্তে পেমেন্ট বন্ধ আছে। একটু পরে আবার চেষ্টা করুন।" : "Payments are paused right now. Please try again later."}
+              </ThemedText>
+            ) : null}
+            {payMethods?.some((m) => m.id === "cod") ? (
+              <Pressable testID="pay-cod" onPress={() => setPayment("cod")} style={[styles.option, { borderColor: payment === "cod" ? theme.primary : theme.inputBorder, backgroundColor: payment === "cod" ? `${theme.primary}10` : "transparent" }]}>
+                <View style={[styles.radioOuter, { borderColor: payment === "cod" ? theme.primary : theme.textSecondary }]}>
+                  {payment === "cod" ? <View style={[styles.radioInner, { backgroundColor: theme.primary }]} /> : null}
+                </View>
+                <Feather name="dollar-sign" size={20} color={theme.text} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <ThemedText style={[styles.bold, { color: theme.text }]}>{tr("Cash on Delivery")}</ThemedText>
+                  <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>{tr("Pay when you receive your order")}</ThemedText>
+                </View>
+              </Pressable>
+            ) : null}
+            {rocket ? (
+              <Pressable testID="pay-rocket" onPress={() => setPayment("rocket")} style={[styles.option, { borderColor: payment === "rocket" ? ROCKET_COLOR : theme.inputBorder, backgroundColor: payment === "rocket" ? `${ROCKET_COLOR}10` : "transparent" }]}>
+                <View style={[styles.radioOuter, { borderColor: payment === "rocket" ? ROCKET_COLOR : theme.textSecondary }]}>
+                  {payment === "rocket" ? <View style={[styles.radioInner, { backgroundColor: ROCKET_COLOR }]} /> : null}
+                </View>
+                <Feather name="smartphone" size={20} color={ROCKET_COLOR} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <ThemedText style={[styles.bold, { color: theme.text }]}>{isBn ? "রকেট" : "Rocket"}</ThemedText>
+                  <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>{isBn ? "রকেটে টাকা পাঠিয়ে TrxID দিন" : "Send money with Rocket, then enter the TrxID"}</ThemedText>
+                </View>
+              </Pressable>
+            ) : null}
+            {rocket && payment === "rocket" ? (
+              <View testID="rocket-panel" style={{ borderRadius: BorderRadius.sm, borderWidth: 1, borderColor: `${ROCKET_COLOR}40`, backgroundColor: `${ROCKET_COLOR}08`, padding: Spacing.md, marginTop: Spacing.xs, gap: 8 }}>
+                <ThemedText style={{ color: theme.text, fontSize: 13.5, lineHeight: 20 }}>
+                  {isBn
+                    ? `১. রকেট অ্যাপ বা *322# থেকে ${rocket.accountType === "merchant" ? "পেমেন্ট" : rocket.accountType === "agent" ? "ক্যাশ ইন" : "সেন্ড মানি"} করে ${money(quote.total)} পাঠান এই নম্বরে:`
+                    : `1. In the Rocket app or *322#, use ${rocket.accountType === "merchant" ? "Payment" : rocket.accountType === "agent" ? "Cash In" : "Send Money"} to send ${money(quote.total)} to:`}
+                </ThemedText>
+                <Pressable
+                  testID="rocket-copy"
+                  onPress={() => {
+                    Clipboard.setStringAsync(rocket.accountNumber || "").catch(() => {});
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1800);
+                  }}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: theme.white, borderRadius: BorderRadius.sm, borderWidth: 1, borderColor: theme.inputBorder, padding: Spacing.sm }}
+                >
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <ThemedText testID="rocket-number" style={{ color: theme.text, fontSize: 18, fontWeight: "800", letterSpacing: 1 }}>{rocket.accountNumber}</ThemedText>
+                    {rocket.accountName ? <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>{rocket.accountName}</ThemedText> : null}
+                  </View>
+                  <Feather name={copied ? "check" : "copy"} size={18} color={ROCKET_COLOR} />
+                  <ThemedText style={{ color: ROCKET_COLOR, fontWeight: "700", fontSize: 12.5 }}>{copied ? (isBn ? "কপি হয়েছে" : "Copied") : isBn ? "কপি" : "Copy"}</ThemedText>
+                </Pressable>
+                {(isBn ? rocket.instructionsBn || rocket.instructionsEn : rocket.instructionsEn || rocket.instructionsBn) ? (
+                  <ThemedText style={{ color: theme.textSecondary, fontSize: 12.5, lineHeight: 18 }}>{isBn ? rocket.instructionsBn || rocket.instructionsEn : rocket.instructionsEn || rocket.instructionsBn}</ThemedText>
+                ) : null}
+                <ThemedText style={{ color: theme.text, fontSize: 13.5, marginTop: 4 }}>
+                  {isBn ? "২. তারপর নিচে লিখুন:" : "2. Then fill in:"}
+                </ThemedText>
+                <TextInput
+                  testID="rocket-from"
+                  style={input}
+                  value={rocketFrom}
+                  onChangeText={(v) => setRocketFrom(v.replace(/[^\d+]/g, "").slice(0, 15))}
+                  keyboardType="phone-pad"
+                  placeholder={isBn ? "যে রকেট নম্বর থেকে পাঠিয়েছেন" : "Rocket number you sent from"}
+                  placeholderTextColor={theme.textSecondary}
+                />
+                {rocketFrom.trim() && !rocketNum(rocketFrom) ? (
+                  <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>{isBn ? "০১ দিয়ে শুরু ১১ বা ১২ সংখ্যার নম্বর লিখুন" : "Use the 11 or 12 digit number that starts with 01"}</ThemedText>
+                ) : null}
+                <TextInput
+                  testID="rocket-trx"
+                  style={input}
+                  value={rocketTrx}
+                  onChangeText={(v) => setRocketTrx(v.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 20))}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                  placeholder={isBn ? "ট্রানজেকশন আইডি (TrxID)" : "Transaction ID (TrxID)"}
+                  placeholderTextColor={theme.textSecondary}
+                />
+                {rocketTrx.trim() && !trxOk(rocketTrx) ? (
+                  <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>{isBn ? "রকেটের মেসেজে থাকা TrxID লিখুন (৬ থেকে ২০ অক্ষর)" : "Type the TrxID from Rocket's message (6 to 20 letters or digits)"}</ThemedText>
+                ) : null}
+                <ThemedText style={{ color: theme.textSecondary, fontSize: 12, lineHeight: 17 }}>
+                  {isBn ? "অ্যাডমিন TrxID মিলিয়ে দেখে আপনার পেমেন্ট নিশ্চিত করবেন। নিশ্চিত হলে নোটিফিকেশন পাবেন।" : "An admin matches your TrxID in Rocket and confirms the payment. You'll get a notification when it's checked."}
+                </ThemedText>
               </View>
-              <Feather name="dollar-sign" size={20} color={theme.text} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <ThemedText style={[styles.bold, { color: theme.text }]}>{tr("Cash on Delivery")}</ThemedText>
-                <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>{tr("Pay when you receive your order")}</ThemedText>
-              </View>
-            </Pressable>
-            <Pressable
-              onPress={() => Alert.alert(tr("bKash payment"), tr("Online bKash payment turns on once the shop's bKash merchant keys are added. Please choose Cash on Delivery for now."))}
-              style={[styles.option, { borderColor: theme.inputBorder, opacity: 0.6 }]}
-            >
-              <View style={[styles.radioOuter, { borderColor: theme.textSecondary }]} />
-              <Feather name="smartphone" size={20} color="#E2136E" />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <ThemedText style={[styles.bold, { color: theme.text }]}>{tr("bKash")}</ThemedText>
-                <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>{tr("Needs bKash merchant keys")}</ThemedText>
-              </View>
-            </Pressable>
+            ) : null}
           </View>
 
           {/* Notes */}
@@ -770,6 +888,11 @@ export default function CheckoutScreen() {
                 ? tr("The seller will tell you when it's ready to pick up.")
                 : `${tr("Delivery")}: ${dayLabel(days.find((d) => d.iso === deliveryDate)?.date || days[0].date, days.findIndex((d) => d.iso === deliveryDate))}, ${tr(SLOTS.find((s) => s.id === slot)?.en || "")}`}
             </ThemedText>
+            {payment === "rocket" ? (
+              <ThemedText testID="placed-rocket" style={{ color: ROCKET_COLOR, textAlign: "center", marginTop: Spacing.xs, fontSize: 13, fontWeight: "600" }}>
+                {isBn ? `রকেট পেমেন্ট যাচাইয়ের অপেক্ষায় · TrxID ${rocketTrx}` : `Rocket payment waiting for check · TrxID ${rocketTrx}`}
+              </ThemedText>
+            ) : null}
             <ThemedText style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs, fontSize: 12 }}>
               {tr("You'll get a notification each time the seller updates it.")}
             </ThemedText>

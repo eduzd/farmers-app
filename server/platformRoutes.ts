@@ -747,6 +747,7 @@ export function registerPlatformRoutes(app: Express) {
       history: J(o.history) || [],
       adminNote: o.admin_note || "",
       checkout: J(o.checkout) || null,
+      payment: J(o.payment) || null,
       createdAt: iso(o.created_at),
     }));
     res.json(q ? out.filter((o: any) => `${o.id} ${o.buyerName} ${o.buyerEmail}`.toLowerCase().includes(q)) : out);
