@@ -12,6 +12,7 @@ import { useI18n } from "@/lib/i18n";
 import { apiGet } from "@/lib/api";
 import { sellRule, perUnitText } from "@shared/selling";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { BuyerPreviewBar, readPreview, BuyerPreviewInfo } from "@/components/BuyerPreview";
 
 /**
  * Shops in the main app. With a slug: one shop (a company or a seller) and all its products.
@@ -35,10 +36,15 @@ export function ShopLogo({ shop, size = 52 }: { shop: Pick<ShopSummary, "name" |
 
 export default function ShopPageScreen() {
   const { theme } = useTheme();
-  const insets = useSafeAreaInsets();
+  const realInsets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, "ShopPage">>();
   const slug = route.params?.slug;
+  // Opened from the admin app's "View as buyer": the same page, loaded through the admin preview route so a
+  // suspended shop still opens; it shows only what buyers would see.
+  const preview = readPreview(route.params);
+  const [previewInfo, setPreviewInfo] = useState<BuyerPreviewInfo | null>(preview);
+  const insets = preview ? { ...realInsets, top: 0 } : realInsets;
   const bn = useI18n().language === "bn";
   const [shop, setShop] = useState<any>(null);
   const [shops, setShops] = useState<ShopSummary[]>([]);
@@ -50,7 +56,11 @@ export default function ShopPageScreen() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      if (slug) setShop(await apiGet(`/api/stores/${encodeURIComponent(slug)}`));
+      if (slug && preview) {
+        const r: any = await apiGet(`/api/admin/manage/preview/stores/${encodeURIComponent(slug)}`);
+        setShop({ store: r.store, products: r.products });
+        setPreviewInfo({ kind: "shop", reasons: r.reasons || [], leftOut: Number(r.leftOut) || 0 });
+      } else if (slug) setShop(await apiGet(`/api/stores/${encodeURIComponent(slug)}`));
       else setShops(await apiGet<ShopSummary[]>("/api/stores"));
     } catch (e: any) {
       setError(e?.message || (bn ? "লোড করা যায়নি" : "Couldn't load"));
@@ -58,7 +68,7 @@ export default function ShopPageScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [slug, bn]);
+  }, [slug, bn, !!preview]);
   useEffect(() => { load(); }, [load]);
 
   const products = useMemo(() => {
@@ -76,12 +86,15 @@ export default function ShopPageScreen() {
   }, [shops, q]);
 
   const header = (title: string) => (
+    <>
+    {previewInfo ? <BuyerPreviewBar info={previewInfo} topInset={realInsets.top} onClose={() => navigation.goBack()} /> : null}
     <View style={[styles.topBar, { paddingTop: insets.top + 8, backgroundColor: theme.backgroundRoot }]}>
       <Pressable testID="shop-back" hitSlop={10} onPress={() => navigation.goBack()} style={styles.backBtn}>
         <Feather name="arrow-left" size={22} color={theme.text} />
       </Pressable>
       <ThemedText type="h4" style={{ color: theme.text, flex: 1 }} numberOfLines={1}>{title}</ThemedText>
     </View>
+    </>
   );
   const search = (
     <View style={[styles.search, { backgroundColor: theme.backgroundSecondary }]}>
@@ -160,7 +173,7 @@ export default function ShopPageScreen() {
   const st = shop?.store || {};
   const color = st.themeColor || theme.primary;
   return (
-    <View testID="shop-page" style={[styles.flex, { backgroundColor: theme.backgroundRoot }]}>
+    <View testID={preview ? "shop-preview" : "shop-page"} style={[styles.flex, { backgroundColor: theme.backgroundRoot }]}>
       {header(st.name || "")}
       <FlatList
         data={products}
@@ -203,7 +216,7 @@ export default function ShopPageScreen() {
           return (
             <Pressable
               testID={`shop-product-${item.id}`}
-              onPress={() => { Haptics.selectionAsync(); navigation.navigate("ProductDetail", { product: item }); }}
+              onPress={() => { Haptics.selectionAsync(); navigation.navigate("ProductDetail", (preview ? { product: item, preview: { kind: "product", reasons: previewInfo?.reasons || [] } } : { product: item }) as any); }}
               style={({ pressed }) => [styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder, transform: [{ scale: pressed ? 0.97 : 1 }] }]}
             >
               <Image source={{ uri: item.image }} style={styles.cardImg} contentFit="cover" />
