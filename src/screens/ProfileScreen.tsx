@@ -40,6 +40,19 @@ import { CommunitySwitcher, CommunitySwitcherRef } from "@/components/CommunityS
 import { EmptyState, IconButton } from "@/components/ui";
 import { shareText } from "@/lib/share";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { apiGet } from "@/lib/api";
+import {
+  LOADING,
+  FAILED,
+  countText,
+  parseFollowCounts,
+  parseRating,
+  pick,
+  ratingView,
+  type FollowCounts,
+  type Loaded,
+  type RatingSummary,
+} from "@/lib/profileStats";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const MENU_ITEMS = [
@@ -91,6 +104,10 @@ export default function ProfileScreen() {
   // Posts this person saved from the feed or a post's page, loaded from the server.
   const [savedPosts, setSavedPosts] = useState<FeedPost[]>([]);
   const savedPostsAnimation = useSharedValue(0);
+  // Real followers / following / rating from the server (never placeholder numbers).
+  const [follows, setFollows] = useState<Loaded<FollowCounts>>(LOADING);
+  const [rating, setRating] = useState<Loaded<RatingSummary>>(LOADING);
+  const [statsReload, setStatsReload] = useState(0);
 
   const toggleSavedPosts = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -151,6 +168,37 @@ export default function ProfileScreen() {
       }
     }, [user?.verified, user?.id])
   );
+
+  // Load followers, following and rating every time the profile comes into view,
+  // so a follow or a new review made elsewhere shows up here.
+  useFocusEffect(
+    React.useCallback(() => {
+      const id = user?.id;
+      if (!id) {
+        setFollows(FAILED);
+        setRating(FAILED);
+        return;
+      }
+      let alive = true;
+      apiGet<any>(`/api/follows/${encodeURIComponent(id)}`)
+        .then((f) => alive && setFollows({ state: "ok", value: parseFollowCounts(f) }))
+        .catch(() => alive && setFollows(FAILED));
+      apiGet<any>(`/api/sellers/${encodeURIComponent(id)}/rating`)
+        .then((r) => alive && setRating({ state: "ok", value: parseRating(r) }))
+        .catch(() => alive && setRating(FAILED));
+      return () => {
+        alive = false;
+      };
+    }, [user?.id, statsReload])
+  );
+  const statsFailed = follows.state === "error" || rating.state === "error";
+  const retryStats = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setFollows(LOADING);
+    setRating(LOADING);
+    setStatsReload((n) => n + 1);
+  };
+  const ratingBox = ratingView(rating, language);
 
   // Refresh saved posts every time the profile comes into view (e.g. after saving one in the feed).
   useFocusEffect(
@@ -359,7 +407,7 @@ export default function ProfileScreen() {
             navigation.navigate("Followers", { userId: user?.id || "", userName: user?.name || "" });
           }}
         >
-          <ThemedText type="h4">{user?.followersCount || 156}</ThemedText>
+          <ThemedText type="h4" testID="profile-stat-followers">{countText(pick(follows, "followers"))}</ThemedText>
           <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
             {t("profile.followers")}
           </ThemedText>
@@ -375,18 +423,36 @@ export default function ProfileScreen() {
             navigation.navigate("Following", { userId: user?.id || "", userName: user?.name || "" });
           }}
         >
-          <ThemedText type="h4">{user?.followingCount || 89}</ThemedText>
+          <ThemedText type="h4" testID="profile-stat-following">{countText(pick(follows, "following"))}</ThemedText>
           <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
             {t("profile.following")}
           </ThemedText>
         </Pressable>
         <View style={[styles.statItem, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <ThemedText type="h4">4.9</ThemedText>
-          <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
-            {t("profile.rating")}
+          <ThemedText type="h4" testID="profile-stat-rating">{ratingBox.value}</ThemedText>
+          <ThemedText
+            type="small"
+            testID="profile-stat-rating-label"
+            numberOfLines={1}
+            style={[styles.statLabel, { color: theme.textSecondary }]}
+          >
+            {ratingBox.label}
           </ThemedText>
         </View>
       </View>
+      {statsFailed ? (
+        <Pressable
+          testID="profile-stats-retry"
+          accessibilityRole="button"
+          onPress={retryStats}
+          style={({ pressed }) => [styles.statsRetry, pressed && { opacity: 0.6 }]}
+        >
+          <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
+          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+            {language === "bn" ? "সংখ্যা লোড হয়নি · আবার চেষ্টা করতে চাপুন" : "Couldn't load these numbers · Tap to retry"}
+          </ThemedText>
+        </Pressable>
+      ) : null}
 
       {/* Quick Settings Section */}
       <View style={[styles.menuSection, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
@@ -803,6 +869,15 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     marginTop: Spacing.xs,
+  },
+  statsRetry: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    marginTop: -Spacing.lg,
+    marginBottom: Spacing.lg,
+    paddingVertical: Spacing.xs,
   },
   sectionTitle: {
     fontSize: 13,

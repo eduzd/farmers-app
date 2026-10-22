@@ -24,6 +24,7 @@ import { tr, useTr } from "@/lib/tr";
 import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
 import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { LOADING, FAILED, countText, parseFollowCounts, pick, type FollowCounts, type Loaded } from "@/lib/profileStats";
 interface UserPost {
   id: string;
   content: string;
@@ -64,23 +65,34 @@ export default function UserProfileScreen() {
   const { user } = route.params;
 
   const [isFollowing, setIsFollowing] = useState(user.isFollowing || false);
-  const [followersCount, setFollowersCount] = useState(user.followersCount);
+  // Followers / following as the server has them: "…" while loading, "—" if the load fails (never a fake 0).
+  const [counts, setCounts] = useState<Loaded<FollowCounts>>(LOADING);
+  const [countsReload, setCountsReload] = useState(0);
   const [posts, setPosts] = useState<UserPost[]>(SAMPLE_POSTS);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set(SAMPLE_POSTS.filter(p => p.isLiked).map(p => p.id)));
 
   // Real numbers from the server: followers, following, whether I follow them, and their about.
-  const [followingCount, setFollowingCount] = useState(user.followingCount || 0);
   const [about, setAbout] = useState<{ bio: string; location: string }>({ bio: user.bio || "", location: user.location || "" });
   useEffect(() => {
     let alive = true;
     apiGet<any>(`/api/follows/${encodeURIComponent(user.id)}`)
       .then((f) => {
-        if (!alive || !f) return;
-        setFollowersCount(f.followerCount ?? 0);
-        setFollowingCount(f.followingCount ?? 0);
-        setIsFollowing(!!f.isFollowing);
+        if (!alive) return;
+        const c = parseFollowCounts(f);
+        setCounts({ state: "ok", value: c });
+        setIsFollowing(c.isFollowing);
       })
-      .catch(() => {});
+      .catch(() => alive && setCounts(FAILED));
+    return () => {
+      alive = false;
+    };
+  }, [user.id, countsReload]);
+  const retryCounts = () => {
+    setCounts(LOADING);
+    setCountsReload((n) => n + 1);
+  };
+  useEffect(() => {
+    let alive = true;
     apiGet<any>(`/api/users/${encodeURIComponent(user.id)}/about`)
       .then((a) => alive && a && setAbout({ bio: a.bio || "", location: a.location || "" }))
       .catch(() => {});
@@ -96,18 +108,26 @@ export default function UserProfileScreen() {
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     const was = isFollowing;
+    const before = counts;
+    const bump = (d: number) =>
+      setCounts((s) => (s.state === "ok" ? { state: "ok", value: { ...s.value, followers: Math.max(0, s.value.followers + d) } } : s));
     setIsFollowing(!was);
-    setFollowersCount((prev) => Math.max(0, prev + (was ? -1 : 1)));
+    bump(was ? -1 : 1);
     apiPost<{ following: boolean }>(`/api/follows/${encodeURIComponent(user.id)}`, {})
-      .then(() => apiGet<any>(`/api/follows/${encodeURIComponent(user.id)}`))
-      .then((f) => {
-        if (!f) return;
-        setFollowersCount(f.followerCount ?? 0);
-        setIsFollowing(!!f.isFollowing);
+      .then((r) => {
+        setIsFollowing(!!r?.following);
+        // Re-read the real count; if only this re-read fails, the follow itself still went through.
+        return apiGet<any>(`/api/follows/${encodeURIComponent(user.id)}`)
+          .then((f) => {
+            const c = parseFollowCounts(f);
+            setCounts({ state: "ok", value: c });
+            setIsFollowing(c.isFollowing);
+          })
+          .catch(() => setCounts(FAILED));
       })
       .catch((e) => {
         setIsFollowing(was);
-        setFollowersCount((prev) => Math.max(0, prev + (was ? 1 : -1)));
+        setCounts(before);
         Alert.alert(tr("Couldn't follow"), e?.message || tr("Please try again."));
       });
   };
@@ -231,7 +251,7 @@ export default function UserProfileScreen() {
           ]}
           onPress={handleFollowers}
         >
-          <ThemedText type="h4">{followersCount}</ThemedText>
+          <ThemedText type="h4" testID="user-stat-followers">{countText(pick(counts, "followers"))}</ThemedText>
           <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
             {tr("ফলোয়ার্স")}
           </ThemedText>
@@ -244,12 +264,25 @@ export default function UserProfileScreen() {
           ]}
           onPress={handleFollowing}
         >
-          <ThemedText type="h4">{followingCount}</ThemedText>
+          <ThemedText type="h4" testID="user-stat-following">{countText(pick(counts, "following"))}</ThemedText>
           <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
             {tr("ফলোয়িং")}
           </ThemedText>
         </Pressable>
       </View>
+      {counts.state === "error" ? (
+        <Pressable
+          testID="user-stats-retry"
+          accessibilityRole="button"
+          onPress={retryCounts}
+          style={({ pressed }) => [styles.statsRetry, pressed && { opacity: 0.6 }]}
+        >
+          <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
+          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+            {tr("Couldn't load these numbers · Tap to retry")}
+          </ThemedText>
+        </Pressable>
+      ) : null}
 
       <View style={styles.actionButtons}>
         <Pressable
@@ -271,7 +304,7 @@ export default function UserProfileScreen() {
             styles.followButtonText,
             { color: isFollowing ? theme.text : "#FFFFFF" },
           ]}>
-            {isFollowing ? "ফলোয়িং" : "ফলো করুন"}
+            {isFollowing ? tr("Following") : tr("Follow")}
           </ThemedText>
         </Pressable>
 
@@ -471,6 +504,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: Spacing.md,
     marginBottom: Spacing.xl,
+  },
+  statsRetry: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    marginTop: -Spacing.md,
+    marginBottom: Spacing.lg,
+    paddingVertical: Spacing.xs,
   },
   statItem: {
     flex: 1,
