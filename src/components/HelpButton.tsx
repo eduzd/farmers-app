@@ -7,6 +7,47 @@ import { useI18n } from "@/lib/i18n";
 import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
 import { useAuthStore } from "@/lib/authStore";
 
+/** Unread admin replies in the user's Help chat (re-checks every 30 s once signed in). */
+export function useSupportUnread(): [number, (n: number) => void] {
+  const [unread, setUnread] = useState(0);
+  const token = useAuthStore((s) => (s.isAuthenticated ? s.token : null));
+  useEffect(() => {
+    let alive = true;
+    if (!token) { setUnread(0); return; }
+    const check = () => apiGet("/api/support/unread").then((r) => alive && setUnread(Number(r?.unread || 0))).catch(() => {});
+    check();
+    const t = setInterval(check, 30000);
+    return () => { alive = false; clearInterval(t); };
+  }, [token]);
+  return [unread, setUnread];
+}
+
+/** Floating Help button (bottom right): opens the chat with the Farmers admins. */
+export function HelpFab({ bottom = 16, testID = "help-fab" }: { bottom?: number; testID?: string }) {
+  const { theme } = useTheme();
+  const navigation = useNavigation<any>();
+  const { language } = useI18n();
+  const [unread, setUnread] = useSupportUnread();
+  const label = language === "bn" ? "সাহায্য" : "Help";
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={language === "bn" ? "সাহায্য: অ্যাডমিনের সাথে চ্যাট" : "Help: chat with the Farmers team"}
+      onPress={() => { setUnread(0); navigation.navigate("SupportChat"); }}
+      style={({ pressed }) => ({
+        position: "absolute", right: 16, bottom, height: 52, paddingHorizontal: 18, borderRadius: 26,
+        flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1,
+        shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6,
+      })}
+    >
+      <Feather name="message-circle" size={20} color="#fff" />
+      <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>{label}</Text>
+      {unread ? <View testID={`${testID}-unread`} style={{ position: "absolute", top: 4, right: 6, width: 11, height: 11, borderRadius: 6, backgroundColor: "#DC2626", borderWidth: 2, borderColor: theme.primary }} /> : null}
+    </Pressable>
+  );
+}
+
 /** Header Help button: a small popup to message the Farmers admins, or open the full conversation. */
 export default function HelpButton({ color, size = 40 }: { color?: string; size?: number }) {
   const { theme } = useTheme();
@@ -18,18 +59,7 @@ export default function HelpButton({ color, size = 40 }: { color?: string; size?
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [unread, setUnread] = useState(0);
-
-  // Re-run once the saved sign-in has loaded (it hydrates after the first render).
-  const token = useAuthStore((s) => (s.isAuthenticated ? s.token : null));
-  useEffect(() => {
-    let alive = true;
-    if (!token) { setUnread(0); return; }
-    const check = () => apiGet("/api/support/unread").then((r) => alive && setUnread(Number(r?.unread || 0))).catch(() => {});
-    check();
-    const t = setInterval(check, 30000);
-    return () => { alive = false; clearInterval(t); };
-  }, [token]);
+  const [unread, setUnread] = useSupportUnread();
 
   const openChat = () => {
     setOpen(false);

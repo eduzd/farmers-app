@@ -18,6 +18,8 @@ import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
+import { AdCarousel, AdCard } from "@/components/AdCarousel";
+import { HelpFab } from "@/components/HelpButton";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -199,14 +201,43 @@ export default function ConnectScreen() {
     </Pressable>
   );
 
+  // Promo / ad cards at the top of Connect (replaces the old intro line). Ad space is sold
+  // through the Help chat for now; admin-managed ads are a later step.
+  const adCards: AdCard[] = [
+    {
+      key: "advertise",
+      icon: "volume-2",
+      title: L("Advertise on Farmers", "Farmers-এ বিজ্ঞাপন দিন"),
+      subtitle: L("Show your shop, feed or medicine to farmers here. Message us.", "আপনার দোকান, খাদ্য বা ওষুধ কৃষকদের দেখান। আমাদের মেসেজ করুন।"),
+      cta: L("Contact", "যোগাযোগ"),
+      colors: ["#7C2D12", "#EA580C"],
+      onPress: () => (navigation as any).navigate("SupportChat"),
+    },
+    {
+      key: "vet",
+      icon: "heart",
+      title: L("Animal doctors", "পশু চিকিৎসক"),
+      subtitle: L("Cow, goat and poultry health advice", "গরু, ছাগল ও হাঁস-মুরগির চিকিৎসা পরামর্শ"),
+      cta: L("See", "দেখুন"),
+      colors: ["#14583A", "#2FA36B"],
+      onPress: () => setField("vet"),
+    },
+    {
+      key: "fish",
+      icon: "anchor",
+      title: L("Fish health experts", "মাছ বিশেষজ্ঞ"),
+      subtitle: L("Pond water, feed and fish disease", "পুকুরের পানি, খাদ্য ও মাছের রোগ"),
+      cta: L("See", "দেখুন"),
+      colors: ["#1D4ED8", "#0D9488"],
+      onPress: () => setField("fish"),
+    },
+  ];
+
   const header = (
     <View>
-      <ThemedText style={[styles.intro, { color: theme.textSecondary }]}>
-        {L(
-          "Talk to real animal doctors, fish health and crop specialists on Farmers.",
-          "Farmers-এ নিবন্ধিত পশু চিকিৎসক, মাছ ও ফসল বিশেষজ্ঞদের সাথে সরাসরি কথা বলুন।",
-        )}
-      </ThemedText>
+      <View style={{ marginBottom: Spacing.md }}>
+        <AdCarousel cards={adCards} testID="connect-carousel" />
+      </View>
       <View style={[styles.search, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}>
         <Feather name="search" size={16} color={theme.textSecondary} />
         <TextInput
@@ -295,9 +326,10 @@ export default function ConnectScreen() {
         ListEmptyComponent={empty}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); loadMine(); }} tintColor={theme.primary} />}
-        contentContainerStyle={{ padding: Spacing.lg, paddingBottom: tabBarHeight + Spacing["3xl"], width: "100%", maxWidth: 720, alignSelf: "center" }}
+        contentContainerStyle={{ padding: Spacing.lg, paddingBottom: tabBarHeight + 96, width: "100%", maxWidth: 720, alignSelf: "center" }}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
       />
+      <HelpFab bottom={tabBarHeight + 16} testID="connect-help-fab" />
       {mine?.isExpert ? (
         <ExpertProfileEditor
           visible={editing}
