@@ -34,6 +34,6 @@ Plan:
  a. [x] ChatIcon gets style prop; src/components/icons/AppIcon.tsx = drop-in Feather that renders ChatIcon for
         message-circle/message-square. Codemod: literal Feather message-* -> ChatIcon; dynamic <Feather name={..}> -> AppIcon.
  b. [x] Connect card: icon-only round chat button, "Active now" when online (avatar dot via UserAvatar userId).
- c. [ ] tsc + checks; commit on admin-app
+ c. [x] tsc (0 errors), check-admin-app 57/57, check-chat-icon-web en+bn 320/360/390 all pass; + checks; commit on admin-app
  d. [ ] fast-forward main to admin-app, push, Render deploy, live check of commit
- e. [ ] narrow-width check Connect + posts en/bn
+ e. [x] narrow-width (local, tests/check-chat-icon-web.py) check Connect + posts en/bn
