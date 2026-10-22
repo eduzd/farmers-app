@@ -1,5 +1,3 @@
-import { navigationRef } from "@/lib/navigationRef";
-
 /**
  * Opening a notification at the place it came from (a comment on your post, an order update,
  * a message, a new follower...). Taps in the Notifications list and taps on a phone push both go
@@ -102,6 +100,9 @@ export function openNotificationWhenReady(p: NotifPayload, key?: string, tries =
     if (opened.has(key)) return;
     opened.add(key);
   }
+  // Loaded here so the rest of this file stays plain logic (checked outside the app).
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { navigationRef } = require("@/lib/navigationRef") as typeof import("@/lib/navigationRef");
   const ready = navigationRef.isReady() && (navigationRef.getRootState()?.routeNames || []).includes("NotificationOpen");
   if (ready) {
     navigationRef.navigate("NotificationOpen", { payload: p });
