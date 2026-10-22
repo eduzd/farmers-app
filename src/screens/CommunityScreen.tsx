@@ -30,6 +30,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
+import HelpButton from "@/components/HelpButton";
 import { Card, Button, IconButton, SectionHeader, EmptyState, PostSkeleton } from "@/components/ui";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, FontFamily, Palette, Shadows } from "@/constants/theme";
@@ -419,6 +420,9 @@ export default function CommunityScreen() {
               </ThemedText>
             </View>
             <IconButton icon="search" accessibilityLabel={isBn ? "খুঁজুন" : "Search"} onPress={() => navigation.navigate("UserSearch")} />
+            <View style={{ marginLeft: Spacing.sm }}>
+              <HelpButton />
+            </View>
             <View style={{ marginLeft: Spacing.sm }}>
               <IconButton
                 icon="bell"

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Pressable, Modal, TextInput, ActivityIndicator, Platform, KeyboardAvoidingView } from "react-native";
+import { View, Text, Pressable, Modal, TextInput, ActivityIndicator, Platform, KeyboardAvoidingView, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
 
 /** Header Help button: a small popup to message the Farmers admins, or open the full conversation. */
-export default function HelpButton({ color, size = 22 }: { color?: string; size?: number }) {
+export default function HelpButton({ color, size = 40 }: { color?: string; size?: number }) {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const { language } = useI18n();
@@ -21,6 +21,7 @@ export default function HelpButton({ color, size = 22 }: { color?: string; size?
 
   useEffect(() => {
     let alive = true;
+    if (!isLoggedIn()) return;
     const check = () => apiGet("/api/support/unread").then((r) => alive && setUnread(Number(r?.unread || 0))).catch(() => {});
     check();
     const t = setInterval(check, 30000);
@@ -35,6 +36,7 @@ export default function HelpButton({ color, size = 22 }: { color?: string; size?
   const send = async () => {
     const body = text.trim();
     if (!body) return;
+    if (!isLoggedIn()) { setErr(L("Please sign in first so the team can reply to you.", "আগে সাইন ইন করুন, যাতে টিম আপনাকে উত্তর দিতে পারে।")); return; }
     setBusy(true); setErr(null);
     try {
       await apiPost("/api/support/messages", { body, clientId: `h-${Date.now()}` });
@@ -49,9 +51,20 @@ export default function HelpButton({ color, size = 22 }: { color?: string; size?
 
   return (
     <>
-      <Pressable testID="help-button" accessibilityLabel={L("Help", "সাহায্য")} onPress={() => { setSent(false); setErr(null); unread ? openChat() : setOpen(true); }} hitSlop={8} style={{ padding: 6 }}>
-        <Feather name="help-circle" size={size} color={color || theme.text} />
-        {unread ? <View style={{ position: "absolute", top: 4, right: 4, width: 9, height: 9, borderRadius: 5, backgroundColor: "#DC2626" }} /> : null}
+      <Pressable
+        testID="help-button"
+        accessibilityRole="button"
+        accessibilityLabel={L("Help", "সাহায্য")}
+        onPress={() => { setSent(false); setErr(null); unread ? openChat() : setOpen(true); }}
+        hitSlop={6}
+        style={({ pressed }) => ({
+          width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center",
+          backgroundColor: theme.backgroundDefault, borderColor: theme.cardBorder, borderWidth: StyleSheet.hairlineWidth,
+          opacity: pressed ? 0.7 : 1,
+        })}
+      >
+        <Feather name="help-circle" size={size * 0.48} color={color || theme.iconDefault || theme.text} />
+        {unread ? <View testID="help-unread" style={{ position: "absolute", top: 2, right: 2, width: 10, height: 10, borderRadius: 5, backgroundColor: "#DC2626", borderWidth: 1.5, borderColor: theme.backgroundRoot }} /> : null}
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
