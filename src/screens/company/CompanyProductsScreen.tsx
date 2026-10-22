@@ -266,16 +266,6 @@ export default function CompanyProductsScreen() {
             </ThemedText>
           </View>
         </View>
-        <View style={styles.gridProductStats}>
-          <Feather name="eye" size={12} color={theme.textSecondary} />
-          <ThemedText style={[styles.gridStatText, { color: theme.textSecondary }]}>
-            {Math.floor(Math.random() * 100)}
-          </ThemedText>
-          <Feather name="shopping-cart" size={12} color={theme.textSecondary} style={{ marginLeft: Spacing.sm }} />
-          <ThemedText style={[styles.gridStatText, { color: theme.textSecondary }]}>
-            {Math.floor(Math.random() * 20)}
-          </ThemedText>
-        </View>
       </View>
     </Pressable>
   );

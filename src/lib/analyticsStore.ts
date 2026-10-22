@@ -86,25 +86,8 @@ const MOCK_COMMUNITY_STATS: CommunityStats = {
   engagementRate: 0,
 };
 
-const generateDailyActivity = (): DailyActivity[] => {
-  const activities: DailyActivity[] = [];
-  const today = new Date();
-  
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    
-    activities.push({
-      date: date.toISOString().split("T")[0],
-      posts: Math.floor(Math.random() * 5) + 1,
-      likes: Math.floor(Math.random() * 50) + 10,
-      comments: Math.floor(Math.random() * 20) + 5,
-      views: Math.floor(Math.random() * 200) + 50,
-    });
-  }
-  
-  return activities;
-};
+// No made-up activity: the chart stays empty until real activity is recorded.
+const generateDailyActivity = (): DailyActivity[] => [];
 
 export const useAnalyticsStore = create<AnalyticsState>()(
   persist(

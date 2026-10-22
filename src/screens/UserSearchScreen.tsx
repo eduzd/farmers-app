@@ -1,141 +1,165 @@
-import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-} from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { View, StyleSheet, FlatList, Pressable, TextInput, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
-import { Image } from "expo-image";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { UserAvatar } from "@/components/UserAvatar";
 import { useTheme } from "@/hooks/useTheme";
+import { useI18n } from "@/lib/i18n";
+import { isLoggedIn } from "@/lib/api";
+import { initialsOf } from "@/lib/feedApi";
+import { searchPeople, toggleFollow, compactCount, type PersonCard } from "@/lib/liveDataApi";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
-interface User {
-  id: string;
-  name: string;
-  avatar: string;
-  location: string;
-  category: string;
-  followers: number;
-  isFollowing: boolean;
-  isVerified: boolean;
-}
-
 const CATEGORIES = [
-  { id: "all", label: "সব" },
-  { id: "crops", label: "ফসল" },
-  { id: "fish", label: "মাছ" },
-  { id: "livestock", label: "গবাদি" },
-  { id: "poultry", label: "হাঁস-মুরগি" },
-  { id: "experts", label: "বিশেষজ্ঞ" },
+  { id: "all", bn: "সব", en: "All" },
+  { id: "crops", bn: "ফসল", en: "Crops" },
+  { id: "fish", bn: "মাছ", en: "Fish" },
+  { id: "livestock", bn: "গবাদি", en: "Livestock" },
+  { id: "poultry", bn: "হাঁস-মুরগি", en: "Poultry" },
+  { id: "experts", bn: "বিশেষজ্ঞ", en: "Experts" },
 ];
 
-const MOCK_USERS: User[] = [];
-
-const SUGGESTED_SEARCHES = ["ধান চাষী", "মাছ চাষী", "কৃষি বিশেষজ্ঞ", "গরু খামার", "হাঁস-মুরগি"];
+const CATEGORY_LABEL: Record<string, { bn: string; en: string }> = {
+  crops: { bn: "ফসল চাষি", en: "Crop farmer" },
+  vegetables: { bn: "সবজি চাষি", en: "Vegetable farmer" },
+  fruits: { bn: "ফল চাষি", en: "Fruit farmer" },
+  dairy: { bn: "দুগ্ধ খামারি", en: "Dairy farmer" },
+  poultry: { bn: "হাঁস-মুরগি খামারি", en: "Poultry farmer" },
+  fish: { bn: "মাছ চাষি", en: "Fish farmer" },
+  livestock: { bn: "গবাদি পশু খামারি", en: "Livestock farmer" },
+  organic: { bn: "জৈব চাষি", en: "Organic farmer" },
+  mixed: { bn: "মিশ্র চাষি", en: "Mixed farmer" },
+};
 
 export default function UserSearchScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { language } = useI18n();
+  const bn = language === "bn";
   const navigation = useNavigation<any>();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [users, setUsers] = useState(MOCK_USERS);
+  const [users, setUsers] = useState<PersonCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const reqId = useRef(0);
 
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.location.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || user.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Ask the server: people whose name or farming type matches, most followed first.
+  const load = useCallback((q: string, cat: string) => {
+    const id = ++reqId.current;
+    setLoading(true);
+    setFailed(false);
+    searchPeople(q, cat)
+      .then((list) => id === reqId.current && setUsers(list))
+      .catch(() => id === reqId.current && setFailed(true))
+      .finally(() => id === reqId.current && setLoading(false));
+  }, []);
 
-  const handleFollow = (userId: string) => {
+  useEffect(() => {
+    const t = setTimeout(() => load(searchQuery.trim(), selectedCategory), searchQuery ? 300 : 0);
+    return () => clearTimeout(t);
+  }, [searchQuery, selectedCategory, load]);
+
+  const handleFollow = async (userId: string) => {
+    if (!isLoggedIn()) return navigation.navigate("Login");
+    if (busy) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId
-          ? { ...user, isFollowing: !user.isFollowing, followers: user.isFollowing ? user.followers - 1 : user.followers + 1 }
-          : user
-      )
-    );
+    setBusy(userId);
+    try {
+      const following = await toggleFollow(userId);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId && u.isFollowing !== following
+            ? { ...u, isFollowing: following, followerCount: Math.max(0, u.followerCount + (following ? 1 : -1)) }
+            : u,
+        ),
+      );
+    } catch {
+      // Nothing changed on the server, so nothing changes on screen.
+    } finally {
+      setBusy(null);
+    }
   };
 
-  const handleUserPress = (user: User) => {
+  const handleUserPress = (user: PersonCard) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     navigation.navigate("UserProfile", {
       user: {
         id: user.id,
         name: user.name,
-        avatar: user.avatar,
-        initials: user.name.slice(0, 2),
-        location: user.location,
-        followers: user.followers,
-        following: 0,
-        posts: 0,
+        avatar: user.avatar || "",
+        initials: initialsOf(user.name),
+        followers: user.followerCount,
+        following: user.followingCount,
         isFollowing: user.isFollowing,
       },
     });
   };
 
-  const renderUser = ({ item, index }: { item: User; index: number }) => (
-    <Animated.View entering={FadeInUp.delay(index * 50)}>
+  const metaOf = (u: PersonCard) => {
+    const kind =
+      u.profileRole === "expert"
+        ? bn ? "বিশেষজ্ঞ" : "Expert"
+        : u.farmingCategory && CATEGORY_LABEL[u.farmingCategory]
+          ? CATEGORY_LABEL[u.farmingCategory][bn ? "bn" : "en"]
+          : bn ? "সদস্য" : "Member";
+    const n = compactCount(u.followerCount);
+    return `${kind} • ${n} ${bn ? "ফলোয়ার" : u.followerCount === 1 ? "follower" : "followers"}`;
+  };
+
+  const renderUser = ({ item, index }: { item: PersonCard; index: number }) => (
+    <Animated.View entering={FadeInUp.delay(Math.min(index, 10) * 40)}>
       <Pressable
         style={[styles.userItem, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
         onPress={() => handleUserPress(item)}
       >
-        <Image source={{ uri: item.avatar }} style={styles.userAvatar} />
+        <UserAvatar initials={initialsOf(item.name)} avatar={item.avatar || undefined} size="medium" userId={item.id} />
         <View style={styles.userInfo}>
           <View style={styles.userNameRow}>
-            <ThemedText style={[styles.userName, { color: theme.text }]}>{item.name}</ThemedText>
-            {item.isVerified ? (
-              <Feather name="check-circle" size={14} color="#2FA36B" />
-            ) : null}
+            <ThemedText style={[styles.userName, { color: theme.text }]} numberOfLines={1}>{item.name}</ThemedText>
+            {item.verified ? <Feather name="check-circle" size={14} color="#2FA36B" /> : null}
           </View>
-          <ThemedText style={[styles.userMeta, { color: theme.textSecondary }]}>
-            {item.location} • {item.followers.toLocaleString()} ফলোয়ার
-          </ThemedText>
+          <ThemedText style={[styles.userMeta, { color: theme.textSecondary }]}>{metaOf(item)}</ThemedText>
         </View>
         <Pressable
           style={[
             styles.followButton,
-            { backgroundColor: item.isFollowing ? theme.card : theme.primary, borderColor: theme.primary },
+            { backgroundColor: item.isFollowing ? theme.card : theme.primary, borderColor: theme.primary, opacity: busy === item.id ? 0.6 : 1 },
           ]}
           onPress={() => handleFollow(item.id)}
+          disabled={busy === item.id}
         >
-          <ThemedText
-            style={[styles.followButtonText, { color: item.isFollowing ? theme.primary : "#fff" }]}
-          >
-            {item.isFollowing ? "ফলো করছেন" : "ফলো করুন"}
+          <ThemedText style={[styles.followButtonText, { color: item.isFollowing ? theme.primary : "#fff" }]}>
+            {item.isFollowing ? (bn ? "ফলো করছেন" : "Following") : bn ? "ফলো করুন" : "Follow"}
           </ThemedText>
         </Pressable>
       </Pressable>
     </Animated.View>
   );
 
+  const browsing = !searchQuery.trim() && selectedCategory === "all";
+
   return (
     <ThemedView style={styles.container}>
       <Animated.View entering={FadeIn} style={styles.header}>
-        <ThemedText style={[styles.title, { color: theme.text }]}>ব্যবহারকারী খুঁজুন</ThemedText>
+        <ThemedText style={[styles.title, { color: theme.text }]}>{bn ? "ব্যবহারকারী খুঁজুন" : "Find people"}</ThemedText>
       </Animated.View>
 
       <Animated.View entering={FadeInUp.delay(50)}>
-        <View
-          style={[styles.searchContainer, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
-        >
+        <View style={[styles.searchContainer, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           <Feather name="search" size={20} color={theme.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: theme.text }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="নাম বা এলাকা দিয়ে খুঁজুন..."
+            placeholder={bn ? "নাম দিয়ে খুঁজুন..." : "Search by name..."}
             placeholderTextColor={theme.textSecondary}
           />
           {searchQuery ? (
@@ -165,46 +189,49 @@ export default function UserSearchScreen() {
               setSelectedCategory(cat.id);
             }}
           >
-            <ThemedText
-              style={[styles.categoryChipText, { color: selectedCategory === cat.id ? "#fff" : theme.text }]}
-            >
-              {cat.label}
+            <ThemedText style={[styles.categoryChipText, { color: selectedCategory === cat.id ? "#fff" : theme.text }]}>
+              {bn ? cat.bn : cat.en}
             </ThemedText>
           </Pressable>
         ))}
       </Animated.ScrollView>
 
-      {!searchQuery && selectedCategory === "all" ? (
-        <Animated.View entering={FadeInUp.delay(150)} style={styles.suggestionsSection}>
-          <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>জনপ্রিয় অনুসন্ধান</ThemedText>
-          <View style={styles.suggestionsContainer}>
-            {SUGGESTED_SEARCHES.map((term) => (
-              <Pressable
-                key={term}
-                style={[styles.suggestionChip, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
-                onPress={() => setSearchQuery(term)}
-              >
-                <Feather name="search" size={14} color={theme.textSecondary} />
-                <ThemedText style={[styles.suggestionText, { color: theme.text }]}>{term}</ThemedText>
-              </Pressable>
-            ))}
-          </View>
-        </Animated.View>
+      {browsing && users.length > 0 ? (
+        <View style={styles.suggestionsSection}>
+          <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>{bn ? "সবচেয়ে বেশি ফলো করা" : "Most followed"}</ThemedText>
+        </View>
       ) : null}
 
       <FlatList
-        data={filteredUsers}
+        data={users}
         keyExtractor={(item) => item.id}
         renderItem={renderUser}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Feather name="users" size={48} color={theme.textSecondary} />
-            <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
-              কোন ব্যবহারকারী পাওয়া যায়নি
-            </ThemedText>
-          </View>
+          loading ? (
+            <View style={styles.emptyState}>
+              <ActivityIndicator color={theme.primary} />
+            </View>
+          ) : failed ? (
+            <View style={styles.emptyState}>
+              <Feather name="wifi-off" size={48} color={theme.textSecondary} />
+              <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
+                {bn ? "লোড করা যায়নি" : "Couldn't load people"}
+              </ThemedText>
+              <Pressable onPress={() => load(searchQuery.trim(), selectedCategory)} style={{ marginTop: Spacing.md }}>
+                <ThemedText style={{ color: theme.primary, fontWeight: "600" }}>{bn ? "আবার চেষ্টা করুন" : "Try again"}</ThemedText>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Feather name="users" size={48} color={theme.textSecondary} />
+              <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
+                {bn ? "কোন ব্যবহারকারী পাওয়া যায়নি" : "No people found"}
+              </ThemedText>
+            </View>
+          )
         }
       />
     </ThemedView>

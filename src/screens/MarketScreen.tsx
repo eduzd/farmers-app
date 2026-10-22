@@ -30,6 +30,7 @@ import { useI18n } from "@/lib/i18n";
 import { MarketplaceProduct, getAllMarketplaceProducts, getAllCompanies, Company } from "@/lib/storage";
 import { initializeSeedData } from "@/lib/seedData";
 import { apiGet } from "@/lib/api";
+import { fetchRatings } from "@/lib/liveDataApi";
 import { ShopLogo, type ShopSummary } from "@/screens/ShopPageScreen";
 import { fetchCatalog, createCatalogItem, updateCatalogItem, deleteCatalogItem, myUserId } from "@/lib/catalog";
 import { CatalogFormModal, FormField } from "@/components/CatalogFormModal";
@@ -57,6 +58,8 @@ export interface Product {
   sellerId?: string;
   location: string;
   rating: number;
+  /** How many buyer reviews the rating comes from (0 = not rated yet). */
+  reviewCount?: number;
   image: string;
   description?: string;
   quantity: number;
@@ -155,7 +158,9 @@ export default function MarketScreen() {
       const serverListings: Product[] = (await fetchCatalog<Product>("listings").catch(() => [] as Product[])).map((p: any) => ({
         ...p,
         price: Number(p.price) || 0,
-        rating: Number(p.rating) || 0,
+        // Real stars come from buyer reviews below; the number saved on the listing is not a review.
+        rating: 0,
+        reviewCount: 0,
         currency: p.currency || "৳",
         seller: p.seller || p.ownerName || "Farmer",
         location: p.location || "",
@@ -182,7 +187,17 @@ export default function MarketScreen() {
       }));
 
       const allProducts = [...serverListings, ...formattedProducts];
-      
+      // Average stars and review count from real buyer reviews. Products with no reviews
+      // show no stars at all (never a made-up 0.0); if this fails, stars are just hidden.
+      const ratings = await fetchRatings(serverListings.map((p) => String(p.id))).catch(() => ({}) as Record<string, { average: number; count: number }>);
+      for (const p of serverListings as any[]) {
+        const r = (ratings as any)[String(p.id)];
+        if (r) {
+          p.rating = r.average;
+          p.reviewCount = r.count;
+        }
+      }
+
       setProducts(allProducts);
     } catch (error) {
       console.error("Error loading products:", error);
@@ -361,10 +376,12 @@ export default function MarketScreen() {
           colors={["transparent", "rgba(0,0,0,0.05)"]}
           style={styles.imageGradient}
         />
-        <View style={styles.ratingBadge}>
-          <Feather name="star" size={10} color="#FFFFFF" />
-          <ThemedText style={styles.ratingBadgeText}>{Number(item.rating || 0).toFixed(1)}</ThemedText>
-        </View>
+        {Number(item.rating) > 0 ? (
+          <View style={styles.ratingBadge}>
+            <Feather name="star" size={10} color="#FFFFFF" />
+            <ThemedText style={styles.ratingBadgeText}>{Number(item.rating).toFixed(1)}</ThemedText>
+          </View>
+        ) : null}
         {item.quantity !== undefined && item.quantity !== null && Number(item.quantity) <= 0 ? (
           <View style={[styles.stockBadge, { backgroundColor: "#DC2626" }]}>
             <ThemedText style={styles.stockBadgeText}>{tr("Out of stock")}</ThemedText>

@@ -385,7 +385,7 @@ export default function ProductDetailScreen() {
                 <View style={styles.starsContainer}>
                   {[1, 2, 3, 4, 5].map((star) => {
                     // Whole, half or empty star, so 4.9 shows five stars and 4.5 shows four and a half.
-                    const r = Math.round((reviews.count ? reviews.average : Number(product.rating) || 0) * 2) / 2;
+                    const r = Math.round((reviews.count ? reviews.average : 0) * 2) / 2;
                     const name = r >= star ? "star" : r >= star - 0.5 ? "star-half-full" : "star-outline";
                     return (
                       <MaterialCommunityIcons
@@ -399,7 +399,7 @@ export default function ProductDetailScreen() {
                   })}
                 </View>
                 <ThemedText style={[styles.ratingText, { color: theme.text }]}>
-                  {reviews.count ? reviews.average.toFixed(1) : product.rating ? Number(product.rating).toFixed(1) : tr("নতুন")}
+                  {reviews.count ? reviews.average.toFixed(1) : tr("নতুন")}
                 </ThemedText>
                 <ThemedText style={[styles.reviewCount, { color: theme.textSecondary }]}>
                   {`(${reviews.count} ${tr("রিভিউ")})`}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -20,72 +20,70 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { useI18n } from "@/lib/i18n";
+import { fetchTrending, type TrendingData } from "@/lib/liveDataApi";
+import type { FeedPost } from "@/lib/feedApi";
 
 import { EmptyState } from "@/components/ui";
 import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-interface TrendingHashtag {
-  id: string;
-  tag: string;
-  postsCount: number;
-  growth: number;
-  category: string;
-}
+type TrendingHashtag = TrendingData["hashtags"][number];
+type TrendingTopic = TrendingData["topics"][number];
+type TrendingPost = FeedPost;
 
-interface TrendingPost {
-  id: string;
-  author: { name: string; avatar: string };
-  content: string;
-  image?: string;
-  likes: number;
-  comments: number;
-  hashtags: string[];
-}
-
-interface TrendingTopic {
-  id: string;
-  title: string;
-  description: string;
-  postsCount: number;
-  icon: keyof typeof Feather.glyphMap;
-  color: string;
-}
-
-const TRENDING_HASHTAGS: TrendingHashtag[] = [];
-
-const TRENDING_TOPICS: TrendingTopic[] = [];
-
-const TRENDING_POSTS: TrendingPost[] = [];
+const HASHTAG = /#[\p{L}\p{N}_]{2,40}/gu;
 
 export default function TrendingScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
+  const { language } = useI18n();
+  const bn = language === "bn";
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<"hashtags" | "topics" | "posts">("hashtags");
+  const [data, setData] = useState<TrendingData | null>(null);
+  const [failed, setFailed] = useState(false);
 
-  const onRefresh = () => {
+  // What people actually posted and reacted to in the last 7 days.
+  const load = useCallback(async () => {
+    setFailed(false);
+    try {
+      setData(await fetchTrending(bn, 7));
+    } catch {
+      setFailed(true);
+    }
+  }, [bn]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    await load();
+    setRefreshing(false);
   };
 
   const handleOpenPost = (item: TrendingPost) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const post = {
-      id: item.id,
-      author: { name: item.author.name, avatar: item.author.avatar, initials: item.author.name.substring(0, 2) },
-      content: item.content,
-      image: item.image,
-      likes: item.likes,
-      comments: item.comments,
-      views: Math.floor(Math.random() * 1000),
-      isLiked: false,
-      createdAt: "সম্প্রতি",
-    };
-    navigation.navigate("PostDetail", { postId: item.id, post });
+    navigation.navigate("PostDetail", { postId: item.id, post: item } as any);
   };
+
+  const empty = failed ? (
+    <EmptyState
+      icon="wifi-off"
+      title={bn ? "লোড করা যায়নি" : "Couldn't load"}
+      message={bn ? "টেনে আবার চেষ্টা করুন।" : "Pull down to try again."}
+    />
+  ) : data ? (
+    <EmptyState
+      icon="inbox"
+      title={bn ? "এখনও কিছু নেই" : "Nothing yet"}
+      message={bn ? "গত ৭ দিনে কমিউনিটিতে যা জনপ্রিয় হবে, এখানে দেখা যাবে।" : "What's popular in the community over the last 7 days will show here."}
+    />
+  ) : null;
 
   const renderHashtag = ({ item, index }: { item: TrendingHashtag; index: number }) => (
     <Animated.View entering={FadeInRight.delay(index * 50)}>
@@ -101,13 +99,19 @@ export default function TrendingScreen() {
         <View style={styles.hashtagInfo}>
           <ThemedText style={[styles.hashtagText, { color: theme.primary }]}>{item.tag}</ThemedText>
           <ThemedText style={[styles.hashtagMeta, { color: theme.textSecondary }]}>
-            {item.postsCount.toLocaleString()} পোস্ট • {item.category}
+            {item.postsCount.toLocaleString()} {bn ? "পোস্ট" : item.postsCount === 1 ? "post" : "posts"}
           </ThemedText>
         </View>
-        <View style={[styles.growthBadge, { backgroundColor: "#2FA36B15" }]}>
-          <Feather name="trending-up" size={12} color="#2FA36B" />
-          <ThemedText style={[styles.growthText, { color: "#2FA36B" }]}>+{item.growth}%</ThemedText>
-        </View>
+        {item.growth === null ? (
+          <View style={[styles.growthBadge, { backgroundColor: "#2FA36B15" }]}>
+            <ThemedText style={[styles.growthText, { color: "#2FA36B" }]}>{bn ? "নতুন" : "New"}</ThemedText>
+          </View>
+        ) : item.growth > 0 ? (
+          <View style={[styles.growthBadge, { backgroundColor: "#2FA36B15" }]}>
+            <Feather name="trending-up" size={12} color="#2FA36B" />
+            <ThemedText style={[styles.growthText, { color: "#2FA36B" }]}>+{item.growth}%</ThemedText>
+          </View>
+        ) : null}
       </Pressable>
     </Animated.View>
   );
@@ -118,17 +122,15 @@ export default function TrendingScreen() {
         style={[styles.topicCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
         onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
       >
-        <View style={[styles.topicIcon, { backgroundColor: item.color + "15" }]}>
-          <AppIcon name={item.icon} size={24} color={item.color} />
+        <View style={[styles.topicIcon, { backgroundColor: theme.primary + "15" }]}>
+          <AppIcon name="layers" size={24} color={theme.primary} />
         </View>
         <View style={styles.topicInfo}>
-          <ThemedText style={[styles.topicTitle, { color: theme.text }]}>{item.title}</ThemedText>
-          <ThemedText style={[styles.topicDescription, { color: theme.textSecondary }]}>{item.description}</ThemedText>
+          <ThemedText style={[styles.topicTitle, { color: theme.text }]}>{bn ? item.nameBn : item.nameEn}</ThemedText>
           <ThemedText style={[styles.topicPosts, { color: theme.primary }]}>
-            {item.postsCount} পোস্ট
+            {bn ? `গত ৭ দিনে ${item.postsCount} পোস্ট` : `${item.postsCount} ${item.postsCount === 1 ? "post" : "posts"} in the last 7 days`}
           </ThemedText>
         </View>
-        <Feather name="chevron-right" size={20} color={theme.textSecondary} />
       </Pressable>
     </Animated.View>
   );
@@ -140,7 +142,7 @@ export default function TrendingScreen() {
         onPress={() => handleOpenPost(item)}
       >
         <View style={styles.postHeader}>
-          <Image source={{ uri: item.author.avatar }} style={styles.postAvatar} />
+          {item.author.avatar ? <Image source={{ uri: item.author.avatar }} style={styles.postAvatar} /> : null}
           <ThemedText style={[styles.postAuthor, { color: theme.text }]}>{item.author.name}</ThemedText>
           <Feather name="trending-up" size={16} color={theme.primary} />
         </View>
@@ -149,7 +151,7 @@ export default function TrendingScreen() {
         </ThemedText>
         {item.image ? <Image source={{ uri: item.image }} style={styles.postImage} contentFit="cover" /> : null}
         <View style={styles.postTags}>
-          {item.hashtags.map(tag => (
+          {Array.from(new Set((item.content.match(HASHTAG) || []).map((t) => t.toLowerCase()))).slice(0, 3).map(tag => (
             <View key={tag} style={[styles.tagChip, { backgroundColor: theme.primary + "15" }]}>
               <ThemedText style={[styles.tagChipText, { color: theme.primary }]}>{tag}</ThemedText>
             </View>
@@ -172,17 +174,17 @@ export default function TrendingScreen() {
   return (
     <ThemedView style={styles.container}>
       <Animated.View entering={FadeIn} style={styles.header}>
-        <ThemedText style={[styles.title, { color: theme.text }]}>ট্রেন্ডিং</ThemedText>
+        <ThemedText style={[styles.title, { color: theme.text }]}>{bn ? "ট্রেন্ডিং" : "Trending"}</ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
-          কমিউনিটিতে এখন যা জনপ্রিয়
+          {bn ? "গত ৭ দিনে কমিউনিটিতে যা জনপ্রিয়" : "Popular in the community over the last 7 days"}
         </ThemedText>
       </Animated.View>
 
       <Animated.View entering={FadeInUp.delay(50)} style={styles.tabsContainer}>
         {[
-          { id: "hashtags", label: "হ্যাশট্যাগ", icon: "hash" as const },
-          { id: "topics", label: "টপিক", icon: "layers" as const },
-          { id: "posts", label: "পোস্ট", icon: "file-text" as const },
+          { id: "hashtags", label: bn ? "হ্যাশট্যাগ" : "Hashtags", icon: "hash" as const },
+          { id: "topics", label: bn ? "কমিউনিটি" : "Communities", icon: "layers" as const },
+          { id: "posts", label: bn ? "পোস্ট" : "Posts", icon: "file-text" as const },
         ].map(tab => (
           <Pressable
             key={tab.id}
@@ -205,9 +207,9 @@ export default function TrendingScreen() {
 
       {activeTab === "hashtags" ? (
         <FlatList
-          data={TRENDING_HASHTAGS}
-          ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
-          keyExtractor={item => item.id}
+          data={data?.hashtags || []}
+          ListEmptyComponent={empty}
+          keyExtractor={item => item.tag}
           renderItem={renderHashtag}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
           showsVerticalScrollIndicator={false}
@@ -215,8 +217,8 @@ export default function TrendingScreen() {
         />
       ) : activeTab === "topics" ? (
         <FlatList
-          data={TRENDING_TOPICS}
-          ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
+          data={data?.topics || []}
+          ListEmptyComponent={empty}
           keyExtractor={item => item.id}
           renderItem={renderTopic}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
@@ -225,8 +227,8 @@ export default function TrendingScreen() {
         />
       ) : (
         <FlatList
-          data={TRENDING_POSTS}
-          ListEmptyComponent={<EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" />}
+          data={data?.posts || []}
+          ListEmptyComponent={empty}
           keyExtractor={item => item.id}
           renderItem={renderPost}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}

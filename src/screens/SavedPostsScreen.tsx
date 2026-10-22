@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -19,24 +19,24 @@ import { ThemedView } from "@/components/ThemedView";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { useAuthStore } from "@/lib/authStore";
+import { useI18n } from "@/lib/i18n";
+import { fetchSavedPosts, setServerPostSaved, type FeedPost } from "@/lib/feedApi";
 
 import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface SavedItem {
   id: string;
+  post: FeedPost;
   type: "post" | "product" | "article" | "video";
   title: string;
   description?: string;
   image?: string;
   author: { name: string; avatar: string };
-  savedAt: Date;
+  savedAt: string;
   category: string;
 }
-
-const SAVED_ITEMS: SavedItem[] = [];
-
-const FILTERS = ["সব", "পোস্ট", "পণ্য", "আর্টিকেল", "ভিডিও"];
 
 const getTypeIcon = (type: string): keyof typeof Feather.glyphMap => {
   const icons: Record<string, keyof typeof Feather.glyphMap> = {
@@ -58,53 +58,76 @@ const getTypeColor = (type: string) => {
   return colors[type] || "#475569";
 };
 
-const formatDate = (date: Date) => {
-  const hours = Math.floor((Date.now() - date.getTime()) / 3600000);
-  if (hours < 24) return `${hours} ঘণ্টা আগে`;
-  const days = Math.floor(hours / 24);
-  return `${days} দিন আগে`;
-};
-
 export default function SavedPostsScreen() {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const { language } = useI18n();
+  const bn = language === "bn";
   const navigation = useNavigation<NavigationProp>();
   const [refreshing, setRefreshing] = useState(false);
-  const [savedItems, setSavedItems] = useState(SAVED_ITEMS);
-  const [selectedFilter, setSelectedFilter] = useState("সব");
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
+  const FILTERS = [bn ? "সব" : "All"];
+  const [selectedFilter, setSelectedFilter] = useState(FILTERS[0]);
+  const token = useAuthStore((s: any) => s.getToken());
+
+  // Posts this account really saved, from the server.
+  const load = useCallback(async () => {
+    if (!token) {
+      setSavedItems([]);
+      setLoading(false);
+      return;
+    }
+    setFailed(false);
+    try {
+      const posts = await fetchSavedPosts(token, bn);
+      setSavedItems(
+        posts.map((p) => ({
+          id: p.id,
+          post: p,
+          type: "post",
+          title: p.content.split("\n")[0].slice(0, 120) || (bn ? "ছবি" : "Photo"),
+          description: p.content.length > 120 ? p.content : undefined,
+          image: p.image,
+          author: { name: p.author.name, avatar: p.author.avatar || "" },
+          savedAt: p.createdAt,
+          category: bn ? "পোস্ট" : "Post",
+        })),
+      );
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, bn]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const handleOpenPost = (item: SavedItem) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (item.type === "post" || item.type === "article") {
-      const post = {
-        id: item.id,
-        author: { name: item.author.name, avatar: item.author.avatar, initials: item.author.name.substring(0, 2) },
-        content: item.description || item.title,
-        image: item.image,
-        likes: Math.floor(Math.random() * 100),
-        comments: Math.floor(Math.random() * 20),
-        views: Math.floor(Math.random() * 500),
-        isLiked: false,
-        createdAt: formatDate(item.savedAt),
-      };
-      navigation.navigate("PostDetail", { postId: item.id, post });
-    } else if (item.type === "product") {
-      navigation.navigate("ProductDetail", { product: { id: item.id, name: item.title, price: 0, image: item.image || "", category: "", description: item.description || "", seller: item.author.name } as any });
-    }
+    navigation.navigate("PostDetail", { postId: item.id, post: item.post } as any);
   };
 
-  const filteredItems = selectedFilter === "সব" 
-    ? savedItems 
-    : savedItems.filter(item => item.category === selectedFilter);
+  const filteredItems = savedItems;
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    await load();
+    setRefreshing(false);
   };
 
-  const handleRemove = (itemId: string) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setSavedItems(prev => prev.filter(item => item.id !== itemId));
+  const handleRemove = async (itemId: string) => {
+    if (!token) return;
+    try {
+      await setServerPostSaved(token, itemId, false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setSavedItems((prev) => prev.filter((item) => item.id !== itemId));
+    } catch {
+      // Still saved on the server, so it stays in the list.
+    }
   };
 
   const renderItem = ({ item, index }: { item: SavedItem; index: number }) => {
@@ -142,13 +165,13 @@ export default function SavedPostsScreen() {
             ) : null}
             <View style={styles.itemFooter}>
               <View style={styles.authorRow}>
-                <Image source={{ uri: item.author.avatar }} style={styles.authorAvatar} />
+                {item.author.avatar ? <Image source={{ uri: item.author.avatar }} style={styles.authorAvatar} /> : null}
                 <ThemedText style={[styles.authorName, { color: theme.textSecondary }]}>
                   {item.author.name}
                 </ThemedText>
               </View>
               <ThemedText style={[styles.savedTime, { color: theme.textSecondary }]}>
-                {formatDate(item.savedAt)}
+                {item.savedAt}
               </ThemedText>
             </View>
           </View>
@@ -160,10 +183,12 @@ export default function SavedPostsScreen() {
   return (
     <ThemedView style={styles.container}>
       <Animated.View entering={FadeIn} style={styles.header}>
-        <ThemedText style={[styles.title, { color: theme.text }]}>সেভ করা</ThemedText>
-        <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {savedItems.length}টি আইটেম সেভ করা আছে
-        </ThemedText>
+        <ThemedText style={[styles.title, { color: theme.text }]}>{bn ? "সেভ করা" : "Saved"}</ThemedText>
+        {!loading && !failed && token ? (
+          <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
+            {bn ? `${savedItems.length}টি পোস্ট সেভ করা আছে` : `${savedItems.length} saved ${savedItems.length === 1 ? "post" : "posts"}`}
+          </ThemedText>
+        ) : null}
       </Animated.View>
 
       <Animated.ScrollView
@@ -203,7 +228,13 @@ export default function SavedPostsScreen() {
           <View style={styles.emptyState}>
             <Feather name="bookmark" size={48} color={theme.textSecondary} />
             <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
-              কোন সেভ করা আইটেম নেই
+              {loading
+                ? bn ? "লোড হচ্ছে..." : "Loading..."
+                : failed
+                  ? bn ? "লোড করা যায়নি। টেনে আবার চেষ্টা করুন" : "Couldn't load. Pull down to try again"
+                  : !token
+                    ? bn ? "সেভ করা পোস্ট দেখতে সাইন ইন করুন" : "Sign in to see your saved posts"
+                    : bn ? "কোন সেভ করা পোস্ট নেই" : "No saved posts yet"}
             </ThemedText>
           </View>
         }

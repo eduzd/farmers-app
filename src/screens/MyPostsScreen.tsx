@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { View, StyleSheet, FlatList, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Haptics from "expo-haptics";
 
@@ -14,6 +14,8 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
+import { likeServerPost } from "@/lib/feedApi";
+import { fetchUserPosts } from "@/lib/liveDataApi";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import type { RootStackParamList } from "@/navigation/RootStackNavigator";
 
@@ -45,56 +47,66 @@ export default function MyPostsScreen() {
   const { user, isWelfareMember } = useAuthStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
-  const myPosts: Post[] = [
-    { 
-      id: "my-1", 
-      content: "সবাই কেমন আছো খানা খেয়েছো", 
-      translatedContent: "সবাই কেমন আছো খানা খেয়েছো",
-      likes: 1, 
-      comments: 0, 
-      isLiked: false, 
-      createdAt: "8 days ago",
-      status: "approved",
-      isOnline: true
-    },
-    { 
-      id: "my-2", 
-      content: "আজকে আমার খামারে নতুন গরু এসেছে!", 
-      translatedContent: "আজকে আমার খামারে নতুন গরু এসেছে!",
-      image: "https://images.unsplash.com/photo-1500595046743-cd271d694d30?w=400",
-      likes: 12, 
-      comments: 5, 
-      isLiked: true, 
-      createdAt: "2 weeks ago",
-      status: "approved",
-      isOnline: false
-    },
-    { 
-      id: "my-3", 
-      content: "এই মাসের শেষে নতুন পোল্ট্রি ফার্ম চালু হবে", 
-      translatedContent: "এই মাসের শেষে নতুন পোল্ট্রি ফার্ম চালু হবে",
-      likes: 0, 
-      comments: 0, 
-      isLiked: false, 
-      createdAt: "1 hour ago",
-      status: "pending",
-      isOnline: true
-    },
-  ];
+  const bn = language === "bn";
+  const token = useAuthStore((st: any) => st.token);
+  const [myPosts, setMyPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const filteredPosts = myPosts.filter(post => {
-    if (activeFilter === "all") return true;
-    return post.status === activeFilter;
-  });
+  // This account's real posts from the server (they go live as soon as they're posted).
+  const load = useCallback(async () => {
+    const uid = (user as any)?.id;
+    if (!uid) {
+      setMyPosts([]);
+      setLoading(false);
+      return;
+    }
+    setFailed(false);
+    try {
+      const posts = await fetchUserPosts(uid, bn);
+      setMyPosts(
+        posts.map((p) => ({
+          id: p.id,
+          content: p.content,
+          image: p.image,
+          likes: p.likes,
+          comments: p.comments,
+          isLiked: p.isLiked,
+          createdAt: p.createdAt,
+          status: "approved" as const,
+        })),
+      );
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, bn]);
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load]),
+  );
+
+  const toggleLike = async (post: Post) => {
+    if (!token) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      const r = await likeServerPost(token, post.id, !post.isLiked);
+      setMyPosts((prev) => prev.map((x) => (x.id === post.id ? { ...x, isLiked: r.liked, likes: r.likes } : x)));
+    } catch {
+      // Not changed on the server, so not changed here.
+    }
+  };
+
+  const filteredPosts = myPosts;
 
   const allCount = myPosts.length;
-  const pendingCount = myPosts.filter(p => p.status === "pending").length;
-  const approvedCount = myPosts.filter(p => p.status === "approved").length;
 
   const filters: { key: FilterType; label: string; count: number; icon: keyof typeof Feather.glyphMap }[] = [
     { key: "all", label: language === "bn" ? "সব" : "All", count: allCount, icon: "file-text" },
-    { key: "pending", label: language === "bn" ? "অপেক্ষমাণ" : "Pending", count: pendingCount, icon: "clock" },
-    { key: "approved", label: language === "bn" ? "অনুমোদিত" : "Approved", count: approvedCount, icon: "check-circle" },
   ];
 
   const renderHeader = () => (
@@ -114,7 +126,7 @@ export default function MyPostsScreen() {
             {user?.name || "User"}
           </ThemedText>
           <ThemedText style={[styles.userRole, { color: theme.textSecondary }]}>
-            {user?.role || "Veterinarian"} • {allCount} {language === "bn" ? "পোস্ট" : "Post"}
+            {loading || failed ? "" : `${allCount} ${bn ? "পোস্ট" : allCount === 1 ? "post" : "posts"}`}
           </ThemedText>
         </View>
       </View>
@@ -180,19 +192,8 @@ export default function MyPostsScreen() {
             <ThemedText style={[styles.postTime, { color: theme.textSecondary }]}>
               {item.createdAt}
             </ThemedText>
-            <ThemedText style={[styles.postMetaDot, { color: theme.textSecondary }]}> • </ThemedText>
-            <View style={[styles.onlineIndicator, { backgroundColor: item.isOnline ? "#16A34A" : "#9CA3AF" }]} />
           </View>
         </View>
-        {item.status === "approved" ? (
-          <View style={[styles.approvedBadge, { backgroundColor: "#16A34A" }]}>
-            <Feather name="check" size={14} color="#fff" />
-          </View>
-        ) : (
-          <View style={[styles.pendingBadge, { backgroundColor: "#EA8A0C" }]}>
-            <Feather name="clock" size={14} color="#fff" />
-          </View>
-        )}
       </View>
 
       {/* Post Content */}
@@ -219,7 +220,7 @@ export default function MyPostsScreen() {
         <View style={styles.leftActions}>
           <Pressable 
             style={styles.actionButton}
-            onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+            onPress={() => toggleLike(item)}
           >
             <View style={[
               styles.actionIconCircle,
@@ -244,15 +245,17 @@ export default function MyPostsScreen() {
                 postId: item.id, 
                 post: { 
                   id: item.id, 
-                  author: { name: user?.name || "", avatar: user?.avatar || "", initials: user?.name?.charAt(0) || "" },
+                  author: { id: (user as any)?.id, name: user?.name || "", avatar: user?.avatar || "", initials: user?.name?.charAt(0) || "" },
                   content: item.content, 
                   image: item.image, 
                   likes: item.likes, 
                   comments: item.comments, 
                   views: 0, 
                   isLiked: item.isLiked, 
-                  createdAt: item.createdAt 
-                } 
+                  isSaved: false,
+                  createdAt: item.createdAt,
+                  shared: true,
+                } as any
               });
             }}
           >
@@ -287,15 +290,21 @@ export default function MyPostsScreen() {
     <View style={[styles.emptyContainer, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
       <Feather name="edit-3" size={48} color={theme.textSecondary} />
       <ThemedText style={[styles.emptyTitle, { color: theme.text }]}>
-        {activeFilter === "pending" 
-          ? (language === "bn" ? "কোন অপেক্ষমাণ পোস্ট নেই" : "No pending posts")
-          : activeFilter === "approved"
-          ? (language === "bn" ? "কোন অনুমোদিত পোস্ট নেই" : "No approved posts")
+        {loading
+          ? (bn ? "লোড হচ্ছে..." : "Loading...")
+          : failed
+          ? (bn ? "পোস্ট লোড করা যায়নি" : "Couldn't load your posts")
           : t("profile.noPosts")}
       </ThemedText>
-      <ThemedText style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
-        {t("profile.startPosting")}
-      </ThemedText>
+      {loading ? null : failed ? (
+        <Pressable onPress={load}>
+          <ThemedText style={[styles.emptySubtitle, { color: theme.primary }]}>{bn ? "আবার চেষ্টা করুন" : "Try again"}</ThemedText>
+        </Pressable>
+      ) : (
+        <ThemedText style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
+          {t("profile.startPosting")}
+        </ThemedText>
+      )}
     </View>
   );
 
@@ -311,6 +320,12 @@ export default function MyPostsScreen() {
           { paddingTop: Spacing.md, paddingBottom: insets.bottom + Spacing.xl }
         ]}
         ListEmptyComponent={renderEmpty}
+        refreshing={refreshing}
+        onRefresh={async () => {
+          setRefreshing(true);
+          await load();
+          setRefreshing(false);
+        }}
         showsVerticalScrollIndicator={false}
       />
     </ThemedView>
