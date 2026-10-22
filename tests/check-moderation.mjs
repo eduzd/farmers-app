@@ -192,6 +192,20 @@ try {
   const media2 = pm ? await fetch(`${BASE}/api/support/media/${pm.mediaId}`, { headers: { Authorization: `Bearer ${ann.token}` } }) : null;
   ok(media?.status === 200 && (media2?.status === 403 || media2?.status === 404), "bob opens the admin photo, ann can't", [media?.status, media2?.status]);
 
+  const voice = Buffer.concat([Buffer.from("000000186674797069736f6d", "hex"), Buffer.alloc(600, 7)]).toString("base64");
+  const vc = await call("POST", `/api/admin/manage/support/threads/${th.id}/voice`, admin.token, { audio: voice, mime: "audio/mp4", durationMs: 3200, clientId: "v-1" });
+  const vc2 = await call("POST", `/api/admin/manage/support/threads/${th.id}/voice`, admin.token, { audio: voice, mime: "audio/mp4", durationMs: 3200, clientId: "v-1" });
+  ok(vc.status === 201 && vc.data.message.kind === "voice" && vc.data.message.durationMs === 3200 && vc2.status === 200 && vc2.data.message.id === vc.data.message.id, "admin sends a voice message (retry doesn't duplicate)", [vc, vc2.status]);
+  const nv = await call("POST", `/api/admin/manage/support/threads/${th.id}/voice`, ann.token, { audio: voice, mime: "audio/mp4" });
+  ok(nv.status === 403, "non-admin can't send as support");
+  const bt2 = await call("GET", "/api/support/thread", bob.token);
+  const vm = bt2.data.messages.find((m) => m.kind === "voice" && m.fromAdmin);
+  const va = vm ? await fetch(`${BASE}/api/support/media/${vm.mediaId}`, { headers: { Authorization: `Bearer ${bob.token}` } }) : null;
+  ok(va?.status === 200 && va.headers.get("content-type") === "audio/mp4", "bob gets and plays the admin voice message", [va?.status, bt2.data.thread]);
+  const tx = await call("POST", `/api/admin/manage/support/threads/${th.id}/reply`, admin.token, { body: "We sent you the details", clientId: "t-1" });
+  const tx2 = await call("POST", `/api/admin/manage/support/threads/${th.id}/reply`, admin.token, { body: "We sent you the details", clientId: "t-1" });
+  ok(tx.status === 201 && tx2.data.message.id === tx.data.message.id, "text reply retry doesn't duplicate");
+
   // ---- delete account ----
   const noConfirm = await call("DELETE", `/api/admin/manage/users/${bob.id}`, admin.token, { confirm: "wrong" });
   ok(noConfirm.status === 400 && noConfirm.data.code === "CONFIRM", "delete needs the username or email typed");

@@ -574,8 +574,14 @@ export function registerAdminAppRoutes(app: Express) {
     if (!t) return res.status(404).json({ error: "Conversation not found" });
     const body = str(req.body?.body, 2000);
     if (!body) return res.status(400).json({ error: "Write a reply first" });
+    const clientId = str(req.body?.clientId, 80) || null;
+    if (clientId) {
+      const dup = rows(await db.execute(sql`SELECT m.*, u.name AS sender_name FROM support_messages m LEFT JOIN users u ON u.id = m.sender_id
+        WHERE m.thread_id = ${t.id} AND m.client_id = ${clientId} LIMIT 1`))[0];
+      if (dup) return res.json({ message: msgOut(dup) });
+    }
     const mid = `sm-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body) VALUES (${mid}, ${t.id}, ${(req as any).uid}, true, ${body})`);
+    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, client_id) VALUES (${mid}, ${t.id}, ${(req as any).uid}, true, ${body}, ${clientId})`);
     await db.execute(sql`UPDATE support_threads SET last_message = ${body.slice(0, 200)}, last_from_admin = true, user_unread = user_unread + 1,
       admin_unread = 0, last_message_at = now(), status = ${req.body?.close ? "closed" : "open"} WHERE id = ${t.id}`);
     await notify(t.user_id, "support", "Farmers Support replied", body.slice(0, 200), { screen: "Support", supportThreadId: t.id });
@@ -584,31 +590,53 @@ export function registerAdminAppRoutes(app: Express) {
     res.status(201).json({ message: msgOut(m) });
   }));
 
-  // Admin replies with a photo, the same way users send them (stored in the conversation, opened only by its user or an admin).
-  app.post(`${A}/support/threads/:id/photo`, requireAdmin, w(async (req, res) => {
+  // Admin replies with a photo or a voice message, the same way users send them (stored in the
+  // conversation; only its user or an admin can open the file).
+  const adminMedia = (kind: "image" | "voice") => w(async (req, res) => {
     const t = await threadRow(req.params.id);
     if (!t) return res.status(404).json({ error: "Conversation not found" });
-    const { b64, mime, ok, size } = decodeUpload(req.body?.image, req.body?.mime, "image/jpeg");
-    if (!ok) return res.status(400).json({ error: "The photo is missing or damaged" });
-    if (!IMAGE_MIME.has(mime)) return res.status(400).json({ error: "That photo format isn't supported" });
-    if (size < 100 || !looksLikeImage(b64, mime)) return res.status(400).json({ error: "That file isn't a photo" });
-    if (size > MAX_IMAGE_BYTES) return res.status(413).json({ error: "The photo is too large (10 MB max)" });
-    const width = Math.max(0, Math.min(20000, Math.round(Number(req.body?.width) || 0)));
-    const height = Math.max(0, Math.min(20000, Math.round(Number(req.body?.height) || 0)));
     const uid = (req as any).uid;
+    const clientId = str(req.body?.clientId, 80) || null;
+    if (clientId) {
+      const dup = rows(await db.execute(sql`SELECT m.*, u.name AS sender_name FROM support_messages m LEFT JOIN users u ON u.id = m.sender_id
+        WHERE m.thread_id = ${t.id} AND m.client_id = ${clientId} LIMIT 1`))[0];
+      if (dup) return res.json({ message: msgOut(dup) });
+    }
+    let b64: string, mime: string, size: number, width = 0, height = 0, durationMs = 0;
+    if (kind === "image") {
+      const d = decodeUpload(req.body?.image, req.body?.mime, "image/jpeg");
+      if (!d.ok) return res.status(400).json({ error: "The photo is missing or damaged" });
+      if (!IMAGE_MIME.has(d.mime)) return res.status(400).json({ error: "That photo format isn't supported" });
+      if (d.size < 100 || !looksLikeImage(d.b64, d.mime)) return res.status(400).json({ error: "That file isn't a photo" });
+      if (d.size > MAX_IMAGE_BYTES) return res.status(413).json({ error: "The photo is too large (10 MB max)" });
+      ({ b64, mime, size } = d);
+      width = Math.max(0, Math.min(20000, Math.round(Number(req.body?.width) || 0)));
+      height = Math.max(0, Math.min(20000, Math.round(Number(req.body?.height) || 0)));
+    } else {
+      const d = decodeUpload(req.body?.audio, req.body?.mime, "audio/mp4");
+      if (!d.ok) return res.status(400).json({ error: "The recording is missing or damaged" });
+      if (!VOICE_MIME.has(d.mime)) return res.status(400).json({ error: "That audio format isn't supported" });
+      if (d.size < 200) return res.status(400).json({ error: "The recording is too short" });
+      if (d.size > MAX_VOICE_BYTES) return res.status(413).json({ error: "The recording is too long" });
+      ({ b64, mime, size } = d);
+      durationMs = Math.max(0, Math.min(MAX_VOICE_MS, Math.round(Number(req.body?.durationMs) || 0)));
+    }
+    const label = kind === "image" ? PHOTO_LABEL : VOICE_LABEL;
     const mediaId = `sp-${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
     await db.execute(sql`INSERT INTO support_media (id, thread_id, sender_id, mime, size, data)
       VALUES (${mediaId}, ${t.id}, ${uid}, ${mime}, ${size}, decode(${b64}, 'base64'))`);
     const mid = `sm-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, kind, media_id, width, height)
-      VALUES (${mid}, ${t.id}, ${uid}, true, ${PHOTO_LABEL}, 'image', ${mediaId}, ${width || null}, ${height || null})`);
-    await db.execute(sql`UPDATE support_threads SET last_message = ${PHOTO_LABEL}, last_from_admin = true, user_unread = user_unread + 1,
+    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, kind, media_id, width, height, duration_ms, client_id)
+      VALUES (${mid}, ${t.id}, ${uid}, true, ${label}, ${kind}, ${mediaId}, ${width || null}, ${height || null}, ${durationMs || null}, ${clientId})`);
+    await db.execute(sql`UPDATE support_threads SET last_message = ${label}, last_from_admin = true, user_unread = user_unread + 1,
       admin_unread = 0, last_message_at = now(), status = 'open' WHERE id = ${t.id}`);
-    await notify(t.user_id, "support", "Farmers Support replied", PHOTO_LABEL, { screen: "Support", supportThreadId: t.id });
-    await audit(req, "SUPPORT_REPLY", "support", t.id, { kind: "image" });
+    await notify(t.user_id, "support", "Farmers Support replied", label, { screen: "Support", supportThreadId: t.id });
+    await audit(req, "SUPPORT_REPLY", "support", t.id, { kind });
     const m = rows(await db.execute(sql`SELECT m.*, u.name AS sender_name FROM support_messages m LEFT JOIN users u ON u.id = m.sender_id WHERE m.id = ${mid}`))[0];
     res.status(201).json({ message: msgOut(m) });
-  }));
+  });
+  app.post(`${A}/support/threads/:id/photo`, requireAdmin, adminMedia("image"));
+  app.post(`${A}/support/threads/:id/voice`, requireAdmin, adminMedia("voice"));
 
   app.put(`${A}/support/threads/:id`, requireAdmin, w(async (req, res) => {
     const t = await threadRow(req.params.id);
