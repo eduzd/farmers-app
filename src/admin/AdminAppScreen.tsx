@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Pressable, BackHandler, Platform, StyleSheet, Animated, Easing } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/lib/authStore";
 import { apiGet } from "@/lib/api";
@@ -71,6 +71,15 @@ export default function AdminAppScreen() {
     const t = setInterval(refreshBadges, 20000);
     return () => clearInterval(t);
   }, [refreshBadges]);
+  // Opened from a "new Support message" notification: go straight to that conversation.
+  const adminRoute = useRoute<any>();
+  const openThread = adminRoute.params?.openThread as string | undefined;
+  useEffect(() => {
+    if (!openThread || !isAdmin) return;
+    setTab("support");
+    setStack([{ name: "thread", id: openThread } as Route]);
+    navigation.setParams({ openThread: undefined });
+  }, [openThread, isAdmin, navigation]);
 
   const nav = useMemo(
     () => ({

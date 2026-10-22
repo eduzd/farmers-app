@@ -183,13 +183,29 @@ export default function OrderDetailScreen() {
     setOrder(getOrderById(orderId));
     // refresh from the server so status changes by the other side show up
     const st = useOrdersStore.getState();
-    Promise.all([st.loadOrders(), st.loadSales()]).then(() => setOrder(useOrdersStore.getState().getOrderById(orderId)));
+    Promise.all([st.loadOrders(), st.loadSales()])
+      .then(() => setOrder(useOrdersStore.getState().getOrderById(orderId)))
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, [orderId]);
+  // Opened straight from a notification the order may not be on the phone yet: wait for the server
+  // before saying it isn't there.
+  const [loaded, setLoaded] = useState(!!getOrderById(orderId));
 
   if (!order) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
-        <ThemedText>{tr("Order not found")}</ThemedText>
+      <View testID={loaded ? "order-not-found" : "order-loading"} style={[styles.container, { backgroundColor: theme.backgroundRoot, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 }]}>
+        {loaded ? (
+          <>
+            <Feather name="package" size={34} color={theme.textSecondary} />
+            <ThemedText style={{ fontWeight: "700", fontSize: 16 }}>{tr("Order not found")}</ThemedText>
+            <ThemedText style={{ color: theme.textSecondary, textAlign: "center" }}>
+              {useI18n.getState().language === "bn" ? "এই অর্ডারটি আপনার অ্যাকাউন্টে নেই, অথবা আর নেই।" : "This order isn't on your account, or isn't there anymore."}
+            </ThemedText>
+          </>
+        ) : (
+          <ThemedText style={{ color: theme.textSecondary }}>{useI18n.getState().language === "bn" ? "অর্ডার লোড হচ্ছে…" : "Loading order…"}</ThemedText>
+        )}
       </View>
     );
   }

@@ -2,9 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { Platform } from "react-native";
 import { refreshUnreadCounts } from "@/lib/liveStatus";
 import * as Notifications from "expo-notifications";
-import { navigateWhenReady } from "@/lib/navigationRef";
+import { openNotificationWhenReady } from "@/lib/notificationTarget";
 import { useAuthStore } from "@/lib/authStore";
-import { fetchServerPost } from "@/lib/feedApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
@@ -144,22 +143,26 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // Tapping a push opens the right screen: a message opens that chat.
+    // Tapping a push opens where it came from: the comment on your post, the order, the chat,
+    // the new follower... (NotificationOpen asks the server and checks it's still there and yours).
+    // Opened once per tap: on a cold start the listener and the last-response check can both report it.
     const openFromPush = (response: Notifications.NotificationResponse | null) => {
-      const data = (response?.notification.request.content.data || {}) as Record<string, any>;
-      const nid = response?.notification.request.identifier;
+      if (!response) return;
+      const content = response.notification.request.content;
+      const data = (content.data || {}) as Record<string, any>;
+      const nid = response.notification.request.identifier;
       if (nid) AsyncStorage.setItem("farmers:lastPushOpened", nid).catch(() => {});
-      if (data.type === "message" && data.userId) {
-        const name = String(data.userName || "Farmer");
-        const initials = name.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "F";
-        navigateWhenReady("Chat", { conversationId: String(data.userId), userName: name, userInitials: initials });
-      } else if ((data.type === "like" || data.type === "comment" || data.type === "new_post") && data.postId) {
-        // A like or comment on your post opens that post.
-        const token = useAuthStore.getState().getToken();
-        fetchServerPost(String(data.postId), false, token)
-          .then((post) => navigateWhenReady("PostDetail", { postId: post.id, post }))
-          .catch(() => navigateWhenReady("Notifications", undefined));
-      }
+      if (data.type === "incoming_call") return; // the call screen comes up on its own
+      openNotificationWhenReady(
+        {
+          id: data.notificationId ? String(data.notificationId) : undefined,
+          type: String(data.type || ""),
+          data,
+          title: content.title || "",
+          body: content.body || "",
+        },
+        nid || (data.notificationId ? String(data.notificationId) : undefined),
+      );
     };
     responseListener.current = Notifications.addNotificationResponseReceivedListener(openFromPush);
     if (Platform.OS !== "web") {

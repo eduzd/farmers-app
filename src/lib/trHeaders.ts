@@ -5,6 +5,7 @@
 export const HEADER_BN_OF_EN: Record<string, string> = {
   Post: "পোস্ট",
   Notifications: "নোটিফিকেশন",
+  Notification: "নোটিফিকেশন",
   Checkout: "চেকআউট",
   "Disease Detector": "রোগ শনাক্তকরণ",
   Experts: "বিশেষজ্ঞ",

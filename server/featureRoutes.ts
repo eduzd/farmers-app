@@ -375,7 +375,7 @@ export function registerFeatureRoutes(app: Express) {
     }
     await db.execute(sql`INSERT INTO follows (follower_id, followee_id) VALUES (${uid}, ${target}) ON CONFLICT DO NOTHING`);
     const me = await publicUser(uid);
-    await notify(target, "follow", "New follower", `${me?.name || "Someone"} started following you`, { userId: uid });
+    await notify(target, "follow", "New follower", `${me?.name || "Someone"} started following you`, { userId: uid, userName: me?.name || "" });
     res.json({ following: true });
   }));
 
