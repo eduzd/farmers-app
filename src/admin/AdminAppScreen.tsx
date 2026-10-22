@@ -29,7 +29,11 @@ export default function AdminAppScreen() {
   const [stack, setStack] = useState<Route[]>([]);
   const [supportUnread, setSupportUnread] = useState(0);
   const [pendingOrders, setPendingOrders] = useState(0);
-  const isAdmin = !!user?.isSuperAdmin;
+  // Sign-in puts the admin flag on the store (from the server's /login, Firebase exchange and /me),
+  // not on the saved user object, so read the store first. Only hides UI: every /api/admin/manage
+  // call is still checked on the server.
+  const storeAdmin = useAuthStore((s) => s.isSuperAdmin);
+  const isAdmin = storeAdmin || !!user?.isSuperAdmin;
 
   const refreshBadges = useCallback(async () => {
     if (!isAdmin) return;
