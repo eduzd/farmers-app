@@ -6,7 +6,12 @@ import { config } from "./config";
 
 /**
  * Phone push notifications (Expo push service).
- *  POST   /api/me/push-tokens {token, platform?}  save this device's Expo push token for the signed-in user
+ *  POST   /api/me/push-tokens {token, platform?, notify?, vibrate?}
+ *                                                 save this device's Expo push token for the signed-in user,
+ *                                                 plus the phone's notification settings (Settings > Notifications):
+ *                                                 notify=false -> no pushes to this phone,
+ *                                                 vibrate=false -> pushes go to the Android "quiet" channel (no vibration).
+ *                                                 Left out = keep what is saved (new tokens: on + vibrate).
  *  DELETE /api/me/push-tokens {token}             remove one of your own tokens (on logout)
  *  GET    /api/me/push-tokens                     list your own tokens (masked)
  * The user always comes from the sign-in token, never from the request body.
@@ -32,6 +37,8 @@ function ensurePushTable() {
         token varchar PRIMARY KEY, user_id varchar NOT NULL, platform varchar,
         created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now())`);
       await db.execute(sql`CREATE INDEX IF NOT EXISTS push_tokens_user_idx ON push_tokens (user_id)`);
+      await db.execute(sql`ALTER TABLE push_tokens ADD COLUMN IF NOT EXISTS notify boolean NOT NULL DEFAULT true`);
+      await db.execute(sql`ALTER TABLE push_tokens ADD COLUMN IF NOT EXISTS vibrate boolean NOT NULL DEFAULT true`);
     })().catch((e) => {
       ready = null;
       throw e;
@@ -56,6 +63,11 @@ function auth(req: Request, res: Response, next: NextFunction) {
 }
 
 const mask = (t: string) => t.slice(0, 20) + "…" + t.slice(-4);
+const optBool = (v: unknown): boolean | null => (typeof v === "boolean" ? v : null);
+
+/** Android channels made by the app (src/lib/notificationService.ts). */
+export const PUSH_CHANNEL_VIBRATE = "default";
+export const PUSH_CHANNEL_QUIET = "quiet";
 
 export function registerPushRoutes(app: Express) {
   app.post("/api/me/push-tokens", auth, async (req, res) => {
@@ -67,10 +79,16 @@ export function registerPushRoutes(app: Express) {
         return res.status(403).json({ error: "You can only register tokens for your own account" });
       }
       const platform = ["android", "ios", "web"].includes(req.body?.platform) ? req.body.platform : null;
+      const notify = optBool(req.body?.notify);
+      const vibrate = optBool(req.body?.vibrate);
       await ensurePushTable();
       // A device token belongs to whoever is signed in on that device now.
-      await db.execute(sql`INSERT INTO push_tokens (token, user_id, platform) VALUES (${token}, ${uid}, ${platform})
-        ON CONFLICT (token) DO UPDATE SET user_id = ${uid}, platform = ${platform}, updated_at = now()`);
+      // The on/off + vibration settings belong to the phone; keep them unless sent.
+      await db.execute(sql`INSERT INTO push_tokens (token, user_id, platform, notify, vibrate)
+        VALUES (${token}, ${uid}, ${platform}, COALESCE(${notify}::boolean, true), COALESCE(${vibrate}::boolean, true))
+        ON CONFLICT (token) DO UPDATE SET user_id = ${uid}, platform = ${platform},
+          notify = COALESCE(${notify}::boolean, push_tokens.notify),
+          vibrate = COALESCE(${vibrate}::boolean, push_tokens.vibrate), updated_at = now()`);
       // Keep only the newest few devices per user.
       await db.execute(sql`DELETE FROM push_tokens WHERE user_id = ${uid} AND token NOT IN (
         SELECT token FROM push_tokens WHERE user_id = ${uid} ORDER BY updated_at DESC LIMIT ${MAX_TOKENS_PER_USER})`);
@@ -99,8 +117,12 @@ export function registerPushRoutes(app: Express) {
   app.get("/api/me/push-tokens", auth, async (req, res) => {
     try {
       await ensurePushTable();
-      const r = rows(await db.execute(sql`SELECT token, platform, updated_at FROM push_tokens WHERE user_id = ${(req as any).uid} ORDER BY updated_at DESC`));
-      res.json({ tokens: r.map((x: any) => ({ token: mask(x.token), platform: x.platform || null, updatedAt: x.updated_at })) });
+      const r = rows(await db.execute(sql`SELECT token, platform, notify, vibrate, updated_at FROM push_tokens WHERE user_id = ${(req as any).uid} ORDER BY updated_at DESC`));
+      res.json({
+        tokens: r.map((x: any) => ({
+          token: mask(x.token), platform: x.platform || null, notify: x.notify !== false, vibrate: x.vibrate !== false, updatedAt: x.updated_at,
+        })),
+      });
     } catch (e: any) {
       console.error("[push] list tokens", e?.message);
       res.status(500).json({ error: "Could not load push tokens" });
@@ -113,9 +135,14 @@ export async function sendPush(userId: string | null | undefined, title: string,
   if (!userId || process.env.PUSH_DISABLED === "1") return;
   try {
     await ensurePushTable();
-    const tokens = rows(await db.execute(sql`SELECT token FROM push_tokens WHERE user_id = ${userId}`)).map((r: any) => r.token as string);
-    if (!tokens.length) return;
-    const messages = tokens.map((to) => ({ to, title: title.slice(0, 200), body: body.slice(0, 500), data, sound: "default", channelId: "default", priority: "high" }));
+    // Phones that turned notifications off get nothing; the others get the channel
+    // that matches their vibration setting.
+    const devices = rows(await db.execute(sql`SELECT token, vibrate FROM push_tokens WHERE user_id = ${userId} AND notify IS NOT FALSE`));
+    if (!devices.length) return;
+    const messages = devices.map((d: any) => ({
+      to: d.token as string, title: title.slice(0, 200), body: body.slice(0, 500), data, sound: "default",
+      channelId: d.vibrate === false ? PUSH_CHANNEL_QUIET : PUSH_CHANNEL_VIBRATE, priority: "high",
+    }));
     const headers: Record<string, string> = { Accept: "application/json", "Content-Type": "application/json" };
     if (process.env.EXPO_ACCESS_TOKEN) headers.Authorization = `Bearer ${process.env.EXPO_ACCESS_TOKEN}`;
     for (let i = 0; i < messages.length; i += 100) {

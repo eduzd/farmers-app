@@ -32,6 +32,12 @@ import { fetchAbout, isLocalPhoto, removeAvatar, saveAbout, saveProfileDetails, 
 import { useI18n, Language } from "@/lib/i18n";
 import { useThemeStore, ThemePreference } from "@/lib/themeStore";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
+import {
+  DEFAULT_NOTIFICATION_PREFS,
+  getNotificationPrefs,
+  NotificationPrefs,
+  setNotificationPrefs,
+} from "@/lib/notificationService";
 
 import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -78,7 +84,9 @@ export default function SettingsScreen() {
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  // Saved on this phone and sent to the server (Android pushes use a no-vibration
+  // channel when vibration is off). See src/lib/notificationService.ts.
+  const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS);
 
   const [editName, setEditName] = useState(user?.name || "");
   const [editUsername, setEditUsername] = useState(user?.username || "");
@@ -92,6 +100,21 @@ export default function SettingsScreen() {
   const [savingProfile, setSavingProfile] = useState(false);
   const token = useAuthStore((s) => s.token);
   const route = useRoute<any>();
+
+  useEffect(() => {
+    let alive = true;
+    void getNotificationPrefs().then((p) => {
+      if (alive) setNotifPrefs(p);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const changeNotifPrefs = (patch: Partial<NotificationPrefs>) => {
+    setNotifPrefs((p) => ({ ...p, ...patch }));
+    void setNotificationPrefs(patch, token).then(({ prefs }) => setNotifPrefs(prefs));
+  };
 
   const openEditProfile = () => {
     setEditName(user?.name || "");
@@ -369,8 +392,15 @@ export default function SettingsScreen() {
             </View>
           </Pressable>
 
-          <View style={[styles.divider, { backgroundColor: theme.inputBorder }]} />
+        </View>
+      </View>
 
+      <View style={styles.section} testID="settings-notifications">
+        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          {t("settings.notificationsSection")}
+        </ThemedText>
+
+        <View style={[styles.settingsGroup, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
               <Feather name="bell" size={20} color={theme.iconDefault || theme.text} />
@@ -379,11 +409,38 @@ export default function SettingsScreen() {
               </ThemedText>
             </View>
             <CustomSwitch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
+              value={notifPrefs.enabled}
+              onValueChange={(v) => changeNotifPrefs({ enabled: v })}
+              accessibilityLabel={t("profile.notifications")}
+              testID="switch-notifications"
+            />
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: theme.inputBorder }]} />
+
+          <View style={[styles.settingItem, !notifPrefs.enabled && { opacity: 0.5 }]}>
+            <View style={styles.settingLeft}>
+              <MaterialCommunityIcons name="vibrate" size={20} color={theme.iconDefault || theme.text} />
+              <ThemedText style={[styles.settingLabel, { color: theme.text }]}>
+                {t("settings.vibration")}
+              </ThemedText>
+            </View>
+            <CustomSwitch
+              value={notifPrefs.vibrate}
+              onValueChange={(v) => changeNotifPrefs({ vibrate: v })}
+              disabled={!notifPrefs.enabled}
+              accessibilityLabel={t("settings.vibration")}
+              testID="switch-vibration"
             />
           </View>
         </View>
+        <ThemedText
+          type="small"
+          style={[styles.sectionHint, { color: theme.textSecondary }]}
+          testID="notifications-hint"
+        >
+          {notifPrefs.enabled ? t("settings.vibrationHint") : t("settings.notificationsOffHint")}
+        </ThemedText>
       </View>
 
       <View style={styles.section}>
@@ -817,6 +874,12 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginLeft: 52,
+  },
+  sectionHint: {
+    marginTop: Spacing.sm,
+    marginHorizontal: Spacing.sm,
+    fontSize: 13,
+    lineHeight: 18,
   },
   versionContainer: {
     alignItems: "center",

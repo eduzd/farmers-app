@@ -262,3 +262,23 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
   tests/check-support-chat-web.py (en+bn 320/360/390) pass; tests/check-admin-web.py updated for the no-popup Help, pass.
 - Left: admin can only reply with text (sees user photos/voice); presence counts an admin as online for ~70 s after they leave;
   real-phone tests (camera, mic recording on Android/iOS) not done; signed-in live check not done.
+
+## 2026-10-22: Settings > Notifications: Vibration switch (and a real Notifications on/off)
+- Settings has its own NOTIFICATIONS / বিজ্ঞপ্তি section: "Notifications" switch (was a fake local switch before) and a
+  new "Vibration / ভাইব্রেশন" switch. Saved on the phone (AsyncStorage farmers:notificationPrefs, default on + vibrate),
+  hint under it: vibration off -> notifications still come with sound. Vibration is greyed out while notifications are off.
+  CustomSwitch now has role=switch + checked/disabled state + label for screen readers.
+- Android: the CHANNEL decides vibration (Android 8+), and a channel can't be changed once made, so there are two:
+  "default" (sound + vibration, unchanged) and "quiet" (sound, enableVibrate false, no vibrationPattern because a
+  pattern re-enables vibration). src/lib/notificationService.ts ensureNotificationChannels() makes both.
+- Server (server/push.ts): push_tokens.notify + push_tokens.vibrate (ALTER ... ADD COLUMN IF NOT EXISTS, default true).
+  POST /api/me/push-tokens takes optional notify/vibrate (left out = keep saved, so older apps change nothing).
+  sendPush(): notify=false phones get nothing; vibrate=false phones get channelId "quiet". So pushes that arrive while
+  the app is closed follow the setting. The app sends the prefs with its token on sign-in/app start and when switched.
+- In-app: one notification handler (NotificationContext's duplicate removed) that hides banners when notifications are
+  off; local notifications use the matching channel. Incoming-call ringing on the call screen still vibrates (not a notification).
+- Needs a NEW APK for phones (web has no vibration). Old APKs keep vibrating as before.
+- Limits: on Android, if the phone itself is on vibrate (silent-with-vibrate) mode, Android turns the sound into a buzz;
+  the user can also change each channel in Android's app notification settings. iPhone: vibration follows iOS settings.
+- Checks: tsc 0 errors; tests/check-push-prefs.mjs 15/15 (fake Expo push server: channel per phone, notify off, re-save keeps
+  prefs, own account only); check-chat 50/50; tests/check-notif-settings-web.py en+bn 320/360/390 16/16 each.
