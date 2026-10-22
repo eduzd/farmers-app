@@ -229,7 +229,8 @@ export function SupportTab() {
   const nav = useAdminNav();
   const { theme } = useTheme();
   const L = useL();
-  const [status, setStatus] = useState("open");
+  // every conversation in one list (no open / solved split)
+  const status = "";
   const [q, setQ] = useState("");
   const dq = useDebounced(q);
   const list = useLoader<any[]>(() => apiGet(`/api/admin/manage/support/threads?status=${status}&q=${encodeURIComponent(dq)}`), [status, dq]);
@@ -240,11 +241,6 @@ export function SupportTab() {
   return (
     <Page onRefresh={() => { list.load(); nav.refreshBadges(); }} testID="admin-support">
       <SearchBox testID="support-search" value={q} onChange={setQ} placeholder={L("Search people or messages", "মানুষ বা মেসেজ খুঁজুন")} />
-      <ChipRow>
-        {[["open", L("Open", "খোলা")], ["closed", L("Closed", "বন্ধ")], ["", L("All", "সব")]].map(([k, label]) => (
-          <Chip key={k || "all"} testID={`support-filter-${k || "all"}`} label={label} on={status === k} onPress={() => setStatus(k)} />
-        ))}
-      </ChipRow>
       {list.error ? <ErrorBox text={list.error} onRetry={list.load} /> : null}
       {list.loading && !list.data ? <Loading /> : null}
       {list.data && !list.data.length ? <Empty icon="message-circle" text={L("No conversations here", "এখানে কোনো কথোপকথন নেই")} /> : null}
@@ -278,17 +274,6 @@ export function ThreadView({ id }: { id: string }) {
   const L = useL();
   const { theme } = useTheme();
   const [meta, setMeta] = useState<any>(null);
-  const [busy, setBusy] = useState(false);
-  const closed = meta?.status === "closed";
-  const toggle = async () => {
-    setBusy(true);
-    try {
-      const r = await apiPut(`/api/admin/manage/support/threads/${id}`, { status: closed ? "open" : "closed" });
-      setMeta((m: any) => ({ ...m, status: r?.status || (closed ? "open" : "closed") }));
-      nav.refreshBadges();
-    } catch {}
-    setBusy(false);
-  };
   const { SupportConversation } = require("@/screens/SupportChatScreen");
   return (
     <SupportConversation
@@ -308,11 +293,6 @@ export function ThreadView({ id }: { id: string }) {
                 <Feather name="user" size={20} color={theme.text} />
               </Pressable>
             ) : null}
-            <Pressable testID="thread-toggle" disabled={busy || !meta} accessibilityLabel={closed ? L("Reopen", "আবার খুলুন") : L("Mark solved", "সমাধান হয়েছে")} onPress={toggle} hitSlop={6}
-              style={{ flexDirection: "row", alignItems: "center", gap: 5, height: 32, paddingHorizontal: 10, borderRadius: 16, marginRight: 4, backgroundColor: closed ? theme.backgroundSecondary : theme.primary + "18" }}>
-              <Feather name={closed ? "rotate-ccw" : "check"} size={15} color={closed ? theme.textSecondary : theme.primary} />
-              <Text style={{ color: closed ? theme.textSecondary : theme.primary, fontWeight: "700", fontSize: 12.5 }}>{closed ? L("Reopen", "খুলুন") : L("Solved", "সমাধান")}</Text>
-            </Pressable>
           </View>
         ),
       }}
