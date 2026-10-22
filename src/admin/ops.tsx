@@ -271,8 +271,6 @@ export function SupportTab() {
 
 export function ThreadView({ id }: { id: string }) {
   const nav = useAdminNav();
-  const L = useL();
-  const { theme } = useTheme();
   const [meta, setMeta] = useState<any>(null);
   const { SupportConversation } = require("@/screens/SupportChatScreen");
   return (
@@ -286,15 +284,7 @@ export function ThreadView({ id }: { id: string }) {
         callUserId: meta?.userId || undefined,
         onMeta: setMeta,
         onChanged: nav.refreshBadges,
-        headerRight: (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            {meta?.userId ? (
-              <Pressable testID="thread-user" accessibilityLabel={L("Open profile", "প্রোফাইল দেখুন")} onPress={() => nav.push({ name: "user", id: meta.userId })} hitSlop={6} style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center" }}>
-                <Feather name="user" size={20} color={theme.text} />
-              </Pressable>
-            ) : null}
-          </View>
-        ),
+        // No extra profile icon: tapping the avatar or name opens the profile; only the call icon sits on the right.
       }}
     />
   );
