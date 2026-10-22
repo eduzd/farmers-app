@@ -23,15 +23,15 @@ import { cleanOptions, cleanDeliveryConfig, deliveryConfig, ensureCheckout } fro
  *  Admin:    /api/admin/manage/* (super admin JWT only): summary, users, stores, orders, catalog, notify
  */
 
-const rows = (r: any): any[] => (Array.isArray(r) ? r : r?.rows || []);
-const J = (v: any) => (typeof v === "string" ? JSON.parse(v) : v);
-const iso = (v: any) => {
+export const rows = (r: any): any[] => (Array.isArray(r) ? r : r?.rows || []);
+export const J = (v: any) => (typeof v === "string" ? JSON.parse(v) : v);
+export const iso = (v: any) => {
   if (!v) return null;
   if (v instanceof Date) return v.toISOString();
   const s = String(v);
   return new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? s : s.replace(" ", "T") + "Z").toISOString();
 };
-const str = (v: any, max = 500) => (v === undefined || v === null ? "" : String(v).trim().slice(0, max));
+export const str = (v: any, max = 500) => (v === undefined || v === null ? "" : String(v).trim().slice(0, max));
 
 let ready: Promise<void> | null = null;
 export function ensurePlatform() {
@@ -80,7 +80,7 @@ async function account(uid: string | null) {
   return r[0] || null;
 }
 
-const wrap = (fn: (req: Request, res: Response) => Promise<any>) => (req: Request, res: Response) => {
+export const wrap = (fn: (req: Request, res: Response) => Promise<any>) => (req: Request, res: Response) => {
   ensurePlatform()
     .then(() => fn(req, res))
     .catch((e: any) => {
@@ -89,14 +89,14 @@ const wrap = (fn: (req: Request, res: Response) => Promise<any>) => (req: Reques
     });
 };
 
-function requireUser(req: Request, res: Response, next: NextFunction) {
+export function requireUser(req: Request, res: Response, next: NextFunction) {
   const uid = tokenUid(req);
   if (!uid) return res.status(401).json({ error: "Please log in first" });
   (req as any).uid = uid;
   next();
 }
 
-function requireAdmin(req: Request, res: Response, next: NextFunction) {
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const uid = tokenUid(req);
   if (!uid) return res.status(401).json({ error: "Please log in first" });
   ensurePlatform()
@@ -110,7 +110,7 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
     .catch(() => res.status(500).json({ error: "Authentication failed" }));
 }
 
-async function audit(req: Request, action: string, targetType: string, targetId: string | null, details: any) {
+export async function audit(req: Request, action: string, targetType: string, targetId: string | null, details: any) {
   const a = (req as any).admin;
   try {
     await db.execute(sql`INSERT INTO audit_logs (id, admin_id, admin_email, action, target_type, target_id, details)
@@ -196,7 +196,7 @@ export function platformGuard(req: Request, res: Response, next: NextFunction) {
 }
 
 // ---------- helpers ----------
-function storeOut(r: any) {
+export function storeOut(r: any) {
   if (!r) return null;
   return {
     id: r.id,
@@ -216,17 +216,17 @@ function storeOut(r: any) {
     createdAt: iso(r.created_at),
   };
 }
-const itemOut = (r: any) => ({ ...(J(r.data) || {}), id: r.id, ownerId: r.owner_id || null, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at) });
+export const itemOut = (r: any) => ({ ...(J(r.data) || {}), id: r.id, ownerId: r.owner_id || null, createdAt: iso(r.created_at), updatedAt: iso(r.updated_at) });
 async function myStore(uid: string) {
   return rows(await db.execute(sql`SELECT * FROM stores WHERE owner_id = ${uid} LIMIT 1`))[0] || null;
 }
-function slugify(name: string) {
+export function slugify(name: string) {
   const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "store";
   return `${base}-${crypto.randomBytes(2).toString("hex")}`;
 }
-const HEX = /^#[0-9a-fA-F]{6}$/;
+export const HEX = /^#[0-9a-fA-F]{6}$/;
 
-function storeFields(body: any) {
+export function storeFields(body: any) {
   const o: Record<string, string> = {};
   for (const k of ["name", "tagline", "description", "logo", "banner", "phone", "location", "category"]) {
     if (body?.[k] !== undefined) o[k] = str(body[k], k === "description" ? 2000 : 500);
@@ -235,7 +235,7 @@ function storeFields(body: any) {
   return o;
 }
 
-function productFields(body: any, partial: boolean) {
+export function productFields(body: any, partial: boolean) {
   const o: any = {};
   const err = (m: string) => ({ error: m });
   if (!partial || body?.name !== undefined) {
@@ -278,7 +278,7 @@ async function sellerStats(uid: string) {
 const CATALOG = ["listings", "experts", "events"];
 const COMMUNITY = ["polls", "questions", "rfqs", "diary"];
 const tableFor = (kind: string) => (CATALOG.includes(kind) ? "catalog_items" : COMMUNITY.includes(kind) ? "community_items" : null);
-const ORDER_STATUSES = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
+export const ORDER_STATUSES = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
 
 export function registerPlatformRoutes(app: Express) {
   ensurePlatform().catch((e) => console.error("[platform] init", e?.message));
