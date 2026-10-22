@@ -390,13 +390,16 @@ export function registerDmRoutes(app: Express, push: Pusher) {
       const me = (req as any).dmUserId as string;
       const other = await resolvePerson(req.params.otherId);
       if (!other) return res.status(404).json({ error: "This person doesn't have an account yet.", code: "NO_ACCOUNT" });
-      const u = await first(sql`SELECT id, name, username, phone FROM users WHERE id = ${other} LIMIT 1`);
+      const u = await first(sql`SELECT id, name, username, phone, avatar, verified FROM users WHERE id = ${other} LIMIT 1`);
+      if (!u) return res.status(404).json({ error: "This person doesn't have an account yet.", code: "NO_ACCOUNT" });
       const name = u?.name || u?.username || "Farmer";
+      // public profile bits, so tapping their photo in the chat opens their profile
+      const pub = { username: u?.username || null, avatar: u?.avatar || null, verified: !!u?.verified };
       // A shop's phone is public business contact info.
       const store = await first(sql`SELECT phone FROM stores WHERE owner_id = ${other} AND status = 'active' AND phone IS NOT NULL AND phone <> '' LIMIT 1`);
-      if (store?.phone) return res.json({ userId: other, name, phone: String(store.phone), phoneSource: "store" });
+      if (store?.phone) return res.json({ userId: other, name, ...pub, phone: String(store.phone), phoneSource: "store" });
       const co = await first(sql`SELECT phone FROM companies WHERE owner_id = ${other} AND phone IS NOT NULL AND phone <> '' LIMIT 1`);
-      if (co?.phone) return res.json({ userId: other, name, phone: String(co.phone), phoneSource: "store" });
+      if (co?.phone) return res.json({ userId: other, name, ...pub, phone: String(co.phone), phoneSource: "store" });
       // A personal number is only shared with people they already deal with:
       // they have messaged you, or there is an order between the two of you.
       let phone: string | null = null;
@@ -409,7 +412,7 @@ export function registerDmRoutes(app: Express, push: Pusher) {
                  OR (user_id = ${other} AND (',' || seller_ids || ',') LIKE ${"%," + me + ",%"}) LIMIT 1`);
         if (wrote || order) phone = String(u.phone);
       }
-      res.json({ userId: other, name, phone, phoneSource: phone ? "profile" : null });
+      res.json({ userId: other, name, ...pub, phone, phoneSource: phone ? "profile" : null });
     } catch (e: any) {
       console.error("[dm] contact error:", e?.message || e);
       res.status(500).json({ error: "Couldn't load contact details" });
