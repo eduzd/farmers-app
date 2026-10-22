@@ -942,11 +942,23 @@ router.post("/presence/beat", requireAuth, (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-router.post("/presence/query", requireAuth, (req: Request, res: Response) => {
+// "known" = the ids that are real accounts, so the app can show a gray (offline) dot for them
+// and no dot at all for sample people who have no account.
+router.post("/presence/query", requireAuth, async (req: Request, res: Response) => {
   const ids: unknown = req.body?.ids;
   if (!Array.isArray(ids)) return res.status(400).json({ error: "ids must be a list" });
   const uniq = [...new Set(ids.filter((x) => typeof x === "string" && x.length > 0 && x.length < 100))].slice(0, 300) as string[];
-  res.json({ online: uniq.filter(isUserPresent), ttlMs: PRESENCE_TTL_MS });
+  let known: string[] = [];
+  try {
+    if (db && uniq.length) {
+      const r: any = await db.execute(sql`SELECT id FROM users WHERE id IN (${sql.join(uniq.map((x) => sql`${x}`), sql`, `)})`);
+      known = (Array.isArray(r) ? r : r?.rows || []).map((x: any) => String(x.id));
+    }
+  } catch {
+    known = [];
+  }
+  const online = uniq.filter(isUserPresent);
+  res.json({ online, known: [...new Set([...known, ...online])], ttlMs: PRESENCE_TTL_MS });
 });
 
 // ============================================

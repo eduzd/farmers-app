@@ -1,115 +1,544 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import {
+  View,
+  Pressable,
+  TextInput,
+  FlatList,
+  ScrollView,
+  Platform,
+  Alert,
+  Modal,
+  ActionSheetIOS,
+  NativeSyntheticEvent,
+  TextInputContentSizeChangeEventData,
+} from "react-native";
+import Animated from "react-native-reanimated";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import { useTheme } from "@/hooks/useTheme";
-import { useI18n } from "@/lib/i18n";
-import { apiGet, apiPost } from "@/lib/api";
+import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 
-import { ChatIcon } from "@/components/icons/ChatIcon";
-/** The signed-in user's own conversation with Farmers admins (Help). */
+import { ThemedText } from "@/components/ThemedText";
+import { UserAvatar } from "@/components/UserAvatar";
+import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
+import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
+import { useVoiceRecorder, type FinishedRecording } from "@/hooks/useVoiceRecorder";
+import { VoiceMessagePlayer, formatVoiceTime } from "@/components/VoiceMessagePlayer";
+import { ChatPhoto } from "@/components/ChatPhoto";
+import { PhotoViewer } from "@/components/PhotoViewer";
+import { AppIcon } from "@/components/icons/AppIcon";
+import { useTheme } from "@/hooks/useTheme";
+import { Spacing } from "@/constants/theme";
+import { useI18n } from "@/lib/i18n";
+import { useAuthStore } from "@/lib/authStore";
+import { useSupportStatus } from "@/components/HelpButton";
+import {
+  fetchSupportThread,
+  sendSupportText,
+  sendSupportPhoto,
+  sendSupportVoice,
+  newClientId,
+  rememberLocalPhoto,
+  type SupportMessage,
+} from "@/lib/dmApi";
+import { chatStyles as styles } from "@/screens/ChatScreen";
+
+const MIN_INPUT_HEIGHT = 40;
+const MAX_INPUT_HEIGHT = 120;
+const POLL_MS = 5000;
+
+/** Ready-made messages the user can tap to send (they are sent as the user's own message). */
+const QUICK_MESSAGES: { en: string; bn: string }[] = [
+  { en: "I need help with my order", bn: "আমার অর্ডার নিয়ে সাহায্য দরকার" },
+  { en: "My fish are dying, please help", bn: "আমার মাছ মারা যাচ্ছে, সাহায্য করুন" },
+  { en: "I have a payment problem", bn: "পেমেন্টে সমস্যা হচ্ছে" },
+  { en: "I want to talk to an expert", bn: "আমি একজন বিশেষজ্ঞের সাথে কথা বলতে চাই" },
+  { en: "I can't sign in to my account", bn: "আমি অ্যাকাউন্টে সাইন ইন করতে পারছি না" },
+  { en: "I want to advertise on Farmers", bn: "আমি Farmers-এ বিজ্ঞাপন দিতে চাই" },
+  { en: "Something in the app isn't working", bn: "অ্যাপের একটি জিনিস কাজ করছে না" },
+];
+
+type Item = {
+  id: string;
+  clientId: string | null;
+  kind: "text" | "image" | "voice";
+  text: string;
+  mediaId?: string | null;
+  localUri?: string;
+  width?: number;
+  height?: number;
+  durationMs?: number;
+  fromAdmin: boolean;
+  createdAt: string;
+  status?: "sending" | "failed";
+  // what to upload again on "Tap to retry"
+  photo?: { base64: string; mime: string; width?: number; height?: number };
+};
+
+const fromServer = (m: SupportMessage): Item => ({
+  id: m.id,
+  clientId: m.clientId,
+  kind: m.kind || "text",
+  text: m.body,
+  mediaId: m.mediaId,
+  width: m.width,
+  height: m.height,
+  durationMs: m.durationMs,
+  fromAdmin: m.fromAdmin,
+  createdAt: m.createdAt,
+});
+
+const timeOf = (iso: string) => {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
+
+/**
+ * Support: the user's own chat with the Farmers admins. Looks and works like a normal chat
+ * (same bubbles, same composer with the plus for photos and the mic for voice messages),
+ * plus ready-made messages to tap and send.
+ */
 export default function SupportChatScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
-  const { language } = useI18n();
-  const L = (en: string, bn: string) => (language === "bn" ? bn : en);
-  const [msgs, setMsgs] = useState<any[]>([]);
+  const bn = useI18n((s) => s.language) === "bn";
+  const L = (en: string, b: string) => (bn ? b : en);
+  const signedIn = useAuthStore((s) => !!(s.isAuthenticated && s.token));
+  const adminsOnline = useSupportStatus((s) => s.adminsOnline);
+
+  const [server, setServer] = useState<Item[]>([]);
+  const [pending, setPending] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const scroll = useRef<ScrollView>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [inputText, setInputText] = useState("");
+  const [inputHeight, setInputHeight] = useState(MIN_INPUT_HEIGHT);
+  const [showMediaMenu, setShowMediaMenu] = useState(false);
+  const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
+  const alive = useRef(true);
 
   const load = useCallback(async () => {
-    try {
-      const r = await apiGet("/api/support/thread");
-      setMsgs(r?.messages || []);
-      setErr(null);
-    } catch (e: any) {
-      setErr(e?.message || "Failed to load");
-    } finally {
+    if (!useAuthStore.getState().token) {
       setLoading(false);
+      return;
+    }
+    try {
+      const r = await fetchSupportThread();
+      if (!alive.current) return;
+      const list = (r.messages || []).map(fromServer);
+      setServer(list);
+      const seen = new Set(list.map((m) => m.clientId).filter(Boolean));
+      setPending((p) => p.filter((m) => !m.clientId || !seen.has(m.clientId)));
+      // Opening the chat marks the admin's replies as read on the server.
+      useSupportStatus.getState().set({ unread: 0, ...(typeof r.adminsOnline === "boolean" ? { adminsOnline: r.adminsOnline } : {}) });
+      setLoadError(null);
+    } catch (e: any) {
+      if (alive.current) setLoadError(e?.message || "error");
+    } finally {
+      if (alive.current) setLoading(false);
     }
   }, []);
-  useFocusEffect(useCallback(() => {
-    load();
-    const t = setInterval(load, 6000);
-    return () => clearInterval(t);
-  }, [load]));
 
-  const send = async () => {
-    const body = text.trim();
-    if (!body || busy) return;
-    setBusy(true);
-    const clientId = `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  useFocusEffect(
+    useCallback(() => {
+      alive.current = true;
+      load();
+      const t = setInterval(load, POLL_MS);
+      return () => {
+        alive.current = false;
+        clearInterval(t);
+      };
+    }, [load]),
+  );
+
+  // newest first (the list is inverted, like the normal chat)
+  const messages = useMemo(() => {
+    const all = [...server, ...pending];
+    return all.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
+  }, [server, pending]);
+
+  const needSignIn = () => {
+    Alert.alert(L("Sign in", "সাইন ইন"), L("Please sign in first so the Farmers team can reply to you.", "আগে সাইন ইন করুন, যাতে টিম আপনাকে উত্তর দিতে পারে।"));
+  };
+
+  const upload = async (item: Item) => {
     try {
-      await apiPost("/api/support/messages", { body, clientId });
-      setText("");
-      await load();
-    } catch (e: any) {
-      setErr(e?.message || "Couldn't send");
-    } finally {
-      setBusy(false);
+      const cid = item.clientId || newClientId();
+      const r =
+        item.kind === "image" && item.photo
+          ? await sendSupportPhoto(item.photo, cid)
+          : item.kind === "voice" && item.localUri
+            ? await sendSupportVoice(item.localUri, item.durationMs || 0, cid)
+            : await sendSupportText(item.text, cid);
+      const m = fromServer(r.message);
+      if (m.mediaId && item.localUri && item.kind === "image") rememberLocalPhoto(m.mediaId, item.localUri);
+      setServer((s) => (s.some((x) => x.id === m.id) ? s : [...s, m]));
+      setPending((p) => p.filter((x) => x.id !== item.id));
+    } catch {
+      setPending((p) => p.map((x) => (x.id === item.id ? { ...x, status: "failed" } : x)));
     }
   };
 
-  return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.backgroundRoot }} behavior={Platform.OS === "ios" ? "padding" : undefined} testID="support-chat">
-      <View style={{ paddingTop: insets.top, backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.cardBorder }}>
-        <View style={{ height: 56, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, gap: 8 }}>
-          <Pressable onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("Main"))} hitSlop={8} style={{ padding: 8 }} testID="support-back">
-            <Feather name="arrow-left" size={22} color={theme.text} />
-          </Pressable>
-          <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: theme.primary, alignItems: "center", justifyContent: "center" }}>
-            <Feather name="life-buoy" size={19} color="#fff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: theme.text, fontWeight: "800", fontSize: 16 }} numberOfLines={1}>{L("Farmers Support", "ফার্মার্স সাপোর্ট")}</Text>
-            <Text style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={1}>{L("Our team replies here", "আমাদের টিম এখানে উত্তর দেবে")}</Text>
+  const queue = (part: Omit<Item, "id" | "clientId" | "fromAdmin" | "createdAt" | "status">) => {
+    if (!signedIn) {
+      needSignIn();
+      return;
+    }
+    const cid = newClientId();
+    const item: Item = { ...part, id: `local-${cid}`, clientId: cid, fromAdmin: false, createdAt: new Date().toISOString(), status: "sending" };
+    setPending((p) => [...p, item]);
+    upload(item);
+  };
+
+  const retry = (item: Item) => {
+    setPending((p) => p.map((x) => (x.id === item.id ? { ...x, status: "sending" } : x)));
+    upload({ ...item, status: "sending" });
+  };
+
+  const handleSend = (preset?: string) => {
+    const text = (preset ?? inputText).trim();
+    if (!text) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (preset === undefined) {
+      setInputText("");
+      setInputHeight(MIN_INPUT_HEIGHT);
+    }
+    queue({ kind: "text", text });
+  };
+
+  // ---- voice ----
+  const sendRecording = (r: FinishedRecording | null) => {
+    if (!r) return;
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    queue({ kind: "voice", text: "", localUri: r.uri, durationMs: r.durationMs });
+  };
+  const voice = useVoiceRecorder(sendRecording);
+  const isRecording = voice.isRecording;
+  const startRecording = async () => {
+    if (!signedIn) return needSignIn();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    await voice.start();
+  };
+  const stopRecording = async () => {
+    const r = await voice.stop();
+    if (!r) {
+      Alert.alert(L("Voice message", "ভয়েস মেসেজ"), L("Hold on a little longer: the recording was too short.", "আরেকটু লম্বা করে রেকর্ড করুন: রেকর্ডিং খুব ছোট ছিল।"));
+      return;
+    }
+    sendRecording(r);
+  };
+  const cancelRecording = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    voice.cancel();
+  };
+
+  // ---- photos (same flow as the normal chat: shrink to 1600px JPEG, show at once, upload) ----
+  const sendImage = async (uri: string, w?: number, h?: number) => {
+    setShowMediaMenu(false);
+    if (!signedIn) return needSignIn();
+    try {
+      const longest = Math.max(w || 0, h || 0);
+      const resize = longest > 1600 ? [w! >= h! ? { resize: { width: 1600 } } : { resize: { height: 1600 } }] : [];
+      const out = await ImageManipulator.manipulateAsync(uri, resize as any, { compress: 0.78, format: ImageManipulator.SaveFormat.JPEG, base64: true });
+      if (!out.base64) throw new Error("no image data");
+      queue({
+        kind: "image",
+        text: "",
+        localUri: out.uri,
+        width: out.width,
+        height: out.height,
+        photo: { base64: out.base64, mime: "image/jpeg", width: out.width, height: out.height },
+      });
+    } catch {
+      Alert.alert(L("Photo not sent", "ছবি পাঠানো হয়নি"), L("Couldn't open that photo. Please try another one.", "ছবিটি খোলা যায়নি। অন্য একটি চেষ্টা করুন।"));
+    }
+  };
+  const openCamera = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(L("Permission needed", "অনুমতি প্রয়োজন"), L("Allow camera access to take a photo.", "ক্যামেরা ব্যবহার করতে অনুমতি দিন।"));
+        return;
+      }
+      const r = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], allowsEditing: false, quality: 1 });
+      if (!r.canceled && r.assets[0]) sendImage(r.assets[0].uri, r.assets[0].width, r.assets[0].height);
+    } catch {
+      Alert.alert(L("Error", "ত্রুটি"), L("Couldn't open the camera.", "ক্যামেরা খুলতে সমস্যা হয়েছে।"));
+    }
+  };
+  const openGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(L("Permission needed", "অনুমতি প্রয়োজন"), L("Allow photo access to pick a photo.", "গ্যালারি ব্যবহার করতে অনুমতি দিন।"));
+        return;
+      }
+      const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: false, quality: 1 });
+      if (!r.canceled && r.assets[0]) sendImage(r.assets[0].uri, r.assets[0].width, r.assets[0].height);
+    } catch {
+      Alert.alert(L("Error", "ত্রুটি"), L("Couldn't open the gallery.", "গ্যালারি খুলতে সমস্যা হয়েছে।"));
+    }
+  };
+  const handleMediaButton = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (!signedIn) return needSignIn();
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: [L("Cancel", "বাতিল"), L("Camera", "ক্যামেরা"), L("Gallery", "গ্যালারি")], cancelButtonIndex: 0, title: L("Send a photo", "ছবি পাঠান") },
+        (i) => (i === 1 ? openCamera() : i === 2 ? openGallery() : undefined),
+      );
+    } else {
+      setShowMediaMenu(true);
+    }
+  };
+
+  const composerPadding = useKeyboardAwareBottomPadding(Spacing.sm);
+  const handleContentSizeChange = (e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
+    setInputHeight(Math.min(Math.max(e.nativeEvent.contentSize.height, MIN_INPUT_HEIGHT), MAX_INPUT_HEIGHT));
+  };
+
+  const supportName = L("Support", "সাপোর্ট");
+  const presence: "online" | "offline" | null = adminsOnline === null ? null : adminsOnline ? "online" : "offline";
+  const headerStatus = !signedIn
+    ? L("Sign in to chat with us", "চ্যাট করতে সাইন ইন করুন")
+    : presence === "online"
+      ? L("Online", "অনলাইন")
+      : presence === "offline"
+        ? L("Offline · we'll reply here", "অফলাইন · আমরা এখানে উত্তর দেব")
+        : L("Farmers team", "Farmers টিম");
+
+  const renderStatus = (item: Item, isLastInGroup: boolean) => {
+    if (item.fromAdmin) return null;
+    if (item.status === "failed") {
+      return (
+        <Pressable onPress={() => retry(item)} hitSlop={8} accessibilityRole="button" testID="support-retry">
+          <ThemedText style={[styles.seenStatus, { color: theme.error || "#D32F2F" }]}>{L("Not sent · Tap to retry", "পাঠানো হয়নি · আবার চেষ্টা করতে ট্যাপ করুন")}</ThemedText>
+        </Pressable>
+      );
+    }
+    if (item.status === "sending") return <ThemedText style={[styles.seenStatus, { color: theme.textSecondary }]}>{L("Sending…", "পাঠানো হচ্ছে…")}</ThemedText>;
+    if (!isLastInGroup) return null;
+    return <ThemedText style={[styles.seenStatus, { color: theme.textSecondary }]}>{L("Sent", "পাঠানো হয়েছে")}</ThemedText>;
+  };
+
+  const renderMessage = ({ item, index }: { item: Item; index: number }) => {
+    const isMe = !item.fromAdmin;
+    const showTime = index === messages.length - 1 || messages[index + 1].fromAdmin !== item.fromAdmin;
+    const isLastInGroup = index === 0 || messages[index - 1].fromAdmin !== item.fromAdmin;
+    const showAvatar = !isMe && isLastInGroup;
+    let body: React.ReactNode;
+    if (item.kind === "voice" && (item.mediaId || item.localUri)) {
+      body = (
+        <View style={[styles.voiceMessageBubble, isMe ? { backgroundColor: theme.primary } : { backgroundColor: theme.surface }]}>
+          <VoiceMessagePlayer
+            mediaId={item.mediaId}
+            localUri={item.localUri}
+            durationMs={item.durationMs ?? null}
+            isMe={isMe}
+            tint={isMe ? theme.white : theme.primary}
+            trackColor={isMe ? "rgba(255,255,255,0.35)" : theme.primary + "30"}
+            textColor={isMe ? theme.white : theme.textSecondary}
+          />
+        </View>
+      );
+    } else if (item.kind === "image" && (item.mediaId || item.localUri)) {
+      body = (
+        <ChatPhoto
+          localUri={item.localUri}
+          mediaId={item.mediaId}
+          width={item.width}
+          height={item.height}
+          onOpen={(uri) => setViewerPhoto(uri)}
+        />
+      );
+    } else {
+      body = (
+        <View style={[styles.messageBubble, isMe ? [styles.myBubble, { backgroundColor: theme.primary }] : [styles.theirBubble, { backgroundColor: theme.surface }]]}>
+          <ThemedText style={[styles.messageText, { color: isMe ? theme.white : theme.text }]}>{item.text}</ThemedText>
+        </View>
+      );
+    }
+    return (
+      <View style={[styles.messageRow, isMe ? styles.myMessageRow : styles.theirMessageRow]} testID={isMe ? "support-msg-me" : "support-msg-admin"}>
+        {!isMe ? (
+          <View style={styles.avatarSpace}>{showAvatar ? <UserAvatar name={supportName} size="small" presence={presence} /> : null}</View>
+        ) : null}
+        <View style={[styles.messageContainer, isMe ? styles.myMessage : styles.theirMessage]}>
+          <View style={styles.bubbleWrapper}>{body}</View>
+          <View style={styles.messageFooter}>
+            {showTime ? <ThemedText style={[styles.messageTime, { color: theme.textSecondary }, isMe && styles.myTime]}>{timeOf(item.createdAt)}</ThemedText> : null}
+            {renderStatus(item, isLastInGroup)}
           </View>
         </View>
       </View>
-      <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 14, gap: 8, flexGrow: 1 }} onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}>
-        {loading ? <ActivityIndicator color={theme.primary} style={{ marginTop: 30 }} /> : null}
-        {!loading && !msgs.length ? (
-          <View style={{ alignItems: "center", paddingTop: 40, gap: 10, paddingHorizontal: 20 }}>
-            <ChatIcon size={34} color={theme.textTertiary} />
-            <Text style={{ color: theme.text, fontWeight: "700", fontSize: 15, textAlign: "center" }}>{L("How can we help?", "আমরা কীভাবে সাহায্য করতে পারি?")}</Text>
-            <Text style={{ color: theme.textSecondary, textAlign: "center" }}>{L("Write your question below. An admin will reply in this chat.", "নিচে আপনার প্রশ্ন লিখুন। অ্যাডমিন এই চ্যাটে উত্তর দেবেন।")}</Text>
-          </View>
-        ) : null}
-        {msgs.map((m) => {
-          const mine = !m.fromAdmin;
-          return (
-            <View key={m.id} style={{ alignSelf: mine ? "flex-end" : "flex-start", maxWidth: "82%" }}>
-              <View style={{ backgroundColor: mine ? theme.primary : theme.card, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8, borderWidth: mine ? 0 : 1, borderColor: theme.cardBorder }}>
-                <Text style={{ color: mine ? "#fff" : theme.text, fontSize: 14.5 }}>{m.body}</Text>
-              </View>
-              <Text style={{ color: theme.textTertiary, fontSize: 10.5, marginTop: 2, textAlign: mine ? "right" : "left" }}>
-                {mine ? "" : `${L("Farmers Support", "ফার্মার্স সাপোর্ট")} · `}{new Date(m.createdAt).toLocaleString()}
-              </Text>
-            </View>
-          );
-        })}
-      </ScrollView>
-      {err ? <Text style={{ color: "#B91C1C", paddingHorizontal: 14, paddingBottom: 6 }}>{err}</Text> : null}
-      <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, padding: 10, paddingBottom: Math.max(insets.bottom, 10), backgroundColor: theme.card }}>
-        <TextInput
-          testID="support-input"
-          value={text}
-          onChangeText={setText}
-          placeholder={L("Write a message…", "মেসেজ লিখুন…")}
-          placeholderTextColor={theme.textTertiary}
-          multiline
-          maxLength={2000}
-          style={{ flex: 1, maxHeight: 120, minHeight: 42, borderRadius: 21, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: theme.backgroundSecondary, color: theme.text, fontSize: 14.5, ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : {}) }}
-        />
-        <Pressable testID="support-send" onPress={send} disabled={busy || !text.trim()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: theme.primary, alignItems: "center", justifyContent: "center", opacity: busy || !text.trim() ? 0.5 : 1 }}>
-          {busy ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="send" size={18} color="#fff" />}
-        </Pressable>
+    );
+  };
+
+  const renderEmptyState = () => (
+    <View style={styles.emptyState} testID="support-empty">
+      <View style={[styles.emptyAvatar, { backgroundColor: theme.primary }]}>
+        <Feather name="life-buoy" size={30} color="#fff" />
       </View>
-    </KeyboardAvoidingView>
+      <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>{supportName}</ThemedText>
+      <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
+        {loading
+          ? L("Loading messages…", "মেসেজ আসছে…")
+          : !signedIn
+            ? L("Sign in to chat with the Farmers team.", "Farmers টিমের সাথে চ্যাট করতে সাইন ইন করুন।")
+            : L("How can we help? Tap a message below or write your own.", "আমরা কীভাবে সাহায্য করতে পারি? নিচের একটি মেসেজে ট্যাপ করুন বা নিজে লিখুন।")}
+      </ThemedText>
+    </View>
+  );
+
+  const banner = loadError && signedIn && !loading ? L("Can't reach the server. Tap to try again.", "সার্ভারে পৌঁছানো যাচ্ছে না। আবার চেষ্টা করতে ট্যাপ করুন।") : null;
+  const showQuick = !isRecording && !inputText.trim();
+
+  return (
+    <KeyboardAvoidingScreen style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+      <View style={[styles.customHeader, { backgroundColor: theme.backgroundRoot, paddingTop: insets.top }]} testID="support-chat">
+        <Pressable style={styles.backButton} onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("Main"))} testID="support-back" accessibilityRole="button" accessibilityLabel={L("Back", "পিছনে")}>
+          <Feather name="arrow-left" size={24} color={theme.text} />
+        </Pressable>
+        <View style={styles.headerTitleContainer}>
+          <View style={styles.headerAvatarContainer}>
+            <UserAvatar name={supportName} size={36} presence={signedIn ? presence : null} />
+          </View>
+          <View style={styles.headerInfo}>
+            <ThemedText style={[styles.headerName, { color: theme.text }]} numberOfLines={1} testID="support-title">{supportName}</ThemedText>
+            <ThemedText style={[styles.headerStatus, { color: theme.textSecondary }]} numberOfLines={1} testID="support-status">{headerStatus}</ThemedText>
+          </View>
+        </View>
+      </View>
+
+      <FlatList
+        data={messages}
+        keyExtractor={(m) => m.id}
+        renderItem={renderMessage}
+        inverted={messages.length > 0}
+        ListEmptyComponent={renderEmptyState}
+        contentContainerStyle={[styles.listContent, { paddingTop: Spacing.md, paddingBottom: Spacing.sm }, messages.length === 0 && styles.emptyListContent]}
+        showsVerticalScrollIndicator={false}
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+      />
+
+      <Animated.View style={[styles.bottomBar, { backgroundColor: theme.backgroundRoot }, composerPadding]}>
+        {banner ? (
+          <Pressable onPress={load} style={[styles.chatBanner, { backgroundColor: theme.surface, borderTopColor: theme.divider }]}>
+            <AppIcon name="wifi-off" size={14} color={theme.textSecondary} />
+            <ThemedText style={[styles.chatBannerText, { color: theme.textSecondary }]}>{banner}</ThemedText>
+          </Pressable>
+        ) : null}
+        {showQuick ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ gap: 8, paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: 2 }}
+            testID="support-quick"
+          >
+            {QUICK_MESSAGES.map((q, i) => (
+              <Pressable
+                key={q.en}
+                onPress={() => handleSend(bn ? q.bn : q.en)}
+                accessibilityRole="button"
+                accessibilityLabel={L(`Send: ${q.en}`, `পাঠান: ${q.bn}`)}
+                testID={`support-quick-${i}`}
+                style={({ pressed }) => ({
+                  paddingHorizontal: 14,
+                  height: 34,
+                  borderRadius: 17,
+                  justifyContent: "center",
+                  backgroundColor: pressed ? theme.primary + "30" : theme.primary + "18",
+                })}
+              >
+                <ThemedText style={{ color: theme.primary, fontSize: 13.5, fontWeight: "600" }} numberOfLines={1}>
+                  {bn ? q.bn : q.en}
+                </ThemedText>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
+        <View style={[styles.inputContainer, { backgroundColor: theme.backgroundRoot }]}>
+          {isRecording ? (
+            <View style={styles.recordingContainer}>
+              <Pressable style={styles.iconButton} onPress={cancelRecording} hitSlop={8} accessibilityRole="button" accessibilityLabel={L("Cancel voice message", "ভয়েস মেসেজ বাতিল")}>
+                <Feather name="trash-2" size={22} color={theme.error} />
+              </Pressable>
+              <View style={[styles.recordingIndicator, { backgroundColor: "#DC2626" }]} />
+              <ThemedText style={[styles.recordingText, { color: theme.text }]}>
+                {formatVoiceTime(voice.durationMs)}
+                <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>
+                  {voice.durationMs > 100000 ? `  ${L("max", "সর্বোচ্চ")} 2:00` : `  ${L("Recording…", "রেকর্ড হচ্ছে…")}`}
+                </ThemedText>
+              </ThemedText>
+              <Pressable style={[styles.iconButton, styles.sendButton, { backgroundColor: theme.primary }]} onPress={stopRecording} accessibilityRole="button" accessibilityLabel={L("Send voice message", "ভয়েস মেসেজ পাঠান")}>
+                <MaterialCommunityIcons name="send" size={20} color={theme.white} />
+              </Pressable>
+            </View>
+          ) : (
+            <>
+              <Pressable style={styles.iconButton} onPress={handleMediaButton} accessibilityRole="button" accessibilityLabel={L("Send a photo", "ছবি পাঠান")} testID="support-plus">
+                <MaterialCommunityIcons name="plus-circle-outline" size={28} color={theme.primary} />
+              </Pressable>
+              <View style={[styles.textInputWrapper, { backgroundColor: theme.surface }]}>
+                <TextInput
+                  testID="support-input"
+                  style={[styles.textInput, { color: theme.text, height: inputHeight }]}
+                  placeholder={L("Type a message...", "মেসেজ লিখুন...")}
+                  placeholderTextColor={theme.textSecondary}
+                  value={inputText}
+                  onChangeText={setInputText}
+                  onContentSizeChange={handleContentSizeChange}
+                  multiline
+                  maxLength={2000}
+                  onKeyPress={(e: any) => {
+                    if (Platform.OS === "web" && e?.nativeEvent?.key === "Enter" && !e?.nativeEvent?.shiftKey) {
+                      e.preventDefault?.();
+                      handleSend();
+                    }
+                  }}
+                />
+              </View>
+              {inputText.trim() ? (
+                <Pressable style={[styles.iconButton, styles.sendButton, { backgroundColor: theme.primary }]} onPress={() => handleSend()} accessibilityRole="button" accessibilityLabel={L("Send message", "মেসেজ পাঠান")} testID="support-send">
+                  <MaterialCommunityIcons name="send" size={20} color={theme.white} />
+                </Pressable>
+              ) : (
+                <Pressable style={[styles.iconButton, styles.micButton, { backgroundColor: theme.primary }]} onPress={startRecording} accessibilityRole="button" accessibilityLabel={L("Record voice message", "ভয়েস মেসেজ রেকর্ড করুন")} testID="support-mic">
+                  <MaterialCommunityIcons name="microphone" size={22} color={theme.white} />
+                </Pressable>
+              )}
+            </>
+          )}
+        </View>
+      </Animated.View>
+
+      <PhotoViewer images={viewerPhoto ? [viewerPhoto] : []} visible={!!viewerPhoto} onClose={() => setViewerPhoto(null)} />
+      <Modal visible={showMediaMenu} transparent animationType="fade" onRequestClose={() => setShowMediaMenu(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setShowMediaMenu(false)}>
+          <View style={[styles.mediaMenuContainer, { backgroundColor: theme.surface }]}>
+            <ThemedText type="h4" style={[styles.mediaMenuTitle, { color: theme.text }]}>{L("Send a photo", "ছবি পাঠান")}</ThemedText>
+            <View style={styles.mediaMenuOptions}>
+              <Pressable style={[styles.mediaOption, { backgroundColor: theme.backgroundDefault }]} onPress={() => { setShowMediaMenu(false); openCamera(); }} testID="support-camera">
+                <View style={[styles.mediaOptionIcon, { backgroundColor: theme.primary + "20" }]}>
+                  <Feather name="camera" size={24} color={theme.primary} />
+                </View>
+                <ThemedText style={[styles.mediaOptionText, { color: theme.text }]}>{L("Camera", "ক্যামেরা")}</ThemedText>
+              </Pressable>
+              <Pressable style={[styles.mediaOption, { backgroundColor: theme.backgroundDefault }]} onPress={() => { setShowMediaMenu(false); openGallery(); }} testID="support-gallery">
+                <View style={[styles.mediaOptionIcon, { backgroundColor: theme.success + "20" }]}>
+                  <Feather name="image" size={24} color={theme.success} />
+                </View>
+                <ThemedText style={[styles.mediaOptionText, { color: theme.text }]}>{L("Gallery", "গ্যালারি")}</ThemedText>
+              </Pressable>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+    </KeyboardAvoidingScreen>
   );
 }

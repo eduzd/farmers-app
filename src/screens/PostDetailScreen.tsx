@@ -552,7 +552,7 @@ export default function PostDetailScreen() {
             size="medium" 
             isWelfareMember={post.author.isWelfareMember}
             badge={post.author.badge}
-            userId={shared ? (post.author as any).id : undefined}
+            userId={(post.author as any).id || undefined}
           />
           <View style={styles.authorInfo}>
             <ThemedText style={[styles.authorName, { color: theme.text }]}>

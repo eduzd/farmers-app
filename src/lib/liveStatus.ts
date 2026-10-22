@@ -73,6 +73,9 @@ export function badgeText(n: number): string {
 // ---------- presence ----------
 const watched = new Map<string, number>(); // userId -> how many avatars show it
 let online = new Set<string>();
+// Real accounts the server answered about (online or not). Only these get a gray "offline" dot;
+// sample people with no account, or no server answer, get no dot at all.
+let known = new Set<string>();
 const listeners = new Set<() => void>();
 let queryTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -85,8 +88,9 @@ async function queryPresence() {
   const t = token();
   const ids = [...watched.keys()];
   if (!t || !ids.length) {
-    if (online.size) {
+    if (online.size || known.size) {
       online = new Set();
+      known = new Set();
       emit();
     }
     return;
@@ -100,9 +104,11 @@ async function queryPresence() {
     if (!r.ok) throw new Error(String(r.status));
     const j = await r.json();
     online = new Set(Array.isArray(j.online) ? j.online : []);
+    known = new Set([...(Array.isArray(j.known) ? j.known : []), ...online]);
   } catch {
-    // Server not reachable: show nobody online rather than an old guess.
+    // Server not reachable: show no dots rather than an old guess.
     online = new Set();
+    known = new Set();
   }
   emit();
 }
@@ -138,6 +144,40 @@ export function useIsOnline(userId?: string | null): boolean {
   );
 }
 
+/** The ids the server says are online right now (a new Set object after every change). */
+export function useOnlineSet(): Set<string> {
+  return useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => {
+        listeners.delete(cb);
+      };
+    },
+    () => online,
+    () => online,
+  );
+}
+
+export type Presence = "online" | "offline" | null;
+
+/**
+ * "online" while the server says this person has the app open, "offline" for a real account
+ * that doesn't, null when unknown (no account, signed out, or no server answer).
+ */
+export function usePresence(userId?: string | null): Presence {
+  useEffect(() => (userId ? watch(userId) : undefined), [userId]);
+  return useSyncExternalStore(
+    (cb) => {
+      listeners.add(cb);
+      return () => {
+        listeners.delete(cb);
+      };
+    },
+    () => (!userId ? null : online.has(userId) ? "online" : known.has(userId) ? "offline" : null),
+    () => null,
+  );
+}
+
 function beat(state: "active" | "away") {
   const t = token();
   if (!t) return;
@@ -155,6 +195,7 @@ export function useLiveStatus() {
     if (!userId) {
       useUnreadCounts.getState().set({ notifications: 0, messages: 0 });
       online = new Set();
+      known = new Set();
       emit();
       return;
     }

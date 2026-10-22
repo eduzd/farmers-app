@@ -142,17 +142,12 @@ const { PGlite } = require('@electric-sql/pglite');
             r["overflow_home"] = await pg.evaluate(OVERFLOW_JS)
             await pg.screenshot(path=f"{SHOTS}/home-help-{lang}-360.png")
             if r["help_button"]:
-                await hb.first.click()
-                await pg.wait_for_timeout(800)
-                r["popup"] = await pg.locator('[data-testid="help-popup"]').count()
-                await pg.screenshot(path=f"{SHOTS}/help-popup-{lang}-360.png")
-                msg = "My order hasn't arrived yet" if lang == "en" else "আমার অর্ডার এখনও আসেনি"
-                await pg.locator('[data-testid="help-input"]').fill(msg)
-                await pg.locator('[data-testid="help-send"]').click()
-                await pg.wait_for_timeout(1500)
-                r["sent_text"] = (await pg.locator('[data-testid="help-popup"]').inner_text())[:120]
-                await pg.locator('[data-testid="help-open-chat"]').click()
+                await hb.first.click()  # Help goes straight to the Support chat (no popup any more)
                 await pg.wait_for_timeout(2500)
+                msg = "My order hasn't arrived yet" if lang == "en" else "আমার অর্ডার এখনও আসেনি"
+                await pg.locator('[data-testid="support-input"]').fill(msg)
+                await pg.locator('[data-testid="support-send"]').click()
+                await pg.wait_for_timeout(2000)
                 r["chat_open"] = await pg.locator('[data-testid="support-chat"]').count()
                 r["chat_has_msg"] = await pg.get_by_text(msg).count()
                 r["overflow_chat"] = await pg.evaluate(OVERFLOW_JS)

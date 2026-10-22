@@ -9,7 +9,7 @@ import { Shadows } from "@/constants/theme";
 import { NotionFace, AVATAR_OPTIONS } from "@/components/AvatarPicker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { PROFILE_BADGES } from "@/constants/profileBadges";
-import { useIsOnline } from "@/lib/liveStatus";
+import { usePresence } from "@/lib/liveStatus";
 
 interface UserAvatarProps {
   /** Shown when there is no photo/avatar. Derived from `name` if omitted. */
@@ -23,9 +23,12 @@ interface UserAvatarProps {
   avatarColor?: string;
   /** Profile badge key (farming category or role), shown on the bottom-left. */
   badge?: string;
-  /** The person's account id. When given, a green dot shows bottom-right while the server
-   *  says they have the app open right now (real presence, never guessed). */
+  /** The person's account id. When given, a dot shows bottom-right: green while the server
+   *  says they have the app open right now, gray when they don't (real presence, never guessed;
+   *  no dot for sample people without an account). */
   userId?: string;
+  /** Presence decided by the caller (e.g. "Support" = any admin online). Overrides userId's. */
+  presence?: "online" | "offline" | null;
   style?: ViewStyle;
 }
 
@@ -85,10 +88,12 @@ export function UserAvatar({
   avatarColor,
   badge,
   userId,
+  presence: presenceProp,
   style 
 }: UserAvatarProps) {
   const { theme } = useTheme();
-  const isOnline = useIsOnline(userId);
+  const watchedPresence = usePresence(presenceProp === undefined ? userId : undefined);
+  const presence = presenceProp === undefined ? watchedPresence : presenceProp;
   const sizeConfig =
     typeof size === "number"
       ? { avatar: size, fontSize: Math.round(size * 0.36), badge: Math.round(size * 0.38), badgeIcon: Math.round(size * 0.2) }
@@ -175,13 +180,14 @@ export function UserAvatar({
           <VerifiedBadge size={Math.max(14, Math.round(sizeConfig.avatar * 0.34))} color="#00A86B" />
         </View>
       ) : null}
-      {isOnline ? (
+      {presence ? (
         <View
-          accessibilityLabel="Online"
-          testID="online-dot"
+          accessibilityLabel={presence === "online" ? "Online" : "Offline"}
+          testID={presence === "online" ? "online-dot" : "offline-dot"}
           style={[
             styles.onlineDot,
             {
+              backgroundColor: presence === "online" ? "#22C55E" : "#9CA3AF",
               width: onlineSize,
               height: onlineSize,
               borderRadius: onlineSize / 2,

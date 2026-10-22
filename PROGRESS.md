@@ -241,3 +241,24 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
 - Checks: tsc 0 errors; check-admin-app 57/57; check-photos-connect 31/31; tests/check-chat-icon-web.py en+bn 320/360/390 pass.
 - Left: admin-managed carousel ads; admin APK; language gaps (profile role/following in Bangla in English mode, calculator inner pages,
   ledger, reports, seller hub, market, admin); unread badges clearing instantly; real-phone tests.
+
+## 2026-10-22: Support chat = Messages look, green/gray dots, Help count, Connect filter, Profile header icons
+- Support (Help) chat rewritten (src/screens/SupportChatScreen.tsx) on the normal chat's styles (ChatScreen exports chatStyles):
+  same header/bubbles/composer, plus button (Camera/Gallery) for photos, mic for voice messages, header name "Support / সাপোর্ট".
+  Ready-made help messages (7, en/bn) as chips above the composer; tapping one sends it as the user's own message.
+  No fake admin messages. Failed sends show "Tap to retry".
+- Server (server/adminAppRoutes.ts): support_messages + kind/media_id/width/height/duration_ms, new support_media table;
+  POST /api/support/photo, POST /api/support/voice, GET /api/support/media/:id (thread owner or super admin, else 404).
+  /api/support/unread and /api/support/thread also return adminsOnline (any admin present). Media ids start "sp-";
+  dmApi routes "sp-" ids to /api/support/media so ChatPhoto / VoiceMessagePlayer work unchanged. Admin ThreadView shows photos/voice.
+- Help: home "?" button goes straight to the Support chat (popup removed); it and the Connect Help FAB show the unread
+  admin-reply COUNT (CountBadge), shared store useSupportStatus, re-checked every 15 s and on app focus; opening the chat clears it.
+- Presence dots: /api/presence/query also returns "known" (real accounts). UserAvatar: green = online, gray = real account offline,
+  no dot for sample people / no server answer. usePresence + useOnlineSet in liveStatus. Home feed + post detail avatars now pass userId.
+- Connect: filter icon (sliders) in the title bar, top right -> sheet with "Online now" and Specialty; highlighted when a filter is on.
+- Profile: Edit-profile button under the name removed; pencil (edit) + share icons in the title bar, top right.
+- Home: create-post floating button now shows a plus instead of the pen (same function).
+- Checks: tsc 0 errors; check-admin-app 57/57; check-photos-connect 31/31; check-chat 43/43;
+  tests/check-support-chat-web.py (en+bn 320/360/390) pass; tests/check-admin-web.py updated for the no-popup Help, pass.
+- Left: admin can only reply with text (sees user photos/voice); presence counts an admin as online for ~70 s after they leave;
+  real-phone tests (camera, mic recording on Android/iOS) not done; signed-in live check not done.

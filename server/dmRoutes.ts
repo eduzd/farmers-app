@@ -93,16 +93,16 @@ function initials(name?: string | null) {
     .substring(0, 2);
 }
 
-const MAX_VOICE_BYTES = 3 * 1024 * 1024; // ~3 MB, about 6 minutes at 64 kbps (the app stops at 2)
-const MAX_VOICE_MS = 3 * 60 * 1000;
-const VOICE_MIME = new Set(["audio/mp4", "audio/m4a", "audio/x-m4a", "audio/aac", "audio/webm", "audio/ogg", "audio/mpeg", "audio/3gpp", "audio/wav", "audio/x-wav"]);
+export const MAX_VOICE_BYTES = 3 * 1024 * 1024; // ~3 MB, about 6 minutes at 64 kbps (the app stops at 2)
+export const MAX_VOICE_MS = 3 * 60 * 1000;
+export const VOICE_MIME = new Set(["audio/mp4", "audio/m4a", "audio/x-m4a", "audio/aac", "audio/webm", "audio/ogg", "audio/mpeg", "audio/3gpp", "audio/wav", "audio/x-wav"]);
 const VOICE_LABEL = "\u{1F3A4} Voice message";
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // the app shrinks photos to about 1600px first, usually well under 1 MB
-const IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"]);
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // the app shrinks photos to about 1600px first, usually well under 1 MB
+export const IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"]);
 const PHOTO_LABEL = "\u{1F4F7} Photo";
 
 /** Check a base64 / data-URL upload. Returns the clean base64, mime and byte size, or an error message. */
-function decodeUpload(raw: unknown, mimeIn: unknown, fallbackMime: string) {
+export function decodeUpload(raw: unknown, mimeIn: unknown, fallbackMime: string) {
   let b64 = String(raw ?? "");
   const dataUrl = /^data:([^;,]+)[^,]*,/.exec(b64);
   if (dataUrl) b64 = b64.slice(dataUrl[0].length);
@@ -114,7 +114,7 @@ function decodeUpload(raw: unknown, mimeIn: unknown, fallbackMime: string) {
 }
 
 /** First bytes of real image files, so a renamed file can't be sent as a photo. */
-function looksLikeImage(b64: string, mime: string): boolean {
+export function looksLikeImage(b64: string, mime: string): boolean {
   const head = Buffer.from(b64.slice(0, 24), "base64");
   const hex = head.toString("hex");
   if (mime === "image/jpeg") return hex.startsWith("ffd8ff");

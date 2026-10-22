@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -29,7 +29,8 @@ import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
 
 import { ChatIcon } from "@/components/icons/ChatIcon";
-import { useIsOnline } from "@/lib/liveStatus";
+import { useIsOnline, useOnlineSet } from "@/lib/liveStatus";
+import { IconButton } from "@/components/ui";
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 interface Field {
@@ -85,6 +86,27 @@ export default function ConnectScreen() {
   const [error, setError] = useState<string | null>(null);
   const [mine, setMine] = useState<MyExpertProfile | null>(null);
   const [editing, setEditing] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [onlineOnly, setOnlineOnly] = useState(false);
+  const onlineSet = useOnlineSet();
+  const activeFilters = (field ? 1 : 0) + (onlineOnly ? 1 : 0);
+
+  // Filter icon in the title bar, top right: specialty + "online now".
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ marginRight: Spacing.lg }} testID="connect-filter-button">
+          <IconButton
+            icon="sliders"
+            size={38}
+            tone={activeFilters ? "primary" : "surface"}
+            accessibilityLabel={bn ? "ফিল্টার" : "Filter"}
+            onPress={() => setFilterOpen(true)}
+          />
+        </View>
+      ),
+    } as any);
+  }, [navigation, activeFilters, bn]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 300);
@@ -306,7 +328,7 @@ export default function ConnectScreen() {
     <View style={styles.empty}>
       <Feather name="users" size={28} color={theme.textSecondary} />
       <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
-        {field || debounced
+        {field || debounced || onlineOnly
           ? L("No experts match this search yet.", "এই খোঁজে এখনো কোনো বিশেষজ্ঞ নেই।")
           : L(
               "No experts have joined yet. Accounts that sign up as an expert show up here.",
@@ -319,7 +341,7 @@ export default function ConnectScreen() {
   return (
     <View style={[styles.root, { backgroundColor: theme.backgroundRoot }]}>
       <FlatList
-        data={items}
+        data={onlineOnly ? items.filter((p) => onlineSet.has(p.id)) : items}
         keyExtractor={(p) => p.id}
         renderItem={renderItem}
         ListHeaderComponent={header}
@@ -330,6 +352,54 @@ export default function ConnectScreen() {
         ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
       />
       <HelpFab bottom={tabBarHeight + 16} testID="connect-help-fab" />
+      <Modal visible={filterOpen} transparent animationType="fade" onRequestClose={() => setFilterOpen(false)}>
+        <Pressable style={styles.filterBackdrop} onPress={() => setFilterOpen(false)}>
+          <Pressable onPress={() => {}} style={[styles.filterSheet, { backgroundColor: theme.backgroundDefault }]} testID="connect-filter-sheet">
+            <View style={styles.filterHead}>
+              <ThemedText style={styles.filterTitle}>{L("Filter experts", "বিশেষজ্ঞ ফিল্টার")}</ThemedText>
+              {activeFilters ? (
+                <Pressable onPress={() => { setField(null); setOnlineOnly(false); }} hitSlop={8} testID="connect-filter-clear">
+                  <ThemedText style={{ color: theme.primary, fontWeight: "700" }}>{L("Clear", "মুছুন")}</ThemedText>
+                </Pressable>
+              ) : null}
+            </View>
+            <Pressable
+              onPress={() => setOnlineOnly((v) => !v)}
+              style={[styles.filterRow, { borderColor: theme.border }]}
+              testID="connect-filter-online"
+              accessibilityRole="switch"
+              accessibilityState={{ checked: onlineOnly }}
+            >
+              <View style={[styles.dotSample, { backgroundColor: "#22C55E" }]} />
+              <ThemedText style={{ flex: 1 }}>{L("Online now", "এখন অনলাইন")}</ThemedText>
+              <Feather name={onlineOnly ? "check-square" : "square"} size={20} color={onlineOnly ? theme.primary : theme.textSecondary} />
+            </Pressable>
+            <ThemedText style={[styles.filterLabel, { color: theme.textSecondary }]}>{L("Specialty", "বিশেষত্ব")}</ThemedText>
+            <ScrollView style={{ maxHeight: 320 }}>
+              {[{ id: "", label: "All", labelBn: "সব" }, ...fields].map((f) => {
+                const active = (field || "") === f.id;
+                return (
+                  <Pressable
+                    key={f.id || "all"}
+                    onPress={() => setField(f.id || null)}
+                    style={[styles.filterRow, { borderColor: theme.border }]}
+                    testID={`connect-filter-field-${f.id || "all"}`}
+                  >
+                    <ThemedText style={{ flex: 1, color: active ? theme.primary : theme.text, fontWeight: active ? "700" : "400" }}>
+                      {bn ? f.labelBn : f.label}
+                    </ThemedText>
+                    {active ? <Feather name="check" size={18} color={theme.primary} /> : null}
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Pressable onPress={() => setFilterOpen(false)} style={[styles.filterDone, { backgroundColor: theme.primary }]} testID="connect-filter-done">
+              <ThemedText style={{ color: "#fff", fontWeight: "700" }}>{L("Show results", "ফলাফল দেখুন")}</ThemedText>
+            </Pressable>
+            <ModalBottomInset />
+          </Pressable>
+        </Pressable>
+      </Modal>
       {mine?.isExpert ? (
         <ExpertProfileEditor
           visible={editing}
@@ -450,6 +520,14 @@ function ExpertProfileEditor({
 }
 
 const styles = StyleSheet.create({
+  filterBackdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "flex-end" },
+  filterSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: Spacing.lg, width: "100%", maxWidth: 720, alignSelf: "center" },
+  filterHead: { flexDirection: "row", alignItems: "center", marginBottom: Spacing.sm },
+  filterTitle: { flex: 1, fontSize: 18, fontWeight: "700" },
+  filterLabel: { marginTop: Spacing.md, marginBottom: 4, fontSize: 13, fontWeight: "600" },
+  filterRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
+  dotSample: { width: 10, height: 10, borderRadius: 5 },
+  filterDone: { marginTop: Spacing.md, height: 46, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   root: { flex: 1 },
   intro: { fontSize: 13, lineHeight: 19, marginBottom: Spacing.md },
   search: {

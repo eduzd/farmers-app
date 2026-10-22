@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useState, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -37,7 +37,8 @@ import { useI18n } from "@/lib/i18n";
 import { useCompanyStore } from "@/lib/companyStore";
 import { CommunitySwitcher, CommunitySwitcherRef } from "@/components/CommunitySwitcher";
 
-import { EmptyState } from "@/components/ui";
+import { EmptyState, IconButton } from "@/components/ui";
+import { shareText } from "@/lib/share";
 import { AppIcon } from "@/components/icons/AppIcon";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -171,6 +172,39 @@ export default function ProfileScreen() {
     }, [user?.id, language])
   );
 
+  // Edit (pencil) and Share sit in the title bar, top right, instead of a button under the name.
+  const isBnHeader = language === "bn";
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () =>
+        user ? (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginRight: Spacing.lg }}>
+            <IconButton
+              icon="share-2"
+              size={38}
+              accessibilityLabel={isBnHeader ? "প্রোফাইল শেয়ার করুন" : "Share profile"}
+              onPress={() =>
+                shareText(
+                  user.name || "Farmers",
+                  isBnHeader
+                    ? `কৃষক বন্ধু অ্যাপে ${user.name}${user.username ? ` (@${user.username})` : ""}-কে খুঁজুন`
+                    : `Find ${user.name}${user.username ? ` (@${user.username})` : ""} on Farmers`,
+                )
+              }
+            />
+            <View testID="profile-edit-button">
+              <IconButton
+                icon="edit-2"
+                size={38}
+                accessibilityLabel={isBnHeader ? "প্রোফাইল এডিট করুন" : "Edit profile"}
+                onPress={() => navigation.navigate("Settings", { openEditProfile: true })}
+              />
+            </View>
+          </View>
+        ) : null,
+    } as any);
+  }, [navigation, user?.id, user?.name, user?.username, isBnHeader]);
+
   const handleMenuPress = (item: typeof MENU_ITEMS[0]) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (item.screen) {
@@ -261,17 +295,6 @@ export default function ProfileScreen() {
         <ThemedText type="body" style={[styles.profileEmail, { color: theme.textSecondary }]}>
           {user?.email || ""}
         </ThemedText>
-        {user ? (
-          <Pressable
-            onPress={() => navigation.navigate("Settings", { openEditProfile: true })}
-            style={[styles.editProfileBtn, { borderColor: theme.primary }]}
-            accessibilityRole="button"
-            testID="profile-edit-button"
-          >
-            <Feather name="edit-2" size={14} color={theme.primary} />
-            <ThemedText style={{ color: theme.primary, fontWeight: "600", fontSize: 14 }}>{tr("প্রোফাইল এডিট করুন")}</ThemedText>
-          </Pressable>
-        ) : null}
         <View style={styles.badgeContainer}>
           {(() => {
             // Same icon, colour and shape as the badge on the avatar, so each category looks different.

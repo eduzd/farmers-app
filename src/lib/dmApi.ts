@@ -186,6 +186,57 @@ export async function sendImage(
   );
 }
 
+/** Help-chat (Support) files have ids starting "sp-" and live under /api/support/media. */
+function mediaPath(mediaId: string): string {
+  return mediaId.startsWith("sp-") ? `/api/support/media/${enc(mediaId)}` : `/api/dm/media/${enc(mediaId)}`;
+}
+
+/** Read a finished recording as base64 + mime (phone file, or a blob: URL in a browser). */
+export async function readRecording(recordingUri: string): Promise<{ audio: string; mime: string }> {
+  if (Platform.OS === "web") {
+    const blob = await (await fetch(recordingUri)).blob();
+    return { mime: (blob.type || "audio/webm").split(";")[0], audio: await blobToDataUrl(blob) };
+  }
+  return {
+    mime: guessMime(recordingUri),
+    audio: await FileSystem.readAsStringAsync(recordingUri, { encoding: FileSystem.EncodingType.Base64 }),
+  };
+}
+
+// ---- Help chat (Support): same kinds of messages as a normal chat, sent to the Farmers admins ----
+export interface SupportMessage {
+  id: string;
+  body: string;
+  kind: "text" | "image" | "voice";
+  mediaId: string | null;
+  width?: number;
+  height?: number;
+  durationMs?: number;
+  fromAdmin: boolean;
+  senderId: string;
+  senderName: string;
+  clientId: string | null;
+  createdAt: string;
+}
+export interface SupportThreadPage {
+  thread: { id: string; userUnread: number } | null;
+  messages: SupportMessage[];
+  adminsOnline?: boolean;
+}
+export function fetchSupportThread(): Promise<SupportThreadPage> {
+  return request<SupportThreadPage>("GET", "/api/support/thread");
+}
+export function sendSupportText(body: string, clientId: string): Promise<{ message: SupportMessage }> {
+  return request("POST", "/api/support/messages", { body, clientId });
+}
+export function sendSupportPhoto(photo: { base64: string; mime: string; width?: number; height?: number }, clientId: string): Promise<{ message: SupportMessage }> {
+  return request("POST", "/api/support/photo", { image: photo.base64, mime: photo.mime, width: photo.width, height: photo.height, clientId }, PHOTO_TIMEOUT_MS);
+}
+export async function sendSupportVoice(recordingUri: string, durationMs: number, clientId: string): Promise<{ message: SupportMessage }> {
+  const { audio, mime } = await readRecording(recordingUri);
+  return request("POST", "/api/support/voice", { audio, mime, durationMs: Math.round(durationMs), clientId }, VOICE_TIMEOUT_MS);
+}
+
 const photoUris = new Map<string, string>();
 
 /** Remember the photo I just sent, so it shows from the phone without downloading it again. */
@@ -202,7 +253,7 @@ export async function photoDisplayUri(mediaId: string): Promise<string> {
   if (known) return known;
   const t = token();
   if (!t) throw new DmError("Please sign in first", 401);
-  const src = url(`/api/dm/media/${enc(mediaId)}`);
+  const src = url(mediaPath(mediaId));
   if (Platform.OS === "web") {
     const res = await fetch(src, { headers: { Authorization: `Bearer ${t}` } });
     if (!res.ok) throw new DmError("Couldn't load the photo", res.status);
@@ -247,7 +298,7 @@ export async function voicePlaybackUri(mediaId: string): Promise<string> {
   if (known) return known;
   const t = token();
   if (!t) throw new DmError("Please sign in first", 401);
-  const src = url(`/api/dm/media/${enc(mediaId)}`);
+  const src = url(mediaPath(mediaId));
   if (Platform.OS === "web") {
     const res = await fetch(src, { headers: { Authorization: `Bearer ${t}` } });
     if (!res.ok) throw new DmError("Couldn't load the voice message", res.status);

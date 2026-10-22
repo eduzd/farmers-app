@@ -578,7 +578,7 @@ export default function CommunityScreen() {
             avatarColor={item.author.avatarColor}
             badge={item.author.badge}
             size={42}
-            userId={item.shared ? item.author.id : undefined}
+            userId={item.author.id || undefined}
           />
           <View style={{ flex: 1 }}>
             <View style={styles.nameRow}>
@@ -727,7 +727,8 @@ export default function CommunityScreen() {
           },
         ]}
       >
-        <Feather name="edit-3" size={22} color="#FFFFFF" />
+        {/* Plus = make something new (a post). The pencil is kept for editing, e.g. Edit profile. */}
+        <Feather name="plus" size={26} color="#FFFFFF" />
       </Pressable>
 
       <Modal visible={showCreatePost} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowCreatePost(false)}>

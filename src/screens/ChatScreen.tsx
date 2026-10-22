@@ -1780,3 +1780,4 @@ const styles = StyleSheet.create({
     fontFamily: "PlusJakartaSans_500Medium",
   },
 });
+export { styles as chatStyles };

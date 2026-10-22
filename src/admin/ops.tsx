@@ -11,6 +11,9 @@ import {
 import { OrderRow } from "./shop";
 
 import { AppIcon } from "@/components/icons/AppIcon";
+import { ChatPhoto } from "@/components/ChatPhoto";
+import { VoiceMessagePlayer } from "@/components/VoiceMessagePlayer";
+import { PhotoViewer } from "@/components/PhotoViewer";
 /* ======================= HOME ======================= */
 export function HomeTab({ supportUnread }: { supportUnread: number }) {
   const nav = useAdminNav();
@@ -233,6 +236,7 @@ export function ThreadView({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const scroll = useRef<ScrollView>(null);
+  const [viewer, setViewer] = useState<string | null>(null);
   useEffect(() => { nav.refreshBadges(); }, [th.data?.messages?.length]);
   useEffect(() => {
     const t = setInterval(() => th.load(), 6000);
@@ -264,9 +268,18 @@ export function ThreadView({ id }: { id: string }) {
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}>
         {th.data.messages.map((m: any) => (
           <View key={m.id} style={{ alignSelf: m.fromAdmin ? "flex-end" : "flex-start", maxWidth: "82%" }}>
-            <View style={{ backgroundColor: m.fromAdmin ? theme.primary : theme.card, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8, borderWidth: m.fromAdmin ? 0 : 1, borderColor: theme.cardBorder }}>
-              <Text style={{ color: m.fromAdmin ? "#fff" : theme.text, fontSize: 14.5 }}>{m.body}</Text>
-            </View>
+            {m.kind === "image" && m.mediaId ? (
+              <ChatPhoto mediaId={m.mediaId} width={m.width} height={m.height} onOpen={(uri) => setViewer(uri)} />
+            ) : m.kind === "voice" && m.mediaId ? (
+              <View style={{ backgroundColor: m.fromAdmin ? theme.primary : theme.card, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 }}>
+                <VoiceMessagePlayer mediaId={m.mediaId} durationMs={m.durationMs ?? null} isMe={!!m.fromAdmin}
+                  tint={m.fromAdmin ? "#fff" : theme.primary} trackColor={m.fromAdmin ? "rgba(255,255,255,0.35)" : theme.primary + "30"} textColor={m.fromAdmin ? "#fff" : theme.textSecondary} />
+              </View>
+            ) : (
+              <View style={{ backgroundColor: m.fromAdmin ? theme.primary : theme.card, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8, borderWidth: m.fromAdmin ? 0 : 1, borderColor: theme.cardBorder }}>
+                <Text style={{ color: m.fromAdmin ? "#fff" : theme.text, fontSize: 14.5 }}>{m.body}</Text>
+              </View>
+            )}
             <Text style={{ color: theme.textTertiary, fontSize: 10.5, marginTop: 2, textAlign: m.fromAdmin ? "right" : "left" }}>
               {m.fromAdmin ? `${m.senderName || L("Admin", "অ্যাডমিন")} · ` : ""}{fmtDate(m.createdAt)}
             </Text>
@@ -281,6 +294,7 @@ export function ThreadView({ id }: { id: string }) {
           <Feather name="send" size={18} color="#fff" />
         </Pressable>
       </View>
+      <PhotoViewer images={viewer ? [viewer] : []} visible={!!viewer} onClose={() => setViewer(null)} />
     </KeyboardAvoidingView>
   );
 }

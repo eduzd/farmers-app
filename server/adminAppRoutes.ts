@@ -3,6 +3,8 @@ import crypto from "crypto";
 import { sql } from "drizzle-orm";
 import { db } from "./db";
 import { notify } from "./featureRoutes";
+import { decodeUpload, looksLikeImage, IMAGE_MIME, MAX_IMAGE_BYTES, VOICE_MIME, MAX_VOICE_BYTES, MAX_VOICE_MS } from "./dmRoutes";
+import { isUserPresent } from "./communityRoutes";
 import {
   rows, J, iso, str, wrap, requireUser, requireAdmin, audit, storeOut, itemOut, slugify, productFields, storeFields, ensurePlatform,
 } from "./platformRoutes";
@@ -15,7 +17,10 @@ import {
  *  Users (signed in, the account always comes from the token, never from the request):
  *    GET  /api/support/thread                        my own support conversation + messages (marks admin replies read)
  *    POST /api/support/messages {body, clientId?}    write to the admin (opens / reopens my conversation)
- *    GET  /api/support/unread                        admin replies I haven't read
+ *    GET  /api/support/unread                        admin replies I haven't read (+ adminsOnline: a Farmers admin has the app open now)
+ *    POST /api/support/photo {image, mime, width?, height?, clientId?}   send a photo to the admins
+ *    POST /api/support/voice {audio, mime, durationMs, clientId?}        send a voice message to the admins
+ *    GET  /api/support/media/:id                     a support photo / voice file (the conversation's user, or an admin)
  *  Admin (/api/admin/manage/*, requireAdmin = signed-in, is_super_admin, not banned, checked on every request):
  *    categories:  GET/POST /categories, PUT/DELETE /categories/:id (?reassign=slug), POST /categories/reorder
  *    shop:        GET /shop/overview, GET /products (q, category, storeId, ownerId, status), GET/PUT/DELETE /products/:id,
@@ -68,6 +73,15 @@ export function ensureAdminApp() {
         id varchar PRIMARY KEY, thread_id varchar NOT NULL, sender_id varchar NOT NULL, from_admin boolean NOT NULL DEFAULT false,
         body text NOT NULL, client_id varchar, created_at timestamp NOT NULL DEFAULT now())`);
       await q(sql`CREATE INDEX IF NOT EXISTS support_messages_thread_idx ON support_messages (thread_id, created_at)`);
+      // Help chat works like the normal chat: text, photos and voice messages.
+      await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS kind varchar NOT NULL DEFAULT 'text'`);
+      await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS media_id varchar`);
+      await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS width integer`);
+      await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS height integer`);
+      await q(sql`ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS duration_ms integer`);
+      await q(sql`CREATE TABLE IF NOT EXISTS support_media (
+        id varchar PRIMARY KEY, thread_id varchar NOT NULL, sender_id varchar NOT NULL, mime varchar NOT NULL,
+        size integer NOT NULL DEFAULT 0, data bytea NOT NULL, created_at timestamp NOT NULL DEFAULT now())`);
     })();
     ready.catch(() => (ready = null));
   }
@@ -141,7 +155,18 @@ const threadOut = (t: any) => ({
   adminUnread: Number(t.admin_unread || 0), userUnread: Number(t.user_unread || 0), lastMessageAt: iso(t.last_message_at), createdAt: iso(t.created_at),
   userName: t.user_name || t.username || "", userEmail: t.user_email || "", userPhone: t.user_phone || "", userAvatar: t.user_avatar || "",
 });
-const msgOut = (m: any) => ({ id: m.id, body: m.body, fromAdmin: !!m.from_admin, senderId: m.sender_id, senderName: m.sender_name || "", clientId: m.client_id || null, createdAt: iso(m.created_at) });
+const msgOut = (m: any) => ({
+  id: m.id, body: m.body, kind: m.kind || "text", mediaId: m.media_id || null,
+  width: m.width ? Number(m.width) : undefined, height: m.height ? Number(m.height) : undefined,
+  durationMs: m.duration_ms ? Number(m.duration_ms) : undefined,
+  fromAdmin: !!m.from_admin, senderId: m.sender_id, senderName: m.sender_name || "", clientId: m.client_id || null, createdAt: iso(m.created_at),
+});
+const PHOTO_LABEL = "\u{1F4F7} Photo";
+const VOICE_LABEL = "\u{1F3A4} Voice message";
+/** true while at least one Farmers admin has the app open (real presence, same as the green dots). */
+async function adminsOnline(): Promise<boolean> {
+  return (await admins()).some((a) => isUserPresent(a));
+}
 
 export function registerAdminAppRoutes(app: Express) {
   ensureAdminApp().catch((e) => console.error("[admin-app] init", e?.message));
@@ -418,43 +443,100 @@ export function registerAdminAppRoutes(app: Express) {
   app.get("/api/support/thread", requireUser, w(async (req, res) => {
     const uid = (req as any).uid;
     const t = await myThread(uid);
-    if (!t) return res.json({ thread: null, messages: [] });
+    const online = await adminsOnline();
+    if (!t) return res.json({ thread: null, messages: [], adminsOnline: online });
     if (Number(t.user_unread) > 0) await db.execute(sql`UPDATE support_threads SET user_unread = 0 WHERE id = ${t.id} AND user_id = ${uid}`);
     const msgs = (await messages(t.id)).map((m) => ({ ...m, senderName: m.fromAdmin ? "Farmers Support" : m.senderName }));
-    res.json({ thread: { ...threadOut(t), userUnread: 0 }, messages: msgs });
+    res.json({ thread: { ...threadOut(t), userUnread: 0 }, messages: msgs, adminsOnline: online });
   }));
 
   app.get("/api/support/unread", requireUser, w(async (req, res) => {
     const t = await myThread((req as any).uid);
-    res.json({ unread: t ? Number(t.user_unread || 0) : 0 });
+    res.json({ unread: t ? Number(t.user_unread || 0) : 0, adminsOnline: await adminsOnline() });
   }));
 
-  app.post("/api/support/messages", requireUser, w(async (req, res) => {
-    const uid = (req as any).uid;
-    const body = str(req.body?.body, 2000);
-    if (!body) return res.status(400).json({ error: "Write a message first" });
-    const clientId = str(req.body?.clientId, 80) || null;
+  /** Add one message from the user to their own conversation (opens it if needed). Same clientId = same message. */
+  const addUserMessage = async (
+    uid: string,
+    m: { body: string; kind: "text" | "image" | "voice"; clientId: string | null; media?: { b64: string; mime: string; size: number }; width?: number; height?: number; durationMs?: number },
+  ) => {
     let t = await myThread(uid);
-    if (clientId && t) {
-      const dup = rows(await db.execute(sql`SELECT * FROM support_messages WHERE thread_id = ${t.id} AND client_id = ${clientId} LIMIT 1`))[0];
-      if (dup) return res.json({ message: msgOut(dup), thread: threadOut(t) });
+    if (m.clientId && t) {
+      const dup = rows(await db.execute(sql`SELECT * FROM support_messages WHERE thread_id = ${t.id} AND client_id = ${m.clientId} LIMIT 1`))[0];
+      if (dup) return { message: msgOut(dup), thread: threadOut(t), existing: true };
     }
     if (!t) {
       const id = `sup-${crypto.randomUUID()}`;
       await db.execute(sql`INSERT INTO support_threads (id, user_id) VALUES (${id}, ${uid}) ON CONFLICT (user_id) DO NOTHING`);
       t = await myThread(uid);
     }
+    let mediaId: string | null = null;
+    if (m.media) {
+      mediaId = `sp-${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
+      await db.execute(sql`INSERT INTO support_media (id, thread_id, sender_id, mime, size, data)
+        VALUES (${mediaId}, ${t.id}, ${uid}, ${m.media.mime}, ${m.media.size}, decode(${m.media.b64}, 'base64'))`);
+    }
     const mid = `sm-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, client_id) VALUES (${mid}, ${t.id}, ${uid}, false, ${body}, ${clientId})`);
-    await db.execute(sql`UPDATE support_threads SET status = 'open', last_message = ${body.slice(0, 200)}, last_from_admin = false,
+    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, client_id, kind, media_id, width, height, duration_ms)
+      VALUES (${mid}, ${t.id}, ${uid}, false, ${m.body}, ${m.clientId}, ${m.kind}, ${mediaId}, ${m.width || null}, ${m.height || null}, ${m.durationMs || null})`);
+    await db.execute(sql`UPDATE support_threads SET status = 'open', last_message = ${m.body.slice(0, 200)}, last_from_admin = false,
       admin_unread = admin_unread + 1, last_message_at = now() WHERE id = ${t.id}`);
     const me = rows(await db.execute(sql`SELECT name, username FROM users WHERE id = ${uid} LIMIT 1`))[0] || {};
     for (const a of await admins()) {
       if (a === uid) continue;
-      await notify(a, "support", `Help request from ${me.name || me.username || "a user"}`, body.slice(0, 200), { supportThreadId: t.id, screen: "AdminSupport" });
+      await notify(a, "support", `Help request from ${me.name || me.username || "a user"}`, m.body.slice(0, 200), { supportThreadId: t.id, screen: "AdminSupport" });
     }
-    const m = rows(await db.execute(sql`SELECT * FROM support_messages WHERE id = ${mid}`))[0];
-    res.status(201).json({ message: msgOut(m), thread: threadOut(await myThread(uid)) });
+    const row = rows(await db.execute(sql`SELECT * FROM support_messages WHERE id = ${mid}`))[0];
+    return { message: msgOut(row), thread: threadOut(await myThread(uid)), existing: false };
+  };
+
+  app.post("/api/support/messages", requireUser, w(async (req, res) => {
+    const body = str(req.body?.body, 2000);
+    if (!body) return res.status(400).json({ error: "Write a message first" });
+    const r = await addUserMessage((req as any).uid, { body, kind: "text", clientId: str(req.body?.clientId, 80) || null });
+    res.status(r.existing ? 200 : 201).json({ message: r.message, thread: r.thread });
+  }));
+
+  app.post("/api/support/photo", requireUser, w(async (req, res) => {
+    const { b64, mime, ok, size } = decodeUpload(req.body?.image, req.body?.mime, "image/jpeg");
+    if (!ok) return res.status(400).json({ error: "The photo is missing or damaged" });
+    if (!IMAGE_MIME.has(mime)) return res.status(400).json({ error: "That photo format isn't supported" });
+    if (size < 100 || !looksLikeImage(b64, mime)) return res.status(400).json({ error: "That file isn't a photo" });
+    if (size > MAX_IMAGE_BYTES) return res.status(413).json({ error: "The photo is too large (10 MB max)" });
+    const width = Math.max(0, Math.min(20000, Math.round(Number(req.body?.width) || 0)));
+    const height = Math.max(0, Math.min(20000, Math.round(Number(req.body?.height) || 0)));
+    const r = await addUserMessage((req as any).uid, { body: PHOTO_LABEL, kind: "image", clientId: str(req.body?.clientId, 80) || null, media: { b64, mime, size }, width, height });
+    res.status(r.existing ? 200 : 201).json({ message: r.message, thread: r.thread });
+  }));
+
+  app.post("/api/support/voice", requireUser, w(async (req, res) => {
+    const { b64, mime, ok, size } = decodeUpload(req.body?.audio, req.body?.mime, "audio/mp4");
+    if (!ok) return res.status(400).json({ error: "The recording is missing or damaged" });
+    if (!VOICE_MIME.has(mime)) return res.status(400).json({ error: "That audio format isn't supported" });
+    if (size < 200) return res.status(400).json({ error: "The recording is too short" });
+    if (size > MAX_VOICE_BYTES) return res.status(413).json({ error: "The recording is too long" });
+    const durationMs = Math.max(0, Math.min(MAX_VOICE_MS, Math.round(Number(req.body?.durationMs) || 0)));
+    const r = await addUserMessage((req as any).uid, { body: VOICE_LABEL, kind: "voice", clientId: str(req.body?.clientId, 80) || null, media: { b64, mime, size }, durationMs });
+    res.status(r.existing ? 200 : 201).json({ message: r.message, thread: r.thread });
+  }));
+
+  // A support photo / voice file: only the user whose conversation it is, or a Farmers admin.
+  app.get("/api/support/media/:id", requireUser, w(async (req, res) => {
+    const uid = (req as any).uid;
+    const m = rows(await db.execute(sql`SELECT md.mime, encode(md.data, 'base64') AS b64, t.user_id FROM support_media md
+      JOIN support_threads t ON t.id = md.thread_id WHERE md.id = ${String(req.params.id).slice(0, 120)} LIMIT 1`))[0];
+    let allowed = !!m && m.user_id === uid;
+    if (m && !allowed) {
+      const u = rows(await db.execute(sql`SELECT is_super_admin, banned FROM users WHERE id = ${uid} LIMIT 1`))[0];
+      allowed = !!u && !!u.is_super_admin && !u.banned;
+    }
+    // Same answer for "missing" and "not yours", so ids can't be probed.
+    if (!m || !allowed) return res.status(404).json({ error: "File not found" });
+    const buf = Buffer.from(String(m.b64).replace(/\s+/g, ""), "base64");
+    res.setHeader("Content-Type", m.mime);
+    res.setHeader("Content-Length", String(buf.length));
+    res.setHeader("Cache-Control", "private, max-age=86400");
+    res.end(buf);
   }));
 
   app.get(`${A}/support/unread`, requireAdmin, w(async (_req, res) => {
