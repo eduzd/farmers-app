@@ -68,3 +68,8 @@ Plan:
  Later rounds: user moderation sheet UI (ban/remove/delete/restrict messaging/posting - server done), Farmers Official in users' Chats,
  admin-editable carousel ads UI + Connect reading /api/ads, global search polish, "water product add" (ASK USER what it means),
  profile share button = post share (done server/UI d. above, verify live), admin APK (wait for user OK).
+ - [x] Pushed main 0826906; Render /api/health version 0826906; live serves new bundle index-3b5f8b40. tests/check-admin-live.py (read-only):
+       UI sign-in as admin@farmers.app at /admin -> admin app; all 5 tabs at 320/360/390, no page errors, 0px sideways overflow, Orders badge 4.
+       Live Bangla toggle not exercised (localStorage key didn't switch it); Bangla checked locally only. Live support thread not opened (would mark read).
+ - check-admin-web.py updated for full-screen chat (support-input/support-send/support-back); local en+bn 320/360/390 all clean; admin reply reached Ann.
+ - This commit (tests + notes) pushed to branch admin-redesign only, not main, to avoid another Render deploy.
