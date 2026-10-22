@@ -286,6 +286,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
     gap: Spacing.xs,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    minHeight: 44,
+    paddingHorizontal: 4,
   },
   tabText: { fontSize: 14, fontWeight: "600" },
   content: { padding: Spacing.lg, paddingTop: 0 },

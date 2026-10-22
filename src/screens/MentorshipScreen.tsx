@@ -191,7 +191,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "700" },
   subtitle: { fontSize: 13, marginTop: 2 },
   tabsContainer: { flexDirection: "row", paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, gap: Spacing.sm },
-  tab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: Spacing.sm, borderRadius: BorderRadius.full, borderWidth: 1, gap: Spacing.xs },
+  tab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: Spacing.sm, borderRadius: BorderRadius.full, borderWidth: 1, gap: Spacing.xs,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    minHeight: 44,
+    paddingHorizontal: 4,
+ },
   tabText: { fontSize: 13, fontWeight: "500" },
   listContent: { paddingHorizontal: Spacing.lg },
   mentorCard: { borderRadius: BorderRadius.xl, borderWidth: 1, padding: Spacing.md, marginBottom: Spacing.md },

@@ -7,6 +7,7 @@ import {
   Pressable,
   Platform,
   Alert,
+  Share,
 } from "react-native";
 import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -35,13 +36,17 @@ import {
   likeServerPost,
   timeAgo,
   ServerComment,
+  setServerPostSaved,
 } from "@/lib/feedApi";
+import { PostActionsSheet } from "@/components/PostActionsSheet";
+import { PostPhoto } from "@/components/PhotoViewer";
 type PostDetailRouteProp = RouteProp<RootStackParamList, "PostDetail">;
 
 interface Reply {
   id: string;
   parentReplyId?: string;
   author: {
+    id?: string;
     name: string;
     initials: string;
     avatar?: string;
@@ -59,6 +64,7 @@ interface Reply {
 interface Comment {
   id: string;
   author: {
+    id?: string;
     name: string;
     initials: string;
     avatar?: string;
@@ -104,7 +110,7 @@ export default function PostDetailScreen() {
   const [sending, setSending] = useState(false);
   const toComment = (c: ServerComment): Comment => ({
     id: c.id,
-    author: { name: c.userName, initials: initialsOf(c.userName), avatar: c.avatar || undefined },
+    author: { id: c.userId, name: c.userName, initials: initialsOf(c.userName), avatar: c.avatar || undefined },
     content: c.body,
     likes: 0,
     isLiked: false,
@@ -128,7 +134,9 @@ export default function PostDetailScreen() {
   const [newComment, setNewComment] = useState("");
   const [isLiked, setIsLiked] = useState(post.isLiked);
   const [likesCount, setLikesCount] = useState(post.likes);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(!!post.isSaved);
+  const [postText, setPostText] = useState(post.content);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{ 
     commentId: string; 
     authorName: string;
@@ -136,9 +144,29 @@ export default function PostDetailScreen() {
     replyPath?: string[];
   } | null>(null);
 
-  const handleSave = () => {
+  const handleShare = async () => {
+    try {
+      await Share.share({ message: `${post.author.name}: ${postText}` });
+    } catch {
+      // user dismissed the share sheet
+    }
+  };
+
+  // Saved on the server, so the post shows under Saved posts on the profile.
+  const handleSave = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsSaved(!isSaved);
+    const next = !isSaved;
+    setIsSaved(next);
+    if (!shared) return;
+    const bn = useI18n.getState().language === "bn";
+    const token = getToken();
+    try {
+      if (!token) throw new Error(bn ? "সেভ করতে আগে সাইন ইন করুন।" : "Sign in to save posts.");
+      await setServerPostSaved(token, post.id, next);
+    } catch (e) {
+      setIsSaved(!next);
+      Alert.alert(bn ? "সেভ হয়নি" : "Couldn't save", e instanceof Error ? e.message : "");
+    }
   };
 
   const handleReply = (commentId: string, authorName: string, replyId?: string, replyPath?: string[]) => {
@@ -342,6 +370,7 @@ export default function PostDetailScreen() {
               avatarColor={reply.author.avatarColor}
               size="small"
               isWelfareMember={reply.author.isWelfareMember}
+              userId={reply.author.id}
             />
           </Pressable>
         </View>
@@ -404,6 +433,7 @@ export default function PostDetailScreen() {
           avatarColor={item.author.avatarColor}
           size="small"
           isWelfareMember={item.author.isWelfareMember}
+          userId={item.author.id}
         />
       </Pressable>
       <View style={styles.commentContent}>
@@ -470,6 +500,7 @@ export default function PostDetailScreen() {
             size="medium" 
             isWelfareMember={post.author.isWelfareMember}
             badge={post.author.badge}
+            userId={shared ? (post.author as any).id : undefined}
           />
           <View style={styles.authorInfo}>
             <ThemedText style={[styles.authorName, { color: theme.text }]}>
@@ -486,22 +517,23 @@ export default function PostDetailScreen() {
             {post.views}
           </ThemedText>
         </View>
-        <Pressable style={styles.moreButton}>
+        <Pressable
+          style={styles.moreButton}
+          onPress={() => setMenuOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={useI18n.getState().language === "bn" ? "আরও" : "More"}
+          hitSlop={8}
+        >
           <Feather name="more-horizontal" size={20} color={theme.textSecondary} />
         </Pressable>
       </View>
 
       <ThemedText style={[styles.postContent, { color: theme.text }]}>
-        {post.content}
+        {postText}
       </ThemedText>
 
       {post.image ? (
-        <Image
-          source={{ uri: post.image }}
-          style={styles.postImage}
-          contentFit="cover"
-          transition={200}
-        />
+        <PostPhoto uri={post.image} style={styles.postImage} radius={BorderRadius.md} />
       ) : null}
 
       <View style={styles.postActionsRow}>
@@ -546,7 +578,12 @@ export default function PostDetailScreen() {
               color={isSaved ? theme.primary : theme.textSecondary} 
             />
           </Pressable>
-          <Pressable style={styles.actionIconCircle}>
+          <Pressable
+            style={styles.actionIconCircle}
+            onPress={handleShare}
+            accessibilityRole="button"
+            accessibilityLabel={useI18n.getState().language === "bn" ? "শেয়ার" : "Share"}
+          >
             <Feather name="upload" size={18} color={theme.textSecondary} />
           </Pressable>
         </View>
@@ -592,7 +629,9 @@ export default function PostDetailScreen() {
         data={comments}
         keyExtractor={(item) => item.id}
         renderItem={renderComment}
-        ListHeaderComponent={renderHeader}
+        // An element, not the function: a new function each render made React remount the header
+        // (and reload the photo) whenever the screen re-rendered, e.g. as the keyboard opened.
+        ListHeaderComponent={renderHeader()}
         contentContainerStyle={[
           styles.listContent,
           { paddingTop: Spacing.md },
@@ -606,7 +645,8 @@ export default function PostDetailScreen() {
         style={[
           styles.inputWrapper,
           {
-            backgroundColor: theme.white,
+            // Same colour as the page, so there is no strip behind the comment box.
+            backgroundColor: theme.backgroundRoot,
           },
           composerPadding,
         ]}
@@ -622,7 +662,7 @@ export default function PostDetailScreen() {
           </View>
         ) : null}
         <View style={styles.inputContainer}>
-          <View style={[styles.commentInputWrapper, { backgroundColor: theme.backgroundRoot, borderColor: theme.inputBorder }]}>
+          <View style={[styles.commentInputWrapper, { backgroundColor: theme.surface }]}>
             <TextInput
               style={[styles.commentInput, { color: theme.text }]}
               placeholder={replyingTo ? "Write a reply..." : "Write a comment..."}
@@ -651,6 +691,15 @@ export default function PostDetailScreen() {
           </Pressable>
         </View>
       </Animated.View>
+      <PostActionsSheet
+        visible={menuOpen}
+        post={{ ...post, content: postText, isSaved, shared }}
+        onClose={() => setMenuOpen(false)}
+        onToggleSave={handleSave}
+        onDeleted={() => navigation.goBack()}
+        onEdited={(_id, content) => setPostText(content)}
+        onAuthorHidden={() => navigation.goBack()}
+      />
     </KeyboardAvoidingScreen>
   );
 }
@@ -709,9 +758,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   postImage: {
-    width: "100%",
-    height: 220,
-    borderRadius: BorderRadius.md,
     marginBottom: Spacing.lg,
   },
   postStats: {
@@ -747,8 +793,6 @@ const styles = StyleSheet.create({
   commentsHeader: {
     marginTop: Spacing.xl,
     paddingTop: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.05)",
   },
   commentItem: {
     flexDirection: "row",
@@ -890,7 +934,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingTop: Spacing.md,
-    borderTopWidth: 1,
     gap: Spacing.sm,
   },
   commentInputWrapper: {
@@ -898,7 +941,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderRadius: BorderRadius.xl,
-    borderWidth: 1,
     paddingHorizontal: Spacing.lg,
     minHeight: 44,
     maxHeight: 100,

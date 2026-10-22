@@ -241,7 +241,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: "700", marginBottom: Spacing.xs },
   subtitle: { fontSize: 14, textAlign: "center" },
   tabContainer: { flexDirection: "row", gap: Spacing.sm, marginBottom: Spacing.lg },
-  tab: { flex: 1, paddingVertical: Spacing.sm, alignItems: "center", borderRadius: BorderRadius.md },
+  tab: { flex: 1, paddingVertical: Spacing.sm, alignItems: "center", borderRadius: BorderRadius.md,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    minHeight: 44,
+    paddingHorizontal: 4,
+    justifyContent: "center",
+ },
   tabText: { fontSize: 14, fontWeight: "600" },
   section: { marginBottom: Spacing.xl },
   sectionTitle: { fontSize: 16, fontWeight: "600", marginBottom: Spacing.md },

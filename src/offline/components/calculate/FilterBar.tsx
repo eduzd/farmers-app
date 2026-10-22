@@ -145,7 +145,8 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.md,
   },
   chipContainer: {
-    maxHeight: 40,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   chipContent: {
     paddingHorizontal: Spacing.md,
@@ -157,6 +158,12 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     marginRight: Spacing.xs,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    flexShrink: 0,
+    minWidth: 84,
+    minHeight: 36,
+    alignItems: "center",
+    justifyContent: "center",
   },
   chipText: {
     fontSize: Typography.sizes.sm,

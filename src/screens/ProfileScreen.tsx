@@ -32,6 +32,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useAuthStore, MembershipApplication } from "@/lib/authStore";
+import { fetchSavedPosts, setServerPostSaved, type FeedPost } from "@/lib/feedApi";
 import { useI18n } from "@/lib/i18n";
 import { useCompanyStore } from "@/lib/companyStore";
 import { CommunitySwitcher, CommunitySwitcherRef } from "@/components/CommunitySwitcher";
@@ -56,7 +57,6 @@ interface SavedPost {
   image?: string;
 }
 
-const SAVED_POSTS: SavedPost[] = [];
 
 const FEATURE_MENU_ITEMS = [
   { id: "wallet", labelKey: "profile.wallet", icon: "credit-card" as const, screen: "Wallet" as const },
@@ -86,7 +86,8 @@ export default function ProfileScreen() {
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const communitySwitcherRef = useRef<CommunitySwitcherRef>(null);
   const [savedPostsExpanded, setSavedPostsExpanded] = useState(false);
-  const [savedPosts, setSavedPosts] = useState(SAVED_POSTS);
+  // Posts this person saved from the feed or a post's page, loaded from the server.
+  const [savedPosts, setSavedPosts] = useState<FeedPost[]>([]);
   const savedPostsAnimation = useSharedValue(0);
 
   const toggleSavedPosts = () => {
@@ -99,27 +100,23 @@ export default function ProfileScreen() {
     transform: [{ rotate: `${interpolate(savedPostsAnimation.value, [0, 1], [0, 180], Extrapolation.CLAMP)}deg` }],
   }));
 
-  const handleViewPost = (post: SavedPost) => {
+  const handleViewPost = (post: FeedPost) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    navigation.navigate("PostDetail", { 
-      postId: post.id, 
-      post: { 
-        id: post.id, 
-        author: post.author, 
-        content: post.content, 
-        image: post.image, 
-        likes: 0, 
-        comments: 0, 
-        views: 0, 
-        isLiked: false, 
-        createdAt: "" 
-      } 
-    });
+    navigation.navigate("PostDetail", { postId: post.id, post });
   };
 
-  const handleRemoveSavedPost = (postId: string) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setSavedPosts(prev => prev.filter(p => p.id !== postId));
+  const handleRemoveSavedPost = async (postId: string) => {
+    const token = useAuthStore.getState().getToken();
+    if (!token) return;
+    const before = savedPosts;
+    setSavedPosts((prev) => prev.filter((p) => p.id !== postId));
+    try {
+      await setServerPostSaved(token, postId, false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e) {
+      setSavedPosts(before);
+      Alert.alert(language === "bn" ? "সরানো যায়নি" : "Couldn't remove", e instanceof Error ? e.message : "");
+    }
   };
 
   const handleAvatarTap = () => {
@@ -151,6 +148,26 @@ export default function ProfileScreen() {
         loadCompany(user.id);
       }
     }, [user?.verified, user?.id])
+  );
+
+  // Refresh saved posts every time the profile comes into view (e.g. after saving one in the feed).
+  useFocusEffect(
+    React.useCallback(() => {
+      const token = useAuthStore.getState().getToken();
+      if (!token || !user?.id) {
+        setSavedPosts([]);
+        return;
+      }
+      let alive = true;
+      fetchSavedPosts(token, language === "bn")
+        .then((list) => {
+          if (alive) setSavedPosts(list);
+        })
+        .catch(() => {});
+      return () => {
+        alive = false;
+      };
+    }, [user?.id, language])
   );
 
   const handleMenuPress = (item: typeof MENU_ITEMS[0]) => {

@@ -272,6 +272,13 @@ export function registerFeatureRoutes(app: Express) {
     const list = r.map((n) => ({ id: n.id, type: n.type, title: n.title, body: n.body, data: J(n.data) || {}, read: !!n.read_at, createdAt: iso(n.created_at) }));
     res.json({ notifications: list, unread: list.filter((n) => !n.read).length });
   }));
+  // Just the number of unread notifications, for the badge on the bell.
+  app.get("/api/me/notifications/unread-count", auth, wrap("notifications", async (req, res) => {
+    const uid = (req as any).uid;
+    await fireDueReminders(uid);
+    const r = rows(await db.execute(sql`SELECT count(*)::int AS n FROM app_notifications WHERE user_id = ${uid} AND read_at IS NULL`));
+    res.json({ unread: Number(r[0]?.n) || 0 });
+  }));
   app.post("/api/me/notifications/read", auth, wrap("notifications", async (req, res) => {
     const uid = (req as any).uid;
     const ids: string[] = Array.isArray(req.body?.ids) ? req.body.ids.map(String) : [];

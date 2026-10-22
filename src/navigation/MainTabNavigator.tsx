@@ -15,6 +15,8 @@ import { useI18n } from "@/lib/i18n";
 import { HomeIcon } from "@/components/icons/HomeIcon";
 import { ProfileIcon } from "@/components/icons/ProfileIcon";
 import { ChatIcon } from "@/components/icons/ChatIcon";
+import { CountBadge } from "@/components/CountBadge";
+import { useLiveStatus, useUnreadCounts } from "@/lib/liveStatus";
 
 export type MainTabParamList = {
   Community: undefined;
@@ -28,6 +30,9 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
   const { t } = useI18n();
+  // Keeps unread counts and online dots fresh while signed in.
+  useLiveStatus();
+  const unreadMessages = useUnreadCounts((s) => s.messages);
 
   const screenOptions: BottomTabNavigationOptions = {
     headerTitleAlign: "left",
@@ -113,6 +118,8 @@ export default function MainTabNavigator() {
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && { backgroundColor: theme.primarySoft }]}>
               <ChatIcon size={20} color={color} />
+              {/* Sits on the icon's top-right, inside the icon row, so it never touches the label. */}
+              <CountBadge count={unreadMessages} style={styles.tabBadge} testID="tab-messages-badge" />
             </View>
           ),
         }}
@@ -141,5 +148,9 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
+  },
+  tabBadge: {
+    top: -5,
+    left: 29,
   },
 });

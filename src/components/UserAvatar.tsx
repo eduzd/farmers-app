@@ -9,6 +9,7 @@ import { Shadows } from "@/constants/theme";
 import { NotionFace, AVATAR_OPTIONS } from "@/components/AvatarPicker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { PROFILE_BADGES } from "@/constants/profileBadges";
+import { useIsOnline } from "@/lib/liveStatus";
 
 interface UserAvatarProps {
   /** Shown when there is no photo/avatar. Derived from `name` if omitted. */
@@ -22,6 +23,9 @@ interface UserAvatarProps {
   avatarColor?: string;
   /** Profile badge key (farming category or role), shown on the bottom-left. */
   badge?: string;
+  /** The person's account id. When given, a green dot shows bottom-right while the server
+   *  says they have the app open right now (real presence, never guessed). */
+  userId?: string;
   style?: ViewStyle;
 }
 
@@ -80,9 +84,11 @@ export function UserAvatar({
   avatarId,
   avatarColor,
   badge,
+  userId,
   style 
 }: UserAvatarProps) {
   const { theme } = useTheme();
+  const isOnline = useIsOnline(userId);
   const sizeConfig =
     typeof size === "number"
       ? { avatar: size, fontSize: Math.round(size * 0.36), badge: Math.round(size * 0.38), badgeIcon: Math.round(size * 0.2) }
@@ -101,6 +107,7 @@ export function UserAvatar({
   const notionAvatar = avatarId ? AVATAR_OPTIONS.find(a => a.id === avatarId) : null;
   const badgeInfo = badge ? PROFILE_BADGES[badge] : undefined;
   const profileBadgeSize = Math.max(14, Math.round(sizeConfig.avatar * 0.36));
+  const onlineSize = Math.max(9, Math.round(sizeConfig.avatar * 0.28));
 
   return (
     <View style={[styles.container, style]}>
@@ -162,10 +169,27 @@ export function UserAvatar({
           <MaterialCommunityIcons name={badgeInfo.icon} size={Math.round(profileBadgeSize * 0.6)} color="#FFFFFF" />
         </View>
       ) : null}
+      {/* Corners never shared: profile badge bottom-left, online dot bottom-right, welfare tick top-right. */}
       {isWelfareMember ? (
-        <View style={[styles.badgeContainer, badgeInfo ? styles.welfareRight : null]}>
-          <VerifiedBadge size={sizeConfig.badge} color="#00A86B" />
+        <View style={[styles.badgeContainer, styles.welfareTopRight]}>
+          <VerifiedBadge size={Math.max(14, Math.round(sizeConfig.avatar * 0.34))} color="#00A86B" />
         </View>
+      ) : null}
+      {isOnline ? (
+        <View
+          accessibilityLabel="Online"
+          testID="online-dot"
+          style={[
+            styles.onlineDot,
+            {
+              width: onlineSize,
+              height: onlineSize,
+              borderRadius: onlineSize / 2,
+              borderWidth: Math.max(1.5, Math.round(onlineSize * 0.2)),
+              borderColor: theme.backgroundDefault,
+            },
+          ]}
+        />
       ) : null}
     </View>
   );
@@ -190,9 +214,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  welfareRight: {
+  welfareTopRight: {
     left: undefined,
+    bottom: undefined,
+    top: -4,
     right: -4,
+  },
+  onlineDot: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    backgroundColor: "#22C55E",
   },
   badgeContainer: {
     position: "absolute",

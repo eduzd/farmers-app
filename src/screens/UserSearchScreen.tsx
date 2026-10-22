@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   searchInput: { flex: 1, fontSize: 15, paddingVertical: 0 },
-  categoriesContainer: { maxHeight: 50 },
+  categoriesContainer: { flexGrow: 0, flexShrink: 0 },
   categoriesContent: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, gap: Spacing.sm },
   categoryChip: {
     paddingHorizontal: Spacing.md,
@@ -234,6 +234,12 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     marginRight: Spacing.sm,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    flexShrink: 0,
+    minWidth: 84,
+    minHeight: 36,
+    alignItems: "center",
+    justifyContent: "center",
   },
   categoryChipText: { fontSize: 13, fontWeight: "500" },
   suggestionsSection: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.md },

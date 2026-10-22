@@ -20,7 +20,7 @@ import {
   chatThreads,
   chatMembers,
 } from "@shared/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm";
 import { notify } from "./featureRoutes";
 import { ensureProfileColumns } from "./profileColumns";
 
@@ -483,6 +483,9 @@ function postSelect(uid: string | null) {
     likedByMe: uid
       ? sql<boolean>`EXISTS (SELECT 1 FROM post_likes pl2 WHERE pl2.post_id = ${posts.id} AND pl2.user_id = ${uid})`
       : sql<boolean>`false`,
+    savedByMe: uid
+      ? sql<boolean>`EXISTS (SELECT 1 FROM post_saves ps WHERE ps.post_id = ${posts.id} AND ps.user_id = ${uid})`
+      : sql<boolean>`false`,
     author: {
       id: users.id,
       name: users.name,
@@ -503,12 +506,19 @@ router.get("/posts", async (req: Request, res: Response) => {
     }
     await ensureProfileColumns();
     const uid = optionalUserId(req);
+    if (uid) await Promise.all([ensureRelations(), ensureSaves()]);
+    // Signed in: leave out people you muted or blocked, and people who blocked you.
+    const hidden = uid
+      ? sql`NOT EXISTS (SELECT 1 FROM user_relations ur WHERE
+          (ur.user_id = ${uid} AND ur.target_id = ${posts.authorId} AND ur.kind IN ('mute', 'block'))
+          OR (ur.user_id = ${posts.authorId} AND ur.target_id = ${uid} AND ur.kind = 'block'))`
+      : sql`TRUE`;
 
     const result = await db
       .select(postSelect(uid))
       .from(posts)
       .leftJoin(users, eq(posts.authorId, users.id))
-      .where(eq(posts.communityId, communityId as string))
+      .where(and(eq(posts.communityId, communityId as string), hidden))
       .orderBy(desc(posts.createdAt))
       .limit(50);
 
@@ -524,6 +534,7 @@ router.get("/posts/:id", async (req: Request, res: Response) => {
   if (!db) return res.status(500).json({ error: "Database not available" });
   try {
     await ensureProfileColumns();
+    await ensureSaves();
     const result = await db
       .select(postSelect(optionalUserId(req)))
       .from(posts)
@@ -648,6 +659,260 @@ router.post("/posts/:id/comments", requireAuth, async (req: Request, res: Respon
     console.error("Create comment error:", error);
     res.status(500).json({ error: "Failed to add comment" });
   }
+});
+
+// Deleting your own post, and reporting someone else's.
+//  DELETE /api/posts/:id          (signed in; only the post's author — anyone else gets 403)
+//  POST   /api/posts/:id/report   { reason, details? }  (signed in; one report per person per post)
+const REPORT_REASONS = new Set(["spam", "harassment", "hate_speech", "violence", "misinformation", "inappropriate", "copyright", "scam", "other"]);
+let reportsReady: Promise<void> | null = null;
+export function ensurePostReports() {
+  if (!reportsReady) {
+    reportsReady = (async () => {
+      await db.execute(sql`CREATE TABLE IF NOT EXISTS post_reports (
+        id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+        post_id varchar NOT NULL,
+        reporter_id varchar NOT NULL,
+        post_author_id varchar,
+        post_excerpt text,
+        reason text NOT NULL,
+        details text,
+        status text NOT NULL DEFAULT 'open',
+        created_at timestamp NOT NULL DEFAULT now(),
+        UNIQUE (post_id, reporter_id)
+      )`);
+    })().catch((e) => {
+      reportsReady = null;
+      throw e;
+    });
+  }
+  return reportsReady;
+}
+
+router.delete("/posts/:id", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    const uid = req.user!.userId;
+    const post = rowsOf(await db.execute(sql`SELECT id, author_id FROM posts WHERE id = ${req.params.id} LIMIT 1`))[0];
+    if (!post) return res.status(404).json({ error: "This post was already removed" });
+    if (post.author_id !== uid) return res.status(403).json({ error: "You can only delete your own posts" });
+    // The author check is repeated in the DELETE itself so it can never remove someone else's post.
+    const gone = rowsOf(await db.execute(sql`DELETE FROM posts WHERE id = ${post.id} AND author_id = ${uid} RETURNING id`));
+    if (!gone.length) return res.status(403).json({ error: "You can only delete your own posts" });
+    res.json({ ok: true, id: post.id });
+  } catch (error) {
+    console.error("Delete post error:", error);
+    res.status(500).json({ error: "Failed to delete post" });
+  }
+});
+
+// PATCH /api/posts/:id { content }  (signed in; only the post's author)
+router.patch("/posts/:id", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    const uid = req.user!.userId;
+    const content = String(req.body?.content ?? "").trim().slice(0, 5000);
+    const post = rowsOf(await db.execute(sql`SELECT id, author_id, media FROM posts WHERE id = ${req.params.id} LIMIT 1`))[0];
+    if (!post) return res.status(404).json({ error: "This post was removed" });
+    if (post.author_id !== uid) return res.status(403).json({ error: "You can only edit your own posts" });
+    const media = Array.isArray(post.media) ? post.media : [];
+    if (!content && !media.length) return res.status(400).json({ error: "Post is empty" });
+    const out = rowsOf(await db.execute(sql`UPDATE posts SET content = ${content} WHERE id = ${post.id} AND author_id = ${uid} RETURNING id, content`))[0];
+    if (!out) return res.status(403).json({ error: "You can only edit your own posts" });
+    res.json({ ok: true, id: out.id, content: out.content });
+  } catch (error) {
+    console.error("Edit post error:", error);
+    res.status(500).json({ error: "Failed to edit post" });
+  }
+});
+
+// Mute and block. Muting hides that person's posts from your feed. Blocking hides posts
+// both ways and stops direct messages between you.
+//  GET    /api/relations                     -> { muted: string[], blocked: string[] }
+//  POST   /api/relations { kind, targetId }  kind = "mute" | "block"
+//  DELETE /api/relations/:kind/:targetId
+let relationsReady: Promise<void> | null = null;
+export function ensureRelations() {
+  if (!relationsReady) {
+    relationsReady = (async () => {
+      await db.execute(sql`CREATE TABLE IF NOT EXISTS user_relations (
+        user_id varchar NOT NULL,
+        target_id varchar NOT NULL,
+        kind text NOT NULL,
+        created_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (user_id, target_id, kind)
+      )`);
+    })().catch((e) => {
+      relationsReady = null;
+      throw e;
+    });
+  }
+  return relationsReady;
+}
+/** True when either person has blocked the other. */
+export async function isBlockedBetween(a: string, b: string): Promise<boolean> {
+  await ensureRelations();
+  const r = rowsOf(await db.execute(sql`SELECT 1 FROM user_relations WHERE kind = 'block'
+    AND ((user_id = ${a} AND target_id = ${b}) OR (user_id = ${b} AND target_id = ${a})) LIMIT 1`));
+  return r.length > 0;
+}
+
+router.get("/relations", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    await ensureRelations();
+    const r = rowsOf(await db.execute(sql`SELECT target_id, kind FROM user_relations WHERE user_id = ${req.user!.userId}`));
+    res.json({ muted: r.filter((x) => x.kind === "mute").map((x) => x.target_id), blocked: r.filter((x) => x.kind === "block").map((x) => x.target_id) });
+  } catch (error) {
+    console.error("Get relations error:", error);
+    res.status(500).json({ error: "Failed to load" });
+  }
+});
+
+router.post("/relations", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    const uid = req.user!.userId;
+    const kind = String(req.body?.kind ?? "");
+    const targetId = String(req.body?.targetId ?? "").trim();
+    if (kind !== "mute" && kind !== "block") return res.status(400).json({ error: "kind must be mute or block" });
+    if (!targetId || targetId === uid) return res.status(400).json({ error: "Pick someone else" });
+    const target = rowsOf(await db.execute(sql`SELECT id FROM users WHERE id = ${targetId} LIMIT 1`))[0];
+    if (!target) return res.status(404).json({ error: "User not found" });
+    await ensureRelations();
+    await db.execute(sql`INSERT INTO user_relations (user_id, target_id, kind) VALUES (${uid}, ${targetId}, ${kind}) ON CONFLICT DO NOTHING`);
+    res.status(201).json({ ok: true, kind, targetId });
+  } catch (error) {
+    console.error("Add relation error:", error);
+    res.status(500).json({ error: "Failed to save" });
+  }
+});
+
+router.delete("/relations/:kind/:targetId", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    await ensureRelations();
+    await db.execute(sql`DELETE FROM user_relations WHERE user_id = ${req.user!.userId} AND target_id = ${req.params.targetId} AND kind = ${req.params.kind}`);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("Remove relation error:", error);
+    res.status(500).json({ error: "Failed to save" });
+  }
+});
+
+// Saved posts (shown under Saved posts on your profile).
+//  POST /api/posts/:id/save { saved: boolean }  (signed in)
+//  GET  /api/me/saved-posts                     newest save first
+let savesReady: Promise<void> | null = null;
+function ensureSaves() {
+  if (!savesReady) {
+    savesReady = (async () => {
+      await db.execute(sql`CREATE TABLE IF NOT EXISTS post_saves (
+        user_id varchar NOT NULL,
+        post_id varchar NOT NULL,
+        created_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (user_id, post_id)
+      )`);
+    })().catch((e) => {
+      savesReady = null;
+      throw e;
+    });
+  }
+  return savesReady;
+}
+
+router.post("/posts/:id/save", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    const uid = req.user!.userId;
+    const saved = req.body?.saved !== false;
+    await ensureSaves();
+    if (saved) {
+      const post = rowsOf(await db.execute(sql`SELECT id FROM posts WHERE id = ${req.params.id} LIMIT 1`))[0];
+      if (!post) return res.status(404).json({ error: "This post was removed" });
+      await db.execute(sql`INSERT INTO post_saves (user_id, post_id) VALUES (${uid}, ${post.id}) ON CONFLICT DO NOTHING`);
+    } else {
+      await db.execute(sql`DELETE FROM post_saves WHERE user_id = ${uid} AND post_id = ${req.params.id}`);
+    }
+    res.json({ ok: true, saved });
+  } catch (error) {
+    console.error("Save post error:", error);
+    res.status(500).json({ error: "Failed to save post" });
+  }
+});
+
+router.get("/me/saved-posts", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    const uid = req.user!.userId;
+    await Promise.all([ensureProfileColumns(), ensureSaves(), ensureRelations()]);
+    const ids = rowsOf(await db.execute(sql`SELECT post_id FROM post_saves WHERE user_id = ${uid} ORDER BY created_at DESC LIMIT 200`)).map((r) => String(r.post_id));
+    if (!ids.length) return res.json([]);
+    const result = await db
+      .select(postSelect(uid))
+      .from(posts)
+      .leftJoin(users, eq(posts.authorId, users.id))
+      .where(inArray(posts.id, ids));
+    const order = new Map(ids.map((id, i) => [id, i]));
+    result.sort((x: any, y: any) => (order.get(x.id) ?? 0) - (order.get(y.id) ?? 0));
+    res.json(result);
+  } catch (error) {
+    console.error("Saved posts error:", error);
+    res.status(500).json({ error: "Failed to load saved posts" });
+  }
+});
+
+router.post("/posts/:id/report", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    const uid = req.user!.userId;
+    const reason = String(req.body?.reason ?? "").trim();
+    if (!REPORT_REASONS.has(reason)) return res.status(400).json({ error: "Pick a reason for the report" });
+    const details = String(req.body?.details ?? "").trim().slice(0, 1000) || null;
+    const post = rowsOf(await db.execute(sql`SELECT id, author_id, content FROM posts WHERE id = ${req.params.id} LIMIT 1`))[0];
+    if (!post) return res.status(404).json({ error: "This post was removed" });
+    if (post.author_id === uid) return res.status(400).json({ error: "You can't report your own post" });
+    await ensurePostReports();
+    const ins = rowsOf(await db.execute(sql`INSERT INTO post_reports (post_id, reporter_id, post_author_id, post_excerpt, reason, details)
+      VALUES (${post.id}, ${uid}, ${post.author_id}, ${String(post.content || "").slice(0, 280)}, ${reason}, ${details})
+      ON CONFLICT (post_id, reporter_id) DO NOTHING RETURNING id`));
+    res.status(ins.length ? 201 : 200).json({ ok: true, alreadyReported: !ins.length });
+  } catch (error) {
+    console.error("Report post error:", error);
+    res.status(500).json({ error: "Failed to send report" });
+  }
+});
+
+// Online presence. The app beats every 30s while it is open and in the foreground, and says
+// "away" when it goes to the background or signs out. Someone counts as online only while
+// their last beat is under 70s old, so a phone that loses signal or is killed drops off on
+// its own. Kept in memory: after a server restart everyone shows offline until their next beat.
+//  POST /api/presence/beat  { state: "active" | "away" }  (signed in, your own status only)
+//  POST /api/presence/query { ids: string[] } -> { online: string[] }  (signed in)
+const PRESENCE_TTL_MS = 70_000;
+const lastBeat = new Map<string, number>();
+export function isUserPresent(userId: string): boolean {
+  const t = lastBeat.get(userId);
+  return !!t && Date.now() - t < PRESENCE_TTL_MS;
+}
+const presenceSweep: any = setInterval(() => {
+  const now = Date.now();
+  for (const [k, t] of lastBeat) if (now - t >= PRESENCE_TTL_MS) lastBeat.delete(k);
+}, 60_000);
+presenceSweep.unref?.();
+
+router.post("/presence/beat", requireAuth, (req: Request, res: Response) => {
+  const uid = req.user!.userId;
+  if (req.body?.state === "away") lastBeat.delete(uid);
+  else lastBeat.set(uid, Date.now());
+  res.json({ ok: true });
+});
+
+router.post("/presence/query", requireAuth, (req: Request, res: Response) => {
+  const ids: unknown = req.body?.ids;
+  if (!Array.isArray(ids)) return res.status(400).json({ error: "ids must be a list" });
+  const uniq = [...new Set(ids.filter((x) => typeof x === "string" && x.length > 0 && x.length < 100))].slice(0, 300) as string[];
+  res.json({ online: uniq.filter(isUserPresent), ttlMs: PRESENCE_TTL_MS });
 });
 
 // ============================================

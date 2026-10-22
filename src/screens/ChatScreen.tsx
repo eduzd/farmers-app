@@ -29,11 +29,13 @@ import { Image } from "expo-image";
 
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
+import { useIsOnline } from "@/lib/liveStatus";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import * as Clipboard from "expo-clipboard";
 import { useAuthStore } from "@/lib/authStore";
+import { refreshUnreadCounts } from "@/lib/liveStatus";
 import {
   fetchMessages,
   fetchReactions,
@@ -109,7 +111,8 @@ export default function ChatScreen() {
   const [otherId, setOtherId] = useState<string>(conversationId);
   const [loadError, setLoadError] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]); // newest first for the inverted list
-  const [inputText, setInputText] = useState("");
+  // A draft passed in (e.g. "Request quote" from a post) is put in the box for the user to edit and send.
+  const [inputText, setInputText] = useState(route.params.draft ?? "");
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
@@ -127,6 +130,9 @@ export default function ChatScreen() {
   const fetching = useRef(false);
   const otherIdRef = useRef(conversationId);
   otherIdRef.current = otherId;
+  // Presence only for a real account (live chat), never for a sample or not-yet-joined contact.
+  const liveOtherId = mode === "live" ? otherId : undefined;
+  const otherOnline = useIsOnline(liveOtherId);
 
   const clock = (iso?: string | null) =>
     (iso ? new Date(iso) : new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -187,6 +193,8 @@ export default function ChatScreen() {
       if (newest) lastServerAt.current = newest.createdAt;
       mergeServer(page.messages);
       applySeen(page.seenUntil);
+      // Opening the chat marks their messages read on the server, so update the Messages badge.
+      if (page.messages.some((m: any) => m.senderId === page.otherId)) refreshUnreadCounts();
     } catch (e: any) {
       setLoadError(true);
       if (e?.status === 401) setMode("guest");
@@ -701,6 +709,7 @@ export default function ChatScreen() {
                     initials={userInitials} 
                     size="small" 
                     isWelfareMember={isWelfareMember}
+                    userId={liveOtherId}
                   />
                 ) : null}
               </View>
@@ -761,6 +770,7 @@ export default function ChatScreen() {
                     initials={userInitials} 
                     size="small" 
                     isWelfareMember={isWelfareMember}
+                    userId={liveOtherId}
                   />
                 ) : null}
               </View>
@@ -811,6 +821,7 @@ export default function ChatScreen() {
                   initials={userInitials} 
                   size="small" 
                   isWelfareMember={isWelfareMember}
+                  userId={liveOtherId}
                 />
               ) : null}
             </View>
@@ -883,7 +894,7 @@ export default function ChatScreen() {
   const composerPadding = useKeyboardAwareBottomPadding(Spacing.sm);
 
   const headerStatus =
-    mode === "live" ? tr("On Farmers") : mode === "checking" ? tr("Connecting…") : mode === "guest" ? tr("Sign in to chat") : tr("Not on Farmers yet");
+    mode === "live" ? (otherOnline ? tr("Online") : tr("On Farmers")) : mode === "checking" ? tr("Connecting…") : mode === "guest" ? tr("Sign in to chat") : tr("Not on Farmers yet");
   const banner =
     mode === "guest"
       ? tr("Sign in to send and receive messages.")
@@ -905,9 +916,7 @@ export default function ChatScreen() {
         </Pressable>
         <Pressable style={styles.headerTitleContainer} onPress={() => handleViewProfile()}>
           <View style={styles.headerAvatarContainer}>
-            <View style={[styles.headerAvatar, { backgroundColor: theme.primary }]}>
-              <ThemedText style={styles.headerAvatarText}>{userInitials}</ThemedText>
-            </View>
+            <UserAvatar initials={userInitials} size={36} userId={liveOtherId} />
           </View>
           <View style={styles.headerInfo}>
             <ThemedText style={[styles.headerName, { color: theme.text }]}>{userName}</ThemedText>
@@ -951,7 +960,7 @@ export default function ChatScreen() {
         keyboardShouldPersistTaps="handled"
       />
 
-      <Animated.View style={[styles.bottomBar, { backgroundColor: theme.white }, composerPadding]}>
+      <Animated.View style={[styles.bottomBar, { backgroundColor: theme.backgroundRoot }, composerPadding]}>
         {banner ? (
           <Pressable
             onPress={mode === "live" || mode === "checking" ? fetchLive : undefined}
@@ -984,7 +993,7 @@ export default function ChatScreen() {
           style={[
             styles.inputContainer,
             {
-              backgroundColor: theme.white,
+              backgroundColor: theme.backgroundRoot,
             },
           ]}
         >
@@ -1021,7 +1030,7 @@ export default function ChatScreen() {
               <MaterialCommunityIcons name="plus-circle-outline" size={28} color={theme.primary} />
             </Pressable>
 
-            <View style={[styles.textInputWrapper, { backgroundColor: theme.backgroundRoot, borderColor: theme.inputBorder }]}>
+            <View style={[styles.textInputWrapper, { backgroundColor: theme.surface }]}>
               <TextInput
                 style={[styles.textInput, { color: theme.text, height: inputHeight }]}
                 placeholder={tr("Type a message...")}
@@ -1218,13 +1227,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.sm,
     paddingBottom: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5E5",
   },
   backButton: {
     padding: Spacing.sm,
   },
-  // No line above the typing bar.
+  // No line above the typing bar, and the bar shares the chat background (no colour step).
   bottomBar: {},
   headerTitleContainer: {
     flex: 1,
@@ -1561,7 +1568,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderRadius: BorderRadius.full,
-    borderWidth: 1,
     paddingHorizontal: Spacing.lg,
     minHeight: 44,
     maxHeight: 100,

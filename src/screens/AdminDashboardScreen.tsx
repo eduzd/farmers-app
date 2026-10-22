@@ -1152,7 +1152,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   tabBar: {
-    maxHeight: 52,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   tabBarContent: {
     paddingHorizontal: Spacing.md,
@@ -1165,6 +1166,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
     gap: Spacing.xs,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    flexShrink: 0,
+    minWidth: 84,
+    minHeight: 36,
+    justifyContent: "center",
   },
   tabLabel: {
     fontSize: 12,

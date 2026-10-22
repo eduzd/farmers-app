@@ -422,6 +422,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    minHeight: 44,
+    paddingHorizontal: 4,
+    justifyContent: "center",
   },
   activeTab: {
     borderBottomWidth: 2,

@@ -138,3 +138,18 @@ Started 2026-10-20. Small steps, logged as they land.
 - FarmDiary, Inventory, SellerApp product modals wrapped in keyboard-controller KAV; Welfare and Fish Summit forms switched to keyboard-controller KAV padding.
 - Cart footer and calculator StickyActionBar get +8dp above the nav bar.
 - app.json androidNavigationBar.enforceContrast=false (no grey scrim) + expo-navigation-bar; App.tsx sets button style by in-app theme.
+
+## Pass "UI polish + Connect" (2026-10-22) -- one APK with everything
+Scope: duplicate headers / clipped tabs, composer separator/background (chat + post detail), profile badge vs Verified overlap,
+online dots bottom-right (real presence), home share = detail share, post actions (owner Edit/Delete; others Report/Save/Mute/Block/Request Quote),
+photo jitter while typing, feed thumb cropped (cover 4:3) / detail whole / fullscreen viewer / upload full or crop (choice),
+saved posts -> Profile Saved section (server), unread badges (bell + Messages tab), Connect tab next to Home (professional roles only, not farmers).
+- [x] server: posts PATCH/DELETE, relations (mute/block), save + /me/saved-posts, report (+admin reports), presence beat/query, /api/me/notifications/unread-count, DM block check
+- [x] PostActionsSheet, share button, ProfileScreen saved posts from server
+- [x] PhotoViewer.tsx (PhotoViewer + PostPhoto thumb/full), CommunityScreen pickImage asks Full photo / Crop
+- [x] PostDetail ListHeaderComponent={renderHeader()} (header remounted every render -> photo jitter)
+- [x] liveStatus.ts (unread counts + presence + heartbeat), CountBadge.tsx, Messages tab badge, bell badge
+- [ ] refreshUnreadCounts after mark-read (Notifications, Chat), on push received
+- [ ] UserAvatar userId -> online dot bottom-right; pass userId in feed/chat list/chat header/post detail/profile
+- [ ] Connect tab + screen + server /api/connect/professionals
+- [ ] tsc, tests, push GitHub/Render, APK build + release

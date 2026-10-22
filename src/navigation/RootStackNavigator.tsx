@@ -169,6 +169,8 @@ interface Post {
   createdAt: string;
   /** Lives on the server: likes and comments are shared and notify the author. */
   shared?: boolean;
+  /** Saved by the signed-in user (server posts only). */
+  isSaved?: boolean;
 }
 
 export type RootStackParamList = {
@@ -181,7 +183,7 @@ export type RootStackParamList = {
   Main: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   PostDetail: { postId: string; post: Post };
-  Chat: { conversationId: string; userName: string; userInitials: string; isWelfareMember?: boolean };
+  Chat: { conversationId: string; userName: string; userInitials: string; isWelfareMember?: boolean; draft?: string };
   Rfq: undefined;
   Settings: { openEditProfile?: boolean } | undefined;
   ProductDetail: { product: Product };

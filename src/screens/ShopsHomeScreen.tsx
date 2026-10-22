@@ -387,6 +387,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginRight: Spacing.sm,
     gap: Spacing.xs,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    flexShrink: 0,
+    minWidth: 84,
+    minHeight: 36,
+    justifyContent: "center",
   },
   categoryText: {
     fontSize: 12,

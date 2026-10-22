@@ -108,6 +108,7 @@ export default function FollowingScreen() {
         avatar={item.avatar}
         size="medium"
         isWelfareMember={item.isWelfareMember}
+        userId={item.id}
       />
 
       <View style={styles.userInfo}>

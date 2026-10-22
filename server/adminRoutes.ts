@@ -4,6 +4,7 @@ import { db } from "./db";
 import { admins, apiKeys, apiUsageLogs, appSettings, adminSessions, users, auditLogs, announcements, posts, experts } from "@shared/schema";
 import { eq, desc, sql, and, gte, lte, count } from "drizzle-orm";
 import { apiKeyManager } from "./services/apiKeyManager";
+import { ensurePostReports } from "./communityRoutes";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
@@ -649,7 +650,15 @@ router.get("/dashboard/stats", requireSuperAdmin, async (req, res) => {
       totalUsers: totalUsersResult?.count || 0,
       activeUsers24h: activeUsersResult?.count || 0,
       totalPosts: totalPostsResult?.count || 0,
-      openReports: 0,
+      openReports: await (async () => {
+        try {
+          await ensurePostReports();
+          const r: any = await db.execute(sql`SELECT count(*)::int AS n FROM post_reports WHERE status = 'open'`);
+          return (Array.isArray(r) ? r : r?.rows || [])[0]?.n ?? 0;
+        } catch {
+          return 0;
+        }
+      })(),
       totalOrders: 0,
       totalExperts: totalExpertsResult?.count || 0,
     });
@@ -693,6 +702,36 @@ router.delete("/posts/:postId", requireSuperAdmin, async (req, res) => {
   } catch (error) {
     console.error("Admin delete post error:", error);
     res.status(500).json({ error: "Failed to delete post" });
+  }
+});
+
+// Post reports from users (newest first) and resolving them.
+router.get("/reports", requireSuperAdmin, async (_req, res) => {
+  try {
+    await ensurePostReports();
+    const r: any = await db.execute(sql`SELECT r.id, r.post_id, r.reason, r.details, r.status, r.created_at, r.post_excerpt,
+        rep.name AS reporter_name, au.name AS author_name,
+        (SELECT count(*)::int FROM post_reports x WHERE x.post_id = r.post_id) AS report_count
+      FROM post_reports r LEFT JOIN users rep ON rep.id = r.reporter_id LEFT JOIN users au ON au.id = r.post_author_id
+      ORDER BY (r.status = 'open') DESC, r.created_at DESC LIMIT 200`);
+    res.json(Array.isArray(r) ? r : r?.rows || []);
+  } catch (error) {
+    console.error("Admin reports error:", error);
+    res.status(500).json({ error: "Failed to load reports" });
+  }
+});
+
+router.post("/reports/:id/resolve", requireSuperAdmin, async (req, res) => {
+  try {
+    await ensurePostReports();
+    const status = req.body?.status === "dismissed" ? "dismissed" : "resolved";
+    await db.execute(sql`UPDATE post_reports SET status = ${status} WHERE id = ${req.params.id}`);
+    const adminUser = (req as any).adminUser;
+    await logAdminAction(adminUser.id, adminUser.email, "RESOLVE_REPORT", "report", req.params.id, status);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Admin resolve report error:", error);
+    res.status(500).json({ error: "Failed to update report" });
   }
 });
 

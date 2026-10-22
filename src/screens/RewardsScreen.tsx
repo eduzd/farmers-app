@@ -251,7 +251,11 @@ const styles = StyleSheet.create({
   progressFill: { height: "100%", backgroundColor: "#fff", borderRadius: 3 },
   progressText: { color: "rgba(255,255,255,0.8)", fontSize: 12, marginTop: Spacing.xs },
   tabsContainer: { flexDirection: "row", gap: Spacing.sm, marginBottom: Spacing.lg },
-  tab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: Spacing.sm, borderRadius: BorderRadius.full, borderWidth: 1, gap: Spacing.xs },
+  tab: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: Spacing.sm, borderRadius: BorderRadius.full, borderWidth: 1, gap: Spacing.xs,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    minHeight: 44,
+    paddingHorizontal: 4,
+ },
   tabText: { fontSize: 13, fontWeight: "500" },
   rewardsGrid: { gap: Spacing.md },
   rewardCard: { borderRadius: BorderRadius.lg, borderWidth: 1, padding: Spacing.md, position: "relative" },

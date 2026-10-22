@@ -37,12 +37,17 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useCommunityStore, CommunityType } from "@/lib/communityStore";
 import { badgeKeyFor } from "@/constants/profileBadges";
 import { useAuthStore } from "@/lib/authStore";
+import { PostActionsSheet } from "@/components/PostActionsSheet";
+import { PostPhoto } from "@/components/PhotoViewer";
+import { CountBadge } from "@/components/CountBadge";
+import { useUnreadCounts } from "@/lib/liveStatus";
 import { useI18n } from "@/lib/i18n";
 import { tr, useTr } from "@/lib/tr";
 import {
   FeedPost,
   createServerPost,
   fetchServerPosts,
+  setServerPostSaved,
   likeServerPost,
   initialsOf,
   resolveServerCommunityId,
@@ -74,6 +79,7 @@ export default function CommunityScreen() {
   const getToken = useAuthStore((s) => s.getToken);
   const { language } = useI18n();
   const isBn = language === "bn";
+  const unreadNotifications = useUnreadCounts((s) => s.notifications);
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 640);
   // Featured cards: the original full-width card shape (one card fills the row), still
@@ -171,9 +177,32 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleSave = (postId: string) => {
+  // Saving a shared post is stored on the server, so it shows under Saved posts on the profile.
+  const handleSave = async (postId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    updatePost(postId, (p) => ({ ...p, isSaved: !p.isSaved }));
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
+    const next = !post.isSaved;
+    updatePost(postId, (p) => ({ ...p, isSaved: next }));
+    if (!post.shared) return; // only on this phone, nothing on the server to save
+    const token = getToken();
+    try {
+      if (!token) throw new Error(isBn ? "সেভ করতে আগে সাইন ইন করুন।" : "Sign in to save posts.");
+      await setServerPostSaved(token, postId, next);
+    } catch (e) {
+      updatePost(postId, (p) => ({ ...p, isSaved: !next }));
+      Alert.alert(isBn ? "সেভ হয়নি" : "Couldn't save", e instanceof Error ? e.message : "");
+    }
+  };
+
+  // Three-dot menu on a post.
+  const [menuPost, setMenuPost] = useState<Post | null>(null);
+  const removePost = (postId: string) => {
+    setLocalPosts((prev) => prev.filter((p) => p.id !== postId));
+    setServerPosts((prev) => prev.filter((p) => p.id !== postId));
+  };
+  const hideAuthor = (authorId: string) => {
+    setServerPosts((prev) => prev.filter((p) => p.author.id !== authorId));
   };
 
   const handleShare = async (post: Post) => {
@@ -240,11 +269,24 @@ export default function CommunityScreen() {
     }
   };
 
-  const pickImage = async () => {
+  // Ask first: post the whole photo as it is, or crop it (the phone's own crop screen).
+  const pickImage = () => {
+    Alert.alert(
+      isBn ? "ছবি যোগ করুন" : "Add photo",
+      isBn ? "পুরো ছবিটা দেবেন, নাকি কেটে ছোট করবেন?" : "Post the whole photo, or crop it first?",
+      [
+        { text: isBn ? "বাতিল" : "Cancel", style: "cancel" },
+        { text: isBn ? "কাটুন" : "Crop", onPress: () => launchPicker(true) },
+        { text: isBn ? "পুরো ছবি" : "Full photo", onPress: () => launchPicker(false) },
+      ],
+    );
+  };
+
+  const launchPicker = async (crop: boolean) => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [4, 3],
+      // Full photo: no crop screen, the picture keeps its own shape. Crop: free-form crop box.
+      allowsEditing: crop,
       quality: 0.5,
       base64: true,
     });
@@ -377,12 +419,18 @@ export default function CommunityScreen() {
               </ThemedText>
             </View>
             <IconButton icon="search" accessibilityLabel={isBn ? "খুঁজুন" : "Search"} onPress={() => navigation.navigate("UserSearch")} />
-            <IconButton
-              icon="bell"
-              accessibilityLabel={isBn ? "নোটিফিকেশন" : "Notifications"}
-              onPress={() => navigation.navigate("Notifications")}
-              style={{ marginLeft: Spacing.sm }}
-            />
+            <View style={{ marginLeft: Spacing.sm }}>
+              <IconButton
+                icon="bell"
+                accessibilityLabel={
+                  unreadNotifications > 0
+                    ? isBn ? `নোটিফিকেশন, ${unreadNotifications}টি নতুন` : `Notifications, ${unreadNotifications} unread`
+                    : isBn ? "নোটিফিকেশন" : "Notifications"
+                }
+                onPress={() => navigation.navigate("Notifications")}
+              />
+              <CountBadge count={unreadNotifications} style={{ top: -4, right: -6 }} testID="bell-badge" />
+            </View>
           </View>
       </View>
     </View>
@@ -525,6 +573,7 @@ export default function CommunityScreen() {
             avatarColor={item.author.avatarColor}
             badge={item.author.badge}
             size={42}
+            userId={item.shared ? item.author.id : undefined}
           />
           <View style={{ flex: 1 }}>
             <View style={styles.nameRow}>
@@ -550,7 +599,7 @@ export default function CommunityScreen() {
             </View>
           </View>
         </Pressable>
-        <IconButton icon="more-horizontal" tone="plain" size={34} accessibilityLabel={tr("More")} />
+        <IconButton icon="more-horizontal" tone="plain" size={34} accessibilityLabel={tr("More")} onPress={() => setMenuPost(item)} />
       </View>
 
       {item.content ? (
@@ -560,7 +609,7 @@ export default function CommunityScreen() {
       ) : null}
 
       {item.image ? (
-        <Image source={{ uri: item.image }} style={styles.postImage} contentFit="cover" transition={200} />
+        <PostPhoto uri={item.image} style={styles.postImage} mode="thumb" />
       ) : null}
 
       {item.likes > 0 || item.comments > 0 ? (
@@ -588,7 +637,18 @@ export default function CommunityScreen() {
           onPress={() => handleLike(item.id)}
         />
         <PostAction icon="message-circle" label={isBn ? "মন্তব্য" : "Comment"} onPress={() => handlePostPress(item)} />
-        <PostAction icon="share-2" label={isBn ? "শেয়ার" : "Share"} onPress={() => handleShare(item)} />
+        {/* Same share button as the post details page: round icon button, no label. */}
+        <View style={styles.shareCell}>
+          <Pressable
+            onPress={() => handleShare(item)}
+            accessibilityRole="button"
+            accessibilityLabel={isBn ? "শেয়ার" : "Share"}
+            hitSlop={4}
+            style={({ pressed }) => [styles.shareCircle, { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" }]}
+          >
+            <Feather name="upload" size={18} color={theme.textSecondary} />
+          </Pressable>
+        </View>
         <PostAction
           icon="bookmark"
           label={isBn ? "সেভ" : "Save"}
@@ -716,6 +776,15 @@ export default function CommunityScreen() {
           </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
+      <PostActionsSheet
+        visible={!!menuPost}
+        post={menuPost}
+        onClose={() => setMenuPost(null)}
+        onToggleSave={() => menuPost && handleSave(menuPost.id)}
+        onDeleted={removePost}
+        onEdited={(id, content) => updatePost(id, (p) => ({ ...p, content }))}
+        onAuthorHidden={hideAuthor}
+      />
     </View>
   );
 }
@@ -888,8 +957,6 @@ const styles = StyleSheet.create({
   },
   postImage: {
     marginTop: Spacing.md,
-    width: "100%",
-    aspectRatio: 4 / 3,
   },
   statsRow: {
     flexDirection: "row",
@@ -923,6 +990,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   actionLabel: { fontSize: 13, lineHeight: 18, fontFamily: FontFamily.semibold },
+  shareCell: { flex: 1, alignItems: "center", justifyContent: "center" },
+  // Matches PostDetailScreen's actionIconCircle (44x44 round, "upload" icon, 18px).
+  shareCircle: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   modalHeader: {
     flexDirection: "row",
     alignItems: "center",

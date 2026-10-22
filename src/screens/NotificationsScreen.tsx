@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { refreshUnreadCounts } from "@/lib/liveStatus";
 import {
   View,
   StyleSheet,
@@ -200,7 +201,7 @@ export default function NotificationsScreen() {
       setLocalNotifications((prev) =>
         prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
       );
-      if (isLoggedIn()) apiPost("/api/me/notifications/read", { ids: [notification.id] }).catch(() => {});
+      if (isLoggedIn()) apiPost("/api/me/notifications/read", { ids: [notification.id] }).then(() => refreshUnreadCounts()).catch(() => {});
       const d = notification.actionData || {};
       if (d.orderId) navigation.navigate("OrderDetail", { orderId: d.orderId });
       else if (notification.type === "message" && d.userId)
@@ -216,7 +217,7 @@ export default function NotificationsScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     markAllPushAsRead();
     setLocalNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    if (isLoggedIn()) apiPost("/api/me/notifications/read", { all: true }).catch(() => {});
+    if (isLoggedIn()) apiPost("/api/me/notifications/read", { all: true }).then(() => refreshUnreadCounts()).catch(() => {});
   };
 
   const renderNotification = ({ item, index }: { item: Notification; index: number }) => (

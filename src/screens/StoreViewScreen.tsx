@@ -848,6 +848,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.lg,
     gap: Spacing.xs,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    minHeight: 44,
+    paddingHorizontal: 4,
   },
   tabText: {
     fontSize: 12,
@@ -883,6 +886,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginRight: Spacing.sm,
     gap: Spacing.xs,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    flexShrink: 0,
+    minWidth: 84,
+    minHeight: 36,
+    justifyContent: "center",
   },
   categoryChipText: {
     fontSize: 12,

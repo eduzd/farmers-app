@@ -137,10 +137,8 @@ export default function ChatListScreen() {
             avatarColor={item.user.avatarColor}
             size={52}
             isWelfareMember={item.user.isWelfareMember}
+            userId={item.id}
           />
-          {item.user.isOnline ? (
-            <View style={[styles.online, { backgroundColor: theme.success, borderColor: theme.backgroundRoot }]} />
-          ) : null}
         </View>
         <View style={styles.rowBody}>
           <View style={styles.rowTop}>

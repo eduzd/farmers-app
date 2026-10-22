@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: Spacing.lg, paddingTop: Spacing.md },
   title: { fontSize: 22, fontWeight: "700" },
   subtitle: { fontSize: 13, marginTop: 2 },
-  storiesContainer: { maxHeight: 120 },
+  storiesContainer: { flexGrow: 0, flexShrink: 0 },
   storiesList: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, gap: Spacing.md },
   storyItem: { alignItems: "center", width: 70 },
   storyAvatarRing: {

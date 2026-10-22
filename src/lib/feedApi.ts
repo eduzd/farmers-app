@@ -70,6 +70,7 @@ interface ServerPostRow {
   commentCount?: number | string | null;
   likeCount?: number | string | null;
   likedByMe?: boolean | null;
+  savedByMe?: boolean | null;
   author: {
     id: string;
     name: string | null;
@@ -95,7 +96,7 @@ function postFromRow(r: ServerPostRow, bn: boolean): FeedPost {
     comments: Number(r.commentCount || 0),
     views: 0,
     isLiked: !!r.likedByMe,
-    isSaved: false,
+    isSaved: !!r.savedByMe,
     createdAt: timeAgo(r.createdAt, bn),
     shared: true,
   };
@@ -126,6 +127,74 @@ export async function likeServerPost(token: string, postId: string, liked: boole
   });
   if (!res.ok) throw new Error(`like ${res.status}`);
   return res.json();
+}
+
+async function errorText(res: Response, fallback: string): Promise<string> {
+  try {
+    const j = await res.json();
+    if (j?.error) return String(j.error);
+  } catch {}
+  return fallback;
+}
+
+/** Save or unsave a shared post for the signed-in user. Throws if the server didn't store it. */
+export async function setServerPostSaved(token: string, postId: string, saved: boolean): Promise<boolean> {
+  const res = await fetch(`${getApiUrl()}/api/posts/${encodeURIComponent(postId)}/save`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify({ saved }),
+  });
+  if (!res.ok) throw new Error(await errorText(res, `save ${res.status}`));
+  return !!(await res.json()).saved;
+}
+
+/** The signed-in user's saved posts, newest save first. */
+export async function fetchSavedPosts(token: string, bn: boolean): Promise<FeedPost[]> {
+  const res = await fetch(`${getApiUrl()}/api/me/saved-posts`, { headers: authHeaders(token) });
+  if (!res.ok) throw new Error(await errorText(res, `saved ${res.status}`));
+  const rows: ServerPostRow[] = await res.json();
+  return rows.map((r) => postFromRow(r, bn));
+}
+
+/** Delete your own post. The server refuses (403) for anyone else's post. */
+export async function deleteServerPost(token: string, postId: string): Promise<void> {
+  const res = await fetch(`${getApiUrl()}/api/posts/${encodeURIComponent(postId)}`, { method: "DELETE", headers: authHeaders(token) });
+  if (!res.ok) throw new Error(await errorText(res, `delete ${res.status}`));
+}
+
+/** Edit the text of your own post. */
+export async function editServerPost(token: string, postId: string, content: string): Promise<string> {
+  const res = await fetch(`${getApiUrl()}/api/posts/${encodeURIComponent(postId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify({ content }),
+  });
+  if (!res.ok) throw new Error(await errorText(res, `edit ${res.status}`));
+  return String((await res.json()).content ?? content);
+}
+
+/** Report someone else's post. Resolves with alreadyReported=true if you had reported it before. */
+export async function reportServerPost(token: string, postId: string, reason: string, details?: string): Promise<{ alreadyReported: boolean }> {
+  const res = await fetch(`${getApiUrl()}/api/posts/${encodeURIComponent(postId)}/report`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify({ reason, details }),
+  });
+  if (!res.ok) throw new Error(await errorText(res, `report ${res.status}`));
+  const j = await res.json();
+  return { alreadyReported: !!j.alreadyReported };
+}
+
+/** Mute or block someone (on=true), or undo it (on=false). */
+export async function setUserRelation(token: string, kind: "mute" | "block", targetId: string, on: boolean): Promise<void> {
+  const res = on
+    ? await fetch(`${getApiUrl()}/api/relations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders(token) },
+        body: JSON.stringify({ kind, targetId }),
+      })
+    : await fetch(`${getApiUrl()}/api/relations/${kind}/${encodeURIComponent(targetId)}`, { method: "DELETE", headers: authHeaders(token) });
+  if (!res.ok) throw new Error(await errorText(res, `${kind} ${res.status}`));
 }
 
 export interface ServerComment {

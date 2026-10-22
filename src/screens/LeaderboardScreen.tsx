@@ -213,6 +213,10 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     alignItems: "center",
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    minHeight: 44,
+    paddingHorizontal: 4,
+    justifyContent: "center",
   },
   tabText: { fontSize: 13, fontWeight: "500" },
   listContent: { paddingHorizontal: Spacing.lg },

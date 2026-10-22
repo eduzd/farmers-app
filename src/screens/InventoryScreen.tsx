@@ -340,6 +340,12 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     borderWidth: 1,
     marginRight: Spacing.sm,
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    flexShrink: 0,
+    minWidth: 84,
+    minHeight: 36,
+    alignItems: "center",
+    justifyContent: "center",
   },
   chipText: {
     fontSize: 14,

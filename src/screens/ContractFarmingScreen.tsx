@@ -187,7 +187,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 4,
   },
-  tab: { flex: 1, paddingVertical: Spacing.sm, borderRadius: BorderRadius.md, alignItems: "center" },
+  tab: { flex: 1, paddingVertical: Spacing.sm, borderRadius: BorderRadius.md, alignItems: "center",
+    // Uniform tab size: never squeezed by its neighbours or its label length.
+    minHeight: 44,
+    paddingHorizontal: 4,
+    justifyContent: "center",
+ },
   tabText: { fontSize: 14, fontWeight: "600" },
   content: { padding: Spacing.lg, paddingTop: 0 },
   contractCard: { borderRadius: BorderRadius.xl, borderWidth: 1, marginBottom: Spacing.md, overflow: "hidden" },

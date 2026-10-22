@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from "react";
 import { Platform } from "react-native";
+import { refreshUnreadCounts } from "@/lib/liveStatus";
 import * as Notifications from "expo-notifications";
 import { navigateWhenReady } from "@/lib/navigationRef";
 import { useAuthStore } from "@/lib/authStore";
@@ -149,6 +150,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     notificationListener.current = Notifications.addNotificationReceivedListener(
       (notification: Notifications.Notification) => {
+        // A push means a new notification or message on the server: refresh the badges.
+        refreshUnreadCounts();
         const newNotification: AppNotification = {
           id: notification.request.identifier,
           type: ((notification.request.content.data?.type as string) || "system") as AppNotification["type"],

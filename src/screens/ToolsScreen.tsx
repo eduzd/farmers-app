@@ -128,9 +128,7 @@ export default function ToolsScreen() {
           <View style={[styles.headerIcon, { backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)" }]}>
             <Feather name="tool" size={32} color={theme.primary} />
           </View>
-          <ThemedText style={[styles.headerTitle, { color: theme.text }]}>
-            {communityName} {isBn ? "টুলস" : "Tools"}
-          </ThemedText>
+          {/* No second "Agriculture Tools" title here: the top bar already says Tools. */}
           <ThemedText style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
             {isBn ? `আপনার জন্য ${allTools.length}+ টুলস` : `${allTools.length}+ tools for you`}
           </ThemedText>

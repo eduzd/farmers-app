@@ -6,6 +6,7 @@ import { db, dbReady } from "./db";
 import { config } from "./config";
 import { notify, publicUser } from "./featureRoutes";
 import { ensureProfileColumns, PROFILE_ROLES, FARMING_CATEGORIES } from "./profileColumns";
+import { isBlockedBetween } from "./communityRoutes";
 
 /**
  * Person-to-person direct messages.
@@ -177,6 +178,10 @@ export function registerDmRoutes(app: Express, push: Pusher) {
     const u = await first(sql`SELECT banned FROM users WHERE id = ${other} LIMIT 1`);
     if (u?.banned) {
       res.status(403).json({ error: "This account has been suspended.", code: "SUSPENDED" });
+      return null;
+    }
+    if (await isBlockedBetween(me, other)) {
+      res.status(403).json({ error: "You can't message this person.", code: "BLOCKED" });
       return null;
     }
     return other;

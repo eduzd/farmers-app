@@ -124,6 +124,7 @@ export default function UserProfileScreen() {
           avatarColor={user.avatarColor}
           size="large" 
           isWelfareMember={user.isWelfareMember}
+          userId={user.id}
         />
 
         <View style={styles.nameContainer}>
