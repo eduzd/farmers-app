@@ -282,3 +282,13 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
   the user can also change each channel in Android's app notification settings. iPhone: vibration follows iOS settings.
 - Checks: tsc 0 errors; tests/check-push-prefs.mjs 15/15 (fake Expo push server: channel per phone, notify off, re-save keeps
   prefs, own account only); check-chat 50/50; tests/check-notif-settings-web.py en+bn 320/360/390 16/16 each.
+
+## 2026-10-22: main app bottom bar a little bigger (user: "a little bit bigger, not so big")
+- src/navigation/MainTabNavigator.tsx only: tab icons 20 -> 23 (Home, Connect, Market, Chats, Profile), icon pill 48x30 -> 54x34,
+  labels 11px -> 12px, bar height 68 -> 74 on web (native 70, was library default 49) + bottom safe area (insets.bottom),
+  unread badge moved to stay on the bigger icon's top-right. Screens already pad with useBottomTabBarHeight, so nothing hides under it.
+- Desktop web uses the same bottom bar (there is no separate desktop nav), so it grows by the same few pixels.
+- Seller Hub tab bar (CompanyTabNavigator) and admin not changed.
+- Check: tests/check-navbar-size-web.py (en/bn 320/360/390/430/1280 + dark 360): icons 23px, labels 12px, none cut off,
+  all inside the bar, Chats badge inside its tab and clear of the label, all 5 tabs navigate, no page errors.
+  Before/after on the old dist: inner bar 61 -> 66 px. tsc clean. Not seen on a real phone; no APK this round.
