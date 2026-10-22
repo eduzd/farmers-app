@@ -37,3 +37,12 @@ Plan:
  c. [x] tsc (0 errors), check-admin-app 57/57, check-chat-icon-web en+bn 320/360/390 all pass; + checks; commit on admin-app
  d. [x] main fast-forwarded to admin-app e4cb152 (has calls fix 4be0d40), pushed; Render /api/health version e4cb152; live guest check en+bn 320/390: Connect carousel + Help FAB + Sylin Har card with icon-only ChatIcon button, home shows ChatIcons, no page errors. Online dot needs sign-in (not checked live).
  e. [x] narrow-width (local, tests/check-chat-icon-web.py) check Connect + posts en/bn
+
+## Round: admin web live for review (task 2026-10-22 08:48), branch admin-login-fix -> main 9c016ac
+- Bug found live: real sign-in at /admin showed "Admins only" for admin@farmers.app (AdminAppScreen read user.isSuperAdmin,
+  which sign-in never saves; the flag lives on the auth store). Fixed: read store isSuperAdmin. tests/check-admin-login-web.py
+  (local: admin UI login -> admin app, also after reload; normal user -> Admins only; normal token 403 on /api/admin/manage/* + legacy).
+- Live 9c016ac: UI sign-in at https://farmers-2ybg.onrender.com/admin -> admin app. All 5 tabs en+bn 320/360/390: no page errors,
+  no API errors, no sideways page scroll. More items all open (Users, moderation, notify, delivery; classic Control Tower for
+  posts/reports, content, analytics, settings, logs). Order detail opens. No-token /api/admin/manage/* = 401.
+- Not done: no global search bar across admin (per-tab search only); carousel ads not admin-managed; admin APK not built (user: wait).
