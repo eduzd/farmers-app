@@ -19,6 +19,8 @@ export interface FormField {
   image?: boolean;
   required?: boolean;
   placeholder?: string;
+  /** shows tappable chips instead of a text box (e.g. marketplace categories from the server) */
+  choices?: { value: string; label: string }[];
 }
 
 interface Props {
@@ -114,6 +116,25 @@ export function CatalogFormModal({ visible, title, fields, initial, submitLabel,
                   {f.label}
                   {f.required ? " *" : ""}
                 </ThemedText>
+                {f.choices && f.choices.length ? (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }} testID={`choices-${f.key}`}>
+                    {f.choices.map((c) => {
+                      const on = String(values[f.key] ?? "") === c.value;
+                      return (
+                        <Pressable
+                          key={c.value}
+                          testID={`choice-${f.key}-${c.value}`}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: on }}
+                          onPress={() => setValues((v) => ({ ...v, [f.key]: c.value }))}
+                          style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1, borderColor: on ? theme.primary : theme.border, backgroundColor: on ? theme.primary : theme.backgroundSecondary }}
+                        >
+                          <ThemedText style={{ fontSize: 13.5, color: on ? "#fff" : theme.text, fontWeight: on ? "700" : "500" }}>{c.label}</ThemedText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                ) : (
                 <TextInput
                   value={values[f.key] ?? ""}
                   onChangeText={(t) => setValues((v) => ({ ...v, [f.key]: t }))}
@@ -128,6 +149,7 @@ export function CatalogFormModal({ visible, title, fields, initial, submitLabel,
                     f.multiline && { minHeight: 80, textAlignVertical: "top" },
                   ]}
                 />
+                )}
                 {f.image ? (
                   <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.md }}>
                     <Pressable

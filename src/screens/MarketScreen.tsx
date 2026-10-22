@@ -1,3 +1,4 @@
+import { useMarketCategories } from "@/lib/marketCategories";
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
 import {
   View,
@@ -41,22 +42,7 @@ const CARD_WIDTH = (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md) / 2;
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const CATEGORIES = [
-  { id: "all", labelBn: "সব", labelEn: "All", icon: "grid" },
-  { id: "vegetables", labelBn: "সবজি", labelEn: "Vegetables", icon: "feather" },
-  { id: "fruits", labelBn: "ফল", labelEn: "Fruits", icon: "sun" },
-  { id: "grains", labelBn: "শস্য", labelEn: "Grains", icon: "layers" },
-  { id: "livestock", labelBn: "গবাদি পশু", labelEn: "Livestock", icon: "github" },
-  { id: "seeds", labelBn: "বীজ", labelEn: "Seeds", icon: "sun" },
-  { id: "fertilizer", labelBn: "সার", labelEn: "Fertilizer", icon: "droplet" },
-  { id: "equipment", labelBn: "যন্ত্রপাতি", labelEn: "Equipment", icon: "tool" },
-  { id: "feed", labelBn: "খাদ্য", labelEn: "Feed", icon: "package" },
-  { id: "medicine", labelBn: "ওষুধ", labelEn: "Medicine", icon: "heart" },
-  { id: "organic", labelBn: "অর্গানিক", labelEn: "Organic", icon: "zap" },
-  { id: "dairy", labelBn: "দুগ্ধ", labelEn: "Dairy", icon: "coffee" },
-  { id: "fish", labelBn: "মাছ", labelEn: "Fish", icon: "anchor" },
-  { id: "other", labelBn: "অন্যান্য", labelEn: "Other", icon: "grid" },
-];
+// Categories now come from the server (admins manage them in the admin app); see useMarketCategories.
 
 export interface Product {
   id: string;
@@ -94,6 +80,14 @@ export default function MarketScreen() {
   const { getItemCount } = useCartStore();
   const activeCommunity = useCommunityStore((state) => state.activeCommunity);
   const isBn = language === "bn";
+  const marketCats = useMarketCategories();
+  const CATEGORIES = useMemo(
+    () => [
+      { id: "all", labelBn: "সব", labelEn: "All", icon: "grid" },
+      ...marketCats.map((c) => ({ id: c.slug, labelBn: c.nameBn, labelEn: c.nameEn, icon: c.icon })),
+    ],
+    [marketCats],
+  );
 
   const communityType = (activeCommunity?.type || "agriculture") as CommunityType;
 
@@ -116,7 +110,7 @@ export default function MarketScreen() {
     { key: "quantity", label: tr("Stock available"), numeric: true },
     { key: "minOrder", label: tr("Minimum order"), numeric: true, placeholder: "1" },
     { key: "location", label: t("market.form.location") },
-    { key: "category", label: t("market.form.category"), placeholder: "vegetables / fruits / grains / fish / livestock / seeds" },
+    { key: "category", label: t("market.form.category"), choices: marketCats.map((c) => ({ value: c.slug, label: isBn ? c.nameBn : c.nameEn })) },
     { key: "image", label: t("market.form.image"), placeholder: "https://...", image: true },
     { key: "description", label: t("market.form.description"), multiline: true },
   ];

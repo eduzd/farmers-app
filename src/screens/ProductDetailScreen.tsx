@@ -1,3 +1,4 @@
+import { useMarketCategories, categoryLabel } from "@/lib/marketCategories";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   View,
@@ -105,6 +106,7 @@ export default function ProductDetailScreen() {
   const isFavorite = useFavoritesStore((st) => st.items.some((i) => i.itemId === String(product.id)));
   const toggleFavorite = useFavoritesStore((st) => st.toggle);
   const { language } = useI18n();
+  const marketCats = useMarketCategories();
   const ownerId: string | undefined = (product as any).ownerId || undefined;
   const isMine = !!ownerId && ownerId === currentUserId();
   const [reviews, setReviews] = useState<{ reviews: any[]; count: number; average: number }>({ reviews: [], count: 0, average: 0 });
@@ -247,7 +249,7 @@ export default function ProductDetailScreen() {
     { label: "স্টক", value: stock === null ? tr("In stock") : stock <= 0 ? tr("Out of stock") : `${stock} ${product.unit}`, icon: "package" },
     ...(minOrder > 1 ? [{ label: tr("Minimum order"), value: `${minOrder} ${product.unit}`, icon: "shopping-bag" }] : []),
     ...((product as any).sold ? [{ label: tr("Sold"), value: `${(product as any).sold} ${product.unit}`, icon: "trending-up" }] : []),
-    { label: "ক্যাটাগরি", value: product.category || "সবজি", icon: "grid" },
+    { label: tr("Category"), value: categoryLabel(marketCats, product.category, language === "bn") || tr("Other"), icon: "grid" },
     { label: "উৎস", value: product.location || "ঢাকা", icon: "map-pin" },
     { label: "ডেলিভারি", value: "২-৩ দিন", icon: "clock" },
   ];
@@ -349,7 +351,7 @@ export default function ProductDetailScreen() {
           <View style={styles.mainInfo}>
             <View style={styles.categoryTag}>
               <ThemedText style={[styles.categoryText, { color: theme.primary }]}>
-                {product.category || "কৃষি পণ্য"}
+                {categoryLabel(marketCats, product.category, language === "bn") || tr("Farm product")}
               </ThemedText>
             </View>
             

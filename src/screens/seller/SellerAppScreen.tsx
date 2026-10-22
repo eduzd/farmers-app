@@ -1,3 +1,4 @@
+import { useMarketCategories, categoryLabel } from "@/lib/marketCategories";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import {
@@ -24,7 +25,7 @@ import { apiGet, apiPost, apiPut, apiDelete, uploadImage, mediaUrl } from "@/lib
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 import { getAppVariant, openVariantOnWeb } from "@/lib/appVariant";
-import { S, STATUS_COLORS, NEXT_STATUS, THEME_SWATCHES, CATEGORIES } from "./sellerTheme";
+import { S, STATUS_COLORS, NEXT_STATUS, THEME_SWATCHES } from "./sellerTheme";
 
 type Store = {
   id: string; name: string; slug: string; tagline: string; description: string; logo: string; banner: string;
@@ -296,6 +297,23 @@ function ImageField({ label, value, onChange, L, testID, disabled }: { label: st
   );
 }
 
+// Categories come from the server, so admin changes (rename, add, hide, reorder) show here too.
+function CategoryChips({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const cats = useMarketCategories();
+  const { language } = useI18n();
+  const bn = language === "bn";
+  const list = cats.some((c) => c.slug === value) || !value ? cats : [...cats, { slug: value, nameEn: value, nameBn: value, icon: "grid", color: "#64748B" }];
+  return (
+    <>
+      {list.map((c) => (
+        <Pressable key={c.slug} testID={`seller-cat-${c.slug}`} onPress={() => onChange(c.slug)} style={[st.chip, value === c.slug && st.chipOn]}>
+          <Text style={[st.chipText, value === c.slug && { color: S.primary }]}>{bn ? c.nameBn : c.nameEn}</Text>
+        </Pressable>
+      ))}
+    </>
+  );
+}
+
 // ---------------- create store (seller sign-up) ----------------
 function CreateStore({ L, onCreated, error, userName, onLogout, onBack }: { L: any; onCreated: () => void; error: string | null; userName: string; onLogout: () => void; onBack?: () => void }) {
   const [f, setF] = useState({ name: "", category: "vegetables", location: "", phone: "", tagline: "" });
@@ -323,11 +341,7 @@ function CreateStore({ L, onCreated, error, userName, onLogout, onBack }: { L: a
           <Field label={L("Short tagline", "ট্যাগলাইন")} value={f.tagline} onChange={set("tagline")} placeholder={L("Fresh vegetables from Gazipur", "গাজীপুরের তাজা সবজি")} />
           <Text style={st.label}>{L("What do you sell?", "কী বিক্রি করেন?")}</Text>
           <View style={st.chips}>
-            {CATEGORIES.map((c) => (
-              <Pressable key={c} onPress={() => set("category")(c)} style={[st.chip, f.category === c && st.chipOn]}>
-                <Text style={[st.chipText, f.category === c && { color: S.primary }]}>{c}</Text>
-              </Pressable>
-            ))}
+            <CategoryChips value={f.category} onChange={set("category")} />
           </View>
           <Field label={L("Location", "অবস্থান")} value={f.location} onChange={set("location")} placeholder="Gazipur, Dhaka" />
           <Field label={L("Business phone", "ব্যবসার ফোন")} value={f.phone} onChange={set("phone")} keyboard="phone-pad" placeholder="01XXXXXXXXX" />
@@ -399,6 +413,8 @@ function Dashboard({ L, store, stats, orders, products, go, wide }: { L: any; st
 // ---------------- products ----------------
 const emptyProduct = { name: "", price: "", unit: "kg", quantity: "", minOrder: "1", category: "vegetables", description: "", image: "" };
 function Products({ L, products, disabled, reload, flash, wide }: { L: any; products: Product[]; disabled: boolean; reload: () => Promise<void>; flash: (m: string) => void; wide: boolean }) {
+  const cats = useMarketCategories();
+  const isBnLang = useI18n().language === "bn";
   const [editing, setEditing] = useState<Product | null | "new">(null);
   const [q, setQ] = useState("");
   const list = products.filter((p) => p.name?.toLowerCase().includes(q.toLowerCase()));
@@ -426,7 +442,7 @@ function Products({ L, products, disabled, reload, flash, wide }: { L: any; prod
               <View style={st.thumbBox}>{p.image ? <Image source={{ uri: mediaUrl(p.image) || p.image }} style={st.thumbImg} /> : <Feather name="package" size={16} color={S.faint} />}</View>
               <View style={{ flex: 1 }}>
                 <Text style={st.rowTitle} numberOfLines={1}>{p.name}</Text>
-                <Text style={st.rowSub} numberOfLines={1}>{p.category}{!wide ? ` · ${taka(p.price)}/${p.unit || ""} · ${p.quantity ?? 0} ${L("in stock", "স্টকে")}` : ""}</Text>
+                <Text style={st.rowSub} numberOfLines={1}>{categoryLabel(cats, p.category, isBnLang)}{!wide ? ` · ${taka(p.price)}/${p.unit || ""} · ${p.quantity ?? 0} ${L("in stock", "স্টকে")}` : ""}</Text>
               </View>
             </View>
             {wide ? <Text style={[st.td, { flex: 1 }]}>{taka(p.price)}/{p.unit}</Text> : null}
@@ -500,11 +516,7 @@ function ProductForm({ L, product, onClose, onSaved }: { L: any; product: Produc
             {opts.length < 5 ? <View style={{ alignItems: "flex-start", marginTop: 6 }}><Btn small kind="ghost" icon="plus" testID="add-option" label={L("Add option", "অপশন যোগ করুন")} onPress={() => setOpts((o) => [...o, { name: "", choices: "" }])} /></View> : null}
             <Text style={st.label}>{L("Category", "ক্যাটাগরি")}</Text>
             <View style={st.chips}>
-              {CATEGORIES.map((c) => (
-                <Pressable key={c} onPress={() => set("category")(c)} style={[st.chip, f.category === c && st.chipOn]}>
-                  <Text style={[st.chipText, f.category === c && { color: S.primary }]}>{c}</Text>
-                </Pressable>
-              ))}
+              <CategoryChips value={f.category} onChange={set("category")} />
             </View>
             <ImageField L={L} label={L("Photo", "ছবি")} value={f.image} onChange={set("image")} />
             <Field label={L("Description", "বিবরণ")} value={f.description} onChange={set("description")} multiline />
