@@ -2,6 +2,7 @@ import React from "react";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useWebKeyboardInset } from "@/hooks/useWebKeyboardInset";
 
 /**
  * Spacer for the bottom of a bottom-sheet modal. Modals are drawn edge to edge
@@ -12,16 +13,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
  * the spacer grows to the keyboard's height: the sheet rises and its fields and
  * Save button stay visible above the keyboard. Pass avoidKeyboard={false} when
  * the sheet is already inside a KeyboardAvoidingView.
+ *
+ * On mobile web the same happens through the browser's visual viewport.
  */
 export function ModalBottomInset({ avoidKeyboard = true }: { avoidKeyboard?: boolean }) {
   const insets = useSafeAreaInsets();
   const { height } = useReanimatedKeyboardAnimation();
+  const webKeyboard = useWebKeyboardInset();
   const bottom = insets.bottom;
 
   const animatedStyle = useAnimatedStyle(() => {
-    const keyboard = avoidKeyboard ? -height.value : 0;
+    const keyboard = avoidKeyboard ? Math.max(-height.value, webKeyboard) : 0;
     return { height: Math.max(bottom, keyboard) };
-  }, [bottom, avoidKeyboard]);
+  }, [bottom, avoidKeyboard, webKeyboard]);
 
   return <Animated.View pointerEvents="none" style={animatedStyle} />;
 }
