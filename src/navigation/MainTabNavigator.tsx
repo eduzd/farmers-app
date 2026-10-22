@@ -3,6 +3,7 @@ import { createBottomTabNavigator, BottomTabNavigationOptions } from "@react-nav
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FontFamily } from "@/constants/theme";
 
 import CommunityScreen from "@/screens/CommunityScreen";
@@ -30,9 +31,14 @@ export type MainTabParamList = {
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
+// Bottom bar sizes (a little bigger than before: icons 20 -> 23, labels 11 -> 12, bar 68 -> 74 on web).
+const TAB_ICON_SIZE = 23;
+const TAB_BAR_HEIGHT = Platform.OS === "web" ? 74 : 70; // plus the bottom safe area
+
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
   const { t } = useI18n();
+  const insets = useSafeAreaInsets();
   // Keeps unread counts and online dots fresh while signed in.
   useLiveStatus();
   const unreadMessages = useUnreadCounts((s) => s.messages);
@@ -58,8 +64,8 @@ export default function MainTabNavigator() {
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: theme.divider,
       elevation: 0,
-      height: Platform.OS === "web" ? 68 : undefined,
-      paddingTop: 6,
+      height: TAB_BAR_HEIGHT + insets.bottom,
+      paddingTop: 7,
     },
     tabBarItemStyle: { paddingVertical: 2 },
     tabBarBackground: () =>
@@ -72,8 +78,8 @@ export default function MainTabNavigator() {
       ) : null,
     tabBarLabelStyle: {
       fontFamily: FontFamily.semibold,
-      fontSize: 11,
-      marginTop: 2,
+      fontSize: 12,
+      marginTop: 3,
     },
   };
 
@@ -81,7 +87,7 @@ export default function MainTabNavigator() {
     (name: keyof typeof Feather.glyphMap) =>
     ({ color, focused }: { color: string; focused: boolean }) => (
       <View style={[styles.iconPill, focused && { backgroundColor: theme.primarySoft }]}>
-        <AppIcon name={name} size={20} color={color} />
+        <AppIcon name={name} size={TAB_ICON_SIZE} color={color} />
       </View>
     );
 
@@ -98,7 +104,7 @@ export default function MainTabNavigator() {
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && { backgroundColor: theme.primarySoft }]}>
-              <HomeIcon size={20} color={color} />
+              <HomeIcon size={TAB_ICON_SIZE} color={color} />
             </View>
           ),
         }}
@@ -130,7 +136,7 @@ export default function MainTabNavigator() {
           tabBarButtonTestID: "tab-chats",
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && { backgroundColor: theme.primarySoft }]}>
-              <ChatIcon size={20} color={color} />
+              <ChatIcon size={TAB_ICON_SIZE} color={color} />
               {/* Sits on the icon's top-right, inside the icon row, so it never touches the label. */}
               <CountBadge count={unreadMessages} style={styles.tabBadge} testID="tab-messages-badge" />
             </View>
@@ -145,7 +151,7 @@ export default function MainTabNavigator() {
           headerTitle: t("nav.profile"),
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && { backgroundColor: theme.primarySoft }]}>
-              <ProfileIcon size={20} color={color} />
+              <ProfileIcon size={TAB_ICON_SIZE} color={color} />
             </View>
           ),
         }}
@@ -156,14 +162,14 @@ export default function MainTabNavigator() {
 
 const styles = StyleSheet.create({
   iconPill: {
-    width: 48,
-    height: 30,
-    borderRadius: 15,
+    width: 54,
+    height: 34,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
   },
   tabBadge: {
-    top: -5,
-    left: 27,
+    top: -4,
+    left: 31,
   },
 });
