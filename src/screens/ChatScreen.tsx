@@ -58,6 +58,7 @@ import { useVoiceRecorder, type FinishedRecording } from "@/hooks/useVoiceRecord
 import { VoiceMessagePlayer, formatVoiceTime } from "@/components/VoiceMessagePlayer";
 import { ChatPhoto } from "@/components/ChatPhoto";
 import { PhotoViewer } from "@/components/PhotoViewer";
+import { ChatOptionsSheet } from "@/components/ChatOptionsSheet";
 import * as ImageManipulator from "expo-image-manipulator";
 
 import { useOptionalVoiceCall } from "@/contexts/VoiceCallContext";
@@ -1059,7 +1060,7 @@ export default function ChatScreen() {
           >
             {calling ? <ActivityIndicator size="small" color={theme.text} /> : <Feather name="phone" size={22} color={theme.text} />}
           </Pressable>
-          <Pressable style={styles.headerButton} onPress={() => setShowOptionsMenu(true)}>
+          <Pressable style={styles.headerButton} onPress={() => setShowOptionsMenu(true)} testID="dm-options-button">
             <Feather name="more-vertical" size={22} color={theme.text} />
           </Pressable>
         </View>
@@ -1198,37 +1199,7 @@ export default function ChatScreen() {
         </View>
       </Animated.View>
 
-      <Modal visible={showOptionsMenu} transparent animationType="fade" onRequestClose={() => setShowOptionsMenu(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowOptionsMenu(false)}>
-          <View style={[styles.optionsMenu, { backgroundColor: theme.surface }]}>
-            <Pressable style={styles.optionItem} onPress={() => { handleViewProfile(); setShowOptionsMenu(false); }}>
-              <Feather name="user" size={20} color={theme.text} />
-              <ThemedText style={[styles.optionText, { color: theme.text }]}>{tr("View Profile")}</ThemedText>
-            </Pressable>
-            <Pressable style={styles.optionItem}>
-              <Feather name="search" size={20} color={theme.text} />
-              <ThemedText style={[styles.optionText, { color: theme.text }]}>{tr("Search in Conversation")}</ThemedText>
-            </Pressable>
-            <Pressable style={styles.optionItem}>
-              <Feather name="bell-off" size={20} color={theme.text} />
-              <ThemedText style={[styles.optionText, { color: theme.text }]}>{tr("Mute Notifications")}</ThemedText>
-            </Pressable>
-            <Pressable style={styles.optionItem}>
-              <Feather name="flag" size={20} color={theme.text} />
-              <ThemedText style={[styles.optionText, { color: theme.text }]}>{tr("Report")}</ThemedText>
-            </Pressable>
-            <Pressable style={styles.optionItem}>
-              <Feather name="slash" size={20} color={theme.error} />
-              <ThemedText style={[styles.optionText, { color: theme.error }]}>{tr("Block")}</ThemedText>
-            </Pressable>
-            <View style={[styles.optionDivider, { backgroundColor: theme.divider }]} />
-            <Pressable style={styles.optionItem}>
-              <Feather name="trash-2" size={20} color={theme.error} />
-              <ThemedText style={[styles.optionText, { color: theme.error }]}>{tr("Delete Chat")}</ThemedText>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+      <ChatOptionsSheet visible={showOptionsMenu} onClose={() => setShowOptionsMenu(false)} onViewProfile={handleViewProfile} />
 
       <Modal visible={showReactionPicker} transparent animationType="fade" onRequestClose={() => setShowReactionPicker(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowReactionPicker(false)}>
@@ -1793,27 +1764,6 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     fontFamily: "PlusJakartaSans_400Regular",
-  },
-  optionsMenu: {
-    width: "80%",
-    maxWidth: 300,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.sm,
-  },
-  optionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    gap: Spacing.md,
-  },
-  optionText: {
-    fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
-  },
-  optionDivider: {
-    height: 1,
-    marginVertical: Spacing.sm,
   },
   imageMessageBubble: {
     borderRadius: BorderRadius.lg,
