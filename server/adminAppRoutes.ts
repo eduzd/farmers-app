@@ -6,7 +6,7 @@ import { notify } from "./featureRoutes";
 import { decodeUpload, looksLikeImage, IMAGE_MIME, MAX_IMAGE_BYTES, VOICE_MIME, MAX_VOICE_BYTES, MAX_VOICE_MS } from "./dmRoutes";
 import { isUserPresent } from "./communityRoutes";
 import {
-  rows, J, iso, str, wrap, requireUser, requireAdmin, audit, storeOut, itemOut, slugify, productFields, storeFields, ensurePlatform,
+  rows, J, iso, str, wrap, requireUser, requireAdmin, audit, storeOut, itemOut, slugify, productFields, storeFields, ensurePlatform, adminNextSteps,
 } from "./platformRoutes";
 
 /**
@@ -112,6 +112,9 @@ function productOut(r: any) {
     quantity: Number(d.quantity || 0),
     unit: d.unit || "",
     category: d.category || "other",
+    sellAs: d.sellAs || "", packSize: d.packSize ?? null, packUnit: d.packUnit || "", grade: d.grade || "", variety: d.variety || "",
+    origin: d.origin || "", harvestDate: d.harvestDate || "", shelfLife: d.shelfLife || "", storage: d.storage || "",
+    organic: !!d.organic, minOrder: d.minOrder ?? null, maxOrder: d.maxOrder ?? null,
     hidden: !!d.hidden,
     active: d.active !== false,
     ownerName: r.owner_name || d.seller || "",
@@ -139,6 +142,7 @@ function orderOut(o: any) {
     address: J(o.address) || null,
     history: J(o.history) || [],
     adminNote: o.admin_note || "",
+    adminNotes: (J(o.admin_notes) || []).length ? J(o.admin_notes) : o.admin_note ? [{ id: "legacy", text: o.admin_note, at: iso(o.updated_at || o.created_at), by: "" }] : [],
     checkout: J(o.checkout) || null,
     createdAt: iso(o.created_at),
   };
@@ -431,7 +435,7 @@ export function registerAdminAppRoutes(app: Express) {
       ? rows(await db.execute(sql`SELECT u.id, u.name, u.email, s.id AS store_id, s.name AS store_name FROM users u LEFT JOIN stores s ON s.owner_id = u.id
           WHERE u.id IN (${sql.join(out.sellerIds.map((x) => sql`${x}`), sql`, `)})`)).map((r: any) => ({ id: r.id, name: r.name || "", email: r.email || "", storeId: r.store_id || null, storeName: r.store_name || "" }))
       : [];
-    res.json({ ...out, products, sellers });
+    res.json({ ...out, products, sellers, next: adminNextSteps(out.status) });
   }));
 
   // ================= SUPPORT (Help -> admin) =================

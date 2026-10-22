@@ -4,7 +4,7 @@ import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import {
-  useAdminNav, useL, useLoader, useDebounced, Page, Card, SectionTitle, Pill, Chip, ChipRow, SearchBox, Btn, Field, KV, Empty, Loading, ErrorBox, Thumb, Stat,
+  useAdminNav, useL, useLoader, useDebounced, Page, Card, SectionTitle, Pill, Chip, ChipRow, SearchBox, Btn, Field, KV, Empty, Loading, ErrorBox, Thumb, Stat, ToggleRow,
   taka, STATUS_COLOR, statusLabel, fmtDate, pickAndUpload, confirmAsk, st, ShopSection,
   Text,
 } from "./ui";
@@ -398,6 +398,43 @@ export function OrderRow({ o, productId }: { o: any; productId?: string }) {
   );
 }
 
+type SellAs = "weight" | "piece" | "pack" | "volume" | "dozen";
+const SELL_UNITS: Record<SellAs, string[]> = {
+  weight: ["kg", "g", "maund"],
+  piece: ["piece"],
+  pack: ["bag", "box", "packet", "sack", "crate", "bottle"],
+  volume: ["litre", "ml"],
+  dozen: ["dozen"],
+};
+const PACK_CONTENT = ["kg", "g", "litre", "ml", "pieces"];
+const unitName = (u: string, L: ReturnType<typeof useL>) =>
+  (({
+    kg: L("kg", "কেজি"), g: L("gram", "গ্রাম"), maund: L("maund", "মণ"), piece: L("piece", "পিস"), bag: L("bag", "ব্যাগ"), box: L("box", "বক্স"),
+    packet: L("packet", "প্যাকেট"), sack: L("sack", "বস্তা"), crate: L("crate", "ক্রেট"), bottle: L("bottle", "বোতল"), litre: L("litre", "লিটার"),
+    ml: L("ml", "মিলি"), dozen: L("dozen", "ডজন"), pieces: L("pieces", "পিস"),
+  } as Record<string, string>)[u] || u);
+function guessSellAs(d: any): SellAs {
+  if (d?.sellAs && SELL_UNITS[d.sellAs as SellAs]) return d.sellAs;
+  const u = String(d?.unit || "kg").toLowerCase();
+  for (const k of Object.keys(SELL_UNITS) as SellAs[]) if (SELL_UNITS[k].includes(u)) return k;
+  return "piece";
+}
+
+function SellTile({ on, icon, title, sub, onPress, testID }: { on: boolean; icon: keyof typeof Feather.glyphMap; title: string; sub: string; onPress: () => void; testID?: string }) {
+  const { theme } = useTheme();
+  return (
+    <Pressable testID={testID} accessibilityRole="radio" accessibilityState={{ selected: on }} onPress={onPress}
+      style={({ pressed }) => ({ flexBasis: "47%", flexGrow: 1, padding: 12, borderRadius: 14, borderWidth: 2, borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primary + "10" : "transparent", transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+      <View style={[st.row, { gap: 8 }]}>
+        <Feather name={icon} size={18} color={on ? theme.primary : theme.textSecondary} />
+        <Text style={{ color: on ? theme.primary : theme.text, fontWeight: "800", flex: 1 }}>{title}</Text>
+        <Feather name={on ? "check-circle" : "circle"} size={16} color={on ? theme.primary : theme.textTertiary} />
+      </View>
+      <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 4 }}>{sub}</Text>
+    </Pressable>
+  );
+}
+
 export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) {
   const nav = useAdminNav();
   const { theme } = useTheme();
@@ -405,19 +442,45 @@ export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) 
   const cats = useLoader<Category[]>(() => apiGet("/api/admin/manage/categories"), []);
   const stores = useLoader<any[]>(() => apiGet("/api/admin/manage/stores"), []);
   const existing = useLoader<any>(() => (id ? apiGet(`/api/admin/manage/products/${id}`) : Promise.resolve(null)), [id]);
-  const [f, setF] = useState<any>({ name: "", price: "", quantity: "", unit: "kg", category: "", description: "", image: "", minOrder: "", location: "", storeId: storeId || "" });
+  const blank = { name: "", price: "", quantity: "", unit: "kg", sellAs: "weight", packSize: "", packUnit: "kg", category: "", description: "", image: "", minOrder: "", maxOrder: "", location: "", storeId: storeId || "", grade: "", variety: "", origin: "", harvestDate: "", shelfLife: "", storage: "", organic: false };
+  const [f, setF] = useState<any>(blank);
+  const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [upl, setUpl] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [shopQ, setShopQ] = useState("");
+  const [tried, setTried] = useState(false);
   useEffect(() => {
     const d = existing.data;
-    if (d) setF({ name: d.name, price: String(d.price), quantity: String(d.quantity), unit: d.unit || "kg", category: d.category, description: d.description || "", image: d.image || "", minOrder: d.minOrder ? String(d.minOrder) : "", location: d.location || "", storeId: d.storeId || "" });
+    if (!d) return;
+    const s2 = (v: any) => (v === null || v === undefined ? "" : String(v));
+    setF({ ...blank, name: d.name, price: s2(d.price), quantity: s2(d.quantity), unit: d.unit || "kg", sellAs: guessSellAs(d), packSize: s2(d.packSize), packUnit: d.packUnit || "kg", category: d.category, description: d.description || "", image: d.image || "", minOrder: s2(d.minOrder), maxOrder: s2(d.maxOrder), location: d.location || "", storeId: d.storeId || "", grade: d.grade || "", variety: d.variety || "", origin: d.origin || "", harvestDate: d.harvestDate || "", shelfLife: d.shelfLife || "", storage: d.storage || "", organic: !!d.organic });
+    if (d.grade || d.variety || d.origin || d.harvestDate || d.shelfLife || d.storage || d.organic || d.maxOrder) setMore(true);
   }, [existing.data?.id]);
-  const set = (k: string) => (v: string) => setF((x: any) => ({ ...x, [k]: v }));
+  const set = (k: string) => (v: any) => setF((x: any) => ({ ...x, [k]: v }));
+  const sellAs = f.sellAs as SellAs;
+  const pickSellAs = (k: SellAs) => setF((x: any) => ({ ...x, sellAs: k, unit: SELL_UNITS[k].includes(x.unit) ? x.unit : SELL_UNITS[k][0] }));
+  const unitLabel = unitName(f.unit, L);
+  const packText = sellAs === "pack" && Number(f.packSize) > 0 ? ` (${f.packSize} ${unitName(f.packUnit, L)})` : "";
+  const errors: string[] = [];
+  if (!f.name.trim()) errors.push(L("Write the product name", "পণ্যের নাম লিখুন"));
+  if (!f.category) errors.push(L("Pick a category", "ক্যাটাগরি বেছে নিন"));
+  if (!(Number(f.price) > 0)) errors.push(L("Price must be more than 0", "দাম ০-এর বেশি হতে হবে"));
+  if (sellAs === "pack" && !(Number(f.packSize) > 0)) errors.push(L("Write how much is in one pack", "এক প্যাকে কতটুকু আছে লিখুন"));
+  if (f.quantity && !(Number(f.quantity) >= 0)) errors.push(L("Stock must be a number", "স্টক সংখ্যা হতে হবে"));
+  if (f.minOrder && f.quantity && Number(f.quantity) > 0 && Number(f.minOrder) > Number(f.quantity)) errors.push(L("Minimum order can't be more than the stock", "সর্বনিম্ন অর্ডার স্টকের বেশি হতে পারে না"));
+  if (f.minOrder && f.maxOrder && Number(f.minOrder) > Number(f.maxOrder)) errors.push(L("Minimum order can't be more than the maximum", "সর্বনিম্ন অর্ডার সর্বোচ্চের বেশি হতে পারে না"));
+  if (f.harvestDate && !/^\d{4}-\d{2}-\d{2}$/.test(f.harvestDate)) errors.push(L("Harvest date: use YYYY-MM-DD", "সংগ্রহের তারিখ: YYYY-MM-DD"));
   const save = async () => {
+    setTried(true);
+    if (errors.length) return;
     setBusy(true); setErr(null);
-    const body: any = { name: f.name, price: Number(f.price), quantity: Number(f.quantity) || 0, unit: f.unit, category: f.category, description: f.description, image: f.image, location: f.location };
+    const body: any = {
+      name: f.name.trim(), price: Number(f.price), quantity: Number(f.quantity) || 0, unit: f.unit, sellAs, category: f.category, description: f.description, image: f.image, location: f.location,
+      packSize: sellAs === "pack" ? Number(f.packSize) : null, packUnit: sellAs === "pack" ? f.packUnit : "",
+      grade: f.grade, variety: f.variety, origin: f.origin, harvestDate: f.harvestDate, shelfLife: f.shelfLife, storage: f.storage, organic: !!f.organic,
+      maxOrder: f.maxOrder ? Number(f.maxOrder) : null,
+    };
     if (f.minOrder) body.minOrder = Number(f.minOrder);
     try {
       if (id) {
@@ -432,45 +495,107 @@ export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) 
   };
   if (id && existing.loading) return <Page><Loading /></Page>;
   const storeList = (stores.data || []).filter((s) => !shopQ || `${s.name} ${s.ownerName}`.toLowerCase().includes(shopQ.toLowerCase()));
-  const canSave = f.name.trim().length > 0 && Number(f.price) > 0 && !!f.category;
+  const label = (t: string) => <Text style={[st.label, { color: theme.textSecondary }]}>{t}</Text>;
+  const GRADES = [L("Premium", "প্রিমিয়াম"), L("Grade A", "গ্রেড এ"), L("Grade B", "গ্রেড বি"), L("Export quality", "রপ্তানি মান")];
   return (
     <Page testID="product-form">
       {err ? <ErrorBox text={err} /> : null}
       {!id ? (
-        <Card>
-          <Text style={[st.label, { color: theme.textSecondary }]}>{L("Which shop sells it?", "কোন দোকান বিক্রি করবে?")}</Text>
-          <SearchBox value={shopQ} onChange={setShopQ} placeholder={L("Find a shop", "দোকান খুঁজুন")} testID="product-form-shop-search" />
-          <ChipRow>
-            <Chip label={L("Farmers (admin)", "ফার্মার্স (অ্যাডমিন)")} on={!f.storeId} onPress={() => set("storeId")("")} />
-            {storeList.map((s) => <Chip key={s.id} testID={`pick-shop-${s.id}`} label={s.name} on={f.storeId === s.id} onPress={() => set("storeId")(s.id)} />)}
-          </ChipRow>
-        </Card>
+        <>
+          <SectionTitle title={L("1. Shop", "১. দোকান")} />
+          <Card>
+            {label(L("Which shop sells it?", "কোন দোকান বিক্রি করবে?"))}
+            <SearchBox value={shopQ} onChange={setShopQ} placeholder={L("Find a shop", "দোকান খুঁজুন")} testID="product-form-shop-search" />
+            <ChipRow>
+              <Chip label={L("Farmers (admin)", "ফার্মার্স (অ্যাডমিন)")} on={!f.storeId} onPress={() => set("storeId")("")} />
+              {storeList.map((s) => <Chip key={s.id} testID={`pick-shop-${s.id}`} label={s.name} on={f.storeId === s.id} onPress={() => set("storeId")(s.id)} />)}
+            </ChipRow>
+          </Card>
+        </>
       ) : null}
+      <SectionTitle title={L(`${id ? 1 : 2}. Basics`, `${id ? "১" : "২"}. মূল তথ্য`)} />
       <Card>
-        <Text style={[st.label, { color: theme.textSecondary }]}>{L("Photo", "ছবি")}</Text>
+        {label(L("Photo", "ছবি"))}
         <View style={[st.row, { marginBottom: 12 }]}>
           <Thumb uri={f.image} size={72} />
           <Btn kind="ghost" small icon="image" busy={upl} label={f.image ? L("Change photo", "ছবি বদলান") : L("Add photo", "ছবি যোগ করুন")}
             onPress={async () => { setUpl(true); try { const u = await pickAndUpload(); if (u) set("image")(u); } catch (e: any) { setErr(e?.message); } finally { setUpl(false); } }} />
           {f.image ? <Btn kind="ghost" small icon="x" label={L("Remove", "সরান")} onPress={() => set("image")("")} /> : null}
         </View>
-        <Field testID="pf-name" label={L("Product name", "পণ্যের নাম")} value={f.name} onChange={set("name")} maxLength={120} />
-        <View style={st.row}>
-          <View style={{ flex: 1 }}><Field testID="pf-price" label={L("Price (৳)", "দাম (৳)")} value={f.price} onChange={set("price")} keyboardType="numeric" /></View>
-          <View style={{ flex: 1 }}><Field testID="pf-unit" label={L("Unit", "একক")} value={f.unit} onChange={set("unit")} maxLength={20} /></View>
-        </View>
-        <View style={st.row}>
-          <View style={{ flex: 1 }}><Field testID="pf-qty" label={L("Stock", "স্টক")} value={f.quantity} onChange={set("quantity")} keyboardType="numeric" /></View>
-          <View style={{ flex: 1 }}><Field label={L("Minimum order", "সর্বনিম্ন অর্ডার")} value={f.minOrder} onChange={set("minOrder")} keyboardType="numeric" /></View>
-        </View>
-        <Text style={[st.label, { color: theme.textSecondary }]}>{L("Category", "ক্যাটাগরি")}</Text>
-        <View style={[st.grid, { marginBottom: 12, gap: 8 }]}>
+        <Field testID="pf-name" label={L("Product name", "পণ্যের নাম")} value={f.name} onChange={set("name")} maxLength={120} placeholder={L("e.g. Miniket rice", "যেমন: মিনিকেট চাল")} />
+        {label(L("Category", "ক্যাটাগরি"))}
+        <View style={[st.grid, { marginBottom: 4, gap: 8 }]}>
           {(cats.data || []).map((c) => <Chip key={c.id} testID={`pf-cat-${c.slug}`} label={L(c.nameEn, c.nameBn)} color={c.color} on={f.category === c.slug} onPress={() => set("category")(c.slug)} />)}
         </View>
+      </Card>
+      <SectionTitle title={L(`${id ? 2 : 3}. How is it sold?`, `${id ? "২" : "৩"}. কীভাবে বিক্রি হবে?`)} />
+      <Card testID="pf-sell-as">
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+          <SellTile testID="sell-weight" on={sellAs === "weight"} icon="activity" title={L("By weight", "ওজনে")} sub={L("kg, gram, maund", "কেজি, গ্রাম, মণ")} onPress={() => pickSellAs("weight")} />
+          <SellTile testID="sell-pack" on={sellAs === "pack"} icon="package" title={L("In packs", "প্যাকেটে")} sub={L("Bag, box, sack with a fixed amount", "নির্দিষ্ট পরিমাণের ব্যাগ, বক্স, বস্তা")} onPress={() => pickSellAs("pack")} />
+          <SellTile testID="sell-piece" on={sellAs === "piece"} icon="box" title={L("By piece", "পিস হিসেবে")} sub={L("Each one, e.g. a fish or a plant", "প্রতিটি, যেমন মাছ বা চারা")} onPress={() => pickSellAs("piece")} />
+          <SellTile testID="sell-dozen" on={sellAs === "dozen"} icon="grid" title={L("By dozen", "ডজনে")} sub={L("12 pieces, e.g. eggs", "১২ পিস, যেমন ডিম")} onPress={() => pickSellAs("dozen")} />
+          <SellTile testID="sell-volume" on={sellAs === "volume"} icon="droplet" title={L("By litre", "লিটারে")} sub={L("Litre or ml, e.g. milk, oil, honey", "লিটার বা মিলি, যেমন দুধ, তেল, মধু")} onPress={() => pickSellAs("volume")} />
+        </View>
+        {SELL_UNITS[sellAs].length > 1 ? (
+          <>
+            <View style={{ height: 12 }} />
+            {label(sellAs === "pack" ? L("Pack type", "প্যাকের ধরন") : L("Unit", "একক"))}
+            <ChipRow>{SELL_UNITS[sellAs].map((u) => <Chip key={u} testID={`pf-unit-${u}`} label={unitName(u, L)} on={f.unit === u} onPress={() => set("unit")(u)} />)}</ChipRow>
+          </>
+        ) : null}
+        {sellAs === "pack" ? (
+          <View style={[st.row, { marginTop: 10, alignItems: "flex-start" }]}>
+            <View style={{ flex: 1 }}><Field testID="pf-pack-size" label={L(`Amount in one ${unitName(f.unit, L)}`, `এক ${unitName(f.unit, L)}-এ পরিমাণ`)} value={f.packSize} onChange={set("packSize")} keyboardType="numeric" placeholder="5" /></View>
+            <View style={{ flex: 1, paddingTop: 22 }}><ChipRow>{PACK_CONTENT.map((u) => <Chip key={u} testID={`pf-pack-unit-${u}`} label={unitName(u, L)} on={f.packUnit === u} onPress={() => set("packUnit")(u)} />)}</ChipRow></View>
+          </View>
+        ) : null}
+      </Card>
+      <SectionTitle title={L(`${id ? 3 : 4}. Price and stock`, `${id ? "৩" : "৪"}. দাম ও স্টক`)} />
+      <Card>
+        <Field testID="pf-price" label={L(`Price for one ${unitLabel}`, `এক ${unitLabel}-এর দাম`)} prefix="৳" value={f.price} onChange={set("price")} keyboardType="numeric" />
+        <Field testID="pf-qty" label={L(`Stock (how many ${unitLabel})`, `স্টক (কত ${unitLabel})`)} value={f.quantity} onChange={set("quantity")} keyboardType="numeric" hint={L("0 means out of stock", "০ মানে স্টক নেই")} />
+        <View style={st.row}>
+          <View style={{ flex: 1 }}><Field testID="pf-min" label={L("Smallest order", "সর্বনিম্ন অর্ডার")} value={f.minOrder} onChange={set("minOrder")} keyboardType="numeric" placeholder="1" /></View>
+          <View style={{ flex: 1 }}><Field testID="pf-max" label={L("Largest order (optional)", "সর্বোচ্চ অর্ডার (ঐচ্ছিক)")} value={f.maxOrder} onChange={set("maxOrder")} keyboardType="numeric" /></View>
+        </View>
+        <View testID="pf-preview" style={{ marginTop: 4, padding: 12, borderRadius: 12, backgroundColor: theme.primary + "10" }}>
+          <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{L("Buyers will see", "ক্রেতারা দেখবেন")}</Text>
+          <Text style={{ color: theme.text, fontWeight: "800", fontSize: 16, marginTop: 2 }}>
+            {Number(f.price) > 0 ? taka(Number(f.price)) : "৳ —"} / {unitLabel}{packText}
+          </Text>
+          <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 2 }}>
+            {Number(f.quantity) > 0 ? L(`${f.quantity} ${unitLabel} in stock`, `স্টকে ${f.quantity} ${unitLabel}`) : L("Out of stock", "স্টক নেই")}
+            {f.minOrder || f.maxOrder ? ` · ${L("order", "অর্ডার")} ${f.minOrder || 1}${f.maxOrder ? `–${f.maxOrder}` : "+"} ${unitLabel}` : ""}
+            {f.organic ? ` · ${L("Organic", "জৈব")}` : ""}{f.grade ? ` · ${f.grade}` : ""}
+          </Text>
+        </View>
+      </Card>
+      <SectionTitle title={L(`${id ? 4 : 5}. More details`, `${id ? "৪" : "৫"}. আরও তথ্য`)} />
+      <Card>
+        <ToggleRow testID="pf-organic" icon="feather" label={L("Organic / no chemicals", "জৈব / রাসায়নিক মুক্ত")} value={!!f.organic} onChange={set("organic")} />
+        {!more ? (
+          <Pressable testID="pf-more" onPress={() => setMore(true)} style={[st.row, { gap: 6, paddingVertical: 10 }]}>
+            <Feather name="plus-circle" size={16} color={theme.primary} />
+            <Text style={{ color: theme.primary, fontWeight: "700" }}>{L("Add grade, variety, origin, harvest date and storage", "গ্রেড, জাত, উৎস, সংগ্রহের তারিখ ও সংরক্ষণ যোগ করুন")}</Text>
+          </Pressable>
+        ) : (
+          <>
+            {label(L("Grade", "গ্রেড"))}
+            <ChipRow>{GRADES.map((g) => <Chip key={g} label={g} on={f.grade === g} onPress={() => set("grade")(f.grade === g ? "" : g)} />)}</ChipRow>
+            <Field testID="pf-variety" label={L("Variety or breed", "জাত")} value={f.variety} onChange={set("variety")} maxLength={80} placeholder={L("e.g. BRRI dhan 28, Rui", "যেমন: ব্রি ধান ২৮, রুই")} />
+            <Field testID="pf-origin" label={L("Where it's from", "কোথা থেকে")} value={f.origin} onChange={set("origin")} maxLength={80} placeholder={L("e.g. Dinajpur", "যেমন: দিনাজপুর")} />
+            <Field testID="pf-harvest" label={L("Harvest or packing date (YYYY-MM-DD)", "সংগ্রহ বা প্যাকিংয়ের তারিখ (YYYY-MM-DD)")} value={f.harvestDate} onChange={set("harvestDate")} maxLength={10} placeholder="2026-10-20" />
+            <Field testID="pf-shelf" label={L("Stays fresh for", "কতদিন ভালো থাকে")} value={f.shelfLife} onChange={set("shelfLife")} maxLength={80} placeholder={L("e.g. 7 days", "যেমন: ৭ দিন")} />
+            <Field testID="pf-storage" label={L("How to store", "কীভাবে সংরক্ষণ করবেন")} value={f.storage} onChange={set("storage")} maxLength={80} placeholder={L("e.g. Keep dry and cool", "যেমন: শুকনো ও ঠান্ডা জায়গায়")} />
+          </>
+        )}
         <Field label={L("Location", "লোকেশন")} value={f.location} onChange={set("location")} maxLength={120} />
         <Field testID="pf-desc" label={L("Description", "বিবরণ")} value={f.description} onChange={set("description")} multiline maxLength={2000} />
+        <Text style={{ color: theme.textTertiary, fontSize: 12 }}>{L("Delivery charges are the same for every product. Change them in More, Delivery charges.", "ডেলিভারি চার্জ সব পণ্যে একই। আরও > ডেলিভারি চার্জ থেকে বদলান।")}</Text>
       </Card>
-      <Btn testID="save-product" icon="check" label={id ? L("Save changes", "পরিবর্তন সংরক্ষণ") : L("Add product", "পণ্য যোগ করুন")} busy={busy} disabled={!canSave} onPress={save} />
+      {tried && errors.length ? <View style={{ gap: 4 }}>{errors.map((e) => <Text key={e} style={{ color: "#B91C1C", fontSize: 12.5 }}>• {e}</Text>)}</View> : null}
+      <Btn testID="save-product" icon="check" label={id ? L("Save changes", "পরিবর্তন সংরক্ষণ") : L("Add product", "পণ্য যোগ করুন")} busy={busy} onPress={save} />
     </Page>
   );
 }

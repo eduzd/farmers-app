@@ -61,6 +61,7 @@ export function ensurePlatform() {
         created_at timestamp NOT NULL DEFAULT now(),
         updated_at timestamp NOT NULL DEFAULT now())`);
       await q(sql`ALTER TABLE shop_orders ADD COLUMN IF NOT EXISTS admin_note text`);
+      await q(sql`ALTER TABLE shop_orders ADD COLUMN IF NOT EXISTS admin_notes jsonb`);
     })();
     ready.catch(() => (ready = null));
   }
@@ -307,6 +308,8 @@ export function storeFields(body: any) {
   return o;
 }
 
+/** weight = by kg/g/maund, piece = each, pack = a bag/box with a fixed amount, volume = litre, dozen = 12 pieces */
+export const SELL_AS = ["weight", "piece", "pack", "volume", "dozen"];
 export function productFields(body: any, partial: boolean) {
   const o: any = {};
   const err = (m: string) => ({ error: m });
@@ -328,7 +331,26 @@ export function productFields(body: any, partial: boolean) {
     if (!Array.isArray(body.options)) return err("Options must be a list");
     o.options = cleanOptions(body.options);
   }
+  // How the product is sold and extra details buyers see.
+  if (body?.sellAs !== undefined) {
+    o.sellAs = String(body.sellAs || "");
+    if (o.sellAs && !SELL_AS.includes(o.sellAs)) return err("Pick how the product is sold");
+  }
+  if (body?.packSize !== undefined) {
+    const n = Number(body.packSize);
+    o.packSize = body.packSize === null || body.packSize === "" ? null : n > 0 && n <= 100000 ? Math.round(n * 1000) / 1000 : NaN;
+    if (Number.isNaN(o.packSize)) return err("Pack size must be a number more than 0");
+  }
+  for (const k of ["packUnit", "grade", "origin", "shelfLife", "storage", "variety"]) if (body?.[k] !== undefined) o[k] = str(body[k], 80);
+  if (body?.harvestDate !== undefined) {
+    o.harvestDate = str(body.harvestDate, 10);
+    if (o.harvestDate && !/^\d{4}-\d{2}-\d{2}$/.test(o.harvestDate)) return err("Harvest date: use YYYY-MM-DD");
+  }
+  if (body?.organic !== undefined) o.organic = !!body.organic;
+  if (body?.maxOrder !== undefined) o.maxOrder = body.maxOrder === null || body.maxOrder === "" ? null : Math.max(1, Math.floor(Number(body.maxOrder) || 1));
+  if (o.sellAs === "pack" && !(o.packSize > 0) && !partial) return err("Write how much is in one pack");
   if (o.minOrder && o.quantity !== undefined && o.quantity > 0 && o.minOrder > o.quantity) return err("Minimum order can't be more than the stock");
+  if (o.minOrder && o.maxOrder && o.minOrder > o.maxOrder) return err("Minimum order can't be more than the maximum");
   return o;
 }
 
@@ -351,6 +373,17 @@ const CATALOG = ["listings", "experts", "events"];
 const COMMUNITY = ["polls", "questions", "rfqs", "diary"];
 const tableFor = (kind: string) => (CATALOG.includes(kind) ? "catalog_items" : COMMUNITY.includes(kind) ? "community_items" : null);
 export const ORDER_STATUSES = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
+/** The order steps in order. The admin moves an order forward one step at a time. */
+export const ORDER_FLOW = ["pending", "confirmed", "processing", "shipped", "delivered"];
+function privateNote(req: Request, text: string, step: string | null) {
+  const a = (req as any).admin;
+  return { id: crypto.randomUUID(), text, at: new Date().toISOString(), by: a?.name || a?.email || "Admin", ...(step ? { step } : {}) };
+}
+export function adminNextSteps(from: string): string[] {
+  if (from === "delivered" || from === "cancelled") return [];
+  const i = ORDER_FLOW.indexOf(from);
+  return [...(i >= 0 && ORDER_FLOW[i + 1] ? [ORDER_FLOW[i + 1]] : []), "cancelled"];
+}
 
 export function registerPlatformRoutes(app: Express) {
   ensurePlatform().catch((e) => console.error("[platform] init", e?.message));
@@ -555,7 +588,8 @@ export function registerPlatformRoutes(app: Express) {
       id: o.id, total: Number(o.total), status: o.status, itemCount: Number(o.item_count), createdAt: iso(o.created_at),
     }));
     const listings = Number(rows(await db.execute(sql`SELECT count(*)::int AS n FROM catalog_items WHERE kind = 'listings' AND owner_id = ${id}`))[0]?.n || 0);
-    res.json({ ...u, recentOrders: orders, listings });
+    const store = rows(await db.execute(sql`SELECT id, name FROM stores WHERE owner_id = ${id} LIMIT 1`))[0] || null;
+    res.json({ ...u, store: (u as any).store || store, recentOrders: orders, listings });
   }));
 
   app.put(`${A}/users/:id`, requireAdmin, wrap(async (req, res) => {
@@ -569,7 +603,22 @@ export function registerPlatformRoutes(app: Express) {
     const banned = b.banned !== undefined ? !!b.banned : !!t.banned;
     if (banned && isSuperAdmin) return res.status(400).json({ error: "Remove admin rights before banning this account" });
     const role = b.role !== undefined ? str(b.role, 30) || "user" : t.role;
+    if (banned && !t.banned && !b.skipWarning) {
+      let warned = 0;
+      try {
+        warned = Number(rows(await db.execute(sql`SELECT count(*)::int AS n FROM user_warnings WHERE user_id = ${id} AND withdrawn_at IS NULL`))[0]?.n || 0);
+      } catch {}
+      if (!warned) return res.status(409).json({ error: "Send this person a warning before you ban them", code: "WARN_FIRST" });
+    }
+    let username = t.username;
+    if (b.username !== undefined) {
+      username = String(b.username || "").trim().toLowerCase().replace(/^@/, "");
+      if (!/^[a-z0-9_.]{3,30}$/.test(username)) return res.status(400).json({ error: "Username: 3 to 30 letters, numbers, _ or ." });
+      const taken = rows(await db.execute(sql`SELECT id FROM users WHERE lower(username) = ${username} AND id <> ${id} LIMIT 1`))[0];
+      if (taken) return res.status(409).json({ error: "That username is taken" });
+    }
     await db.execute(sql`UPDATE users SET
+      username = ${username},
       name = ${b.name !== undefined ? str(b.name, 120) : t.name}, phone = ${b.phone !== undefined ? str(b.phone, 30) : t.phone},
       role = ${role}, verified = ${b.verified !== undefined ? !!b.verified : !!t.verified},
       is_super_admin = ${isSuperAdmin}, banned = ${banned}, banned_reason = ${banned ? str(b.bannedReason) || t.banned_reason || null : null}
@@ -643,20 +692,51 @@ export function registerPlatformRoutes(app: Express) {
   app.put(`${A}/orders/:id`, requireAdmin, wrap(async (req, res) => {
     const o = rows(await db.execute(sql`SELECT * FROM shop_orders WHERE id = ${req.params.id} LIMIT 1`))[0];
     if (!o) return res.status(404).json({ error: "Order not found" });
-    const status = req.body?.status !== undefined ? String(req.body.status) : o.status;
+    const from = String(o.status || "pending");
+    const status = req.body?.status !== undefined ? String(req.body.status) : from;
     if (!ORDER_STATUSES.includes(status)) return res.status(400).json({ error: "Unknown status" });
-    const note = req.body?.note !== undefined ? str(req.body.note, 1000) : o.admin_note;
+    // One way only: pending -> confirmed -> processing -> shipped -> delivered, one step at a time.
+    // Cancel is allowed until the order is delivered. A finished step can't be picked again.
+    if (status !== from && !adminNextSteps(from).includes(status)) {
+      return res.status(409).json({ error: `This order is ${from}. Next it can only go to: ${adminNextSteps(from).join(" or ") || "nothing (it's finished)"}.`, status: from, next: adminNextSteps(from) });
+    }
+    // A note sent with a step is a private admin note: kept in admin_notes, never shown to the buyer or seller.
+    const noteIn = req.body?.note !== undefined ? str(req.body.note, 1000) : "";
+    const notes = [...(J(o.admin_notes) || [])];
+    if (noteIn) notes.push(privateNote(req, noteIn, status !== from ? status : null));
     const history = [...(J(o.history) || [])];
-    if (status !== o.status) history.push({ status, at: new Date().toISOString(), by: (req as any).uid, admin: true });
-    await db.execute(sql`UPDATE shop_orders SET status = ${status}, admin_note = ${note || null}, history = ${JSON.stringify(history)}::jsonb, updated_at = now() WHERE id = ${o.id}`);
-    if (status !== o.status) {
-      await notify(o.user_id, "order", `Order ${status}`, `The admin updated your order ${o.id} to ${status}.`, { orderId: o.id, role: "buyer", status });
+    if (status !== from) history.push({ status, at: new Date().toISOString(), by: (req as any).uid, admin: true });
+    await db.execute(sql`UPDATE shop_orders SET status = ${status}, admin_note = ${noteIn || o.admin_note || null}, admin_notes = ${JSON.stringify(notes)}::jsonb, history = ${JSON.stringify(history)}::jsonb, updated_at = now() WHERE id = ${o.id}`);
+    if (status !== from) {
+      const label: Record<string, string> = { confirmed: "confirmed", processing: "being packed", shipped: "on the way", delivered: "delivered", cancelled: "cancelled" };
+      const t = `Order ${label[status] || status}`;
+      await notify(o.user_id, "order", t, `Your order ${o.id} is now ${label[status] || status}.`, { orderId: o.id, role: "buyer", status });
       for (const s of String(o.seller_ids || "").split(",").filter(Boolean)) {
-        await notify(s, "order", `Order ${status}`, `The admin updated order ${o.id} to ${status}.`, { orderId: o.id, role: "seller", status });
+        await notify(s, "order", t, `The admin updated order ${o.id}: it is now ${label[status] || status}.`, { orderId: o.id, role: "seller", status });
       }
     }
-    await audit(req, "UPDATE_ORDER", "order", o.id, { from: o.status, to: status, note });
-    res.json({ success: true, status });
+    await audit(req, "UPDATE_ORDER", "order", o.id, { from, to: status, note: noteIn ? "private note added" : undefined });
+    res.json({ success: true, status, next: adminNextSteps(status) });
+  }));
+
+  // Private admin notes on an order (hidden from the buyer and seller).
+  app.post(`${A}/orders/:id/notes`, requireAdmin, wrap(async (req, res) => {
+    const o = rows(await db.execute(sql`SELECT id, admin_notes FROM shop_orders WHERE id = ${req.params.id} LIMIT 1`))[0];
+    if (!o) return res.status(404).json({ error: "Order not found" });
+    const text = str(req.body?.text, 1000);
+    if (!text) return res.status(400).json({ error: "Write the note first" });
+    const notes = [...(J(o.admin_notes) || []), privateNote(req, text, null)];
+    await db.execute(sql`UPDATE shop_orders SET admin_notes = ${JSON.stringify(notes)}::jsonb, admin_note = ${text} WHERE id = ${o.id}`);
+    await audit(req, "ORDER_NOTE", "order", o.id, "private note added");
+    res.status(201).json({ success: true, notes });
+  }));
+  app.delete(`${A}/orders/:id/notes/:nid`, requireAdmin, wrap(async (req, res) => {
+    const o = rows(await db.execute(sql`SELECT id, admin_notes FROM shop_orders WHERE id = ${req.params.id} LIMIT 1`))[0];
+    if (!o) return res.status(404).json({ error: "Order not found" });
+    const notes = (J(o.admin_notes) || []).filter((n: any) => n.id !== req.params.nid);
+    await db.execute(sql`UPDATE shop_orders SET admin_notes = ${JSON.stringify(notes)}::jsonb, admin_note = ${notes.length ? notes[notes.length - 1].text : null} WHERE id = ${o.id}`);
+    await audit(req, "ORDER_NOTE_DELETE", "order", o.id, "");
+    res.json({ success: true, notes });
   }));
 
   app.delete(`${A}/orders/:id`, requireAdmin, wrap(async (req, res) => {

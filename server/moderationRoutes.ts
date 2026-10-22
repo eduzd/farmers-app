@@ -45,6 +45,10 @@ export function ensureModeration() {
         id varchar PRIMARY KEY, target_user_id varchar, title text, body text NOT NULL, link jsonb,
         created_by varchar, created_at timestamp NOT NULL DEFAULT now())`);
       await q(sql`CREATE INDEX IF NOT EXISTS official_messages_target_idx ON official_messages (target_user_id, created_at)`);
+      await q(sql`CREATE TABLE IF NOT EXISTS user_warnings (
+        id varchar PRIMARY KEY, user_id varchar NOT NULL, reason text NOT NULL, created_by varchar, created_by_email text,
+        withdrawn_at timestamp, created_at timestamp NOT NULL DEFAULT now())`);
+      await q(sql`CREATE INDEX IF NOT EXISTS user_warnings_user_idx ON user_warnings (user_id, created_at)`);
       await q(sql`CREATE TABLE IF NOT EXISTS official_reads (user_id varchar PRIMARY KEY, read_at timestamp NOT NULL DEFAULT now())`);
       await q(sql`CREATE TABLE IF NOT EXISTS carousel_ads (
         id varchar PRIMARY KEY, placement varchar NOT NULL DEFAULT 'all', title_en text NOT NULL, title_bn text NOT NULL DEFAULT '',
@@ -99,6 +103,19 @@ async function target(req: Request, res: Response) {
 }
 
 const LABEL: Record<string, string> = { message: "sending messages", post: "posting in the community", comment: "commenting", sell: "selling", buy: "placing orders" };
+
+/** Puts a message from Farmers Official in one person's chat list and rings their bell. */
+export async function sendOfficial(createdBy: string | null, targetId: string, title: string, body: string) {
+  const id = `off-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+  await db.execute(sql`INSERT INTO official_messages (id, target_user_id, title, body, link, created_by)
+    VALUES (${id}, ${targetId}, ${title || null}, ${body}, ${null}::jsonb, ${createdBy})`);
+  await notify(targetId, "official", title || OFFICIAL_NAME, body.slice(0, 200), { screen: "OfficialChat" });
+  return id;
+}
+
+async function activeWarnings(uid: string) {
+  return rows(await db.execute(sql`SELECT * FROM user_warnings WHERE user_id = ${uid} AND withdrawn_at IS NULL ORDER BY created_at DESC`));
+}
 
 export function moderationOut(t: any) {
   const act = activeRestrictions(t.restrictions);
@@ -182,6 +199,18 @@ export function registerModerationRoutes(app: Express) {
         messagesSent: await tryCount(sql`SELECT count(*)::int AS n FROM direct_messages WHERE sender_id = ${id}`),
         reportsAgainst: await tryCount(sql`SELECT count(*)::int AS n FROM post_reports r JOIN posts p ON p.id = r.post_id WHERE p.author_id = ${id}`),
       },
+      warnings: rows(await db.execute(sql`SELECT * FROM user_warnings WHERE user_id = ${id} ORDER BY created_at DESC LIMIT 30`)).map((x: any) => ({
+        id: x.id, reason: x.reason, by: x.created_by_email || "", at: iso(x.created_at), withdrawn: !!x.withdrawn_at,
+      })),
+      activity: await (async () => {
+        try {
+          return rows(await db.execute(sql`SELECT action, admin_email, details, created_at FROM audit_logs WHERE target_type = 'user' AND target_id = ${id} ORDER BY created_at DESC LIMIT 40`)).map((x: any) => ({
+            action: x.action, by: x.admin_email || "", at: iso(x.created_at), details: typeof x.details === "string" ? x.details.slice(0, 300) : "",
+          }));
+        } catch {
+          return [];
+        }
+      })(),
     });
   }));
 
@@ -211,12 +240,51 @@ export function registerModerationRoutes(app: Express) {
     if (!t) return;
     const reason = str(req.body?.reason, 300);
     const days = Number(req.body?.days) || 0;
+    // Warning first: a ban needs at least one warning, unless the admin says why it can't wait.
+    const warned = (await activeWarnings(t.id)).length;
+    if (!warned && !req.body?.skipWarning) {
+      return res.status(409).json({ error: "Send this person a warning before you ban them, or say why the ban can't wait.", code: "WARN_FIRST" });
+    }
+    if (!warned && !reason) return res.status(400).json({ error: "Write why you're banning without a warning" });
     const until = days > 0 ? new Date(Date.now() + Math.min(days, 3650) * 86400000).toISOString() : null;
     await db.execute(sql`UPDATE users SET banned = true, banned_reason = ${reason || null}, banned_until = ${until} WHERE id = ${t.id}`);
     await tryRun(sql`DELETE FROM push_tokens WHERE user_id = ${t.id}`);
     await audit(req, "BAN_USER", "user", t.id, { reason, days });
     const fresh = rows(await db.execute(sql`SELECT * FROM users WHERE id = ${t.id} LIMIT 1`))[0];
     res.json({ success: true, ...moderationOut(fresh) });
+  }));
+
+  app.post(`${A}/users/:id/warn`, requireAdmin, w(async (req, res) => {
+    const t = await target(req, res);
+    if (!t) return;
+    const reason = str(req.body?.reason, 500);
+    if (!reason) return res.status(400).json({ error: "Write what the warning is for" });
+    const me = (req as any).admin;
+    const id = `warn-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
+    await db.execute(sql`INSERT INTO user_warnings (id, user_id, reason, created_by, created_by_email) VALUES (${id}, ${t.id}, ${reason}, ${me?.id || null}, ${me?.email || null})`);
+    const n = (await activeWarnings(t.id)).length;
+    await sendOfficial(me?.id || null, t.id, `Warning ${n}`, `${reason}\n\nPlease follow the Farmers community rules. More warnings can lead to limits on your account or a ban.`);
+    await audit(req, "WARN_USER", "user", t.id, { reason, warning: n });
+    res.status(201).json({ success: true, id, warnings: n });
+  }));
+
+  app.delete(`${A}/users/:id/warnings/:wid`, requireAdmin, w(async (req, res) => {
+    const x = rows(await db.execute(sql`SELECT * FROM user_warnings WHERE id = ${String(req.params.wid)} AND user_id = ${String(req.params.id)} LIMIT 1`))[0];
+    if (!x) return res.status(404).json({ error: "Warning not found" });
+    await db.execute(sql`UPDATE user_warnings SET withdrawn_at = now() WHERE id = ${x.id}`);
+    await audit(req, "WITHDRAW_WARNING", "user", x.user_id, { reason: x.reason });
+    res.json({ success: true });
+  }));
+
+  app.post(`${A}/users/:id/message`, requireAdmin, w(async (req, res) => {
+    const t = rows(await db.execute(sql`SELECT id FROM users WHERE id = ${String(req.params.id)} AND deleted_at IS NULL LIMIT 1`))[0];
+    if (!t) return res.status(404).json({ error: "User not found" });
+    const body = str(req.body?.body, 2000);
+    if (!body) return res.status(400).json({ error: "Write the message first" });
+    const title = str(req.body?.title, 120);
+    const id = await sendOfficial((req as any).uid, t.id, title, body);
+    await audit(req, "OFFICIAL_MESSAGE", "user", t.id, { title, length: body.length });
+    res.status(201).json({ success: true, id });
   }));
 
   app.post(`${A}/users/:id/unban`, requireAdmin, w(async (req, res) => {

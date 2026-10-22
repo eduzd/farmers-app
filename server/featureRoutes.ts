@@ -147,7 +147,8 @@ function orderOut(r: any) {
     status: r.status || "pending",
     shippingAddress: J(r.address) || null,
     checkout: J(r.checkout) || null,
-    history: J(r.history) || [{ status: "pending", at: iso(r.created_at) }],
+    // Admin notes are private: never sent to the buyer or seller.
+    history: (J(r.history) || [{ status: "pending", at: iso(r.created_at) }]).map(({ note, adminNote, ...h }: any) => h),
     createdAt: iso(r.created_at),
     updatedAt: iso(r.updated_at || r.created_at),
   };

@@ -123,6 +123,17 @@ try {
   await call("PUT", `/api/admin/manage/users/${bob.id}/restrictions`, admin.token, {});
 
   // ---- temporary ban ----
+  const early = await call("POST", `/api/admin/manage/users/${bob.id}/ban`, admin.token, { reason: "Abuse", days: 3 });
+  ok(early.status === 409 && early.data.code === "WARN_FIRST", "a ban needs a warning first", early);
+  const warn = await call("POST", `/api/admin/manage/users/${bob.id}/warn`, admin.token, { reason: "Spam in comments" });
+  ok(warn.status === 201 && warn.data.warnings === 1, "admin warns bob", warn);
+  const offi = await call("GET", "/api/official/messages", bob.token);
+  ok(offi.status === 200 && offi.data.messages.some((m) => /Spam in comments/.test(m.body)), "the warning shows in bob's Farmers Official chat", offi);
+  const msg = await call("POST", `/api/admin/manage/users/${bob.id}/message`, admin.token, { title: "Hello", body: "Your shop looks great" });
+  const offi2 = await call("GET", "/api/official/messages", bob.token);
+  ok(msg.status === 201 && offi2.data.messages.some((m) => m.body === "Your shop looks great"), "a profile message lands in bob's Farmers Official chat");
+  const modv = await call("GET", `/api/admin/manage/users/${bob.id}/moderation`, admin.token);
+  ok(modv.data.warnings?.length === 1 && modv.data.activity?.some((a) => a.action === "WARN_USER"), "the profile lists warnings and admin activity", modv.data);
   const ban = await call("POST", `/api/admin/manage/users/${bob.id}/ban`, admin.token, { reason: "Abuse", days: 3 });
   ok(ban.status === 200 && ban.data.banned && ban.data.bannedUntil, "admin bans bob for 3 days", ban);
   const banned = await call("GET", "/api/me/notifications", bob.token);
@@ -154,7 +165,7 @@ try {
   const reply = await call("POST", "/api/official/messages", ann.token, { body: "reply" });
   ok(reply.status === 404 || reply.status === 405, `nobody can reply into the official page (${reply.status})`);
   const ol = await call("GET", "/api/admin/manage/official", admin.token);
-  ok(ol.data.length === 2 && ol.data.some((m) => m.targetUserId === cat.id), "admin sees sent official messages");
+  ok(ol.data.length >= 2 && ol.data.some((m) => m.targetUserId === bob.id) && ol.data.some((m) => m.targetUserId === cat.id), "admin sees sent official messages");
   await call("DELETE", `/api/admin/manage/official/${one.data.message.id}`, admin.token);
   const sc2 = await call("GET", "/api/official/messages", cat.token);
   ok(sc2.data.messages.length === 1, "deleting an official message removes it");

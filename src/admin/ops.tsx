@@ -2,11 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { View, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
-import { apiGet, apiPost, apiPut } from "@/lib/api";
-import { AdminUserSheet, AdminCatalogTab, AdminNotifyTab, AdminDeliveryTab } from "@/components/admin/ManageTabs";
+import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
+import { AdminCatalogTab, AdminNotifyTab } from "@/components/admin/ManageTabs";
+import { OrderProgress, DeliveryInfo, PaymentInfo, DeliverySettings, payLabel } from "./orderflow";
 import {
   useAdminNav, useL, useLoader, useDebounced, Page, Card, SectionTitle, Pill, Chip, ChipRow, SearchBox, Btn, Field, KV, Empty, Loading, ErrorBox, Thumb, Stat,
-  taka, STATUS_COLOR, ORDER_STATUSES, statusLabel, fmtDate, st,
+  taka, STATUS_COLOR, ORDER_STATUSES, statusLabel, fmtDate, st, confirmAsk,
   Text, Hero, shadow, ListRow, ToggleRow, RadioGroup, Avatar, Segmented,
 } from "./ui";
 import { OrderRow } from "./shop";
@@ -119,34 +120,26 @@ export function OrderDetail({ id }: { id: string }) {
   const { theme } = useTheme();
   const L = useL();
   const o = useLoader<any>(() => apiGet(`/api/admin/manage/orders/${id}`), [id]);
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
   if (o.loading && !o.data) return <Page><Loading /></Page>;
-  if (!o.data) return <Page><ErrorBox text={o.error || L("Order not found", "অর্ডার পাওয়া যায়নি")} onRetry={o.load} /></Page>;
+  if (!o.data) return <Page><ErrorBox text={o.error || L("Order not found", "অর্ডার পাওয়া যায়নি")} onRetry={o.load} /></Page>;
   const d = o.data;
-  const setStatus = async (s: string) => {
-    setBusy(s); setErr(null);
-    try { await apiPut(`/api/admin/manage/orders/${id}`, { status: s, note: note.trim() || undefined }); setNote(""); await o.load(); } catch (e: any) { setErr(e?.message); } finally { setBusy(null); }
-  };
-  const addr = d.address || {};
   return (
     <Page onRefresh={o.load} testID="order-detail">
-      {err ? <ErrorBox text={err} /> : null}
       <Card>
         <View style={[st.row, { justifyContent: "space-between" }]}>
           <Text style={{ color: theme.text, fontWeight: "800", fontSize: 17 }}>#{String(d.id).slice(-6).toUpperCase()}</Text>
           <Pill label={statusLabel(d.status, L)} color={STATUS_COLOR[d.status] || "#64748B"} />
         </View>
-        <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 4 }}>{fmtDate(d.createdAt)} · {d.paymentMethod || "—"}</Text>
+        <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 4 }}>{fmtDate(d.createdAt)} · {payLabel(d.paymentMethod, L)}</Text>
         <Text style={{ color: theme.text, fontWeight: "800", fontSize: 20, marginTop: 8 }}>{taka(d.total)}</Text>
       </Card>
+      <OrderProgress order={d} onChanged={o.load} />
+      <SectionTitle title={L("Delivery", "ডেলিভারি")} />
+      <DeliveryInfo order={d} />
       <SectionTitle title={L("Buyer", "ক্রেতা")} />
       <Card>
-        <KV k={L("Name", "নাম")} v={d.buyerName} testID="order-open-buyer" onPress={d.buyerId ? () => nav.push({ name: "user", id: d.buyerId }) : undefined} />
-        <KV k={L("Email", "ইমেইল")} v={d.buyerEmail} />
-        <KV k={L("Phone", "ফোন")} v={addr.phone || d.buyerPhone} />
-        <KV k={L("Deliver to", "ঠিকানা")} v={[addr.name, addr.address || addr.street, addr.area, addr.district || addr.city].filter(Boolean).join(", ")} />
+        <KV icon="user" k={L("Name", "নাম")} v={d.buyerName} testID="order-open-buyer" onPress={d.buyerId ? () => nav.push({ name: "user", id: d.buyerId }) : undefined} />
+        <KV icon="mail" k={L("Email", "ইমেইল")} v={d.buyerEmail} />
       </Card>
       <SectionTitle title={`${L("Items", "পণ্য")} (${d.items.length})`} />
       {d.items.map((it: any, i: number) => {
@@ -158,7 +151,7 @@ export function OrderDetail({ id }: { id: string }) {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: theme.text, fontWeight: "700" }} numberOfLines={1}>{it.name || p?.name || L("Item", "পণ্য")}</Text>
                 <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>
-                  {it.quantity} × {taka(it.price)}{p?.storeName || it.seller ? ` · ${p?.storeName || it.seller}` : ""}
+                  {it.quantity}{it.unit ? ` ${it.unit}` : ""} × {taka(it.price)}{p?.storeName || it.seller ? ` · ${p?.storeName || it.seller}` : ""}
                 </Text>
               </View>
               {p ? <Feather name="chevron-right" size={18} color={theme.textTertiary} /> : <Text style={{ color: theme.textTertiary, fontSize: 11 }}>{L("removed", "মুছে ফেলা")}</Text>}
@@ -166,39 +159,66 @@ export function OrderDetail({ id }: { id: string }) {
           </Card>
         );
       })}
+      <SectionTitle title={L("Payment", "পেমেন্ট")} />
+      <PaymentInfo order={d} />
       {d.sellers?.length ? (
         <>
           <SectionTitle title={L("Sellers", "বিক্রেতা")} />
           <Card>
             {d.sellers.map((s: any) => (
-              <KV key={s.id} k={s.name || s.email} v={s.storeName || L("No shop", "দোকান নেই")} onPress={() => (s.storeId ? nav.push({ name: "store", id: s.storeId }) : nav.push({ name: "user", id: s.id }))} />
+              <KV key={s.id} icon="shopping-bag" k={s.name || s.email} v={s.storeName || L("No shop", "দোকান নেই")} onPress={() => (s.storeId ? nav.push({ name: "store", id: s.storeId }) : nav.push({ name: "user", id: s.id }))} />
             ))}
           </Card>
         </>
       ) : null}
-      <SectionTitle title={L("Change status", "স্ট্যাটাস পরিবর্তন")} />
-      <Card>
-        <Field testID="order-note" label={L("Note for history (optional)", "নোট (ঐচ্ছিক)")} value={note} onChange={setNote} maxLength={300} />
-        <View style={[st.grid, { gap: 8 }]}>
-          {ORDER_STATUSES.filter((s) => s !== d.status).map((s) => (
-            <Btn key={s} testID={`set-status-${s}`} small kind={s === "cancelled" ? "danger" : "soft"} label={statusLabel(s, L)} busy={busy === s} onPress={() => setStatus(s)} />
-          ))}
-        </View>
-      </Card>
-      {d.history?.length ? (
-        <>
-          <SectionTitle title={L("History", "ইতিহাস")} />
-          <Card>
-            {[...d.history].reverse().map((h: any, i: number) => (
-              <View key={i} style={{ paddingVertical: 6 }}>
-                <Text style={{ color: theme.text, fontWeight: "600" }}>{statusLabel(h.status, L)}{h.note ? ` · ${h.note}` : ""}</Text>
-                <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{fmtDate(h.at || h.date || h.createdAt)}{h.by ? ` · ${h.by}` : ""}</Text>
-              </View>
-            ))}
-          </Card>
-        </>
-      ) : null}
+      <SectionTitle title={L("Private notes", "ব্যক্তিগত নোট")} />
+      <PrivateNotes order={d} onChanged={o.load} />
     </Page>
+  );
+}
+
+/** Notes only admins can see. The buyer and seller never get them. */
+function PrivateNotes({ order, onChanged }: { order: any; onChanged: () => Promise<any> | void }) {
+  const { theme } = useTheme();
+  const L = useL();
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const notes: any[] = order.adminNotes || [];
+  const add = async () => {
+    setBusy("add"); setErr(null);
+    try { await apiPost(`/api/admin/manage/orders/${order.id}/notes`, { text: text.trim() }); setText(""); await onChanged(); } catch (e: any) { setErr(e?.message || L("Couldn't save the note", "নোট সংরক্ষণ হয়নি")); } finally { setBusy(null); }
+  };
+  const del = async (nid: string) => {
+    if (!(await confirmAsk(L("Delete this note?", "এই নোট মুছবেন?"), "", L("Delete", "মুছুন"), L("Go back", "ফিরে যান")))) return;
+    setBusy(nid); setErr(null);
+    try { await apiDelete(`/api/admin/manage/orders/${order.id}/notes/${nid}`); await onChanged(); } catch (e: any) { setErr(e?.message || L("Couldn't delete", "মোছা যায়নি")); } finally { setBusy(null); }
+  };
+  return (
+    <Card testID="order-private-notes">
+      <View style={[st.row, { gap: 8, marginBottom: 8 }]}>
+        <Feather name="lock" size={14} color={theme.textSecondary} />
+        <Text style={{ color: theme.textSecondary, fontSize: 12.5, flex: 1 }}>{L("Only admins see these. The buyer and seller never do.", "শুধু অ্যাডমিনরা দেখেন। ক্রেতা বা বিক্রেতা কখনো দেখেন না।")}</Text>
+      </View>
+      {notes.map((n: any) => (
+        <View key={n.id} style={[st.row, { gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: theme.cardBorder }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: theme.text }}>{n.text}</Text>
+            <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 2 }}>
+              {fmtDate(n.at)}{n.by ? ` · ${n.by}` : ""}{n.step ? ` · ${L("with step", "ধাপের সাথে")}: ${statusLabel(n.step, L)}` : ""}
+            </Text>
+          </View>
+          {n.id !== "legacy" ? (
+            <Pressable testID={`note-delete-${n.id}`} accessibilityLabel={L("Delete note", "নোট মুছুন")} onPress={() => del(n.id)} disabled={!!busy} style={{ padding: 6 }}>
+              <Feather name="trash-2" size={16} color="#B91C1C" />
+            </Pressable>
+          ) : null}
+        </View>
+      ))}
+      {err ? <ErrorBox text={err} /> : null}
+      <Field testID="private-note-input" label={L("New note", "নতুন নোট")} value={text} onChange={setText} multiline maxLength={1000} placeholder={L("e.g. Buyer asked to deliver after 5 PM", "যেমন: ক্রেতা বিকেল ৫টার পরে চান")} />
+      <Btn testID="private-note-save" small kind="soft" icon="plus" label={L("Add note", "নোট যোগ করুন")} busy={busy === "add"} disabled={!text.trim()} onPress={add} />
+    </Card>
   );
 }
 
@@ -338,57 +358,24 @@ export function UsersList() {
   );
 }
 
-export function UserDetail({ id }: { id: string }) {
-  const nav = useAdminNav();
-  const { theme } = useTheme();
-  const L = useL();
-  const u = useLoader<any>(() => apiGet(`/api/admin/manage/users/${id}`), [id]);
-  const [manage, setManage] = useState(false);
-  if (u.loading && !u.data) return <Page><Loading /></Page>;
-  if (!u.data) return <Page><ErrorBox text={u.error || L("User not found", "ব্যবহারকারী পাওয়া যায়নি")} onRetry={u.load} /></Page>;
-  const d = u.data;
-  return (
-    <Page onRefresh={u.load} testID="user-detail">
-      <Card>
-        <View style={st.row}>
-          <Thumb uri={d.avatar} icon="user" size={60} />
-          <View style={{ flex: 1, gap: 3 }}>
-            <Text style={{ color: theme.text, fontWeight: "800", fontSize: 17 }}>{d.name}</Text>
-            <Text style={{ color: theme.textSecondary, fontSize: 13 }}>@{d.username}</Text>
-            <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
-              <Pill label={d.banned ? L("Banned", "ব্যানড") : L("Active", "সক্রিয়")} color={d.banned ? "#B91C1C" : "#047857"} />
-              {d.isSuperAdmin ? <Pill label={L("Admin", "অ্যাডমিন")} color="#7C3AED" /> : null}
-              {d.verified ? <Pill label={L("Verified", "যাচাইকৃত")} color="#1D4ED8" /> : null}
-            </View>
-          </View>
-        </View>
-        <View style={{ marginTop: 8 }}>
-          <KV k={L("Email", "ইমেইল")} v={d.email} />
-          <KV k={L("Phone", "ফোন")} v={d.phone} />
-          <KV k={L("Role", "ভূমিকা")} v={d.role} />
-          <KV k={L("Joined", "যোগ দিয়েছেন")} v={fmtDate(d.createdAt, false)} />
-          {d.store ? <KV k={L("Shop", "দোকান")} v={d.store.name} testID="user-open-shop" onPress={() => nav.push({ name: "store", id: d.store.id })} /> : null}
-          <KV k={L("Products listed", "তালিকাভুক্ত পণ্য")} v={String(d.listings || 0)} />
-          <KV k={L("Total spent", "মোট খরচ")} v={taka(d.spent)} />
-        </View>
-        <View style={[st.grid, { marginTop: 10 }]}>
-          <Btn testID="manage-user" small kind="soft" icon="settings" label={L("Manage account", "অ্যাকাউন্ট পরিচালনা")} onPress={() => setManage(true)} />
-        </View>
-      </Card>
-      <SectionTitle title={`${L("Orders", "অর্ডার")} (${d.recentOrders?.length || 0})`} />
-      {!d.recentOrders?.length ? <Empty icon="shopping-bag" text={L("No orders", "কোনো অর্ডার নেই")} /> : null}
-      {(d.recentOrders || []).map((o: any) => <OrderRow key={o.id} o={{ ...o, buyerName: d.name }} />)}
-      {manage ? <AdminUserSheet userId={id} onClose={() => setManage(false)} onChanged={() => u.load()} /> : null}
-    </Page>
-  );
-}
+export { UserDetail } from "./people";
 
-/* ======================= MORE ======================= */
 export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminName: string }) {
   const nav = useAdminNav();
   const { theme } = useTheme();
   const L = useL();
   const [panel, setPanel] = useState<null | "moderation" | "notify" | "delivery">(null);
+  if (panel === "delivery") {
+    return (
+      <View style={{ flex: 1 }}>
+        <Pressable onPress={() => setPanel(null)} style={[st.row, { padding: 12, gap: 8 }]} testID="more-back">
+          <Feather name="arrow-left" size={18} color={theme.primary} />
+          <Text style={{ color: theme.primary, fontWeight: "700" }}>{L("More", "আরও")}</Text>
+        </Pressable>
+        <DeliverySettings />
+      </View>
+    );
+  }
   if (panel) {
     return (
       <View style={{ flex: 1 }}>
@@ -397,7 +384,7 @@ export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminNa
           <Text style={{ color: theme.primary, fontWeight: "700" }}>{L("More", "আরও")}</Text>
         </Pressable>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 14, paddingTop: 0, width: "100%", maxWidth: 900, alignSelf: "center" }}>
-          {panel === "moderation" ? <AdminCatalogTab /> : panel === "notify" ? <AdminNotifyTab /> : <AdminDeliveryTab />}
+          {panel === "moderation" ? <AdminCatalogTab /> : panel === "notify" ? <AdminNotifyTab /> : null}
         </ScrollView>
       </View>
     );
@@ -406,7 +393,7 @@ export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminNa
     ["users", L("Users", "ব্যবহারকারী"), L("Search, verify, ban, roles", "খুঁজুন, যাচাই, ব্যান, ভূমিকা"), "users", () => nav.push({ name: "users" })],
     ["moderation", L("Listings moderation", "তালিকা মডারেশন"), L("Jobs, rentals, services and more", "চাকরি, ভাড়া, সেবা ইত্যাদি"), "shield", () => setPanel("moderation")],
     ["notify", L("Send notification", "নোটিফিকেশন পাঠান"), L("To everyone or one person", "সবাইকে বা একজনকে"), "bell", () => setPanel("notify")],
-    ["delivery", L("Delivery & payments", "ডেলিভারি ও পেমেন্ট"), L("Delivery zones and charges", "ডেলিভারি এলাকা ও চার্জ"), "truck", () => setPanel("delivery")],
+    ["delivery", L("Delivery charges", "ডেলিভারি চার্জ"), L("Inside and outside Dhaka, free delivery, express", "ঢাকার ভেতরে ও বাইরে, ফ্রি ডেলিভারি, এক্সপ্রেস"), "truck", () => setPanel("delivery")],
     ["posts", L("Posts & reports", "পোস্ট ও রিপোর্ট"), L("Community posts and user reports", "কমিউনিটি পোস্ট ও রিপোর্ট"), "flag", () => nav.openClassic("reports")],
     ["content", L("Content & announcements", "কন্টেন্ট ও ঘোষণা"), L("Banners, tips, announcements", "ব্যানার, টিপস, ঘোষণা"), "layout", () => nav.openClassic("content")],
     ["analytics", L("Analytics", "অ্যানালিটিক্স"), L("Growth and activity", "বৃদ্ধি ও কার্যকলাপ"), "bar-chart-2", () => nav.openClassic("analytics")],
