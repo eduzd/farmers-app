@@ -509,7 +509,7 @@ export function VoiceCallProvider({ children, userId }: Props) {
       }
       let ws: WebSocket;
       try {
-        ws = new WebSocket(getWsUrl());
+        ws = new WebSocket(`${getWsUrl()}/ws/chat`);
       } catch {
         retry = setTimeout(connect, 5000);
         return;
