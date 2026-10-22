@@ -179,8 +179,9 @@ const { PGlite } = require('@electric-sql/pglite');
 
         # ---- admin app: reply to Ann in Support, then all tabs at 3 widths x 2 languages ----
         replied = False
-        for lang in ("en", "bn"):
-            for w in (320, 360, 390):
+        quick = os.environ.get("QUICK") == "1"
+        for lang in (("en",) if quick else ("en", "bn")):
+            for w in ((360,) if quick else (320, 360, 390)):
                 key = f"admin-{lang}-{w}"
                 r = rep[key] = {}
                 ctx = await b.new_context(viewport={"width": w, "height": 760})
@@ -242,8 +243,8 @@ const { PGlite } = require('@electric-sql/pglite');
                 await ctx.close()
 
         # ---- Ann sees the reply in her Help chat; the Help button shows the unread dot ----
-        st, th = api("GET", "/api/support/thread", tok=ann["token"])
-        rep["ann_thread_api"] = [(m.get("fromAdmin"), m.get("body")) for m in (th or {}).get("messages", [])]
+        # /api/support/unread does not mark anything read (opening the thread does), so read it first.
+        rep["ann_unread_api"] = api("GET", "/api/support/unread", tok=ann["token"])[1]
         ctx = await b.new_context(viewport={"width": 360, "height": 760})
         pg = await ctx.new_page()
         await pg.add_init_script(init_script(ann, "en"))
@@ -255,6 +256,8 @@ const { PGlite } = require('@electric-sql/pglite');
         rep["ann_sees_reply"] = await pg.get_by_text("We're checking your order now").count()
         await pg.screenshot(path=f"{SHOTS}/help-chat-reply-en-360.png")
         await ctx.close()
+        st, th = api("GET", "/api/support/thread", tok=ann["token"])
+        rep["ann_thread_api"] = [(m.get("fromAdmin"), m.get("body")) for m in (th or {}).get("messages", [])]
         await b.close()
     print(json.dumps(rep, ensure_ascii=False, indent=1))
 
