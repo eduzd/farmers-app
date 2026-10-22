@@ -231,3 +231,13 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
       and the same server; web first, user checks before any APK.
 - [ ] LAST (after user confirms everything is done): full source handoff zip + HANDOFF.md for another AI agent (what the app is,
       how to run server/web/APK, env keys needed, branches, what is done/pending). Not before.
+
+## 2026-10-22: admin-app merged to main + shared chat icon, live on Render (e4cb152)
+- main fast-forwarded to admin-app: Connect ad carousel + floating Help FAB, home Help button + support chat,
+  admin-managed categories, admin app screens (src/admin), calls fix kept.
+- One shared chat icon: src/components/icons/ChatIcon.tsx (the Chats tab icon). AppIcon.tsx = drop-in Feather that
+  draws ChatIcon for message-circle/message-square; all <Feather name={..}> now go through AppIcon; literal message icons -> ChatIcon.
+- Connect cards: icon-only round chat button, green online dot on avatar (UserAvatar userId) + "Active now / এখন সক্রিয়" when online.
+- Checks: tsc 0 errors; check-admin-app 57/57; check-photos-connect 31/31; tests/check-chat-icon-web.py en+bn 320/360/390 pass.
+- Left: admin-managed carousel ads; admin APK; language gaps (profile role/following in Bangla in English mode, calculator inner pages,
+  ledger, reports, seller hub, market, admin); unread badges clearing instantly; real-phone tests.

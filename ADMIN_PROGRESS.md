@@ -23,7 +23,7 @@ User 2026-10-22: no keyboard shortcuts needed in Shop.
        admin replies in Support; user sees unread dot + reply; Connect 320/360/390 en+bn: carousel auto-moves one
        card, no cut text, FAB above tab bar and opens chat, no overflow, no page errors (owner_user_id error gone).
        NOT re-run post-merge: admin tabs at 320/390 and in Bangla.
-5. [ ] push main (after the farmers-ui deploy task is finished), Render deploy + live check
+5. [x] pushed to main + live on Render (e4cb152, 2026-10-22)
 6. [ ] Admin APK (applicationId com.farmers.admin, EXPO_PUBLIC_APP_VARIANT=admin), release on GitHub, download check
 
 ## Round: shared chat icon + Connect online dots, then merge to main + Render (task started 2026-10-22 08:11)
@@ -35,5 +35,5 @@ Plan:
         message-circle/message-square. Codemod: literal Feather message-* -> ChatIcon; dynamic <Feather name={..}> -> AppIcon.
  b. [x] Connect card: icon-only round chat button, "Active now" when online (avatar dot via UserAvatar userId).
  c. [x] tsc (0 errors), check-admin-app 57/57, check-chat-icon-web en+bn 320/360/390 all pass; + checks; commit on admin-app
- d. [ ] fast-forward main to admin-app, push, Render deploy, live check of commit
+ d. [x] main fast-forwarded to admin-app e4cb152 (has calls fix 4be0d40), pushed; Render /api/health version e4cb152; live guest check en+bn 320/390: Connect carousel + Help FAB + Sylin Har card with icon-only ChatIcon button, home shows ChatIcons, no page errors. Online dot needs sign-in (not checked live).
  e. [x] narrow-width (local, tests/check-chat-icon-web.py) check Connect + posts en/bn
