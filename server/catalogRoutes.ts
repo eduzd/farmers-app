@@ -111,7 +111,10 @@ export function registerCatalogRoutes(app: Express) {
     try {
       await ensure();
       const r = rows(await db.execute(sql`SELECT * FROM catalog_items WHERE kind = ${kind} ORDER BY created_at DESC LIMIT 500`));
-      res.json(r.map(out));
+      // Shop products the admin hid, or that are switched off, are left out (their owner still sees them).
+      const me = kind === "listings" ? userFrom(req) : null;
+      const shown = kind === "listings" ? r.filter((x: any) => { const d = (typeof x.data === "string" ? JSON.parse(x.data) : x.data) || {}; return (!d.hidden && d.active !== false) || (me && x.owner_id === me); }) : r;
+      res.json(shown.map(out));
     } catch (e: any) {
       console.error("[catalog] list", e?.message);
       res.status(500).json({ error: "Failed to load" });
@@ -209,7 +212,8 @@ export function registerCatalogRoutes(app: Express) {
         if (q.itemErrors.length) return res.status(400).json({ error: q.itemErrors[0].error, itemErrors: q.itemErrors });
         if (q.stockErrors.length) {
           const e = q.stockErrors[0];
-          return res.status(409).json({ error: `Only ${e.available} left of ${e.name}`, stockErrors: q.stockErrors });
+          const ln = q.lines.find((l: any) => l.productId === e.productId);
+          return res.status(409).json({ error: `Only ${e.available}${ln?.unit ? " " + ln.unit : ""} left of ${e.name}`, stockErrors: q.stockErrors });
         }
         if (b.checkout.deliveryMethod === "express" && q.deliveryMethod !== "express") return res.status(400).json({ error: q.methodError || "Express delivery isn't available here" });
         const v = validateCheckout(b.checkout, q.deliveryMethod);
@@ -218,9 +222,13 @@ export function registerCatalogRoutes(app: Express) {
         if (Array.isArray(b.items))
           b.items = b.items.map((it: any, i: number) => ({
             ...it, price: q.lines[i]?.price ?? it.price, name: q.lines[i]?.name || it.name, quantity: q.lines[i]?.quantity ?? it.quantity,
+            // how the product was sold, saved on the order so it always reads "2.5 kg" / "3 bags (25 kg)"
+            ...(q.lines[i] ? { unit: q.lines[i].unit, sellAs: q.lines[i].sellAs, lineTotal: q.lines[i].lineTotal } : {}),
+            ...(q.lines[i]?.packSize ? { packSize: q.lines[i].packSize, packUnit: q.lines[i].packUnit } : {}),
             ...(q.lines[i]?.options ? { options: q.lines[i].options } : {}),
           }));
-        b.itemCount = q.lines.reduce((n: number, l: any) => n + l.quantity, 0);
+        // part amounts (2.5 kg) count as one item each
+        b.itemCount = q.lines.reduce((n: number, l: any) => n + (Number.isInteger(l.quantity) ? l.quantity : 1), 0);
         const s = (v: any, n = 300) => String(v ?? "").trim().slice(0, n);
         checkout = {
           deliveryMethod: q.deliveryMethod, zone: q.deliveryMethod === "pickup" ? null : q.zone,

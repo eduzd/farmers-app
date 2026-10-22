@@ -16,7 +16,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
-import { useCartStore, CartItem } from "@/lib/cartStore";
+import { useCartStore, CartItem, cartRule, nextQty, canStepUp } from "@/lib/cartStore";
+import { amountText, perUnitText, totalContentText } from "@shared/selling";
 import { useI18n } from "@/lib/i18n";
 
 import { tr, useTr } from "@/lib/tr";
@@ -28,12 +29,13 @@ export default function CartScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const { items, removeItem, updateQuantity, getTotal, clearCart } = useCartStore();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
+  const bn = language === "bn";
 
   const total = getTotal();
   // Delivery fee and promo codes are worked out at checkout (server/checkoutRoutes.ts).
   const grandTotal = total;
-  const taka = (n: number) => `৳${Math.round(n).toLocaleString("en-IN")}`;
+  const taka = (n: number) => `৳${(Math.round(n * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
   const handleRemoveItem = (id: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -64,26 +66,30 @@ export default function CartScreen() {
         </ThemedText>
         <ThemedText style={[styles.itemSeller, { color: theme.textSecondary }]}>
           {item.seller}
+          {totalContentText(cartRule(item), item.quantity, bn) ? ` · ${totalContentText(cartRule(item), item.quantity, bn)}` : ""}
         </ThemedText>
         <View style={styles.itemFooter}>
           <ThemedText style={[styles.itemPrice, { color: theme.primary }]}>
-            {item.currency}{item.price}/{item.unit}
+            {item.currency}{item.price} {perUnitText(cartRule(item), bn)}
           </ThemedText>
           <View style={[styles.quantityControl, { backgroundColor: theme.backgroundDefault }]}>
             <Pressable
               style={styles.quantityButton}
-              onPress={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+              testID={`cart-minus-${item.productId}`}
+              onPress={() => handleUpdateQuantity(item.id, nextQty(item, -1))}
             >
               <Feather name="minus" size={16} color={theme.text} />
             </Pressable>
             <ThemedText style={[styles.quantityValue, { color: theme.text }]}>
-              {item.quantity}
+              {amountText(cartRule(item), item.quantity, bn)}
             </ThemedText>
             <Pressable
+              testID={`cart-plus-${item.productId}`}
               style={styles.quantityButton}
-              onPress={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+              disabled={!canStepUp(item)}
+              onPress={() => handleUpdateQuantity(item.id, nextQty(item, 1))}
             >
-              <Feather name="plus" size={16} color={theme.text} />
+              <Feather name="plus" size={16} color={canStepUp(item) ? theme.text : theme.textSecondary} />
             </Pressable>
           </View>
         </View>

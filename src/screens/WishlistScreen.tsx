@@ -12,6 +12,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useTr } from "@/lib/tr";
 import { useI18n } from "@/lib/i18n";
 import { useFavoritesStore } from "@/lib/favoritesStore";
+import { sellRule } from "@shared/selling";
 import { useCartStore } from "@/lib/cartStore";
 import { apiPost, isLoggedIn, timeAgo } from "@/lib/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -113,7 +114,12 @@ export default function WishlistScreen() {
 
   const handleAddToCart = (item: WishlistItem) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    addToCart({ productId: item.id, name: item.name, price: item.price, currency: "৳", unit: item.product?.unit || "", quantity: 1, image: item.image, seller: item.seller });
+    // Start at the product's minimum amount, in its selling unit.
+    const r = sellRule({ unit: item.product?.unit || "", ...(item.product || {}) });
+    addToCart({
+      productId: item.id, name: item.name, price: item.price, currency: "৳", unit: r.unit, quantity: r.min, image: item.image, seller: item.seller,
+      sale: { sellAs: r.sellAs, step: r.step, min: r.min, max: r.max, stock: r.stock, packSize: r.packSize, packUnit: r.packUnit },
+    });
     Alert.alert(tr("কার্টে যোগ হয়েছে"), `${item.name} ${tr("কার্টে যোগ করা হয়েছে")}`);
   };
 

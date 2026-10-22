@@ -40,6 +40,8 @@ import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
 import { fetchCatalog } from "@/lib/catalog";
 import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
+const money2 = (n: number) => (Math.round(n * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+import { sellRule, clampQty as clampToRule, upperLimit, perUnitText, amountText, totalContentText, unitWord, num } from "@shared/selling";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const IMAGE_HEIGHT = SCREEN_HEIGHT * 0.42;
 
@@ -70,14 +72,14 @@ export default function ProductDetailScreen() {
     image: raw.image || "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400",
   }) as typeof route.params.product, [raw]);
   const { addItem, getItemCount } = useCartStore();
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
-  const stock: number | null =
-    product.quantity === undefined || product.quantity === null || (product.quantity as any) === "" || Number.isNaN(Number(product.quantity))
-      ? null
-      : Number(product.quantity);
-  const minOrder = Math.max(1, Number((product as any).minOrder) || 1);
-  const outOfStock = stock !== null && stock <= 0;
+  // How this product is sold (set in the admin dashboard / Seller Hub): unit, step, minimum, maximum, stock, quick amounts.
+  const rule = useMemo(() => sellRule(product), [product]);
+  const stock: number | null = rule.stock;
+  const minOrder = rule.min;
+  const maxQty = upperLimit(rule);
+  const outOfStock = stock !== null && (stock <= 0 || stock < minOrder);
   const [quantity, setQuantity] = useState(minOrder);
   const [qtyDraft, setQtyDraft] = useState<string | null>(null);
   // Seller-defined options (size, weight, grade...). Each choice may add to the unit price.
@@ -89,11 +91,20 @@ export default function ProductDetailScreen() {
   const unitPrice =
     Number(product.price || 0) +
     optionGroups.reduce((sum, g) => sum + (Number(g.choices.find((c) => c.label === picked[g.name])?.extra) || 0), 0);
-  const clampQty = (n: number) => {
-    let q = Math.max(minOrder, Math.floor(n) || minOrder);
-    if (stock !== null && stock > 0) q = Math.min(q, stock);
-    return q;
-  };
+  const clampQty = (n: number) => clampToRule(rule, n);
+  const bn = language === "bn";
+  // Quick amounts the admin set, or a few handy ones made from the step and minimum.
+  const quickAmounts = useMemo(() => {
+    if (rule.presets.length) return rule.presets.filter((a) => a <= maxQty + 1e-9);
+    const base = [1, 2, 5, 10].map((k) => clampQty(minOrder * k));
+    return [...new Set(base)].filter((a) => a >= minOrder && a <= maxQty + 1e-9).slice(0, 4);
+  }, [rule, maxQty]);
+  const amountRules = [
+    rule.step !== 1 ? (bn ? `প্রতি ধাপে ${amountText(rule, rule.step, true)}` : `In steps of ${amountText(rule, rule.step)}`) : "",
+    minOrder !== rule.step ? (bn ? `সর্বনিম্ন ${amountText(rule, minOrder, true)}` : `Minimum ${amountText(rule, minOrder)}`) : "",
+    rule.max !== null ? (bn ? `সর্বোচ্চ ${amountText(rule, rule.max, true)}` : `Maximum ${amountText(rule, rule.max)}`) : "",
+    stock !== null ? (bn ? `স্টকে ${amountText(rule, stock, true)}` : `${amountText(rule, stock)} in stock`) : "",
+  ].filter(Boolean).join(" · ");
   const [related, setRelated] = useState<any[]>([]);
   useEffect(() => {
     useRecentlyViewedStore.getState().add(product);
@@ -107,10 +118,12 @@ export default function ProductDetailScreen() {
   }, [product.id]);
   const isFavorite = useFavoritesStore((st) => st.items.some((i) => i.itemId === String(product.id)));
   const toggleFavorite = useFavoritesStore((st) => st.toggle);
-  const { language } = useI18n();
   const marketCats = useMarketCategories();
   const ownerId: string | undefined = (product as any).ownerId || undefined;
   const isMine = !!ownerId && ownerId === currentUserId();
+  // company shops are run by the Farmers admins: no account to follow, questions go to Farmers Support
+  const companyShop = !!ownerId && ownerId.startsWith("company-");
+  const storeSlug: string | undefined = (product as any).storeSlug || (product as any).storeId || undefined;
   const [reviews, setReviews] = useState<{ reviews: any[]; count: number; average: number }>({ reviews: [], count: 0, average: 0 });
   const [reviewOpen, setReviewOpen] = useState(false);
   const [following, setFollowing] = useState(false);
@@ -119,7 +132,7 @@ export default function ProductDetailScreen() {
   useEffect(() => {
     useFavoritesStore.getState().load();
     loadReviews();
-    if (ownerId) apiGet(`/api/follows/${ownerId}`).then((r) => setFollowing(!!r.isFollowing)).catch(() => {});
+    if (ownerId && !companyShop) apiGet(`/api/follows/${ownerId}`).then((r) => setFollowing(!!r.isFollowing)).catch(() => {});
   }, [product.id]);
   const handleFollow = async () => {
     if (!ownerId) return;
@@ -148,10 +161,11 @@ export default function ProductDetailScreen() {
       price: unitPrice,
       ...(optionGroups.length ? { options: picked } : {}),
       currency: product.currency,
-      unit: product.unit,
+      unit: rule.unit,
       quantity,
       image: product.image,
       seller: product.seller,
+      sale: { sellAs: rule.sellAs, step: rule.step, min: rule.min, max: rule.max, stock: rule.stock, packSize: rule.packSize, packUnit: rule.packUnit },
     });
   };
 
@@ -165,22 +179,23 @@ export default function ProductDetailScreen() {
       price: unitPrice,
       ...(optionGroups.length ? { options: picked } : {}),
       currency: product.currency,
-      unit: product.unit,
+      unit: rule.unit,
       quantity,
       image: product.image,
       seller: product.seller,
+      sale: { sellAs: rule.sellAs, step: rule.step, min: rule.min, max: rule.max, stock: rule.stock, packSize: rule.packSize, packUnit: rule.packUnit },
     });
     navigation.navigate("Cart");
   };
 
   const increaseQuantity = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setQuantity((q) => (stock !== null && q >= stock ? q : q + 1));
+    setQuantity((q) => (q + rule.step > maxQty + 1e-9 ? q : clampQty(q + rule.step)));
   };
 
   const decreaseQuantity = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (quantity > minOrder) setQuantity((q) => q - 1);
+    if (quantity > minOrder) setQuantity((q) => clampQty(q - rule.step));
   };
 
   const handleToggleFavorite = () => {
@@ -233,6 +248,10 @@ export default function ProductDetailScreen() {
 
   const handleContactSeller = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (companyShop) {
+      navigation.navigate("Support" as any);
+      return;
+    }
     navigation.navigate("Chat", {
       conversationId: ownerId || product.companyId || "seller",
       userName: product.seller,
@@ -248,9 +267,9 @@ export default function ProductDetailScreen() {
   ];
 
   const specs = [
-    { label: "স্টক", value: stock === null ? tr("In stock") : stock <= 0 ? tr("Out of stock") : `${stock} ${product.unit}`, icon: "package" },
-    ...(minOrder > 1 ? [{ label: tr("Minimum order"), value: `${minOrder} ${product.unit}`, icon: "shopping-bag" }] : []),
-    ...((product as any).sold ? [{ label: tr("Sold"), value: `${(product as any).sold} ${product.unit}`, icon: "trending-up" }] : []),
+    { label: "স্টক", value: stock === null ? tr("In stock") : outOfStock ? tr("Out of stock") : amountText(rule, stock, bn), icon: "package" },
+    ...(minOrder !== 1 ? [{ label: tr("Minimum order"), value: amountText(rule, minOrder, bn), icon: "shopping-bag" }] : []),
+    ...((product as any).sold ? [{ label: tr("Sold"), value: amountText(rule, Number((product as any).sold), bn), icon: "trending-up" }] : []),
     { label: tr("Category"), value: categoryLabel(marketCats, product.category, language === "bn") || tr("Other"), icon: "grid" },
     { label: "উৎস", value: product.location || "ঢাকা", icon: "map-pin" },
     { label: "ডেলিভারি", value: "২-৩ দিন", icon: "clock" },
@@ -398,13 +417,45 @@ export default function ProductDetailScreen() {
                   <ThemedText style={[styles.price, { color: theme.primary }]}>
                     {product.price}
                   </ThemedText>
-                  <ThemedText style={[styles.unit, { color: theme.textSecondary }]}>
-                    /{product.unit}
+                  <ThemedText testID="product-per-unit" style={[styles.unit, { color: theme.textSecondary }]}>
+                    {" "}{perUnitText(rule, bn)}
                   </ThemedText>
                 </View>
               </View>
             </View>
           </View>
+
+          {!outOfStock ? (
+            <View testID="product-amount-box" style={[styles.amountBox, { backgroundColor: theme.white, borderColor: theme.inputBorder }]}>
+              <ThemedText style={[styles.amountTitle, { color: theme.text }]}>
+                {bn ? `কতটুকু চান? (${unitWord(rule.unit, 2, true)})` : `How much do you want? (${unitWord(rule.unit, 2)})`}
+              </ThemedText>
+              {quickAmounts.length ? (
+                <View style={styles.amountChips}>
+                  {quickAmounts.map((a) => {
+                    const on = Math.abs(a - quantity) < 1e-9;
+                    return (
+                      <Pressable
+                        key={a}
+                        testID={`qty-chip-${a}`}
+                        onPress={() => { Haptics.selectionAsync(); setQtyDraft(null); setQuantity(clampQty(a)); }}
+                        style={[styles.amountChip, { borderColor: on ? theme.primary : theme.inputBorder, backgroundColor: on ? `${theme.primary}14` : "transparent" }]}
+                      >
+                        <ThemedText style={[styles.amountChipText, { color: on ? theme.primary : theme.text }]}>{amountText(rule, a, bn)}</ThemedText>
+                        <ThemedText style={[styles.amountChipPrice, { color: theme.textSecondary }]}>{product.currency}{Math.round(unitPrice * a).toLocaleString("en-IN")}</ThemedText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              ) : null}
+              <ThemedText testID="product-amount-rules" style={[styles.amountRules, { color: theme.textSecondary }]}>
+                {amountRules}
+              </ThemedText>
+              <ThemedText testID="product-amount-summary" style={[styles.amountSummary, { color: theme.text }]}>
+                {`${amountText(rule, quantity, bn)}${totalContentText(rule, quantity, bn) ? ` · ${totalContentText(rule, quantity, bn)}` : ""} = ${product.currency}${money2(unitPrice * quantity)}`}
+              </ThemedText>
+            </View>
+          ) : null}
 
           <View style={styles.featuresRow}>
             {features.map((feature, index) => (
@@ -424,7 +475,10 @@ export default function ProductDetailScreen() {
             <Pressable
               style={styles.sellerInfo}
               onPress={() => {
-                if (product.companyId) {
+                if (storeSlug) {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  navigation.navigate("ShopPage", { slug: storeSlug });
+                } else if (product.companyId) {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   navigation.navigate("StoreView", { companyId: product.companyId });
                 }
@@ -469,7 +523,7 @@ export default function ProductDetailScreen() {
               </View>
             </Pressable>
             <View style={styles.sellerActions}>
-              {ownerId && !isMine ? (
+              {ownerId && !isMine && !companyShop ? (
                 <Pressable
                   style={[styles.chatButton, { borderColor: theme.primary, backgroundColor: following ? theme.primary : "transparent" }]}
                   onPress={handleFollow}
@@ -663,15 +717,15 @@ export default function ProductDetailScreen() {
               <TextInput
                 testID="product-qty-input"
                 value={qtyDraft ?? String(quantity)}
-                onChangeText={(v) => setQtyDraft(v.replace(/[^0-9]/g, "").slice(0, 4))}
+                onChangeText={(v) => setQtyDraft(rule.step < 1 ? v.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1").slice(0, 8) : v.replace(/[^0-9]/g, "").slice(0, 4))}
                 onBlur={() => { if (qtyDraft !== null) setQuantity(clampQty(Number(qtyDraft))); setQtyDraft(null); }}
                 onSubmitEditing={() => { if (qtyDraft !== null) setQuantity(clampQty(Number(qtyDraft))); setQtyDraft(null); }}
-                keyboardType="number-pad"
+                keyboardType={rule.step < 1 ? "decimal-pad" : "number-pad"}
                 style={[styles.qtyText, { color: theme.text, paddingVertical: 4 }]}
                 accessibilityLabel={tr("Quantity")}
               />
-              <Pressable style={styles.qtyBtn} onPress={increaseQuantity}>
-                <Feather name="plus" size={16} color={theme.text} />
+              <Pressable testID="product-qty-plus" style={styles.qtyBtn} onPress={increaseQuantity} disabled={quantity + rule.step > maxQty + 1e-9}>
+                <Feather name="plus" size={16} color={quantity + rule.step > maxQty + 1e-9 ? theme.textSecondary : theme.text} />
               </Pressable>
             </View>
             <ThemedText
@@ -680,13 +734,14 @@ export default function ProductDetailScreen() {
               adjustsFontSizeToFit
               minimumFontScale={0.7}
             >
-              {product.currency}{Math.round(unitPrice * quantity).toLocaleString("en-IN")}
+              {product.currency}{money2(unitPrice * quantity)}
             </ThemedText>
           </View>
 
           <View style={styles.footerRight}>
             <Pressable
               style={[styles.cartBtn, { borderColor: outOfStock ? theme.textSecondary : theme.primary }]}
+              testID="product-add-to-cart"
               onPress={handleAddToCart}
               disabled={outOfStock}
               accessibilityLabel={tr("Add to cart")}
@@ -696,6 +751,7 @@ export default function ProductDetailScreen() {
 
             <Pressable
               style={[styles.buyBtn, { backgroundColor: outOfStock ? theme.textSecondary : theme.primary }]}
+              testID="product-buy-now"
               onPress={handleBuyNow}
               disabled={outOfStock}
             >
@@ -931,6 +987,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  amountBox: { marginHorizontal: 16, marginTop: 12, padding: 14, borderRadius: 14, borderWidth: 1, gap: 8 },
+  amountTitle: { fontSize: 15, fontWeight: "700" },
+  amountChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  amountChip: { borderWidth: 1.5, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12, alignItems: "center", minWidth: 72 },
+  amountChipText: { fontSize: 14, fontWeight: "700" },
+  amountChipPrice: { fontSize: 12, marginTop: 2 },
+  amountRules: { fontSize: 12.5 },
+  amountSummary: { fontSize: 14, fontWeight: "600" },
   sellerCard: {
     flexDirection: "row",
     alignItems: "center",

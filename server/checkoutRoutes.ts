@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sql } from "drizzle-orm";
+import { sellRule, checkQty, lineSaleInfo, round3, money, MAX_QTY } from "@shared/selling";
 import { db } from "./db";
 import { config } from "./config";
 import { ensureFeatures } from "./featureRoutes";
@@ -143,24 +144,26 @@ export async function quoteOrder(input: any) {
   let subtotal = 0;
   for (const it of items) {
     const rawQty = Number(it?.quantity);
-    const qty = Number.isInteger(rawQty) ? rawQty : Math.floor(rawQty) || 0;
     let price = Number(it?.price) || 0;
     let name = String(it?.name || "");
     const pid = String(it?.productId || "");
     const chosen: Record<string, string> = it?.options && typeof it.options === "object" ? it.options : {};
     let options: Record<string, string> | undefined;
-    if (!Number.isInteger(rawQty) || qty < 1 || qty > 9999) itemErrors.push({ productId: pid, name, error: `Quantity for ${name || "an item"} must be a whole number from 1 to 9999` });
+    // Amount rules come from the product's selling settings (the admin/seller set them); without a
+    // product row we fall back to the old rule: a whole number from 1 to 9999.
+    let rule = sellRule({});
+    let qty = rawQty;
     if (pid) {
       const r = rows(await db.execute(sql`SELECT data FROM catalog_items WHERE id = ${pid} AND kind = 'listings' LIMIT 1`));
       if (r[0]) {
         const d = J(r[0].data) || {};
+        rule = sellRule(d);
         if (Number(d.price) > 0) price = Number(d.price);
         name = d.name || name;
-        if (d.active === false) itemErrors.push({ productId: pid, name, error: `${name} is not for sale right now` });
-        const stock = d.quantity === undefined || d.quantity === null || d.quantity === "" ? null : Number(d.quantity);
-        if (stock !== null && !Number.isNaN(stock) && qty > stock) stockErrors.push({ productId: pid, name, available: Math.max(0, stock) });
-        const minOrder = Math.max(1, Math.floor(Number(d.minOrder) || 1));
-        if (qty >= 1 && qty < minOrder) itemErrors.push({ productId: pid, name, error: `${name} has a minimum order of ${minOrder}` });
+        if (d.active === false || d.hidden) itemErrors.push({ productId: pid, name, error: `${name} is not for sale right now` });
+        const problem = checkQty(rule, rawQty, name);
+        if (problem?.code === "stock") stockErrors.push({ productId: pid, name, available: rule.stock ?? 0 });
+        else if (problem) itemErrors.push({ productId: pid, name, error: problem.message });
         const groups = cleanOptions(d.options);
         if (groups.length) {
           options = {};
@@ -175,11 +178,17 @@ export async function quoteOrder(input: any) {
             price += c.extra;
           }
         }
+      } else {
+        itemErrors.push({ productId: pid, name, error: `${name || "An item"} is no longer in the shop` });
       }
+    } else if (!Number.isInteger(rawQty) || rawQty < 1 || rawQty > MAX_QTY) {
+      itemErrors.push({ productId: pid, name, error: `Quantity for ${name || "an item"} must be a whole number from 1 to 9999` });
     }
-    const q = Math.max(1, qty);
-    subtotal += price * q;
-    lines.push({ productId: pid, name, price, quantity: q, ...(options ? { options } : {}) });
+    if (!(Number.isFinite(qty) && qty > 0)) qty = rule.min;
+    qty = round3(qty);
+    const lineTotal = money(price * qty);
+    subtotal = money(subtotal + lineTotal);
+    lines.push({ productId: pid, name, price, quantity: qty, lineTotal, ...lineSaleInfo(rule), ...(options ? { options } : {}) });
   }
   let fee = deliveryFee(method, zone, subtotal, cfg);
   const methodError = fee < 0 ? (cfg.expressEnabled ? "Express delivery is only available inside Dhaka" : "Express delivery is turned off right now") : null;
@@ -237,14 +246,14 @@ export function validateCheckout(c: any, method: string): { error: string | null
 export async function takeStock(items: any[]) {
   for (const it of items || []) {
     const pid = String(it?.productId || "");
-    const qty = Math.max(1, parseInt(it?.quantity, 10) || 1);
+    const qty = round3(Number(it?.quantity) > 0 ? Number(it.quantity) : 1);
     if (!pid) continue;
     const r = rows(await db.execute(sql`SELECT data FROM catalog_items WHERE id = ${pid} AND kind = 'listings' LIMIT 1`));
     if (!r[0]) continue;
     const d = J(r[0].data) || {};
     if (d.quantity === undefined || d.quantity === null || d.quantity === "" || Number.isNaN(Number(d.quantity))) continue;
-    d.quantity = Math.max(0, Number(d.quantity) - qty);
-    d.sold = (Number(d.sold) || 0) + qty;
+    d.quantity = Math.max(0, round3(Number(d.quantity) - qty));
+    d.sold = round3((Number(d.sold) || 0) + qty);
     await db.execute(sql`UPDATE catalog_items SET data = ${JSON.stringify(d)}::jsonb, updated_at = now() WHERE id = ${pid}`);
   }
 }

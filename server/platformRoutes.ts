@@ -7,6 +7,7 @@ import { db, dbReady } from "./db";
 import { config } from "./config";
 import { notify, ensureFeatures } from "./featureRoutes";
 import { cleanOptions, cleanDeliveryConfig, deliveryConfig, ensureCheckout } from "./checkoutRoutes";
+import { PART_UNITS, MAX_QTY, isStepMultiple, round3, SELL_UNITS } from "@shared/selling";
 
 /**
  * Three apps, one backend.
@@ -269,11 +270,16 @@ export function platformGuard(req: Request, res: Response, next: NextFunction) {
 }
 
 // ---------- helpers ----------
+/** Company shops are run by the admins and have no owner account; their products use this made-up owner id. */
+export const COMPANY_OWNER_PREFIX = "company-";
+export const isCompanyOwner = (id: any) => typeof id === "string" && id.startsWith(COMPANY_OWNER_PREFIX);
 export function storeOut(r: any) {
   if (!r) return null;
   return {
     id: r.id,
     ownerId: r.owner_id,
+    /** a company shop the admin runs, with no owner account */
+    companyShop: isCompanyOwner(r.owner_id),
     name: r.name,
     slug: r.slug,
     tagline: r.tagline || "",
@@ -322,11 +328,25 @@ export function productFields(body: any, partial: boolean) {
     if (!(o.price > 0)) return err("Price must be more than 0");
   }
   if (body?.quantity !== undefined) {
-    o.quantity = Math.max(0, Math.floor(Number(body.quantity) || 0));
+    o.quantity = Math.max(0, round3(Number(body.quantity) || 0));
   } else if (!partial) o.quantity = 0;
   for (const k of ["unit", "category", "description", "image", "location"]) if (body?.[k] !== undefined) o[k] = str(body[k], k === "description" ? 2000 : 500);
   if (body?.active !== undefined) o.active = !!body.active;
-  if (body?.minOrder !== undefined) o.minOrder = Math.max(1, Math.floor(Number(body.minOrder) || 1));
+  const amt = (v: any) => (v === null || v === "" ? null : Number(v) > 0 && Number(v) <= MAX_QTY ? round3(Number(v)) : NaN);
+  if (body?.minOrder !== undefined) {
+    o.minOrder = amt(body.minOrder);
+    if (Number.isNaN(o.minOrder)) return err("Minimum order must be a number more than 0");
+  }
+  if (body?.step !== undefined) {
+    o.step = amt(body.step);
+    if (Number.isNaN(o.step)) return err("Step must be a number more than 0");
+  }
+  if (body?.presets !== undefined) {
+    const list = Array.isArray(body.presets) ? body.presets : String(body.presets || "").split(/[,\s]+/);
+    const vals = list.filter((x: any) => x !== "" && x !== null).map((x: any) => Number(x));
+    if (vals.some((x: number) => !(x > 0 && x <= MAX_QTY))) return err("Quick amounts must be numbers more than 0");
+    o.presets = [...new Set(vals.map(round3))].sort((a: any, b: any) => a - b).slice(0, 6);
+  }
   if (body?.options !== undefined) {
     if (!Array.isArray(body.options)) return err("Options must be a list");
     o.options = cleanOptions(body.options);
@@ -347,11 +367,41 @@ export function productFields(body: any, partial: boolean) {
     if (o.harvestDate && !/^\d{4}-\d{2}-\d{2}$/.test(o.harvestDate)) return err("Harvest date: use YYYY-MM-DD");
   }
   if (body?.organic !== undefined) o.organic = !!body.organic;
-  if (body?.maxOrder !== undefined) o.maxOrder = body.maxOrder === null || body.maxOrder === "" ? null : Math.max(1, Math.floor(Number(body.maxOrder) || 1));
+  if (body?.maxOrder !== undefined) {
+    o.maxOrder = amt(body.maxOrder);
+    if (Number.isNaN(o.maxOrder)) return err("Maximum order must be a number more than 0");
+  }
   if (o.sellAs === "pack" && !(o.packSize > 0) && !partial) return err("Write how much is in one pack");
   if (o.minOrder && o.quantity !== undefined && o.quantity > 0 && o.minOrder > o.quantity) return err("Minimum order can't be more than the stock");
   if (o.minOrder && o.maxOrder && o.minOrder > o.maxOrder) return err("Minimum order can't be more than the maximum");
   return o;
+}
+
+/**
+ * Checks the selling settings of a product as a whole (after an edit is merged into what was saved),
+ * so the shop can always offer a valid amount: steps below 1 only for kg, maund and litre,
+ * and the minimum, maximum and quick amounts all on a step.
+ */
+export function sellComboError(d: any): string | null {
+  const unit = String(d?.unit || "").toLowerCase();
+  if (d?.sellAs && SELL_UNITS[d.sellAs as keyof typeof SELL_UNITS] && unit && !SELL_UNITS[d.sellAs as keyof typeof SELL_UNITS].includes(unit))
+    return `Unit "${d.unit}" doesn't match how the product is sold`;
+  const step = Number(d?.step) > 0 ? Number(d.step) : 1;
+  const whole = (n: number) => Math.abs(n - Math.round(n)) < 1e-9;
+  if (!PART_UNITS.includes(unit)) {
+    for (const [label, v] of [["Step", d?.step], ["Minimum order", d?.minOrder], ["Maximum order", d?.maxOrder]] as const)
+      if (v !== undefined && v !== null && v !== "" && !whole(Number(v))) return `${label} must be a whole number for ${d?.unit || "this unit"}`;
+    for (const v of d?.presets || []) if (!whole(Number(v))) return `Quick amounts must be whole numbers for ${d?.unit || "this unit"}`;
+  }
+  if (d?.minOrder && !isStepMultiple(Number(d.minOrder), step)) return "Minimum order must be a whole number of steps";
+  if (d?.maxOrder && !isStepMultiple(Number(d.maxOrder), step)) return "Maximum order must be a whole number of steps";
+  if (d?.maxOrder && Number(d.maxOrder) < step) return "Maximum order can't be less than one step";
+  for (const v of d?.presets || []) {
+    if (!isStepMultiple(Number(v), step)) return "Each quick amount must be a whole number of steps";
+    if (d?.minOrder && Number(v) < Number(d.minOrder)) return "Quick amounts can't be below the minimum order";
+    if (d?.maxOrder && Number(v) > Number(d.maxOrder)) return "Quick amounts can't be above the maximum order";
+  }
+  return null;
 }
 
 async function sellerStats(uid: string) {
@@ -446,6 +496,8 @@ export function registerPlatformRoutes(app: Express) {
     if (f.error) return res.status(400).json(f);
     const id = `listings-${crypto.randomUUID()}`;
     const data = { currency: "৳", unit: "kg", category: "other", rating: 0, active: true, ...f, seller: s.name, storeId: s.id, storeSlug: s.slug, location: f.location || s.location || "" };
+    const combo = sellComboError(data);
+    if (combo) return res.status(400).json({ error: combo });
     await db.execute(sql`INSERT INTO catalog_items (id, kind, data, owner_id) VALUES (${id}, 'listings', ${JSON.stringify(data)}::jsonb, ${uid})`);
     const r = rows(await db.execute(sql`SELECT * FROM catalog_items WHERE id = ${id}`));
     res.status(201).json(itemOut(r[0]));
@@ -461,6 +513,8 @@ export function registerPlatformRoutes(app: Express) {
     const f = productFields(req.body, true);
     if (f.error) return res.status(400).json(f);
     const data = { ...(J(r[0].data) || {}), ...f };
+    const combo = sellComboError(data);
+    if (combo) return res.status(400).json({ error: combo });
     if (Number(data.minOrder) > 1 && Number(data.quantity) > 0 && Number(data.minOrder) > Number(data.quantity))
       return res.status(400).json({ error: "Minimum order can't be more than the stock" });
     await db.execute(sql`UPDATE catalog_items SET data = ${JSON.stringify(data)}::jsonb, updated_at = now() WHERE id = ${r[0].id} AND owner_id = ${uid}`);
@@ -477,6 +531,15 @@ export function registerPlatformRoutes(app: Express) {
   }));
 
   // Public storefront
+  // All open shops for the main app's Shop tab (company shops and sellers' shops), with how many products each shows.
+  app.get("/api/stores", wrap(async (_req, res) => {
+    const r = rows(await db.execute(sql`SELECT s.*,
+        (SELECT count(*)::int FROM catalog_items c WHERE c.kind = 'listings' AND c.owner_id = s.owner_id
+           AND coalesce(c.data->>'hidden','false') <> 'true' AND coalesce(c.data->>'active','true') <> 'false') AS products
+      FROM stores s WHERE s.status = 'active' ORDER BY products DESC, s.created_at ASC LIMIT 200`));
+    res.json(r.map((s: any) => ({ ...storeOut(s), products: Number(s.products) || 0 })));
+  }));
+
   app.get("/api/stores/:slug", wrap(async (req, res) => {
     const s = rows(await db.execute(sql`SELECT * FROM stores WHERE slug = ${req.params.slug} OR id = ${req.params.slug} LIMIT 1`))[0];
     if (!s || s.status !== "active") return res.status(404).json({ error: "Store not found" });

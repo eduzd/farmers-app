@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { orderLineText } from "@shared/selling";
 import { View, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
@@ -152,7 +153,7 @@ export function OrderDetail({ id }: { id: string }) {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: theme.text, fontWeight: "700" }} numberOfLines={1}>{it.name || p?.name || L("Item", "পণ্য")}</Text>
                 <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>
-                  {it.quantity}{it.unit ? ` ${it.unit}` : ""} × {taka(it.price)}{p?.storeName || it.seller ? ` · ${p?.storeName || it.seller}` : ""}
+                  {orderLineText(it)} × {taka(it.price)}{p?.storeName || it.seller ? ` · ${p?.storeName || it.seller}` : ""}
                 </Text>
               </View>
               {p ? <Feather name="chevron-right" size={18} color={theme.textTertiary} /> : <Text style={{ color: theme.textTertiary, fontSize: 11 }}>{L("removed", "মুছে ফেলা")}</Text>}

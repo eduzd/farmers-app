@@ -11,7 +11,8 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
-import { useCartStore } from "@/lib/cartStore";
+import { useCartStore, cartRule, nextQty, canStepUp } from "@/lib/cartStore";
+import { amountText, perUnitText, totalContentText } from "@shared/selling";
 import { useOrdersStore } from "@/lib/ordersStore";
 import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
@@ -277,7 +278,7 @@ export default function CheckoutScreen() {
           id: orderId,
           shippingAddress: { fullName: checkout.contactName || ship.fullName, address: ship.address, city: ship.city, phone: checkout.contactPhone || ship.phone },
           total: quote.total,
-          itemCount: items.reduce((n, i) => n + (i.quantity || 1), 0),
+          itemCount: items.reduce((n, i) => n + (Number.isInteger(i.quantity) ? i.quantity || 1 : 1), 0),
           paymentMethod: payment,
           checkout,
           items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity, image: i.image, unit: i.unit, ...(i.options ? { options: i.options } : {}) })),
@@ -319,7 +320,10 @@ export default function CheckoutScreen() {
     await addOrder({
       id: orderId,
       onServer: savedOnServer,
-      items: items.map((item) => ({ id: item.id, productId: item.productId, name: item.name, price: item.price, quantity: item.quantity, image: item.image, options: item.options })),
+      items: items.map((item) => {
+        const r = cartRule(item);
+        return { id: item.id, productId: item.productId, name: item.name, price: item.price, quantity: item.quantity, image: item.image, options: item.options, unit: r.unit, sellAs: r.sellAs, ...(r.packSize ? { packSize: r.packSize, packUnit: r.packUnit } : {}) };
+      }),
       total: finalTotal,
       currency: "৳",
       status: "pending",
@@ -336,7 +340,7 @@ export default function CheckoutScreen() {
 
   const dayLabel = (d: Date, i: number) =>
     i === 0 ? tr("Tomorrow") : d.toLocaleDateString(isBn ? "bn-BD" : "en-GB", { weekday: "short", day: "numeric", month: "short" });
-  const money = (n: number) => `৳${Math.round(n).toLocaleString("en-IN")}`;
+  const money = (n: number) => `৳${(Math.round(n * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
   const freeLeft = method === "home" && quote.deliveryFee > 0 ? quote.freeDeliveryOver - quote.subtotal : 0;
 
   const card = [styles.section, { backgroundColor: theme.white, borderColor: theme.cardBorder }];
@@ -656,11 +660,12 @@ export default function CheckoutScreen() {
                       </ThemedText>
                     ) : null}
                     <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>
-                      {money(i.price)}{i.unit ? `/${i.unit}` : ""}
+                      {money(i.price)} {perUnitText(cartRule(i), language === "bn")}
+                      {totalContentText(cartRule(i), i.quantity, language === "bn") ? ` · ${totalContentText(cartRule(i), i.quantity, language === "bn")}` : ""}
                     </ThemedText>
                     {err ? (
                       <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>
-                        {tr("Only")} {err.available} {tr("left")}
+                        {tr("Only")} {amountText(cartRule(i), err.available, language === "bn")} {tr("left")}
                       </ThemedText>
                     ) : null}
                     {itemErr ? <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>{tr(itemErr.error)}</ThemedText> : null}
@@ -668,12 +673,12 @@ export default function CheckoutScreen() {
                   <View style={{ alignItems: "flex-end", gap: 6 }}>
                     <ThemedText style={{ color: theme.text, fontWeight: "600" }}>{money(i.price * i.quantity)}</ThemedText>
                     <View style={[styles.stepper, { borderColor: theme.inputBorder }]}>
-                      <Pressable testID={`qty-minus-${i.productId}`} hitSlop={6} style={styles.stepBtn} onPress={() => (i.quantity <= 1 ? removeItem(i.id) : updateQuantity(i.id, i.quantity - 1))}>
-                        <AppIcon name={i.quantity <= 1 ? "trash-2" : "minus"} size={14} color={i.quantity <= 1 ? "#DC2626" : theme.text} />
+                      <Pressable testID={`qty-minus-${i.productId}`} hitSlop={6} style={styles.stepBtn} onPress={() => (nextQty(i, -1) === 0 ? removeItem(i.id) : updateQuantity(i.id, nextQty(i, -1)))}>
+                        <AppIcon name={nextQty(i, -1) === 0 ? "trash-2" : "minus"} size={14} color={nextQty(i, -1) === 0 ? "#DC2626" : theme.text} />
                       </Pressable>
-                      <ThemedText testID={`qty-${i.productId}`} style={{ color: theme.text, minWidth: 26, textAlign: "center", fontWeight: "600" }}>{i.quantity}</ThemedText>
-                      <Pressable testID={`qty-plus-${i.productId}`} hitSlop={6} style={styles.stepBtn} disabled={!!err} onPress={() => updateQuantity(i.id, i.quantity + 1)}>
-                        <Feather name="plus" size={14} color={err ? theme.textSecondary : theme.text} />
+                      <ThemedText testID={`qty-${i.productId}`} style={{ color: theme.text, minWidth: 26, textAlign: "center", fontWeight: "600" }}>{amountText(cartRule(i), i.quantity, language === "bn")}</ThemedText>
+                      <Pressable testID={`qty-plus-${i.productId}`} hitSlop={6} style={styles.stepBtn} disabled={!!err || !canStepUp(i)} onPress={() => updateQuantity(i.id, nextQty(i, 1))}>
+                        <Feather name="plus" size={14} color={err || !canStepUp(i) ? theme.textSecondary : theme.text} />
                       </Pressable>
                     </View>
                   </View>

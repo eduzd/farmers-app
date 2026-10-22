@@ -29,6 +29,8 @@ import { useCartStore } from "@/lib/cartStore";
 import { useI18n } from "@/lib/i18n";
 import { MarketplaceProduct, getAllMarketplaceProducts, getAllCompanies, Company } from "@/lib/storage";
 import { initializeSeedData } from "@/lib/seedData";
+import { apiGet } from "@/lib/api";
+import { ShopLogo, type ShopSummary } from "@/screens/ShopPageScreen";
 import { fetchCatalog, createCatalogItem, updateCatalogItem, deleteCatalogItem, myUserId } from "@/lib/catalog";
 import { CatalogFormModal, FormField } from "@/components/CatalogFormModal";
 import { useAuthStore } from "@/lib/authStore";
@@ -94,6 +96,8 @@ export default function MarketScreen() {
 
   const [products, setProducts] = useState<Product[]>(DEMO_PRODUCTS);
   const [companies, setCompanies] = useState<Company[]>([]);
+  // real shops from the server (company shops the admin opened, and sellers' shops)
+  const [shops, setShops] = useState<ShopSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -147,6 +151,7 @@ export default function MarketScreen() {
       }
 
       // Listings made with the Sell form may leave out rating, seller, location or currency.
+      apiGet<ShopSummary[]>("/api/stores").then((r) => setShops(Array.isArray(r) ? r : [])).catch(() => {});
       const serverListings: Product[] = (await fetchCatalog<Product>("listings").catch(() => [] as Product[])).map((p: any) => ({
         ...p,
         price: Number(p.price) || 0,
@@ -324,8 +329,10 @@ export default function MarketScreen() {
 
   const handleSeeAllShops = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    navigation.navigate("ShopsHome");
-  }, [navigation]);
+    // real shops when there are any; the old sample shops otherwise
+    if (shops.length) navigation.navigate("ShopPage", {});
+    else navigation.navigate("ShopsHome");
+  }, [navigation, shops.length]);
 
   const renderProduct = useCallback(({ item }: { item: Product }) => (
     <Pressable
@@ -701,7 +708,7 @@ export default function MarketScreen() {
               ) : null}
             </View>
 
-            {companies.length > 0 ? (
+            {shops.length > 0 || companies.length > 0 ? (
             <View style={styles.shopsSection}>
               <View style={styles.sectionHeader}>
                 <ThemedText type="h4" style={{ color: theme.text }}>
@@ -719,7 +726,23 @@ export default function MarketScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.shopsContainer}
               >
-                {companies.slice(0, 5).map((company) => (
+                {shops.slice(0, 10).map((shop) => (
+                  <Pressable
+                    key={shop.id}
+                    testID={`market-shop-${shop.slug}`}
+                    style={[styles.shopCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+                    onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); navigation.navigate("ShopPage", { slug: shop.slug }); }}
+                  >
+                    <ShopLogo shop={shop} size={48} />
+                    <ThemedText style={[styles.shopName, { color: theme.text }]} numberOfLines={1}>
+                      {shop.name}
+                    </ThemedText>
+                    <ThemedText style={{ color: theme.textSecondary, fontSize: 11 }} numberOfLines={1}>
+                      {isBn ? `${shop.products || 0}টি পণ্য` : `${shop.products || 0} products`}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+                {(shops.length ? [] : companies.slice(0, 5)).map((company) => (
                   <Pressable
                     key={company.id}
                     style={[styles.shopCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}

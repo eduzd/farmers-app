@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { PART_UNITS } from "@shared/selling";
 import { View, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
@@ -145,7 +146,7 @@ function ShopsList() {
             <Thumb uri={s.logo} icon="briefcase" size={46} />
             <View style={{ flex: 1, gap: 3 }}>
               <Text style={{ color: theme.text, fontWeight: "700", fontSize: 14.5 }} numberOfLines={1}>{s.name}</Text>
-              <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>{s.ownerName || s.ownerEmail}{s.location ? ` · ${s.location}` : ""}</Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>{s.companyShop ? L("Company shop", "কোম্পানির দোকান") : s.ownerName || s.ownerEmail}{s.location ? ` · ${s.location}` : ""}</Text>
               <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
                 <Pill label={statusLabel(s.status, L)} color={STATUS_COLOR[s.status] || "#64748B"} />
                 <Pill label={`${s.products} ${L("products", "পণ্য")}`} color="#0E7490" />
@@ -442,7 +443,7 @@ export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) 
   const cats = useLoader<Category[]>(() => apiGet("/api/admin/manage/categories"), []);
   const stores = useLoader<any[]>(() => apiGet("/api/admin/manage/stores"), []);
   const existing = useLoader<any>(() => (id ? apiGet(`/api/admin/manage/products/${id}`) : Promise.resolve(null)), [id]);
-  const blank = { name: "", price: "", quantity: "", unit: "kg", sellAs: "weight", packSize: "", packUnit: "kg", category: "", description: "", image: "", minOrder: "", maxOrder: "", location: "", storeId: storeId || "", grade: "", variety: "", origin: "", harvestDate: "", shelfLife: "", storage: "", organic: false };
+  const blank = { name: "", price: "", quantity: "", unit: "kg", sellAs: "weight", packSize: "", packUnit: "kg", category: "", description: "", image: "", minOrder: "", maxOrder: "", step: "", presets: "", location: "", storeId: storeId || "", grade: "", variety: "", origin: "", harvestDate: "", shelfLife: "", storage: "", organic: false };
   const [f, setF] = useState<any>(blank);
   const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -454,7 +455,7 @@ export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) 
     const d = existing.data;
     if (!d) return;
     const s2 = (v: any) => (v === null || v === undefined ? "" : String(v));
-    setF({ ...blank, name: d.name, price: s2(d.price), quantity: s2(d.quantity), unit: d.unit || "kg", sellAs: guessSellAs(d), packSize: s2(d.packSize), packUnit: d.packUnit || "kg", category: d.category, description: d.description || "", image: d.image || "", minOrder: s2(d.minOrder), maxOrder: s2(d.maxOrder), location: d.location || "", storeId: d.storeId || "", grade: d.grade || "", variety: d.variety || "", origin: d.origin || "", harvestDate: d.harvestDate || "", shelfLife: d.shelfLife || "", storage: d.storage || "", organic: !!d.organic });
+    setF({ ...blank, name: d.name, price: s2(d.price), quantity: s2(d.quantity), unit: d.unit || "kg", sellAs: guessSellAs(d), packSize: s2(d.packSize), packUnit: d.packUnit || "kg", category: d.category, description: d.description || "", image: d.image || "", minOrder: s2(d.minOrder), maxOrder: s2(d.maxOrder), step: s2(d.step), presets: Array.isArray(d.presets) ? d.presets.join(", ") : "", location: d.location || "", storeId: d.storeId || "", grade: d.grade || "", variety: d.variety || "", origin: d.origin || "", harvestDate: d.harvestDate || "", shelfLife: d.shelfLife || "", storage: d.storage || "", organic: !!d.organic });
     if (d.grade || d.variety || d.origin || d.harvestDate || d.shelfLife || d.storage || d.organic || d.maxOrder) setMore(true);
   }, [existing.data?.id]);
   const set = (k: string) => (v: any) => setF((x: any) => ({ ...x, [k]: v }));
@@ -469,6 +470,17 @@ export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) 
   if (sellAs === "pack" && !(Number(f.packSize) > 0)) errors.push(L("Write how much is in one pack", "এক প্যাকে কতটুকু আছে লিখুন"));
   if (f.quantity && !(Number(f.quantity) >= 0)) errors.push(L("Stock must be a number", "স্টক সংখ্যা হতে হবে"));
   if (f.minOrder && f.quantity && Number(f.quantity) > 0 && Number(f.minOrder) > Number(f.quantity)) errors.push(L("Minimum order can't be more than the stock", "সর্বনিম্ন অর্ডার স্টকের বেশি হতে পারে না"));
+  // amounts buyers can pick: a step (e.g. 0.5 kg), and quick amounts (e.g. 1, 5, 10)
+  const stepN = Number(f.step) > 0 ? Number(f.step) : 1;
+  const partOk = PART_UNITS.includes(f.unit);
+  const onStep = (v: number) => Math.abs(v / stepN - Math.round(v / stepN)) < 1e-6;
+  const presetList = String(f.presets || "").split(/[,\s]+/).filter(Boolean).map(Number);
+  if (f.step && !(Number(f.step) > 0)) errors.push(L("Step must be a number more than 0", "ধাপ ০-এর বেশি সংখ্যা হতে হবে"));
+  if (!partOk && [f.step, f.minOrder, f.maxOrder].some((v) => v && !Number.isInteger(Number(v)))) errors.push(L(`Use whole numbers for ${unitLabel}`, `${unitLabel}-এর জন্য পূর্ণ সংখ্যা দিন`));
+  if (f.minOrder && !onStep(Number(f.minOrder))) errors.push(L("Smallest order must be a whole number of steps", "সর্বনিম্ন অর্ডার ধাপের গুণিতক হতে হবে"));
+  if (f.maxOrder && !onStep(Number(f.maxOrder))) errors.push(L("Largest order must be a whole number of steps", "সর্বোচ্চ অর্ডার ধাপের গুণিতক হতে হবে"));
+  if (presetList.some((v) => !(v > 0) || !onStep(v) || (!partOk && !Number.isInteger(v)))) errors.push(L("Each quick amount must be a number on a step", "প্রতিটি দ্রুত পরিমাণ ধাপের গুণিতক হতে হবে"));
+  if (presetList.some((v) => (f.minOrder && v < Number(f.minOrder)) || (f.maxOrder && v > Number(f.maxOrder)))) errors.push(L("Quick amounts must be between the smallest and largest order", "দ্রুত পরিমাণ সর্বনিম্ন ও সর্বোচ্চ অর্ডারের মধ্যে হতে হবে"));
   if (f.minOrder && f.maxOrder && Number(f.minOrder) > Number(f.maxOrder)) errors.push(L("Minimum order can't be more than the maximum", "সর্বনিম্ন অর্ডার সর্বোচ্চের বেশি হতে পারে না"));
   if (f.harvestDate && !/^\d{4}-\d{2}-\d{2}$/.test(f.harvestDate)) errors.push(L("Harvest date: use YYYY-MM-DD", "সংগ্রহের তারিখ: YYYY-MM-DD"));
   const save = async () => {
@@ -480,8 +492,10 @@ export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) 
       packSize: sellAs === "pack" ? Number(f.packSize) : null, packUnit: sellAs === "pack" ? f.packUnit : "",
       grade: f.grade, variety: f.variety, origin: f.origin, harvestDate: f.harvestDate, shelfLife: f.shelfLife, storage: f.storage, organic: !!f.organic,
       maxOrder: f.maxOrder ? Number(f.maxOrder) : null,
+      step: f.step ? Number(f.step) : null,
+      presets: presetList,
     };
-    if (f.minOrder) body.minOrder = Number(f.minOrder);
+    body.minOrder = f.minOrder ? Number(f.minOrder) : null;
     try {
       if (id) {
         await apiPut(`/api/admin/manage/products/${id}`, body);
@@ -559,6 +573,16 @@ export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) 
           <View style={{ flex: 1 }}><Field testID="pf-min" label={L("Smallest order", "সর্বনিম্ন অর্ডার")} value={f.minOrder} onChange={set("minOrder")} keyboardType="numeric" placeholder="1" /></View>
           <View style={{ flex: 1 }}><Field testID="pf-max" label={L("Largest order (optional)", "সর্বোচ্চ অর্ডার (ঐচ্ছিক)")} value={f.maxOrder} onChange={set("maxOrder")} keyboardType="numeric" /></View>
         </View>
+        <View style={st.row}>
+          <View style={{ flex: 1 }}>
+            <Field testID="pf-step" label={L("Buyers add at a time", "প্রতি ধাপে যোগ হবে")} value={f.step} onChange={set("step")} keyboardType="numeric" placeholder="1"
+              hint={partOk ? L(`e.g. 0.5 lets buyers pick 2.5 ${unitLabel}`, `যেমন ০.৫ দিলে ক্রেতা ২.৫ ${unitLabel} নিতে পারবেন`) : L(`Whole ${unitLabel} only`, `শুধু পূর্ণ ${unitLabel}`)} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Field testID="pf-presets" label={L("Quick amounts (optional)", "দ্রুত পরিমাণ (ঐচ্ছিক)")} value={f.presets} onChange={set("presets")} placeholder="1, 5, 10"
+              hint={L("Buttons buyers can tap", "ক্রেতারা ট্যাপ করতে পারবেন")} />
+          </View>
+        </View>
         <View testID="pf-preview" style={{ marginTop: 4, padding: 12, borderRadius: 12, backgroundColor: theme.primary + "10" }}>
           <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{L("Buyers will see", "ক্রেতারা দেখবেন")}</Text>
           <Text style={{ color: theme.text, fontWeight: "800", fontSize: 16, marginTop: 2 }}>
@@ -568,7 +592,18 @@ export function ProductForm({ id, storeId }: { id?: string; storeId?: string }) 
             {Number(f.quantity) > 0 ? L(`${f.quantity} ${unitLabel} in stock`, `স্টকে ${f.quantity} ${unitLabel}`) : L("Out of stock", "স্টক নেই")}
             {f.minOrder || f.maxOrder ? ` · ${L("order", "অর্ডার")} ${f.minOrder || 1}${f.maxOrder ? `–${f.maxOrder}` : "+"} ${unitLabel}` : ""}
             {f.organic ? ` · ${L("Organic", "জৈব")}` : ""}{f.grade ? ` · ${f.grade}` : ""}
+            {stepN !== 1 ? ` · ${L(`in steps of ${stepN} ${unitLabel}`, `প্রতি ধাপে ${stepN} ${unitLabel}`)}` : ""}
           </Text>
+          {presetList.length ? (
+            <View style={[st.row, { gap: 6, flexWrap: "wrap", marginTop: 8 }]}>
+              {presetList.slice(0, 6).map((v) => (
+                <View key={v} style={{ paddingVertical: 5, paddingHorizontal: 10, borderRadius: 10, borderWidth: 1.5, borderColor: theme.primary + "55" }}>
+                  <Text style={{ color: theme.text, fontWeight: "700", fontSize: 12.5 }}>{v} {unitLabel}</Text>
+                  {Number(f.price) > 0 ? <Text style={{ color: theme.textSecondary, fontSize: 11 }}>{taka(Number(f.price) * v)}</Text> : null}
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
       </Card>
       <SectionTitle title={L(`${id ? 4 : 5}. More details`, `${id ? "৪" : "৫"}. আরও তথ্য`)} />
@@ -637,7 +672,9 @@ export function StoreDetail({ id }: { id: string }) {
           </View>
         </View>
         <View style={{ marginTop: 8 }}>
-          <KV k={L("Owner", "মালিক")} v={d.ownerName || d.ownerEmail} testID="store-open-owner" onPress={() => nav.push({ name: "user", id: d.ownerId })} />
+          {d.companyShop
+            ? <KV k={L("Run by", "চালায়")} v={L("Farmers admins (company shop)", "ফার্মার্স অ্যাডমিন (কোম্পানির দোকান)")} testID="store-company" />
+            : <KV k={L("Owner", "মালিক")} v={d.ownerName || d.ownerEmail} testID="store-open-owner" onPress={() => nav.push({ name: "user", id: d.ownerId })} />}
           <KV k={L("Phone", "ফোন")} v={d.phone || d.ownerPhone} />
           <KV k={L("Location", "লোকেশন")} v={d.location} />
           <KV k={L("Category", "ক্যাটাগরি")} v={d.category ? catName(cats.data, d.category, L) : ""} />
@@ -692,6 +729,7 @@ export function StoreForm({ id }: { id?: string }) {
   const cats = useCategories();
   const existing = useLoader<any>(() => (id ? apiGet(`/api/admin/manage/stores/${id}`) : Promise.resolve(null)), [id]);
   const [f, setF] = useState<any>({ owner: "", name: "", tagline: "", description: "", phone: "", location: "", category: "", logo: "" });
+  const [kind, setKind] = useState<"company" | "seller">("company");
   const [userQ, setUserQ] = useState("");
   const dq = useDebounced(userQ);
   const users = useLoader<any[]>(() => (!id && dq.trim().length >= 2 ? apiGet(`/api/admin/manage/users?q=${encodeURIComponent(dq)}`) : Promise.resolve([])), [dq, id]);
@@ -707,7 +745,11 @@ export function StoreForm({ id }: { id?: string }) {
     setBusy(true); setErr(null);
     try {
       if (id) { await apiPut(`/api/admin/manage/stores/${id}/details`, f); nav.pop(); }
-      else { const r = await apiPost("/api/admin/manage/stores", f); nav.pop(); nav.push({ name: "store", id: r.id }); }
+      else {
+        // a company shop has no owner account: the admins run it and add its products
+        const r = await apiPost("/api/admin/manage/stores", { ...f, owner: kind === "company" ? "" : f.owner });
+        nav.pop(); nav.push({ name: "store", id: r.id });
+      }
     } catch (e: any) { setErr(e?.message); } finally { setBusy(false); }
   };
   if (id && existing.loading) return <Page><Loading /></Page>;
@@ -716,6 +758,17 @@ export function StoreForm({ id }: { id?: string }) {
     <Page testID="store-form">
       {err ? <ErrorBox text={err} /> : null}
       {!id ? (
+        <Card>
+          <Text style={[st.label, { color: theme.textSecondary }]}>{L("Who runs this shop?", "দোকানটি কে চালাবে?")}</Text>
+          <View style={[st.row, { gap: 10, flexWrap: "wrap" }]}>
+            <SellTile testID="store-kind-company" on={kind === "company"} icon="briefcase" title={L("Company shop", "কোম্পানির দোকান")}
+              sub={L("You add its products here. Good for a company or brand.", "পণ্য আপনি এখান থেকে যোগ করবেন। কোম্পানি বা ব্র্যান্ডের জন্য।")} onPress={() => setKind("company")} />
+            <SellTile testID="store-kind-seller" on={kind === "seller"} icon="user" title={L("A seller's shop", "বিক্রেতার দোকান")}
+              sub={L("Give it to a user, who runs it from the Seller Hub.", "একজন ব্যবহারকারী সেলার হাব থেকে চালাবেন।")} onPress={() => setKind("seller")} />
+          </View>
+        </Card>
+      ) : null}
+      {!id && kind === "seller" ? (
         <Card>
           <Text style={[st.label, { color: theme.textSecondary }]}>{L("Shop owner", "দোকানের মালিক")}</Text>
           <SearchBox testID="owner-search" value={userQ} onChange={setUserQ} placeholder={L("Search by name, email or phone", "নাম, ইমেইল বা ফোন দিয়ে খুঁজুন")} />
@@ -749,7 +802,7 @@ export function StoreForm({ id }: { id?: string }) {
         <Field label={L("About the shop", "দোকান সম্পর্কে")} value={f.description} onChange={set("description")} multiline maxLength={2000} />
       </Card>
       <Btn testID="save-store" icon="check" label={id ? L("Save changes", "পরিবর্তন সংরক্ষণ") : L("Open shop", "দোকান খুলুন")} busy={busy}
-        disabled={f.name.trim().length < 2 || (!id && !f.owner)} onPress={save} />
+        disabled={f.name.trim().length < 2 || (!id && kind === "seller" && !f.owner)} onPress={save} />
     </Page>
   );
 }

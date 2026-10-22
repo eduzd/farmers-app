@@ -111,3 +111,11 @@ Plan:
 - [x] tests: check-chat 50/50 (new reply checks), check-admin-app 70/70, check-moderation 63/63, reactions 12/12,
       photos-connect 31/31; tests/check-reply-both-web.py en/bn at 360 + 320: support admin->user, user->admin,
       Ann->Cat, Cat->Ann quotes visible on both screens, no page errors, no sideways overflow.
+
+## Round: shop selling units + company shops (Oct 22, evening)
+- shared/selling.ts: one set of selling rules (unit, step, min, max, stock, pack size, quick amounts) used by server, admin form and main app.
+- Admin: "Open a shop" now defaults to a Company shop with no owner account (owner_id `company-<uuid>`), so admins can open one shop per company and add its products. Seller's shop (with owner) still works. Same name twice is refused.
+- Admin product form: new "Buyers add at a time" (step, below 1 only for kg/maund/litre) and "Quick amounts"; preview shows the chips. Server checks the whole combination (sellComboError) on create and edit.
+- Main app: Market "Shops" row shows real shops from GET /api/stores; new ShopPage screen (one shop + its products, or all shops). Product page: price "per kg / per bag (25 kg)", amount box with quick-amount chips, rules line, live total; stepper uses the step, min, max and stock; part amounts allowed where step < 1. Cart and checkout steppers use the same rules and show "5.5 kg", "3 bags · 75 kg in all". Company shop products: no follow button, Message goes to Farmers Support.
+- Server: checkout quote/order validate amounts with the product's rule (step/min/max/stock, hidden/inactive), price from the product, order lines saved with unit/sellAs/packSize; stock in decimals; hidden/inactive products left out of /api/catalog/listings except for their owner. Company shops get no notifications (no account).
+- Tests: tests/check-shop-units.mjs (42 API checks), tests/check-shop-units-web.py (admin opens a company shop + adds a kg product through the dashboard; buyer sees shop, product amount picker, cart, in English and Bangla). check-admin-app.mjs and check-moderation.mjs still pass.

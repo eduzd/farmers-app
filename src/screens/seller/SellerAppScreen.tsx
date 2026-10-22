@@ -1,4 +1,5 @@
 import { useMarketCategories, categoryLabel } from "@/lib/marketCategories";
+import { orderLineText } from "@shared/selling";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import {
@@ -574,7 +575,7 @@ function Orders({ L, orders, reload, flash }: { L: any; orders: Order[]; reload:
             </View>
             {(o.items || []).map((it, i) => (
               <View key={i} style={st.itemLine}>
-                <Text style={[st.td, { flex: 1 }]} numberOfLines={2}>{it.name || "Item"}{it.options ? ` (${Object.entries(it.options).map(([k, v]) => `${k}: ${v}`).join(", ")})` : ""} × {it.quantity || 1}</Text>
+                <Text style={[st.td, { flex: 1 }]} numberOfLines={2}>{it.name || "Item"}{it.options ? ` (${Object.entries(it.options).map(([k, v]) => `${k}: ${v}`).join(", ")})` : ""} × {orderLineText(it)}</Text>
                 <Text style={st.td}>{taka((it.price || 0) * (it.quantity || 1))}</Text>
               </View>
             ))}

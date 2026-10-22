@@ -12,6 +12,11 @@ export interface OrderItem {
   price: number;
   quantity: number;
   image: string;
+  /** how it was sold: "kg", "bag"... (orders made before units were saved have none) */
+  unit?: string;
+  sellAs?: string;
+  packSize?: number;
+  packUnit?: string;
 }
 
 export interface Order {
@@ -69,6 +74,7 @@ function fromServer(o: any, role: "buyer" | "seller"): Order {
       price: Number(i.price || 0),
       quantity: Number(i.quantity || 1),
       image: i.image || "",
+      ...(i.unit ? { unit: String(i.unit), sellAs: i.sellAs, packSize: i.packSize, packUnit: i.packUnit } : {}),
       ...(i.options && typeof i.options === "object" ? { options: i.options } : {}),
     })),
     total: Number(o.total || 0),

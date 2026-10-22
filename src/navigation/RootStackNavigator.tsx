@@ -57,6 +57,7 @@ import {
 import MainTabNavigator, { MainTabParamList } from "@/navigation/MainTabNavigator";
 import CompanyTabNavigator from "@/navigation/CompanyTabNavigator";
 import StoreViewScreen from "@/screens/StoreViewScreen";
+import ShopPageScreen from "@/screens/ShopPageScreen";
 import ShopsHomeScreen from "@/screens/ShopsHomeScreen";
 import SellerOnboardingScreen from "@/screens/SellerOnboardingScreen";
 import AddressManagementScreen from "@/screens/AddressManagementScreen";
@@ -224,6 +225,8 @@ export type RootStackParamList = {
   CalculateRecordDetail: { id: string };
   CompanyDashboard: undefined;
   StoreView: { companyId: string };
+  /** a shop from the server (company shop or seller's shop); no slug = list of all shops */
+  ShopPage: { slug?: string } | undefined;
   ShopsHome: undefined;
   SellerOnboarding: undefined;
   AddressManagement: undefined;
@@ -750,6 +753,13 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="StoreView"
             component={StoreViewScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="ShopPage"
+            component={ShopPageScreen}
             options={{
               headerShown: false,
             }}

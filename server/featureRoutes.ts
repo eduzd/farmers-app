@@ -112,7 +112,8 @@ export async function publicUser(uid: string | null) {
 
 /** Create an in-app notification for a user (never throws). */
 export async function notify(userId: string | null | undefined, type: string, title: string, body: string, data: any = {}) {
-  if (!userId) return;
+  // Company shops (run by the admins) have no account to notify; admins see their orders in the dashboard.
+  if (!userId || userId.startsWith("company-")) return;
   try {
     await ensureFeatures();
     const id = `n-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;

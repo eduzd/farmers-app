@@ -30,6 +30,8 @@ import { useOrdersStore, Order, OrderStatus } from "@/lib/ordersStore";
 
 import { tr, useTr } from "@/lib/tr";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { useI18n } from "@/lib/i18n";
+import { orderLineText } from "@shared/selling";
 type OrderDetailRouteProp = RouteProp<RootStackParamList, "OrderDetail">;
 
 const TRACKING_STEPS: { status: OrderStatus; label: string; icon: string }[] = [
@@ -167,6 +169,7 @@ function AnimatedTrackingStep({
 
 export default function OrderDetailScreen() {
   const tr = useTr();
+  const bnOrder = useI18n().language === "bn";
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
   const route = useRoute<OrderDetailRouteProp>();
@@ -330,11 +333,11 @@ export default function OrderDetailScreen() {
                 </ThemedText>
               ) : null}
               <ThemedText style={[styles.itemQuantity, { color: theme.textSecondary }]}>
-                {tr("Qty")}: {item.quantity}
+                {tr("Qty")}: {orderLineText(item as any, bnOrder)}
               </ThemedText>
             </View>
             <ThemedText style={[styles.itemPrice, { color: theme.text }]}>
-              {order.currency || "৳"}{Math.round(item.price * item.quantity).toLocaleString("en-IN")}
+              {order.currency || "৳"}{(Math.round(item.price * item.quantity * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
             </ThemedText>
           </View>
         ))}

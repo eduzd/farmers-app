@@ -6,7 +6,7 @@ import { notify } from "./featureRoutes";
 import { decodeUpload, looksLikeImage, IMAGE_MIME, MAX_IMAGE_BYTES, VOICE_MIME, MAX_VOICE_BYTES, MAX_VOICE_MS } from "./dmRoutes";
 import { isUserPresent } from "./communityRoutes";
 import {
-  rows, J, iso, str, wrap, requireUser, requireAdmin, audit, storeOut, itemOut, slugify, productFields, storeFields, ensurePlatform, adminNextSteps,
+  rows, J, iso, str, wrap, requireUser, requireAdmin, audit, storeOut, itemOut, slugify, productFields, sellComboError, storeFields, COMPANY_OWNER_PREFIX, isCompanyOwner, ensurePlatform, adminNextSteps,
 } from "./platformRoutes";
 
 /**
@@ -339,6 +339,8 @@ export function registerAdminAppRoutes(app: Express) {
       ...(b.featured !== undefined ? { featured: !!b.featured } : {}),
       addedByAdmin: true,
     };
+    const combo = sellComboError(data);
+    if (combo) return res.status(400).json({ error: combo });
     await db.execute(sql`INSERT INTO catalog_items (id, kind, data, owner_id) VALUES (${id}, 'listings', ${JSON.stringify(data)}::jsonb, ${ownerId})`);
     await audit(req, "CREATE_PRODUCT", "listings", id, { name: data.name, storeId: store?.id || null, ownerId });
     res.status(201).json(productOut(await productRow(id)));
@@ -355,6 +357,8 @@ export function registerAdminAppRoutes(app: Express) {
     const data: any = { ...before, ...f };
     if (b.hidden !== undefined) data.hidden = !!b.hidden;
     if (b.featured !== undefined) data.featured = !!b.featured;
+    const combo = sellComboError(data);
+    if (combo) return res.status(400).json({ error: combo });
     if (Number(data.minOrder) > 1 && Number(data.quantity) > 0 && Number(data.minOrder) > Number(data.quantity))
       return res.status(400).json({ error: "Minimum order can't be more than the stock" });
     await db.execute(sql`UPDATE catalog_items SET data = ${JSON.stringify(data)}::jsonb, updated_at = now() WHERE id = ${p.id}`);
@@ -378,21 +382,35 @@ export function registerAdminAppRoutes(app: Express) {
 
   // Shops (stores)
   app.post(`${A}/stores`, requireAdmin, w(async (req, res) => {
+    // Two kinds of shop:
+    //  - a company shop (no owner): the admins run it and add its products, e.g. one shop per company/brand;
+    //  - a seller's shop: given to one user account, who then manages it from the Seller Hub.
     const b = req.body || {};
     const who = str(b.owner, 200).toLowerCase();
-    if (!who) return res.status(400).json({ error: "Choose the shop owner (email, username or user id)" });
-    const u = rows(await db.execute(sql`SELECT id, name FROM users WHERE id = ${who} OR lower(coalesce(email,'')) = ${who} OR lower(username) = ${who} LIMIT 1`))[0];
-    if (!u) return res.status(404).json({ error: "No account found for that owner" });
-    if (rows(await db.execute(sql`SELECT id FROM stores WHERE owner_id = ${u.id} LIMIT 1`))[0]) return res.status(409).json({ error: "This account already has a shop" });
+    let ownerId: string;
+    let u: any = null;
+    if (!who) {
+      ownerId = `${COMPANY_OWNER_PREFIX}${crypto.randomUUID()}`;
+    } else {
+      u = rows(await db.execute(sql`SELECT id, name FROM users WHERE id = ${who} OR lower(coalesce(email,'')) = ${who} OR lower(username) = ${who} LIMIT 1`))[0];
+      if (!u) return res.status(404).json({ error: "No account found for that owner" });
+      if (rows(await db.execute(sql`SELECT id FROM stores WHERE owner_id = ${u.id} LIMIT 1`))[0]) return res.status(409).json({ error: "This account already has a shop" });
+      ownerId = u.id;
+    }
     const f = storeFields(b);
     if (!f.name || f.name.length < 2) return res.status(400).json({ error: "Shop name is required" });
+    if (rows(await db.execute(sql`SELECT id FROM stores WHERE lower(name) = ${f.name.toLowerCase()} LIMIT 1`))[0]) return res.status(409).json({ error: "A shop with this name already exists" });
     const id = `store-${crypto.randomUUID()}`;
+    let slug = slugify(f.name);
+    if (rows(await db.execute(sql`SELECT id FROM stores WHERE slug = ${slug} LIMIT 1`))[0]) slug = `${slug}-${id.slice(6, 10)}`;
     await db.execute(sql`INSERT INTO stores (id, owner_id, name, slug, tagline, description, logo, banner, theme_color, phone, location, category)
-      VALUES (${id}, ${u.id}, ${f.name}, ${slugify(f.name)}, ${f.tagline || null}, ${f.description || null}, ${f.logo || null}, ${f.banner || null},
+      VALUES (${id}, ${ownerId}, ${f.name}, ${slug}, ${f.tagline || null}, ${f.description || null}, ${f.logo || null}, ${f.banner || null},
         ${f.theme_color || "#2563EB"}, ${f.phone || null}, ${f.location || null}, ${f.category || null})`);
-    await db.execute(sql`UPDATE catalog_items SET data = data || ${JSON.stringify({ storeId: id, seller: f.name })}::jsonb WHERE kind = 'listings' AND owner_id = ${u.id}`);
-    await notify(u.id, "store", "Your shop is open", `The admin opened ${f.name} for you. Manage it from the Seller Hub.`, { storeId: id });
-    await audit(req, "CREATE_STORE", "store", id, { name: f.name, ownerId: u.id });
+    if (u) {
+      await db.execute(sql`UPDATE catalog_items SET data = data || ${JSON.stringify({ storeId: id, storeSlug: slug, seller: f.name })}::jsonb WHERE kind = 'listings' AND owner_id = ${u.id}`);
+      await notify(u.id, "store", "Your shop is open", `The admin opened ${f.name} for you. Manage it from the Seller Hub.`, { storeId: id });
+    }
+    await audit(req, "CREATE_STORE", "store", id, { name: f.name, ownerId: u ? u.id : null, companyShop: !u });
     res.status(201).json(storeOut(rows(await db.execute(sql`SELECT * FROM stores WHERE id = ${id}`))[0]));
   }));
 

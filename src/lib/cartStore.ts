@@ -1,5 +1,17 @@
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { sellRule, upperLimit, clampQty, round3, type SellAs } from "@shared/selling";
+
+/** How the product is sold, copied from the product when it was added (the server checks it again at checkout). */
+export interface CartSale {
+  sellAs?: SellAs;
+  step?: number;
+  min?: number;
+  max?: number | null;
+  stock?: number | null;
+  packSize?: number | null;
+  packUnit?: string;
+}
 
 export interface CartItem {
   id: string;
@@ -13,6 +25,23 @@ export interface CartItem {
   seller: string;
   /** Chosen product options, e.g. { Size: "5 kg", Grade: "A" }. */
   options?: Record<string, string>;
+  sale?: CartSale;
+}
+
+/** The selling rule of a cart line. Lines added before sale info existed: whole numbers, step 1. */
+export function cartRule(i: Pick<CartItem, "unit" | "sale">) {
+  const s = i.sale || {};
+  return sellRule({ sellAs: s.sellAs, unit: i.unit, step: s.step, minOrder: s.min, maxOrder: s.max, quantity: s.stock ?? undefined, packSize: s.packSize, packUnit: s.packUnit });
+}
+/** The amount after one tap on + or -; 0 means the line should go (below the minimum). */
+export function nextQty(i: CartItem, dir: 1 | -1): number {
+  const r = cartRule(i);
+  const n = round3(i.quantity + dir * r.step);
+  if (dir < 0) return n < r.min - 1e-9 ? 0 : n;
+  return n > upperLimit(r) + 1e-9 ? i.quantity : n;
+}
+export function canStepUp(i: CartItem) {
+  return nextQty(i, 1) !== i.quantity;
 }
 
 const optKey = (o?: Record<string, string>) =>
@@ -44,7 +73,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     if (existingItem) {
       newItems = items.map((i) =>
         same(i)
-          ? { ...i, quantity: i.quantity + item.quantity }
+          ? { ...i, ...(item.sale ? { sale: item.sale } : {}), quantity: clampQty(cartRule({ unit: i.unit, sale: item.sale || i.sale }), round3(i.quantity + item.quantity)) }
           : i
       );
     } else {
@@ -97,11 +126,12 @@ export const useCartStore = create<CartState>((set, get) => ({
 
   getTotal: () => {
     const { items } = get();
-    return items.reduce((total, item) => total + item.price * item.quantity, 0);
+    return round3(items.reduce((total, item) => total + item.price * item.quantity, 0));
   },
 
   getItemCount: () => {
     const { items } = get();
-    return items.reduce((count, item) => count + item.quantity, 0);
+    // part amounts (2.5 kg) count as one item
+    return items.reduce((count, item) => count + (Number.isInteger(item.quantity) ? item.quantity : 1), 0);
   },
 }));
