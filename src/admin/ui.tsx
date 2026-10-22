@@ -25,7 +25,8 @@ export type Route =
   | { name: "search" }
   | { name: "official"; target?: string; targetName?: string }
   | { name: "ads" }
-  | { name: "adForm"; id?: string };
+  | { name: "adForm"; id?: string }
+  | { name: "notifications" };
 export type TabName = "home" | "shop" | "orders" | "support" | "more";
 export type ShopSection = "products" | "shops" | "categories";
 

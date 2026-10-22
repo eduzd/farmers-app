@@ -17,7 +17,9 @@ import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
 import { HomeIcon } from "@/components/icons/HomeIcon";
 import { useThemeStore } from "@/lib/themeStore";
-import { useLiveStatus } from "@/lib/liveStatus";
+import { useLiveStatus, refreshUnreadCounts } from "@/lib/liveStatus";
+import { apiPost } from "@/lib/api";
+import { NotificationsScreen, useAdminBellCount } from "./notifications";
 /**
  * Farmers Admin app: its own bottom navigation (Home, Shop, Orders, Support, More) over the
  * shared backend. Every call goes to /api/admin/manage/*, which the server checks for an
@@ -57,6 +59,14 @@ export default function AdminAppScreen() {
   // Online beat while the admin app is open (the main tabs do this for the app; the admin app never mounted it),
   // so users see Support as online (green dot) and Support voice calls ring an admin who is actually here.
   useLiveStatus();
+  // Bell on the Home header: this admin's unread notifications (new Support messages and the rest), same count as the main app's bell.
+  const bellCount = useAdminBellCount();
+  // Opening a Support conversation (from the bell, the Support tab or anywhere) marks its "new Support message" notifications read.
+  const openThreadId = stack.length && stack[stack.length - 1].name === "thread" ? (stack[stack.length - 1] as any).id as string : "";
+  useEffect(() => {
+    if (!openThreadId || !isAdmin) return;
+    apiPost("/api/me/notifications/read", { supportThreadId: openThreadId }).then(() => refreshUnreadCounts()).catch(() => {});
+  }, [openThreadId, isAdmin]);
 
   const refreshBadges = useCallback(async () => {
     if (!isAdmin) return;
@@ -107,6 +117,11 @@ export default function AdminAppScreen() {
   }
 
   const top = stack[stack.length - 1];
+  const bellBadge = bellCount > 0 ? (
+    <View testID="header-bell-badge" style={{ position: "absolute", top: 3, right: 1, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.backgroundRoot }}>
+      <Text style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}>{bellCount > 99 ? "99+" : bellCount}</Text>
+    </View>
+  ) : null;
   const tabTitle: Record<TabName, string> = {
     home: L("Farmers Admin", "ফার্মার্স অ্যাডমিন"), shop: L("Shop", "শপ"), orders: L("Orders", "অর্ডার"), support: L("Support", "সাপোর্ট"), more: L("More", "আরও"),
   };
@@ -116,6 +131,7 @@ export default function AdminAppScreen() {
       store: L("Shop details", "দোকানের তথ্য"), storeForm: (r as any).id ? L("Edit shop", "দোকান এডিট") : L("Open a shop", "দোকান খুলুন"),
       order: L("Order", "অর্ডার"), user: L("User", "ব্যবহারকারী"), users: L("Users", "ব্যবহারকারী"), thread: L("Conversation", "কথোপকথন"),
       categoryForm: (r as any).id ? L("Edit category", "ক্যাটাগরি এডিট") : L("New category", "নতুন ক্যাটাগরি"),
+      notifications: L("Notifications", "নোটিফিকেশন"),
     } as Record<string, string>)[r.name];
 
   const renderRoute = (r: Route) => {
@@ -138,6 +154,7 @@ export default function AdminAppScreen() {
       case "adForm":
         return <AdForm id={r.id} />;
       case "categoryForm": return <CategoryForm key={key} id={r.id} />;
+      case "notifications": return <NotificationsScreen key={key} />;
     }
   };
 
@@ -184,6 +201,7 @@ export default function AdminAppScreen() {
                 )}
               </View>
               {!top && tab === "home" ? iconBtn("header-theme", () => setThemePref(isDark ? "light" : "dark"), <Feather name={isDark ? "sun" : "moon"} size={20} color={theme.text} />, false, isDark ? L("Switch to light mode", "লাইট মোডে যান") : L("Switch to dark mode", "ডার্ক মোডে যান")) : null}
+              {!top && tab === "home" ? iconBtn("header-bell", () => nav.push({ name: "notifications" }), <><Feather name="bell" size={21} color={theme.text} />{bellBadge}</>, false, bellCount ? L(`Notifications, ${bellCount} unread`, `নোটিফিকেশন, ${bellCount}টি অপঠিত`) : L("Notifications", "নোটিফিকেশন")) : null}
               {top?.name !== "search" ? iconBtn("header-search", () => nav.push({ name: "search" }), <Feather name="search" size={21} color={theme.text} />, false, L("Search", "খুঁজুন")) : null}
               {!top && tab !== "support" ? iconBtn("header-support", () => nav.goTab("support"), <ChatIcon size={21} color={theme.text} />, !!supportUnread, L("Support chats", "সাপোর্ট চ্যাট")) : null}
             </View>

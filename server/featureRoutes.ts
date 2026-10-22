@@ -284,6 +284,13 @@ export function registerFeatureRoutes(app: Express) {
   app.post("/api/me/notifications/read", auth, wrap("notifications", async (req, res) => {
     const uid = (req as any).uid;
     const ids: string[] = Array.isArray(req.body?.ids) ? req.body.ids.map(String) : [];
+    // Only the caller's own notifications about one Support conversation (admin opened that conversation).
+    const supportThreadId = typeof req.body?.supportThreadId === "string" ? req.body.supportThreadId.slice(0, 80) : "";
+    if (supportThreadId) {
+      await db.execute(sql`UPDATE app_notifications SET read_at = now() WHERE user_id = ${uid} AND read_at IS NULL
+        AND type = 'support' AND data->>'supportThreadId' = ${supportThreadId}`);
+      return res.json({ success: true });
+    }
     if (req.body?.all || !ids.length) await db.execute(sql`UPDATE app_notifications SET read_at = now() WHERE user_id = ${uid} AND read_at IS NULL`);
     else for (const id of ids) await db.execute(sql`UPDATE app_notifications SET read_at = now() WHERE user_id = ${uid} AND id = ${id}`);
     res.json({ success: true });
