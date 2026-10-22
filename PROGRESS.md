@@ -152,4 +152,13 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
 - [ ] refreshUnreadCounts after mark-read (Notifications, Chat), on push received
 - [ ] UserAvatar userId -> online dot bottom-right; pass userId in feed/chat list/chat header/post detail/profile
 - [ ] Connect tab + screen + server /api/connect/professionals
-- [ ] tsc, tests, push GitHub/Render, APK build + release
+- [x] 2026-10-22 round: fixed the two tsc errors (presence sweep `.unref` typed via `any` in server/communityRoutes.ts;
+      `isSaved?: boolean` added to the PostDetail `Post` param type in RootStackNavigator.tsx). `npx tsc --noEmit` clean.
+- [x] Committed all saved UI work on ui-headers (ab49992), then merged main (calls2 fix 4be0d40: VoiceCallContext opens /ws/chat).
+      Merge had no conflicts; tsc clean again after the merge.
+- [ ] USER DECISION 2026-10-22: no APK for now. Deliver the WEB version (Render https://farmers-2ybg.onrender.com) for the user
+      to check first; they will confirm before any APK build.
+- [ ] Web: `npm run web:export` (dist is committed, served by server on Render), smoke test, merge ui-headers -> main, push origin main, verify Render /api/health shows the new commit.
+- [ ] Then: Connect tab + screen + server /api/connect/professionals; unread refresh after mark-read; UserAvatar online dot; narrow-width Bangla/English audit.
+- [ ] LAST (after user confirms everything is done): full source handoff zip + HANDOFF.md for another AI agent (what the app is,
+      how to run server/web/APK, env keys needed, branches, what is done/pending). Not before.
