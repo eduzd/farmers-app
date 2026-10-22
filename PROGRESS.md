@@ -186,6 +186,16 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
 - [x] Calculator auto-jump to the next row: 1 s -> 0.4 s (no pause at all would jump after the first digit of "125").
 - [x] tests/check-photos-connect.mjs 31/31, tests/check-chat.mjs 43/43, tsc clean.
 
+## LIVE on Render (2026-10-22 07:36 +06): commit b213ae9 pushed to origin/main (ui-headers -> main, fast-forward, contains calls2 fix 4be0d40)
+- /api/health reports version b213ae9. Site loads, serves bundle index-da0b2f5d...js (new). Live: GET /api/connect/fields +
+  /api/connect/professionals answer, /api/me/expert-profile 401 without sign-in (as designed). Bundle contains Connect profile,
+  chat photo upload and new_post notification code. Before push: tsc clean, check-photos-connect 31/31, check-chat 43/43 (local).
+- NOT checked live: signed-in screens clicked through; NOT tested on a phone: follower notifications, post title swap, @mention
+  taps, real follower counts, faster calculator jump, language switching of titles, chat photos. No APK this round.
+- Admin app: separate task builds it in /home/sprite/farmers-admin (branch admin-app) -- do not touch from here.
+- Still to do: Help icon support flow (see 3), ads in carousel (see 4), language gaps (see 0): English mode profile still shows
+  role কৃষক and ফলোয়িং button in Bangla; calculator inner pages, ledger, reports, seller hub, market, admin text stuck in one language.
+
 ## NEXT ROUNDS (exact remaining work)
 0. LANGUAGE everywhere (user 2026-10-22): Bangla selected = Bangla everywhere, English = English everywhere. Audit every screen
    for hard-coded single-language strings (calculator sub-screens, ledger, reports, seller hub, market, admin) and route
