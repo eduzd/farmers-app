@@ -1,5 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView, RefreshControl, Platform } from "react-native";
+import { View, Text as RNText, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView, RefreshControl, Platform, type TextProps, type TextStyle } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { FontFamily, BanglaFontFamily } from "@/constants/theme";
+import { CustomSwitch } from "@/components/CustomSwitch";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useTheme } from "@/hooks/useTheme";
@@ -16,9 +19,13 @@ export type Route =
   | { name: "storeForm"; id?: string }
   | { name: "order"; id: string }
   | { name: "user"; id: string }
-  | { name: "users" }
+  | { name: "users"; filter?: string }
   | { name: "thread"; id: string }
-  | { name: "categoryForm"; id?: string };
+  | { name: "categoryForm"; id?: string }
+  | { name: "search" }
+  | { name: "official"; target?: string; targetName?: string }
+  | { name: "ads" }
+  | { name: "adForm"; id?: string };
 export type TabName = "home" | "shop" | "orders" | "support" | "more";
 export type ShopSection = "products" | "shops" | "categories";
 
@@ -88,13 +95,45 @@ export function useDebounced<T>(v: T, ms = 300) {
   return d;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Look and feel. The admin app uses the same fonts, colours, switches, radio buttons, chat icon
+// and soft cards as the main Farmers app, with a few admin-only pieces (stat tiles, hero card).
+// ---------------------------------------------------------------------------------------------
+
+const WEIGHT_FAMILY: Record<string, string> = {
+  "400": FontFamily.regular, normal: FontFamily.regular, "500": FontFamily.medium, "600": FontFamily.semibold,
+  "700": FontFamily.bold, bold: FontFamily.bold, "800": FontFamily.extrabold, "900": FontFamily.extrabold,
+};
+const BENGALI = /[\u0980-\u09FF]/;
+const hasBangla = (c: React.ReactNode): boolean =>
+  typeof c === "string" ? BENGALI.test(c) : Array.isArray(c) ? c.some(hasBangla) : typeof c === "number" ? false : false;
+
+/** Text in the main app's font (Plus Jakarta Sans, Hind Siliguri for Bangla), picked from fontWeight. */
+export function Text({ style, children, ...rest }: TextProps & { children?: React.ReactNode }) {
+  const flat = (StyleSheet.flatten(style) || {}) as TextStyle;
+  let family = flat.fontFamily || WEIGHT_FAMILY[String(flat.fontWeight || "400")] || FontFamily.regular;
+  if (hasBangla(children)) family = BanglaFontFamily[family] ?? family;
+  return (
+    <RNText {...rest} style={[flat, { fontFamily: family }, Platform.OS === "android" ? { fontWeight: undefined } : null]}>
+      {children}
+    </RNText>
+  );
+}
+
+export const R = { card: 18, tile: 16, field: 14, pill: 999 };
+export const shadow = (dark: boolean) =>
+  Platform.select({
+    web: { boxShadow: dark ? "0 1px 2px rgba(0,0,0,.4)" : "0 1px 2px rgba(16,24,40,.04), 0 4px 14px rgba(16,24,40,.06)" } as any,
+    default: { shadowColor: "#0F172A", shadowOpacity: dark ? 0.3 : 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  });
+
 export function Page({ children, onRefresh, refreshing, testID, pad = true }: { children: React.ReactNode; onRefresh?: () => void; refreshing?: boolean; testID?: string; pad?: boolean }) {
   const { theme } = useTheme();
   return (
     <ScrollView
       testID={testID}
       style={{ flex: 1, backgroundColor: theme.backgroundRoot }}
-      contentContainerStyle={{ padding: pad ? 14 : 0, paddingBottom: 32, width: "100%", maxWidth: 900, alignSelf: "center" }}
+      contentContainerStyle={{ padding: pad ? 16 : 0, paddingBottom: 40, width: "100%", maxWidth: 920, alignSelf: "center" }}
       keyboardShouldPersistTaps="handled"
       refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={theme.primary} /> : undefined}
     >
@@ -104,11 +143,11 @@ export function Page({ children, onRefresh, refreshing, testID, pad = true }: { 
 }
 
 export function Card({ children, style, onPress, testID }: { children: React.ReactNode; style?: any; onPress?: () => void; testID?: string }) {
-  const { theme } = useTheme();
-  const body = [st.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }, style];
+  const { theme, isDark } = useTheme();
+  const body = [st.card, { backgroundColor: theme.card }, shadow(isDark), style];
   if (onPress)
     return (
-      <Pressable testID={testID} onPress={onPress} style={({ pressed }) => [...body, pressed && { opacity: 0.75 }]}>
+      <Pressable testID={testID} onPress={onPress} style={({ pressed }) => [...body, { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.985 : 1 }] }]}>
         {children}
       </Pressable>
     );
@@ -121,58 +160,73 @@ export function SectionTitle({ title, action, onAction, testID }: { title: strin
     <View style={st.sectionRow}>
       <Text style={[st.section, { color: theme.text }]} numberOfLines={1}>{title}</Text>
       {action ? (
-        <Pressable testID={testID} onPress={onAction} hitSlop={8}>
+        <Pressable testID={testID} onPress={onAction} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
           <Text style={{ color: theme.primary, fontWeight: "700", fontSize: 13 }}>{action}</Text>
+          <Feather name="chevron-right" size={15} color={theme.primary} />
         </Pressable>
       ) : null}
     </View>
   );
 }
 
-export function Pill({ label, color }: { label: string; color: string }) {
+export function Pill({ label, color, icon }: { label: string; color: string; icon?: keyof typeof Feather.glyphMap }) {
   return (
-    <View style={[st.pill, { backgroundColor: color + "18" }]}>
+    <View style={[st.pill, { backgroundColor: color + "1A" }]}>
+      {icon ? <Feather name={icon} size={11} color={color} /> : <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }} />}
       <Text style={{ color, fontSize: 11, fontWeight: "700" }} numberOfLines={1}>{label}</Text>
     </View>
   );
 }
 
-export function Chip({ label, on, onPress, testID, color }: { label: string; on: boolean; onPress: () => void; testID?: string; color?: string }) {
+/** Filter chip, the main app's rounded chip (filled when on). */
+export function Chip({ label, on, onPress, testID, color, count }: { label: string; on: boolean; onPress: () => void; testID?: string; color?: string; count?: number }) {
   const { theme } = useTheme();
   const c = color || theme.primary;
   return (
-    <Pressable testID={testID} onPress={onPress} style={[st.chip, { borderColor: on ? c : theme.cardBorder, backgroundColor: on ? c + "18" : theme.card }]}>
-      <Text style={{ color: on ? c : theme.textSecondary, fontWeight: "700", fontSize: 12.5 }} numberOfLines={1}>{label}</Text>
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityState={{ selected: on }}
+      onPress={onPress}
+      style={({ pressed }) => [st.chip, { backgroundColor: on ? c : theme.card, borderColor: on ? c : theme.cardBorder, opacity: pressed ? 0.85 : 1 }]}
+    >
+      <Text style={{ color: on ? "#fff" : theme.text, fontWeight: on ? "700" : "600", fontSize: 13 }} numberOfLines={1}>{label}</Text>
+      {count ? (
+        <View style={{ minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, alignItems: "center", justifyContent: "center", backgroundColor: on ? "rgba(255,255,255,.25)" : c + "1A" }}>
+          <Text style={{ color: on ? "#fff" : c, fontSize: 10.5, fontWeight: "800" }}>{count > 99 ? "99+" : count}</Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
 
 export function ChipRow({ children }: { children: React.ReactNode }) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2, paddingRight: 8 }} style={{ marginBottom: 10, flexGrow: 0 }}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2, paddingRight: 8 }} style={{ marginBottom: 12, flexGrow: 0 }}>
       {children}
     </ScrollView>
   );
 }
 
-export function SearchBox({ value, onChange, placeholder, testID }: { value: string; onChange: (s: string) => void; placeholder: string; testID?: string }) {
+export function SearchBox({ value, onChange, placeholder, testID, autoFocus }: { value: string; onChange: (s: string) => void; placeholder: string; testID?: string; autoFocus?: boolean }) {
   const { theme } = useTheme();
   return (
-    <View style={[st.search, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-      <Feather name="search" size={16} color={theme.textSecondary} />
+    <View style={[st.search, { backgroundColor: theme.backgroundSecondary }]}>
+      <Feather name="search" size={17} color={theme.textSecondary} />
       <TextInput
         testID={testID}
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
         placeholderTextColor={theme.textTertiary}
-        style={[st.searchInput, { color: theme.text }]}
+        style={[st.searchInput, { color: theme.text, fontFamily: FontFamily.medium }, Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : null]}
         returnKeyType="search"
         autoCapitalize="none"
+        autoFocus={autoFocus}
       />
       {value ? (
-        <Pressable onPress={() => onChange("")} hitSlop={8}>
-          <Feather name="x" size={16} color={theme.textSecondary} />
+        <Pressable onPress={() => onChange("")} hitSlop={8} accessibilityLabel="Clear">
+          <Feather name="x-circle" size={17} color={theme.textSecondary} />
         </Pressable>
       ) : null}
     </View>
@@ -180,106 +234,285 @@ export function SearchBox({ value, onChange, placeholder, testID }: { value: str
 }
 
 export function Btn({ label, onPress, icon, kind = "primary", busy, disabled, testID, small, style }: {
-  label: string; onPress: () => void; icon?: keyof typeof Feather.glyphMap; kind?: "primary" | "ghost" | "danger" | "soft"; busy?: boolean; disabled?: boolean; testID?: string; small?: boolean; style?: any;
+  label: string; onPress: () => void; icon?: keyof typeof Feather.glyphMap; kind?: "primary" | "ghost" | "danger" | "soft" | "dangerSoft"; busy?: boolean; disabled?: boolean; testID?: string; small?: boolean; style?: any;
 }) {
   const { theme } = useTheme();
-  const bg = kind === "primary" ? theme.primary : kind === "danger" ? "#DC2626" : kind === "soft" ? theme.primary + "15" : "transparent";
-  const fg = kind === "primary" || kind === "danger" ? "#fff" : theme.primary;
+  const bg = kind === "primary" ? theme.primary : kind === "danger" ? "#DC2626" : kind === "soft" ? theme.primary + "16" : kind === "dangerSoft" ? "#DC262614" : theme.card;
+  const fg = kind === "primary" || kind === "danger" ? "#fff" : kind === "dangerSoft" ? "#DC2626" : kind === "ghost" ? theme.text : theme.primary;
   return (
     <Pressable
       testID={testID}
+      accessibilityRole="button"
       onPress={onPress}
       disabled={disabled || busy}
-      style={({ pressed }) => [st.btn, small && st.btnSmall, { backgroundColor: bg, borderColor: kind === "ghost" ? theme.cardBorder : bg, opacity: disabled ? 0.5 : pressed ? 0.8 : 1 }, style]}
+      style={({ pressed }) => [st.btn, small && st.btnSmall, { backgroundColor: bg, borderColor: kind === "ghost" ? theme.cardBorder : bg, opacity: disabled ? 0.5 : pressed ? 0.9 : 1, transform: [{ scale: pressed && !disabled ? 0.96 : 1 }] }, Platform.OS === "web" ? ({ transitionProperty: "transform, opacity", transitionDuration: "120ms" } as any) : null, style]}
     >
-      {busy ? <ActivityIndicator size="small" color={fg} /> : icon ? <AppIcon name={icon} size={small ? 14 : 16} color={fg} /> : null}
-      <Text style={{ color: fg, fontWeight: "700", fontSize: small ? 12.5 : 14 }} numberOfLines={1}>{label}</Text>
+      {busy ? <ActivityIndicator size="small" color={fg} /> : icon ? <AppIcon name={icon} size={small ? 14 : 17} color={fg} /> : null}
+      <Text style={{ color: fg, fontWeight: "700", fontSize: small ? 12.5 : 14.5 }} numberOfLines={1}>{label}</Text>
     </Pressable>
   );
 }
 
-export function Field({ label, value, onChange, placeholder, multiline, keyboardType, testID, maxLength }: {
-  label: string; value: string; onChange: (s: string) => void; placeholder?: string; multiline?: boolean; keyboardType?: any; testID?: string; maxLength?: number;
+export function Field({ label, value, onChange, placeholder, multiline, keyboardType, testID, maxLength, hint, prefix }: {
+  label: string; value: string; onChange: (s: string) => void; placeholder?: string; multiline?: boolean; keyboardType?: any; testID?: string; maxLength?: number; hint?: string; prefix?: string;
 }) {
   const { theme } = useTheme();
+  const [focus, setFocus] = useState(false);
   return (
-    <View style={{ marginBottom: 12 }}>
+    <View style={{ marginBottom: 14 }}>
       <Text style={[st.label, { color: theme.textSecondary }]}>{label}</Text>
-      <TextInput
-        testID={testID}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={theme.textTertiary}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        maxLength={maxLength}
-        style={[st.input, multiline && { minHeight: 84, textAlignVertical: "top" }, { color: theme.text, borderColor: theme.inputBorder, backgroundColor: theme.inputBackground }]}
-      />
+      <View style={[st.inputWrap, { backgroundColor: theme.backgroundSecondary, borderColor: focus ? theme.primary : "transparent" }, multiline && { alignItems: "flex-start" }]}>
+        {prefix ? <Text style={{ color: theme.textSecondary, fontWeight: "700", fontSize: 15, marginRight: 4, marginTop: multiline ? 12 : 0 }}>{prefix}</Text> : null}
+        <TextInput
+          testID={testID}
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor={theme.textTertiary}
+          multiline={multiline}
+          keyboardType={keyboardType}
+          maxLength={maxLength}
+          onFocus={() => setFocus(true)}
+          onBlur={() => setFocus(false)}
+          style={[st.input, { color: theme.text, fontFamily: FontFamily.medium }, multiline && { minHeight: 96, textAlignVertical: "top", paddingTop: 12 }, Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : null]}
+        />
+      </View>
+      {hint ? <Text style={{ color: theme.textTertiary, fontSize: 12, marginTop: 5 }}>{hint}</Text> : null}
     </View>
   );
 }
 
-export function KV({ k, v, onPress, testID }: { k: string; v: string; onPress?: () => void; testID?: string }) {
+export function KV({ k, v, onPress, testID, icon }: { k: string; v: string; onPress?: () => void; testID?: string; icon?: keyof typeof Feather.glyphMap }) {
   const { theme } = useTheme();
   return (
-    <Pressable testID={testID} disabled={!onPress} onPress={onPress} style={st.kv}>
-      <Text style={{ color: theme.textSecondary, fontSize: 13, flexShrink: 0, marginRight: 12 }}>{k}</Text>
-      <Text style={{ color: onPress ? theme.primary : theme.text, fontSize: 13.5, fontWeight: "600", flex: 1, textAlign: "right" }} numberOfLines={2}>
-        {v || "—"}
-      </Text>
-      {onPress ? <Feather name="chevron-right" size={15} color={theme.primary} style={{ marginLeft: 4 }} /> : null}
+    <Pressable testID={testID} disabled={!onPress} onPress={onPress} style={[st.kv, { borderBottomColor: theme.divider || theme.cardBorder }]}>
+      {icon ? <Feather name={icon} size={15} color={theme.textSecondary} style={{ marginRight: 8 }} /> : null}
+      <Text style={{ color: theme.textSecondary, fontSize: 13.5, flexShrink: 0, maxWidth: "45%" }} numberOfLines={1}>{k}</Text>
+      <Text style={{ color: onPress ? theme.primary : theme.text, fontSize: 14, fontWeight: "600", flex: 1, textAlign: "right" }} numberOfLines={2}>{v}</Text>
+      {onPress ? <Feather name="chevron-right" size={16} color={theme.primary} /> : null}
     </Pressable>
   );
 }
 
-export function Empty({ icon = "inbox", text }: { icon?: keyof typeof Feather.glyphMap; text: string }) {
+export function Empty({ icon = "inbox", text, action, onAction }: { icon?: keyof typeof Feather.glyphMap; text: string; action?: string; onAction?: () => void }) {
   const { theme } = useTheme();
   return (
-    <View style={{ alignItems: "center", paddingVertical: 36, gap: 10 }}>
-      <AppIcon name={icon} size={30} color={theme.textTertiary} />
-      <Text style={{ color: theme.textSecondary, fontSize: 14, textAlign: "center" }}>{text}</Text>
+    <View style={{ alignItems: "center", paddingVertical: 40, paddingHorizontal: 20, gap: 12 }} testID="admin-empty">
+      <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: theme.primary + "14", alignItems: "center", justifyContent: "center" }}>
+        <AppIcon name={icon} size={30} color={theme.primary} />
+      </View>
+      <Text style={{ color: theme.textSecondary, textAlign: "center", fontSize: 14.5, lineHeight: 21, maxWidth: 320 }}>{text}</Text>
+      {action && onAction ? <Btn small kind="soft" label={action} onPress={onAction} /> : null}
     </View>
   );
 }
 
-export function Loading() {
-  const { theme } = useTheme();
-  return <ActivityIndicator style={{ marginVertical: 30 }} color={theme.primary} />;
+/** Skeleton rows while a list loads (instead of a lone spinner). */
+export function Loading({ rows: n = 3 }: { rows?: number }) {
+  const { theme, isDark } = useTheme();
+  return (
+    <View testID="admin-loading" style={{ paddingVertical: 4 }}>
+      {Array.from({ length: n }).map((_, i) => (
+        <View key={i} style={[st.card, shadow(isDark), { backgroundColor: theme.card, flexDirection: "row", alignItems: "center", gap: 12 }]}>
+          <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: theme.backgroundSecondary }} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <View style={{ height: 12, width: "60%", borderRadius: 6, backgroundColor: theme.backgroundSecondary }} />
+            <View style={{ height: 10, width: "35%", borderRadius: 5, backgroundColor: theme.backgroundSecondary }} />
+          </View>
+        </View>
+      ))}
+      <ActivityIndicator style={{ marginTop: 4 }} color={theme.primary} />
+    </View>
+  );
 }
 
 export function ErrorBox({ text, onRetry }: { text: string; onRetry?: () => void }) {
   const L = useL();
   return (
-    <View style={[st.error]}>
-      <Text style={{ color: "#B91C1C", fontSize: 13, flex: 1 }}>{text}</Text>
-      {onRetry ? <Btn small kind="ghost" label={L("Retry", "আবার চেষ্টা")} onPress={onRetry} /> : null}
+    <View style={st.error} testID="admin-error">
+      <Feather name="alert-circle" size={18} color="#B91C1C" />
+      <Text style={{ color: "#991B1B", flex: 1, fontSize: 13.5, lineHeight: 19 }}>{text}</Text>
+      {onRetry ? <Btn small kind="dangerSoft" icon="refresh-cw" label={L("Retry", "আবার")} onPress={onRetry} /> : null}
     </View>
   );
 }
 
-export function Thumb({ uri, size = 52, icon = "package" }: { uri?: string | null; size?: number; icon?: keyof typeof Feather.glyphMap }) {
+export function Thumb({ uri, size = 52, icon = "package", round }: { uri?: string | null; size?: number; icon?: keyof typeof Feather.glyphMap; round?: boolean }) {
   const { theme } = useTheme();
   const { Image } = require("expo-image");
+  const r = round ? size / 2 : Math.round(size * 0.28);
   return uri ? (
-    <Image source={{ uri: mediaUrl(uri) }} style={{ width: size, height: size, borderRadius: 10, backgroundColor: theme.backgroundSecondary }} contentFit="cover" />
+    <Image source={{ uri: mediaUrl(uri) }} style={{ width: size, height: size, borderRadius: r, backgroundColor: theme.backgroundSecondary }} contentFit="cover" />
   ) : (
-    <View style={{ width: size, height: size, borderRadius: 10, backgroundColor: theme.backgroundSecondary, alignItems: "center", justifyContent: "center" }}>
-      <AppIcon name={icon} size={size * 0.4} color={theme.textTertiary} />
+    <View style={{ width: size, height: size, borderRadius: r, backgroundColor: theme.primary + "14", alignItems: "center", justifyContent: "center" }}>
+      <AppIcon name={icon} size={Math.round(size * 0.42)} color={theme.primary} />
     </View>
   );
 }
 
-export function Stat({ label, value, icon, color, onPress, testID }: { label: string; value: string | number; icon: keyof typeof Feather.glyphMap; color: string; onPress?: () => void; testID?: string }) {
+/** Round initials / photo avatar, like the main app's. */
+export function Avatar({ name, uri, size = 44, dot }: { name?: string; uri?: string | null; size?: number; dot?: "online" | "offline" | null }) {
+  const UserAvatar = require("@/components/UserAvatar").default;
+  return <UserAvatar name={name || "?"} avatar={uri || undefined} size={size} presence={dot ?? null} />;
+}
+
+export function Stat({ label, value, icon, color, onPress, testID, hint }: { label: string; value: string | number; icon: keyof typeof Feather.glyphMap; color: string; onPress?: () => void; testID?: string; hint?: string }) {
+  const { theme, isDark } = useTheme();
+  return (
+    <Pressable testID={testID} onPress={onPress} disabled={!onPress} style={({ pressed }) => [st.stat, shadow(isDark), { backgroundColor: theme.card, opacity: pressed ? 0.85 : 1 }]}>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+        <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: color + "18", alignItems: "center", justifyContent: "center" }}>
+          <AppIcon name={icon} size={19} color={color} />
+        </View>
+        {onPress ? <Feather name="arrow-up-right" size={15} color={theme.textTertiary} /> : null}
+      </View>
+      <Text style={{ color: theme.text, fontSize: 22, fontWeight: "800", marginTop: 12, letterSpacing: -0.3 }} numberOfLines={1}>{value}</Text>
+      <Text style={{ color: theme.textSecondary, fontSize: 12.5, fontWeight: "600", marginTop: 2 }} numberOfLines={1}>{label}</Text>
+      {hint ? <Text style={{ color, fontSize: 11.5, fontWeight: "700", marginTop: 4 }} numberOfLines={1}>{hint}</Text> : null}
+    </Pressable>
+  );
+}
+
+/** The green gradient banner at the top of Home. */
+export function Hero({ children, testID }: { children: React.ReactNode; testID?: string }) {
   const { theme } = useTheme();
   return (
-    <Pressable testID={testID} onPress={onPress} disabled={!onPress} style={({ pressed }) => [st.stat, { backgroundColor: theme.card, borderColor: theme.cardBorder, opacity: pressed ? 0.8 : 1 }]}>
-      <View style={[st.statIcon, { backgroundColor: color + "18" }]}>
-        <AppIcon name={icon} size={17} color={color} />
+    <LinearGradient testID={testID} colors={[theme.primary, "#0F766E"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.hero}>
+      <View style={{ position: "absolute", right: -40, top: -40, width: 160, height: 160, borderRadius: 80, backgroundColor: "rgba(255,255,255,0.08)" }} />
+      <View style={{ position: "absolute", right: 40, bottom: -60, width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(255,255,255,0.06)" }} />
+      {children}
+    </LinearGradient>
+  );
+}
+
+/** The main app's switch (Settings), with a label row around it. */
+export function ToggleRow({ label, sub, value, onChange, testID, icon, disabled }: {
+  label: string; sub?: string; value: boolean; onChange: (v: boolean) => void; testID?: string; icon?: keyof typeof Feather.glyphMap; disabled?: boolean;
+}) {
+  const { theme } = useTheme();
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value, disabled }}
+      disabled={disabled}
+      onPress={() => onChange(!value)}
+      style={[st.rowLine, { borderBottomColor: theme.divider || theme.cardBorder }]}
+    >
+      {icon ? (
+        <View style={[st.rowIcon, { backgroundColor: theme.primary + "14" }]}>
+          <AppIcon name={icon} size={17} color={theme.primary} />
+        </View>
+      ) : null}
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={{ color: theme.text, fontSize: 14.5, fontWeight: "600" }}>{label}</Text>
+        {sub ? <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 2, lineHeight: 17 }}>{sub}</Text> : null}
       </View>
-      <Text style={{ color: theme.text, fontSize: 20, fontWeight: "800" }} numberOfLines={1}>{value}</Text>
-      <Text style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={1}>{label}</Text>
+      <View pointerEvents="none">
+        <CustomSwitch value={value} onValueChange={onChange} disabled={disabled} />
+      </View>
     </Pressable>
+  );
+}
+
+/** Drop-in for React Native's Switch that looks like the main app's switch. */
+export function Switch({ value, onValueChange, testID, disabled }: { value: boolean; onValueChange?: (v: boolean) => void; testID?: string; disabled?: boolean; [k: string]: any }) {
+  return (
+    <Pressable testID={testID} accessibilityRole="switch" accessibilityState={{ checked: !!value, disabled }} disabled={disabled} onPress={() => onValueChange?.(!value)} hitSlop={6}>
+      <View pointerEvents="none">
+        <CustomSwitch value={!!value} onValueChange={(v: boolean) => onValueChange?.(v)} disabled={disabled} />
+      </View>
+    </Pressable>
+  );
+}
+
+/** The main app's radio button (Checkout): a ring that fills with a green dot. */
+export function Radio({ on }: { on: boolean }) {
+  const { theme } = useTheme();
+  return (
+    <View style={[st.radioOuter, { borderColor: on ? theme.primary : theme.textSecondary }]}>
+      {on ? <View style={[st.radioInner, { backgroundColor: theme.primary }]} /> : null}
+    </View>
+  );
+}
+
+export function RadioGroup<T extends string>({ options, value, onChange, testID, row }: {
+  options: { value: T; label: string; sub?: string; icon?: keyof typeof Feather.glyphMap; color?: string }[];
+  value: T; onChange: (v: T) => void; testID?: string; row?: boolean;
+}) {
+  const { theme } = useTheme();
+  return (
+    <View style={row ? { flexDirection: "row", flexWrap: "wrap", gap: 8 } : { gap: 8 }} accessibilityRole="radiogroup" testID={testID}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <Pressable
+            key={o.value}
+            testID={testID ? `${testID}-${o.value}` : undefined}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: on }}
+            onPress={() => onChange(o.value)}
+            style={({ pressed }) => [
+              st.radioRow,
+              row && { flexGrow: 1, flexBasis: 140 },
+              { borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primary + "0D" : theme.card, opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <Radio on={on} />
+            {o.icon ? <AppIcon name={o.icon} size={18} color={o.color || theme.text} /> : null}
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ color: theme.text, fontWeight: "700", fontSize: 14 }} numberOfLines={1}>{o.label}</Text>
+              {o.sub ? <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 1 }} numberOfLines={2}>{o.sub}</Text> : null}
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/** A tappable settings-style row with an icon tile and a chevron. */
+export function ListRow({ icon, label, sub, onPress, testID, color, right, badge, last }: {
+  icon: keyof typeof Feather.glyphMap; label: string; sub?: string; onPress?: () => void; testID?: string; color?: string; right?: React.ReactNode; badge?: number; last?: boolean;
+}) {
+  const { theme } = useTheme();
+  const c = color || theme.primary;
+  return (
+    <Pressable testID={testID} onPress={onPress} disabled={!onPress} style={({ pressed }) => [st.rowLine, { borderBottomColor: last ? "transparent" : theme.divider || theme.cardBorder, opacity: pressed ? 0.75 : 1 }]}>
+      <View style={[st.rowIcon, { backgroundColor: c + "16" }]}>
+        <AppIcon name={icon} size={17} color={c} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={{ color: theme.text, fontSize: 14.5, fontWeight: "600" }} numberOfLines={1}>{label}</Text>
+        {sub ? <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 1 }} numberOfLines={2}>{sub}</Text> : null}
+      </View>
+      {badge ? (
+        <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 5 }}>
+          <Text style={{ color: "#fff", fontSize: 11, fontWeight: "800" }}>{badge > 99 ? "99+" : badge}</Text>
+        </View>
+      ) : null}
+      {right}
+      {onPress ? <Feather name="chevron-right" size={18} color={theme.textTertiary} /> : null}
+    </Pressable>
+  );
+}
+
+/** Two to four equal segments (like a tab switch inside a page). */
+export function Segmented<T extends string>({ options, value, onChange, testID }: { options: { value: T; label: string; count?: number }[]; value: T; onChange: (v: T) => void; testID?: string }) {
+  const { theme, isDark } = useTheme();
+  return (
+    <View style={[st.segWrap, { backgroundColor: theme.backgroundSecondary }]} testID={testID}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <Pressable key={o.value} testID={testID ? `${testID}-${o.value}` : undefined} onPress={() => onChange(o.value)} style={[st.seg, on && [{ backgroundColor: theme.card }, shadow(isDark)]]}>
+            <Text style={{ color: on ? theme.text : theme.textSecondary, fontWeight: on ? "800" : "600", fontSize: 13 }} numberOfLines={1}>
+              {o.label}{o.count ? ` · ${o.count}` : ""}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -304,21 +537,29 @@ export function confirmAsk(title: string, msg: string, ok: string, cancel: strin
 }
 
 export const st = StyleSheet.create({
-  card: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 10 },
-  sectionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8, marginBottom: 8, gap: 10 },
-  section: { fontSize: 15.5, fontWeight: "800", flex: 1 },
-  pill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, alignSelf: "flex-start" },
-  chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 1 },
-  search: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, height: 44, marginBottom: 10 },
-  searchInput: { flex: 1, fontSize: 14.5, height: 44, ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : {}) },
-  btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingHorizontal: 16, height: 44, borderRadius: 12, borderWidth: 1 },
-  btnSmall: { height: 34, paddingHorizontal: 12, borderRadius: 10 },
-  label: { fontSize: 12.5, fontWeight: "700", marginBottom: 6 },
-  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14.5 },
-  kv: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
-  error: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#FEF2F2", borderRadius: 12, padding: 12, marginBottom: 10 },
-  stat: { flexBasis: "47%", flexGrow: 1, borderWidth: 1, borderRadius: 14, padding: 12, gap: 4, minWidth: 140 },
-  statIcon: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  card: { borderRadius: 18, padding: 16, marginBottom: 12 },
+  sectionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 14, marginBottom: 10, gap: 10 },
+  section: { fontSize: 16.5, fontWeight: "800", flex: 1, letterSpacing: -0.2 },
+  pill: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, alignSelf: "flex-start" },
+  chip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 15, height: 36, borderRadius: 18, borderWidth: 1 },
+  search: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 14, paddingHorizontal: 14, height: 46, marginBottom: 12 },
+  searchInput: { flex: 1, fontSize: 15, paddingVertical: 0, height: 46 },
+  btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 48, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1 },
+  btnSmall: { height: 36, paddingHorizontal: 13, borderRadius: 12 },
+  label: { fontSize: 13, fontWeight: "700", marginBottom: 7 },
+  inputWrap: { flexDirection: "row", alignItems: "center", borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 14 },
+  input: { flex: 1, minHeight: 48, fontSize: 15, paddingVertical: 10 },
+  kv: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
+  error: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#FEF2F2", borderRadius: 14, padding: 12, marginBottom: 12 },
+  stat: { flexGrow: 1, flexBasis: 150, minWidth: 140, borderRadius: 18, padding: 14 },
+  hero: { borderRadius: 22, padding: 20, marginBottom: 16, overflow: "hidden" },
+  rowLine: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 13, borderBottomWidth: StyleSheet.hairlineWidth },
+  rowIcon: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  radioOuter: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: "center", justifyContent: "center" },
+  radioInner: { width: 10, height: 10, borderRadius: 5 },
+  radioRow: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 },
+  segWrap: { flexDirection: "row", borderRadius: 14, padding: 4, marginBottom: 14 },
+  seg: { flex: 1, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 6 },
 });

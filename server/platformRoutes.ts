@@ -531,6 +531,8 @@ export function registerPlatformRoutes(app: Express) {
       users: await one(sql`SELECT count(*)::int AS n FROM users WHERE deleted_at IS NULL`),
       banned: await one(sql`SELECT count(*)::int AS n FROM users WHERE banned AND deleted_at IS NULL`),
       admins: await one(sql`SELECT count(*)::int AS n FROM users WHERE is_super_admin`),
+      restricted: rows(await db.execute(sql`SELECT restrictions FROM users WHERE restrictions IS NOT NULL AND deleted_at IS NULL`)).filter((u: any) => RESTRICTION_KEYS.some((k) => (activeRestrictions(u.restrictions) as any)[k])).length,
+      openReports: await one(sql`SELECT count(*)::int AS n FROM post_reports WHERE coalesce(status, 'open') = 'open'`).catch(() => 0),
       stores: await one(sql`SELECT count(*)::int AS n FROM stores`),
       suspendedStores: await one(sql`SELECT count(*)::int AS n FROM stores WHERE status <> 'active'`),
       listings: await one(sql`SELECT count(*)::int AS n FROM catalog_items WHERE kind = 'listings'`),

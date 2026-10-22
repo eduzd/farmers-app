@@ -229,6 +229,25 @@ export function fetchSupportThread(): Promise<SupportThreadPage> {
 export function sendSupportText(body: string, clientId: string): Promise<{ message: SupportMessage }> {
   return request("POST", "/api/support/messages", { body, clientId });
 }
+// ---- the same conversation from the admin side (Farmers Admin app; the server checks the admin rights) ----
+export interface AdminSupportThreadPage {
+  thread: { id: string; userId: string; userName: string; userUsername?: string; userAvatar?: string | null; userOnline?: boolean; status: string } | null;
+  messages: SupportMessage[];
+}
+const adminThread = (id: string) => `/api/admin/manage/support/threads/${encodeURIComponent(id)}`;
+export function fetchAdminSupportThread(threadId: string): Promise<AdminSupportThreadPage> {
+  return request<AdminSupportThreadPage>("GET", adminThread(threadId));
+}
+export function sendAdminSupportText(threadId: string, body: string, clientId: string): Promise<{ message: SupportMessage }> {
+  return request("POST", `${adminThread(threadId)}/reply`, { body, clientId });
+}
+export function sendAdminSupportPhoto(threadId: string, photo: { base64: string; mime: string; width?: number; height?: number }, clientId: string): Promise<{ message: SupportMessage }> {
+  return request("POST", `${adminThread(threadId)}/photo`, { image: photo.base64, mime: photo.mime, width: photo.width, height: photo.height, clientId }, PHOTO_TIMEOUT_MS);
+}
+export async function sendAdminSupportVoice(threadId: string, recordingUri: string, durationMs: number, clientId: string): Promise<{ message: SupportMessage }> {
+  const { audio, mime } = await readRecording(recordingUri);
+  return request("POST", `${adminThread(threadId)}/voice`, { audio, mime, durationMs: Math.round(durationMs), clientId }, VOICE_TIMEOUT_MS);
+}
 export function sendSupportPhoto(photo: { base64: string; mime: string; width?: number; height?: number }, clientId: string): Promise<{ message: SupportMessage }> {
   return request("POST", "/api/support/photo", { image: photo.base64, mime: photo.mime, width: photo.width, height: photo.height, clientId }, PHOTO_TIMEOUT_MS);
 }

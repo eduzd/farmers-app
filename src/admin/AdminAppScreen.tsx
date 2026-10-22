@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable, BackHandler, Platform } from "react-native";
+import { View, Pressable, BackHandler, Platform, StyleSheet, Animated, Easing } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/lib/authStore";
 import { apiGet } from "@/lib/api";
-import { AdminNav, Route, TabName, ShopSection, useL, Btn } from "./ui";
+import { AdminNav, Route, TabName, ShopSection, useL, Btn, Text, shadow } from "./ui";
+import { SearchScreen, OfficialScreen, AdsScreen, AdForm } from "./power";
+import { Image } from "expo-image";
+import { FontFamily } from "@/constants/theme";
 import { ShopTab, ProductDetail, ProductForm, StoreDetail, StoreForm, CategoryForm } from "./shop";
 import { HomeTab, OrdersTab, OrderDetail, SupportTab, ThreadView, UsersList, UserDetail, MoreTab } from "./ops";
 
@@ -17,8 +20,21 @@ import { AppIcon } from "@/components/icons/AppIcon";
  * shared backend. Every call goes to /api/admin/manage/*, which the server checks for an
  * admin account on each request; this screen's own guard is only for a friendly message.
  */
+/** Smooth fade + slight rise whenever the tab or the open screen changes. */
+function FadeIn({ children }: { children: React.ReactNode }) {
+  const a = React.useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(a, { toValue: 1, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== "web" }).start();
+  }, [a]);
+  return (
+    <Animated.View style={{ flex: 1, opacity: a, transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
+      {children}
+    </Animated.View>
+  );
+}
+
 export default function AdminAppScreen() {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const L = useL();
   const navigation = useNavigation<any>();
@@ -106,6 +122,14 @@ export default function AdminAppScreen() {
       case "user": return <UserDetail key={key} id={r.id} />;
       case "users": return <UsersList key={key} />;
       case "thread": return <ThreadView key={key} id={r.id} />;
+      case "search":
+        return <SearchScreen />;
+      case "official":
+        return <OfficialScreen target={r.target} targetName={r.targetName} />;
+      case "ads":
+        return <AdsScreen />;
+      case "adForm":
+        return <AdForm id={r.id} />;
       case "categoryForm": return <CategoryForm key={key} id={r.id} />;
     }
   };
@@ -118,53 +142,73 @@ export default function AdminAppScreen() {
     ["more", L("More", "আরও"), "menu", 0],
   ];
 
+  // A support conversation opens full screen with the main app's own chat header and composer.
+  const fullScreen = top?.name === "thread";
+  const iconBtn = (testID: string, onPress: () => void, child: React.ReactNode, dot?: boolean, label?: string) => (
+    <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} hitSlop={6}
+      style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? theme.backgroundSecondary : "transparent" })}>
+      {child}
+      {dot ? <View style={{ position: "absolute", top: 8, right: 8, width: 9, height: 9, borderRadius: 5, backgroundColor: "#DC2626", borderWidth: 1.5, borderColor: theme.backgroundRoot }} /> : null}
+    </Pressable>
+  );
   return (
     <AdminNav.Provider value={nav}>
       <View style={{ flex: 1, backgroundColor: theme.backgroundRoot }} testID="admin-app">
-        <View style={{ paddingTop: insets.top, backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.cardBorder }}>
-          <View style={{ height: 54, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, gap: 4, width: "100%", maxWidth: 900, alignSelf: "center" }}>
-            {top ? (
-              <Pressable testID="admin-back" onPress={nav.pop} hitSlop={8} style={{ padding: 8 }}>
-                <Feather name="arrow-left" size={22} color={theme.text} />
-              </Pressable>
-            ) : (
-              <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: theme.primary, alignItems: "center", justifyContent: "center", marginHorizontal: 6 }}>
-                <Feather name="shield" size={18} color="#fff" />
+        {fullScreen ? null : (
+          <View style={{ paddingTop: insets.top, backgroundColor: theme.backgroundRoot }}>
+            <View style={{ height: 58, flexDirection: "row", alignItems: "center", paddingHorizontal: 10, gap: 6, width: "100%", maxWidth: 920, alignSelf: "center" }}>
+              {top ? (
+                iconBtn("admin-back", nav.pop, <Feather name="arrow-left" size={22} color={theme.text} />, false, L("Back", "পেছনে"))
+              ) : (
+                <View style={[{ width: 38, height: 38, borderRadius: 12, overflow: "hidden", marginLeft: 4, marginRight: 4, backgroundColor: theme.card }, shadow(isDark)]}>
+                  <Image source={require("../../assets/images/icon.png")} style={{ width: 38, height: 38 }} contentFit="cover" />
+                </View>
+              )}
+              <View style={{ flex: 1, minWidth: 0 }}>
+                {!top && tab === "home" ? (
+                  <>
+                    <Text style={{ color: theme.text, fontSize: 20, fontFamily: FontFamily.bold, letterSpacing: -0.3 }} numberOfLines={1} testID="admin-title">Farmers</Text>
+                    <Text style={{ color: theme.primary, fontSize: 11.5, fontWeight: "700", marginTop: -2, letterSpacing: 0.4 }} numberOfLines={1}>{L("ADMIN CONSOLE", "অ্যাডমিন কনসোল")}</Text>
+                  </>
+                ) : (
+                  <Text style={{ color: theme.text, fontSize: 19, fontWeight: "800", letterSpacing: -0.2 }} numberOfLines={1} testID="admin-title">
+                    {top ? routeTitle(top) : tabTitle[tab]}
+                  </Text>
+                )}
               </View>
-            )}
-            <Text style={{ flex: 1, color: theme.text, fontSize: 18, fontWeight: "800" }} numberOfLines={1} testID="admin-title">
-              {top ? routeTitle(top) : tabTitle[tab]}
-            </Text>
-            {!top && tab === "home" ? (
-              <Pressable testID="header-support" onPress={() => nav.goTab("support")} hitSlop={8} style={{ padding: 8 }}>
-                <ChatIcon size={21} color={theme.text} />
-                {supportUnread ? <View style={{ position: "absolute", top: 6, right: 6, width: 9, height: 9, borderRadius: 5, backgroundColor: "#DC2626" }} /> : null}
-              </Pressable>
-            ) : null}
+              {top?.name !== "search" ? iconBtn("header-search", () => nav.push({ name: "search" }), <Feather name="search" size={21} color={theme.text} />, false, L("Search", "খুঁজুন")) : null}
+              {!top && tab !== "support" ? iconBtn("header-support", () => nav.goTab("support"), <ChatIcon size={21} color={theme.text} />, !!supportUnread, L("Support chats", "সাপোর্ট চ্যাট")) : null}
+            </View>
           </View>
-        </View>
+        )}
         <View style={{ flex: 1 }}>
+          <FadeIn key={top ? `r-${stack.length}-${top.name}` : `t-${tab}`}>
           {top ? renderRoute(top) : tab === "home" ? <HomeTab supportUnread={supportUnread} /> : tab === "shop" ? <ShopTab section={shopSection} setSection={setShopSection} />
             : tab === "orders" ? <OrdersTab /> : tab === "support" ? <SupportTab /> : <MoreTab adminName={user?.name || user?.email || ""} onLogout={() => logout()} />}
+          </FadeIn>
         </View>
-        <View style={{ flexDirection: "row", backgroundColor: theme.card, borderTopWidth: 1, borderTopColor: theme.cardBorder, paddingBottom: Math.max(insets.bottom, 6), paddingTop: 6 }} testID="admin-tabbar">
-          {tabs.map(([k, label, icon, badge]) => {
-            const on = tab === k;
-            return (
-              <Pressable key={k} testID={`admin-tab-${k}`} onPress={() => { if (on && !stack.length) return; nav.goTab(k); }} style={{ flex: 1, alignItems: "center", gap: 3, paddingVertical: 4 }}>
-                <View>
-                  <AppIcon name={icon} size={22} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
-                  {badge ? (
-                    <View style={{ position: "absolute", top: -6, right: -12, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.card }}>
-                      <Text style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}>{badge > 99 ? "99+" : badge}</Text>
+        {fullScreen ? null : (
+          <View style={[{ flexDirection: "row", backgroundColor: theme.card, paddingBottom: Math.max(insets.bottom, 8), paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.cardBorder }]} testID="admin-tabbar">
+            <View style={{ flexDirection: "row", flex: 1, maxWidth: 640, alignSelf: "center", marginHorizontal: "auto" as any }}>
+              {tabs.map(([k, label, icon, badge]) => {
+                const on = tab === k && !top;
+                return (
+                  <Pressable key={k} testID={`admin-tab-${k}`} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => { if (on && !stack.length) return; nav.goTab(k); }} style={({ pressed }) => ({ flex: 1, alignItems: "center", gap: 3, transform: [{ scale: pressed ? 0.92 : 1 }] })}>
+                    <View style={{ width: 56, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: on ? theme.primary + "1F" : "transparent" }}>
+                      <AppIcon name={icon} size={22} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
+                      {badge ? (
+                        <View style={{ position: "absolute", top: -4, right: 4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.card }}>
+                          <Text style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}>{badge > 99 ? "99+" : badge}</Text>
+                        </View>
+                      ) : null}
                     </View>
-                  ) : null}
-                </View>
-                <Text style={{ fontSize: 11.5, fontWeight: on ? "800" : "600", color: on ? theme.primary : theme.textSecondary }} numberOfLines={1}>{label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+                    <Text style={{ fontSize: 11.5, fontWeight: on ? "700" : "500", color: on ? theme.primary : theme.textSecondary }} numberOfLines={1}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
       </View>
     </AdminNav.Provider>
   );

@@ -7,11 +7,11 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
-  Switch,
   RefreshControl,
   FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Switch } from "@/admin/ui";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/lib/authStore";

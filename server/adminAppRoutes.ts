@@ -566,7 +566,7 @@ export function registerAdminAppRoutes(app: Express) {
     const t = await threadRow(req.params.id);
     if (!t) return res.status(404).json({ error: "Conversation not found" });
     if (Number(t.admin_unread) > 0) await db.execute(sql`UPDATE support_threads SET admin_unread = 0 WHERE id = ${t.id}`);
-    res.json({ thread: { ...threadOut(t), adminUnread: 0 }, messages: await messages(t.id) });
+    res.json({ thread: { ...threadOut(t), adminUnread: 0, userOnline: isUserPresent(t.user_id) }, messages: await messages(t.id) });
   }));
 
   app.post(`${A}/support/threads/:id/reply`, requireAdmin, w(async (req, res) => {

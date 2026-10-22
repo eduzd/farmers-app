@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
@@ -7,6 +7,7 @@ import { AdminUserSheet, AdminCatalogTab, AdminNotifyTab, AdminDeliveryTab } fro
 import {
   useAdminNav, useL, useLoader, useDebounced, Page, Card, SectionTitle, Pill, Chip, ChipRow, SearchBox, Btn, Field, KV, Empty, Loading, ErrorBox, Thumb, Stat,
   taka, STATUS_COLOR, ORDER_STATUSES, statusLabel, fmtDate, st,
+  Text, Hero, shadow, ListRow, ToggleRow, RadioGroup, Avatar, Segmented,
 } from "./ui";
 import { OrderRow } from "./shop";
 
@@ -17,49 +18,72 @@ import { PhotoViewer } from "@/components/PhotoViewer";
 /* ======================= HOME ======================= */
 export function HomeTab({ supportUnread }: { supportUnread: number }) {
   const nav = useAdminNav();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const L = useL();
   const sum = useLoader<any>(() => apiGet("/api/admin/manage/summary"), []);
   const shop = useLoader<any>(() => apiGet("/api/admin/manage/shop/overview"), []);
   const reload = () => { sum.load(); shop.load(); nav.refreshBadges(); };
   const s = sum.data || {};
   const o = shop.data || {};
+  const h = new Date().getHours();
+  const hello = h < 12 ? L("Good morning", "শুভ সকাল") : h < 17 ? L("Good afternoon", "শুভ অপরাহ্ন") : L("Good evening", "শুভ সন্ধ্যা");
+  const shortcuts: [string, string, any, string, () => void][] = [
+    ["add-product", L("Add product", "পণ্য যোগ"), "plus-square", "#16A34A", () => nav.push({ name: "productForm" })],
+    ["official", L("Official message", "অফিসিয়াল মেসেজ"), "send", "#2563EB", () => nav.push({ name: "official" })],
+    ["ads", L("Carousel ads", "ক্যারোসেল বিজ্ঞাপন"), "image", "#DB2777", () => nav.push({ name: "ads" })],
+    ["restricted", L("Restricted users", "সীমিত ব্যবহারকারী"), "shield", "#B45309", () => nav.push({ name: "users", filter: "restricted" })],
+    ["open-shop", L("Open a shop", "দোকান খুলুন"), "briefcase", "#7C3AED", () => nav.push({ name: "storeForm" })],
+    ["categories", L("Categories", "ক্যাটাগরি"), "grid", "#0E7490", () => nav.goTab("shop", "categories")],
+    ["notify", L("Notification", "নোটিফিকেশন"), "bell", "#EA580C", () => nav.goTab("more")],
+    ["search", L("Search all", "সব খুঁজুন"), "search", "#475569", () => nav.push({ name: "search" })],
+  ];
   return (
     <Page onRefresh={reload} testID="admin-home">
+      <Hero testID="admin-hero">
+        <Text style={{ color: "rgba(255,255,255,.85)", fontSize: 13.5, fontWeight: "600" }}>{hello}</Text>
+        <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800", marginTop: 2, letterSpacing: -0.3 }} numberOfLines={1}>{L("Farmers at a glance", "এক নজরে Farmers")}</Text>
+        <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
+          <View style={{ flex: 1, minWidth: 150 }}>
+            <Text style={{ color: "rgba(255,255,255,.8)", fontSize: 12.5, fontWeight: "600" }}>{L("Sales (all orders except cancelled)", "বিক্রি (বাতিল ছাড়া সব অর্ডার)")}</Text>
+            <Text testID="hero-revenue" style={{ color: "#fff", fontSize: 30, fontWeight: "800", letterSpacing: -0.5 }} numberOfLines={1}>{s.revenue !== undefined ? taka(s.revenue) : "…"}</Text>
+          </View>
+          <Pressable testID="hero-pending" onPress={() => nav.goTab("orders")} style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,.18)", paddingHorizontal: 12, height: 36, borderRadius: 18, opacity: pressed ? 0.8 : 1 })}>
+            <Feather name="clock" size={14} color="#fff" />
+            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>{`${o.pendingOrders ?? "…"} ${L("to approve", "অনুমোদন বাকি")}`}</Text>
+          </Pressable>
+        </View>
+      </Hero>
       {sum.error ? <ErrorBox text={sum.error} onRetry={reload} /> : null}
-      <View style={[st.grid, { marginBottom: 10 }]}>
-        <Stat testID="stat-users" label={L("Users", "ব্যবহারকারী")} value={s.users ?? "…"} icon="users" color="#2563EB" onPress={() => nav.push({ name: "users" })} />
+      <View style={[st.grid, { marginBottom: 6 }]}>
+        <Stat testID="stat-users" label={L("Users", "ব্যবহারকারী")} value={s.users ?? "…"} icon="users" color="#2563EB" onPress={() => nav.push({ name: "users" })} hint={s.banned || s.restricted ? `${s.banned || 0} ${L("banned", "নিষিদ্ধ")} · ${s.restricted || 0} ${L("limited", "সীমিত")}` : undefined} />
         <Stat testID="stat-orders" label={L("Pending orders", "অপেক্ষমাণ অর্ডার")} value={o.pendingOrders ?? "…"} icon="shopping-bag" color="#B45309" onPress={() => nav.goTab("orders")} />
         <Stat testID="stat-products" label={L("Products", "পণ্য")} value={o.products ?? "…"} icon="package" color="#0E7490" onPress={() => nav.goTab("shop", "products")} />
         <Stat testID="stat-shops" label={L("Shops", "দোকান")} value={o.stores ?? "…"} icon="briefcase" color="#7C3AED" onPress={() => nav.goTab("shop", "shops")} />
         <Stat testID="stat-support" label={L("Unread help", "অপঠিত সাহায্য")} value={supportUnread} icon="message-circle" color="#DB2777" onPress={() => nav.goTab("support")} />
-        <Stat label={L("Revenue", "আয়")} value={s.revenue !== undefined ? taka(s.revenue) : "…"} icon="dollar-sign" color="#047857" />
+        <Stat testID="stat-reports" label={L("Open reports", "খোলা রিপোর্ট")} value={s.openReports ?? "…"} icon="flag" color="#DC2626" onPress={() => nav.goTab("more")} />
       </View>
-      <SectionTitle title={L("Shortcuts", "শর্টকাট")} />
-      <View style={[st.grid, { marginBottom: 10 }]}>
-        {([
-          ["add-product", L("Add product", "পণ্য যোগ"), "plus-square", () => nav.push({ name: "productForm" })],
-          ["open-shop", L("Open a shop", "দোকান খুলুন"), "briefcase", () => nav.push({ name: "storeForm" })],
-          ["categories", L("Categories", "ক্যাটাগরি"), "grid", () => nav.goTab("shop", "categories")],
-          ["notify", L("Send notification", "নোটিফিকেশন পাঠান"), "bell", () => nav.goTab("more")],
-        ] as [string, string, any, () => void][]).map(([k, label, icon, fn]) => (
-          <Pressable key={k} testID={`shortcut-${k}`} onPress={fn} style={({ pressed }) => [{ flexBasis: "47%", flexGrow: 1, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, borderRadius: 14, borderWidth: 1, borderColor: theme.cardBorder, backgroundColor: theme.card, opacity: pressed ? 0.8 : 1 }]}>
-            <AppIcon name={icon} size={18} color={theme.primary} />
-            <Text style={{ color: theme.text, fontWeight: "700", fontSize: 13.5, flex: 1 }} numberOfLines={1}>{label}</Text>
+      <SectionTitle title={L("Quick actions", "দ্রুত কাজ")} />
+      <View style={[st.grid, { marginBottom: 6 }]}>
+        {shortcuts.map(([k, label, icon, color, fn]) => (
+          <Pressable key={k} testID={`shortcut-${k}`} onPress={fn} style={({ pressed }) => [{ flexBasis: "22%", minWidth: 132, flexGrow: 1, padding: 14, borderRadius: 18, backgroundColor: theme.card, opacity: pressed ? 0.82 : 1, gap: 10 }, shadow(isDark)]}>
+            <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: color + "18", alignItems: "center", justifyContent: "center" }}>
+              <AppIcon name={icon} size={19} color={color} />
+            </View>
+            <Text style={{ color: theme.text, fontWeight: "700", fontSize: 13.5 }} numberOfLines={1}>{label}</Text>
           </Pressable>
         ))}
       </View>
       <SectionTitle title={L("Recent orders", "সাম্প্রতিক অর্ডার")} action={L("All", "সব")} onAction={() => nav.goTab("orders")} />
-      {shop.loading && !shop.data ? <Loading /> : null}
-      {shop.data && !o.recentOrders?.length ? <Empty icon="shopping-bag" text={L("No orders yet", "এখনও কোনো অর্ডার নেই")} /> : null}
+      {shop.loading && !shop.data ? <Loading rows={2} /> : null}
+      {shop.data && !o.recentOrders?.length ? <Card><Empty icon="shopping-bag" text={L("No orders yet. New orders show up here first.", "এখনও কোনো অর্ডার নেই। নতুন অর্ডার প্রথমে এখানে দেখাবে।")} /></Card> : null}
       {(o.recentOrders || []).map((x: any) => <OrderRow key={x.id} o={x} />)}
       <SectionTitle title={L("Low stock", "কম স্টক")} action={L("Products", "পণ্য")} onAction={() => nav.goTab("shop", "products")} />
-      {shop.data && !o.lowStock?.length ? <Empty icon="box" text={L("Nothing is running low", "কোনো পণ্যের স্টক কম নয়")} /> : null}
+      {shop.data && !o.lowStock?.length ? <Card><Empty icon="box" text={L("Nothing is running low", "কোনো পণ্যের স্টক কম নয়")} /></Card> : null}
       {(o.lowStock || []).map((p: any) => (
         <Card key={p.id} onPress={() => nav.push({ name: "product", id: p.id })}>
           <View style={st.row}>
-            <Thumb uri={p.image} size={40} />
-            <Text style={{ flex: 1, color: theme.text, fontWeight: "600" }} numberOfLines={1}>{p.name}</Text>
+            <Thumb uri={p.image} size={44} />
+            <Text style={{ flex: 1, color: theme.text, fontWeight: "700" }} numberOfLines={1}>{p.name}</Text>
             <Pill label={`${L("Stock", "স্টক")} ${p.quantity}`} color={p.quantity > 0 ? "#B45309" : "#B91C1C"} />
           </View>
         </Card>
@@ -229,77 +253,50 @@ export function SupportTab() {
 
 export function ThreadView({ id }: { id: string }) {
   const nav = useAdminNav();
-  const { theme } = useTheme();
   const L = useL();
-  const th = useLoader<any>(() => apiGet(`/api/admin/manage/support/threads/${id}`), [id]);
-  const [text, setText] = useState("");
+  const { theme } = useTheme();
+  const [meta, setMeta] = useState<any>(null);
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const scroll = useRef<ScrollView>(null);
-  const [viewer, setViewer] = useState<string | null>(null);
-  useEffect(() => { nav.refreshBadges(); }, [th.data?.messages?.length]);
-  useEffect(() => {
-    const t = setInterval(() => th.load(), 6000);
-    return () => clearInterval(t);
-  }, [th.load]);
-  const send = async () => {
-    const body = text.trim();
-    if (!body) return;
-    setBusy(true); setErr(null);
-    try { await apiPost(`/api/admin/manage/support/threads/${id}/reply`, { body }); setText(""); await th.load(); } catch (e: any) { setErr(e?.message); } finally { setBusy(false); }
+  const closed = meta?.status === "closed";
+  const toggle = async () => {
+    setBusy(true);
+    try {
+      const r = await apiPut(`/api/admin/manage/support/threads/${id}`, { status: closed ? "open" : "closed" });
+      setMeta((m: any) => ({ ...m, status: r?.status || (closed ? "open" : "closed") }));
+      nav.refreshBadges();
+    } catch {}
+    setBusy(false);
   };
-  const setStatus = async (s: string) => {
-    try { await apiPut(`/api/admin/manage/support/threads/${id}`, { status: s }); await th.load(); } catch (e: any) { setErr(e?.message); }
-  };
-  if (th.loading && !th.data) return <Page><Loading /></Page>;
-  if (!th.data) return <Page><ErrorBox text={th.error || L("Conversation not found", "কথোপকথন পাওয়া যায়নি")} onRetry={th.load} /></Page>;
-  const t = th.data.thread;
+  const { SupportConversation } = require("@/screens/SupportChatScreen");
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: theme.backgroundRoot }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <Pressable testID="thread-open-user" onPress={() => nav.push({ name: "user", id: t.userId })} style={[st.row, { padding: 12, borderBottomWidth: 1, borderBottomColor: theme.cardBorder, backgroundColor: theme.card }]}>
-        <Thumb uri={t.userAvatar} icon="user" size={38} />
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: theme.text, fontWeight: "700" }} numberOfLines={1}>{t.userName || t.userEmail}</Text>
-          <Text style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={1}>{t.userEmail || t.userPhone}</Text>
-        </View>
-        <Btn testID="thread-toggle" small kind="ghost" icon={t.status === "open" ? "check" : "rotate-ccw"} label={t.status === "open" ? L("Close", "বন্ধ") : L("Reopen", "আবার খুলুন")} onPress={() => setStatus(t.status === "open" ? "closed" : "open")} />
-      </Pressable>
-      <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 14, gap: 8, width: "100%", maxWidth: 900, alignSelf: "center" }}
-        onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: false })}>
-        {th.data.messages.map((m: any) => (
-          <View key={m.id} style={{ alignSelf: m.fromAdmin ? "flex-end" : "flex-start", maxWidth: "82%" }}>
-            {m.kind === "image" && m.mediaId ? (
-              <ChatPhoto mediaId={m.mediaId} width={m.width} height={m.height} onOpen={(uri) => setViewer(uri)} />
-            ) : m.kind === "voice" && m.mediaId ? (
-              <View style={{ backgroundColor: m.fromAdmin ? theme.primary : theme.card, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 }}>
-                <VoiceMessagePlayer mediaId={m.mediaId} durationMs={m.durationMs ?? null} isMe={!!m.fromAdmin}
-                  tint={m.fromAdmin ? "#fff" : theme.primary} trackColor={m.fromAdmin ? "rgba(255,255,255,0.35)" : theme.primary + "30"} textColor={m.fromAdmin ? "#fff" : theme.textSecondary} />
-              </View>
-            ) : (
-              <View style={{ backgroundColor: m.fromAdmin ? theme.primary : theme.card, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 8, borderWidth: m.fromAdmin ? 0 : 1, borderColor: theme.cardBorder }}>
-                <Text style={{ color: m.fromAdmin ? "#fff" : theme.text, fontSize: 14.5 }}>{m.body}</Text>
-              </View>
-            )}
-            <Text style={{ color: theme.textTertiary, fontSize: 10.5, marginTop: 2, textAlign: m.fromAdmin ? "right" : "left" }}>
-              {m.fromAdmin ? `${m.senderName || L("Admin", "অ্যাডমিন")} · ` : ""}{fmtDate(m.createdAt)}
-            </Text>
+    <SupportConversation
+      admin={{
+        threadId: id,
+        userName: meta?.userName || "",
+        userAvatar: meta?.userAvatar || null,
+        onBack: () => { nav.pop(); nav.refreshBadges(); },
+        onOpenUser: meta?.userId ? () => nav.push({ name: "user", id: meta.userId }) : undefined,
+        onMeta: setMeta,
+        onChanged: nav.refreshBadges,
+        headerRight: (
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {meta?.userId ? (
+              <Pressable testID="thread-user" accessibilityLabel={L("Open profile", "প্রোফাইল দেখুন")} onPress={() => nav.push({ name: "user", id: meta.userId })} hitSlop={6} style={{ width: 40, height: 40, alignItems: "center", justifyContent: "center" }}>
+                <Feather name="user" size={20} color={theme.text} />
+              </Pressable>
+            ) : null}
+            <Pressable testID="thread-toggle" disabled={busy || !meta} accessibilityLabel={closed ? L("Reopen", "আবার খুলুন") : L("Mark solved", "সমাধান হয়েছে")} onPress={toggle} hitSlop={6}
+              style={{ flexDirection: "row", alignItems: "center", gap: 5, height: 32, paddingHorizontal: 10, borderRadius: 16, marginRight: 4, backgroundColor: closed ? theme.backgroundSecondary : theme.primary + "18" }}>
+              <Feather name={closed ? "rotate-ccw" : "check"} size={15} color={closed ? theme.textSecondary : theme.primary} />
+              <Text style={{ color: closed ? theme.textSecondary : theme.primary, fontWeight: "700", fontSize: 12.5 }}>{closed ? L("Reopen", "খুলুন") : L("Solved", "সমাধান")}</Text>
+            </Pressable>
           </View>
-        ))}
-      </ScrollView>
-      {err ? <View style={{ paddingHorizontal: 12 }}><ErrorBox text={err} /></View> : null}
-      <View style={[st.row, { padding: 10, backgroundColor: theme.card, gap: 8 }]}>
-        <TextInput testID="reply-input" value={text} onChangeText={setText} placeholder={L("Write a reply…", "উত্তর লিখুন…")} placeholderTextColor={theme.textTertiary} multiline maxLength={2000}
-          style={{ flex: 1, maxHeight: 120, minHeight: 42, borderRadius: 21, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: theme.backgroundSecondary, color: theme.text, fontSize: 14.5, ...(Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : {}) }} />
-        <Pressable testID="reply-send" onPress={send} disabled={busy || !text.trim()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: theme.primary, alignItems: "center", justifyContent: "center", opacity: busy || !text.trim() ? 0.5 : 1 }}>
-          <Feather name="send" size={18} color="#fff" />
-        </Pressable>
-      </View>
-      <PhotoViewer images={viewer ? [viewer] : []} visible={!!viewer} onClose={() => setViewer(null)} />
-    </KeyboardAvoidingView>
+        ),
+      }}
+    />
   );
 }
 
-/* ======================= USERS ======================= */
 export function UsersList() {
   const nav = useAdminNav();
   const { theme } = useTheme();

@@ -41,6 +41,10 @@ import {
   sendSupportVoice,
   newClientId,
   rememberLocalPhoto,
+  fetchAdminSupportThread,
+  sendAdminSupportText,
+  sendAdminSupportPhoto,
+  sendAdminSupportVoice,
   type SupportMessage,
 } from "@/lib/dmApi";
 import { chatStyles as styles } from "@/screens/ChatScreen";
@@ -59,6 +63,29 @@ const QUICK_MESSAGES: { en: string; bn: string }[] = [
   { en: "I want to advertise on Farmers", bn: "আমি Farmers-এ বিজ্ঞাপন দিতে চাই" },
   { en: "Something in the app isn't working", bn: "অ্যাপের একটি জিনিস কাজ করছে না" },
 ];
+
+/** Ready-made replies for the admin side of the same conversation. */
+const ADMIN_QUICK: { en: string; bn: string }[] = [
+  { en: "Hello! How can we help you?", bn: "হ্যালো! আমরা কীভাবে সাহায্য করতে পারি?" },
+  { en: "Thanks, we're checking this now.", bn: "ধন্যবাদ, আমরা এখনই দেখছি।" },
+  { en: "Please send a photo of the problem.", bn: "সমস্যার একটি ছবি পাঠান।" },
+  { en: "Your order is on the way.", bn: "আপনার অর্ডার পথে আছে।" },
+  { en: "An expert will call you soon.", bn: "একজন বিশেষজ্ঞ শীঘ্রই আপনাকে কল করবেন।" },
+  { en: "Is there anything else we can help with?", bn: "আর কিছুতে সাহায্য লাগবে?" },
+];
+
+/** Admin mode: the Farmers Admin app opens the same chat screen for one user's conversation. */
+export type SupportChatAdmin = {
+  threadId: string;
+  userName: string;
+  userAvatar?: string | null;
+  onBack: () => void;
+  onOpenUser?: () => void;
+  headerRight?: React.ReactNode;
+  onChanged?: () => void;
+  /** Called with the conversation's details (user, status) each time it loads. */
+  onMeta?: (t: NonNullable<Awaited<ReturnType<typeof fetchAdminSupportThread>>["thread"]>) => void;
+};
 
 type Item = {
   id: string;
@@ -102,13 +129,22 @@ const timeOf = (iso: string) => {
  * plus ready-made messages to tap and send.
  */
 export default function SupportChatScreen() {
+  return <SupportConversation />;
+}
+
+export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const bn = useI18n((s) => s.language) === "bn";
   const L = (en: string, b: string) => (bn ? b : en);
   const signedIn = useAuthStore((s) => !!(s.isAuthenticated && s.token));
-  const adminsOnline = useSupportStatus((s) => s.adminsOnline);
+  const adminsOnlineUser = useSupportStatus((s) => s.adminsOnline);
+  const [userOnline, setUserOnline] = useState<boolean | null>(null);
+  const [adminMeta, setAdminMeta] = useState<{ name: string; avatar?: string | null } | null>(null);
+  const adminsOnline = admin ? userOnline : adminsOnlineUser;
+  /** My own messages sit on the right: the user's in the app, the admins' in the admin app. */
+  const mine = (m: { fromAdmin: boolean }) => (admin ? m.fromAdmin : !m.fromAdmin);
 
   const [server, setServer] = useState<Item[]>([]);
   const [pending, setPending] = useState<Item[]>([]);
@@ -126,6 +162,21 @@ export default function SupportChatScreen() {
       return;
     }
     try {
+      if (admin) {
+        const a = await fetchAdminSupportThread(admin.threadId);
+        if (!alive.current) return;
+        const list = (a.messages || []).map(fromServer);
+        setServer(list);
+        const seen = new Set(list.map((m) => m.clientId).filter(Boolean));
+        setPending((p) => p.filter((m) => !m.clientId || !seen.has(m.clientId)));
+        setUserOnline(typeof a.thread?.userOnline === "boolean" ? a.thread.userOnline : null);
+        if (a.thread) {
+          setAdminMeta({ name: a.thread.userName || a.thread.userUsername || "", avatar: a.thread.userAvatar });
+          admin.onMeta?.(a.thread);
+        }
+        setLoadError(null);
+        return;
+      }
       const r = await fetchSupportThread();
       if (!alive.current) return;
       const list = (r.messages || []).map(fromServer);
@@ -140,7 +191,7 @@ export default function SupportChatScreen() {
     } finally {
       if (alive.current) setLoading(false);
     }
-  }, []);
+  }, [admin?.threadId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -167,16 +218,18 @@ export default function SupportChatScreen() {
   const upload = async (item: Item) => {
     try {
       const cid = item.clientId || newClientId();
+      const tid = admin?.threadId;
       const r =
         item.kind === "image" && item.photo
-          ? await sendSupportPhoto(item.photo, cid)
+          ? await (tid ? sendAdminSupportPhoto(tid, item.photo, cid) : sendSupportPhoto(item.photo, cid))
           : item.kind === "voice" && item.localUri
-            ? await sendSupportVoice(item.localUri, item.durationMs || 0, cid)
-            : await sendSupportText(item.text, cid);
+            ? await (tid ? sendAdminSupportVoice(tid, item.localUri, item.durationMs || 0, cid) : sendSupportVoice(item.localUri, item.durationMs || 0, cid))
+            : await (tid ? sendAdminSupportText(tid, item.text, cid) : sendSupportText(item.text, cid));
       const m = fromServer(r.message);
       if (m.mediaId && item.localUri && item.kind === "image") rememberLocalPhoto(m.mediaId, item.localUri);
       setServer((s) => (s.some((x) => x.id === m.id) ? s : [...s, m]));
       setPending((p) => p.filter((x) => x.id !== item.id));
+      admin?.onChanged?.();
     } catch {
       setPending((p) => p.map((x) => (x.id === item.id ? { ...x, status: "failed" } : x)));
     }
@@ -188,7 +241,7 @@ export default function SupportChatScreen() {
       return;
     }
     const cid = newClientId();
-    const item: Item = { ...part, id: `local-${cid}`, clientId: cid, fromAdmin: false, createdAt: new Date().toISOString(), status: "sending" };
+    const item: Item = { ...part, id: `local-${cid}`, clientId: cid, fromAdmin: !!admin, createdAt: new Date().toISOString(), status: "sending" };
     setPending((p) => [...p, item]);
     upload(item);
   };
@@ -300,9 +353,14 @@ export default function SupportChatScreen() {
     setInputHeight(Math.min(Math.max(e.nativeEvent.contentSize.height, MIN_INPUT_HEIGHT), MAX_INPUT_HEIGHT));
   };
 
-  const supportName = L("Support", "সাপোর্ট");
+  const supportName = admin ? admin.userName || adminMeta?.name || L("User", "ব্যবহারকারী") : L("Support", "সাপোর্ট");
+  const otherAvatar = admin ? admin.userAvatar || adminMeta?.avatar || undefined : undefined;
   const presence: "online" | "offline" | null = adminsOnline === null ? null : adminsOnline ? "online" : "offline";
-  const headerStatus = !signedIn
+  const headerStatus = admin
+    ? presence === "online"
+      ? L("Online", "অনলাইন")
+      : L("Offline · they'll see it in Support", "অফলাইন · সাপোর্টে দেখতে পাবেন")
+    : !signedIn
     ? L("Sign in to chat with us", "চ্যাট করতে সাইন ইন করুন")
     : presence === "online"
       ? L("Online", "অনলাইন")
@@ -311,7 +369,7 @@ export default function SupportChatScreen() {
         : L("Farmers team", "Farmers টিম");
 
   const renderStatus = (item: Item, isLastInGroup: boolean) => {
-    if (item.fromAdmin) return null;
+    if (!mine(item)) return null;
     if (item.status === "failed") {
       return (
         <Pressable onPress={() => retry(item)} hitSlop={8} accessibilityRole="button" testID="support-retry">
@@ -325,7 +383,7 @@ export default function SupportChatScreen() {
   };
 
   const renderMessage = ({ item, index }: { item: Item; index: number }) => {
-    const isMe = !item.fromAdmin;
+    const isMe = mine(item);
     const showTime = index === messages.length - 1 || messages[index + 1].fromAdmin !== item.fromAdmin;
     const isLastInGroup = index === 0 || messages[index - 1].fromAdmin !== item.fromAdmin;
     const showAvatar = !isMe && isLastInGroup;
@@ -362,9 +420,9 @@ export default function SupportChatScreen() {
       );
     }
     return (
-      <View style={[styles.messageRow, isMe ? styles.myMessageRow : styles.theirMessageRow]} testID={isMe ? "support-msg-me" : "support-msg-admin"}>
+      <View style={[styles.messageRow, isMe ? styles.myMessageRow : styles.theirMessageRow]} testID={item.fromAdmin ? "support-msg-admin" : "support-msg-me"}>
         {!isMe ? (
-          <View style={styles.avatarSpace}>{showAvatar ? <UserAvatar name={supportName} size="small" presence={presence} /> : null}</View>
+          <View style={styles.avatarSpace}>{showAvatar ? <UserAvatar name={supportName} avatar={otherAvatar} size="small" presence={presence} /> : null}</View>
         ) : null}
         <View style={[styles.messageContainer, isMe ? styles.myMessage : styles.theirMessage]}>
           <View style={styles.bubbleWrapper}>{body}</View>
@@ -386,6 +444,8 @@ export default function SupportChatScreen() {
       <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
         {loading
           ? L("Loading messages…", "মেসেজ আসছে…")
+          : admin
+            ? L("No messages yet. Write the first one below.", "এখনো কোনো মেসেজ নেই। নিচে প্রথমটি লিখুন।")
           : !signedIn
             ? L("Sign in to chat with the Farmers team.", "Farmers টিমের সাথে চ্যাট করতে সাইন ইন করুন।")
             : L("How can we help? Tap a message below or write your own.", "আমরা কীভাবে সাহায্য করতে পারি? নিচের একটি মেসেজে ট্যাপ করুন বা নিজে লিখুন।")}
@@ -399,18 +459,19 @@ export default function SupportChatScreen() {
   return (
     <KeyboardAvoidingScreen style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <View style={[styles.customHeader, { backgroundColor: theme.backgroundRoot, paddingTop: insets.top }]} testID="support-chat">
-        <Pressable style={styles.backButton} onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("Main"))} testID="support-back" accessibilityRole="button" accessibilityLabel={L("Back", "পিছনে")}>
+        <Pressable style={styles.backButton} onPress={() => (admin ? admin.onBack() : navigation.canGoBack() ? navigation.goBack() : navigation.navigate("Main"))} testID="support-back" accessibilityRole="button" accessibilityLabel={L("Back", "পিছনে")}>
           <Feather name="arrow-left" size={24} color={theme.text} />
         </Pressable>
-        <View style={styles.headerTitleContainer}>
+        <Pressable style={styles.headerTitleContainer} disabled={!admin?.onOpenUser} onPress={admin?.onOpenUser} testID="support-header-user">
           <View style={styles.headerAvatarContainer}>
-            <UserAvatar name={supportName} size={36} presence={signedIn ? presence : null} />
+            <UserAvatar name={supportName} avatar={otherAvatar} size={36} presence={signedIn ? presence : null} />
           </View>
           <View style={styles.headerInfo}>
             <ThemedText style={[styles.headerName, { color: theme.text }]} numberOfLines={1} testID="support-title">{supportName}</ThemedText>
             <ThemedText style={[styles.headerStatus, { color: theme.textSecondary }]} numberOfLines={1} testID="support-status">{headerStatus}</ThemedText>
           </View>
-        </View>
+        </Pressable>
+        {admin?.headerRight ?? null}
       </View>
 
       <FlatList
@@ -440,7 +501,7 @@ export default function SupportChatScreen() {
             contentContainerStyle={{ gap: 8, paddingHorizontal: Spacing.md, paddingTop: Spacing.sm, paddingBottom: 2 }}
             testID="support-quick"
           >
-            {QUICK_MESSAGES.map((q, i) => (
+            {(admin ? ADMIN_QUICK : QUICK_MESSAGES).map((q, i) => (
               <Pressable
                 key={q.en}
                 onPress={() => handleSend(bn ? q.bn : q.en)}

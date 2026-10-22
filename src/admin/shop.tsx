@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useTheme } from "@/hooks/useTheme";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import {
   useAdminNav, useL, useLoader, useDebounced, Page, Card, SectionTitle, Pill, Chip, ChipRow, SearchBox, Btn, Field, KV, Empty, Loading, ErrorBox, Thumb, Stat,
   taka, STATUS_COLOR, statusLabel, fmtDate, pickAndUpload, confirmAsk, st, ShopSection,
+  Text,
 } from "./ui";
 
 import { AppIcon } from "@/components/icons/AppIcon";
