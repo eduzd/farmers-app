@@ -38,6 +38,10 @@ export interface DmContact {
   name: string;
   phone: string | null;
   phoneSource: "store" | "profile" | null;
+  /** for opening their profile from the chat (older servers leave these out) */
+  username?: string | null;
+  avatar?: string | null;
+  verified?: boolean;
 }
 
 export class DmError extends Error {

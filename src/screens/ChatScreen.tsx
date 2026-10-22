@@ -46,6 +46,7 @@ import {
   sendImage,
   rememberLocalPhoto,
   fetchContact,
+  type DmContact,
   newClientId,
   onLiveDm,
   onLiveReaction,
@@ -253,10 +254,95 @@ export default function ChatScreen() {
     });
   }, [navigation]);
 
-  const handleViewProfile = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.alert(tr("Profile"), `Viewing ${userName}'s profile`);
+  // The person behind this chat (a shop or product chat points at its owner), for their profile.
+  const contactRef = useRef<{ id: string; contact: DmContact | null } | null>(null);
+  const openingProfile = useRef(false);
+  const loadContact = useCallback(async (id: string): Promise<DmContact | null> => {
+    if (contactRef.current?.id === id) return contactRef.current.contact;
+    const contact = await fetchContact(id);
+    contactRef.current = { id, contact };
+    return contact;
+  }, []);
+  // Look the person up once the chat is live, so tapping their photo opens the profile at once.
+  useEffect(() => {
+    if (mode === "live" && otherId) loadContact(otherId).catch(() => {});
+  }, [mode, otherId, loadContact]);
+
+  // Tapping their photo or name opens that person's real profile (UserProfile). Pushed on top,
+  // so Back comes straight back to this conversation.
+  const handleViewProfile = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (mode === "guest") {
+      Alert.alert(tr("Profile"), tr("Sign in to see their profile."));
+      return;
+    }
+    if (mode === "noAccount") {
+      Alert.alert(tr("Profile"), tr("This person isn't on Farmers yet, so there's no profile to show."));
+      return;
+    }
+    if (mode !== "live" || !otherIdRef.current) {
+      Alert.alert(tr("Profile"), tr("Still connecting. Try again in a moment."));
+      return;
+    }
+    if (openingProfile.current) return;
+    openingProfile.current = true;
+    const id = otherIdRef.current;
+    let contact: DmContact | null = null;
+    try {
+      contact = await loadContact(id);
+    } catch (e: any) {
+      if (e?.code === "NO_ACCOUNT" || e?.status === 404) {
+        // the account was removed after the chat started
+        openingProfile.current = false;
+        Alert.alert(tr("Profile"), tr("This person isn't on Farmers yet, so there's no profile to show."));
+        return;
+      }
+      // offline or a server hiccup: open the profile with what the chat already knows
+    }
+    const personId = contact?.userId || id;
+    const name = (contact?.name || userName || "").trim() || "Farmer";
+    const initials =
+      contact?.name && contact.name !== userName
+        ? name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join("") || "?"
+        : userInitials;
+    (navigation as any).push("UserProfile", {
+      user: {
+        id: personId,
+        name,
+        username: contact?.username || undefined,
+        initials,
+        avatar: contact?.avatar || undefined,
+        role: "farmer",
+        verified: !!contact?.verified,
+        isWelfareMember,
+        followersCount: 0,
+        followingCount: 0,
+        location: "",
+        bio: "",
+      },
+    });
+    setTimeout(() => {
+      openingProfile.current = false;
+    }, 600);
   };
+
+  /** Their small photo beside a message; tapping it opens their profile. */
+  const renderPeerAvatar = () => (
+    <Pressable
+      onPress={handleViewProfile}
+      hitSlop={6}
+      accessibilityRole="button"
+      accessibilityLabel={`${tr("View Profile")}: ${userName}`}
+      testID="dm-msg-avatar"
+    >
+      <UserAvatar
+        initials={userInitials}
+        size="small"
+        isWelfareMember={isWelfareMember}
+        userId={liveOtherId}
+      />
+    </Pressable>
+  );
 
   const dial = async (phone: string) => {
     const number = phone.replace(/[^\d+]/g, "");
@@ -760,14 +846,7 @@ export default function ChatScreen() {
           <View style={[styles.messageRow, item.isMe ? styles.myMessageRow : styles.theirMessageRow]}>
             {!item.isMe ? (
               <View style={styles.avatarSpace}>
-                {showAvatar ? (
-                  <UserAvatar 
-                    initials={userInitials} 
-                    size="small" 
-                    isWelfareMember={isWelfareMember}
-                    userId={liveOtherId}
-                  />
-                ) : null}
+                {showAvatar ? renderPeerAvatar() : null}
               </View>
             ) : null}
             <View style={[styles.messageContainer, item.isMe ? styles.myMessage : styles.theirMessage]}>
@@ -821,14 +900,7 @@ export default function ChatScreen() {
           <View style={[styles.messageRow, item.isMe ? styles.myMessageRow : styles.theirMessageRow]}>
             {!item.isMe ? (
               <View style={styles.avatarSpace}>
-                {showAvatar ? (
-                  <UserAvatar 
-                    initials={userInitials} 
-                    size="small" 
-                    isWelfareMember={isWelfareMember}
-                    userId={liveOtherId}
-                  />
-                ) : null}
+                {showAvatar ? renderPeerAvatar() : null}
               </View>
             ) : null}
             <View style={[styles.messageContainer, item.isMe ? styles.myMessage : styles.theirMessage]}>
@@ -873,14 +945,7 @@ export default function ChatScreen() {
         <View style={[styles.messageRow, item.isMe ? styles.myMessageRow : styles.theirMessageRow]}>
           {!item.isMe ? (
             <View style={styles.avatarSpace}>
-              {showAvatar ? (
-                <UserAvatar 
-                  initials={userInitials} 
-                  size="small" 
-                  isWelfareMember={isWelfareMember}
-                  userId={liveOtherId}
-                />
-              ) : null}
+              {showAvatar ? renderPeerAvatar() : null}
             </View>
           ) : null}
           <View style={[styles.messageContainer, item.isMe ? styles.myMessage : styles.theirMessage]}>
@@ -971,7 +1036,7 @@ export default function ChatScreen() {
         <Pressable style={styles.backButton} onPress={handleGoBack}>
           <Feather name="arrow-left" size={24} color={theme.text} />
         </Pressable>
-        <Pressable style={styles.headerTitleContainer} onPress={() => handleViewProfile()}>
+        <Pressable style={styles.headerTitleContainer} onPress={() => handleViewProfile()} accessibilityRole="button" accessibilityLabel={`${tr("View Profile")}: ${userName}`} testID="chat-header-profile">
           <View style={styles.headerAvatarContainer}>
             <UserAvatar initials={userInitials} size={36} userId={liveOtherId} />
           </View>
