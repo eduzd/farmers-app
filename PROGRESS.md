@@ -282,3 +282,15 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
   the user can also change each channel in Android's app notification settings. iPhone: vibration follows iOS settings.
 - Checks: tsc 0 errors; tests/check-push-prefs.mjs 15/15 (fake Expo push server: channel per phone, notify off, re-save keeps
   prefs, own account only); check-chat 50/50; tests/check-notif-settings-web.py en+bn 320/360/390 16/16 each.
+
+## 2026-10-22: Edit post stays above the keyboard (post detail + feed)
+- src/components/PostActionsSheet.tsx (the three-dot sheet used by PostDetail and the home feed): the sheet's bottom is now
+  ModalBottomInset, so on Android/iOS it rises by the keyboard's height (react-native-keyboard-controller, works inside Modal)
+  instead of a fixed safe-area padding. The edit box's max height follows the room left between the keyboard and the top of
+  the screen (min 72, up to 120 tall by default), so the title, the box and Save stay in view; long posts scroll inside the box.
+  The report list gets the same max height.
+- Mobile web: new src/hooks/useWebKeyboardInset.ts (visualViewport), used by ModalBottomInset, so every bottom sheet using it
+  rises above the keyboard on iPhone Safari / Chrome Android too. react-native-web's useWindowDimensions already follows
+  visualViewport, so the sheet doesn't subtract the keyboard twice on web.
+- Checks: tsc 0 errors; tests/check-post-edit-keyboard-web.py (stand-in visualViewport keyboard, en+bn 320x640/360x740/390x844).
+- Not tested on a real phone keyboard (Android/iOS app); no APK built.
