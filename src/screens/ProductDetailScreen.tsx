@@ -122,7 +122,9 @@ export default function ProductDetailScreen() {
       })
       .catch(() => {});
   }, [product.id]);
-  const isFavorite = useFavoritesStore((st) => st.items.some((i) => i.itemId === String(product.id)));
+  const savedByMe = useFavoritesStore((st) => st.items.some((i) => i.itemId === String(product.id)));
+  // in preview the heart shows as a new buyer sees it, not the admin's own saved list
+  const isFavorite = preview ? false : savedByMe;
   const toggleFavorite = useFavoritesStore((st) => st.toggle);
   const marketCats = useMarketCategories();
   const ownerId: string | undefined = (product as any).ownerId || undefined;
@@ -779,7 +781,7 @@ export default function ProductDetailScreen() {
       {cartCount > 0 ? (
         <Pressable
           style={[styles.cartBadge, { backgroundColor: theme.primary, top: insets.top + 70 }]}
-          onPress={() => navigation.navigate("Cart")}
+          onPress={() => (preview ? previewNote.show(tr("Cart")) : navigation.navigate("Cart"))}
         >
           <Feather name="shopping-cart" size={18} color="#FFFFFF" />
           <View style={styles.cartCount}>
