@@ -32,15 +32,17 @@ export function CalculateHomeScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 50, y: 200 });
   const lang: Language = useI18n((st) => st.language) as Language;
+  // Bangla when Bangla is chosen, English when English is chosen.
+  const L = (bn: string, en: string) => (lang === 'bn' ? bn : en);
 
   const { isOnline, pendingCount } = useSyncContext();
 
   const shortcuts = [
-    { label: 'ব্যাপারী ক্যালকুলেটর', onPress: () => navigation.navigate('CalculateBepari'), icon: 'dollar-sign' as const },
-    { label: 'আড়ত ক্যালকুলেটর', onPress: () => navigation.navigate('CalculateArat'), icon: 'percent' as const },
-    { label: 'খাদ্য ক্যালকুলেটর', onPress: () => navigation.navigate('CalculateFeed'), icon: 'box' as const },
-    { label: 'খাতা (Ledger)', onPress: () => navigation.navigate('CalculateLedger'), icon: 'book' as const },
-    { label: 'সেটিংস', onPress: () => navigation.navigate('CalculateSettings'), icon: 'settings' as const },
+    { label: L('ব্যাপারী ক্যালকুলেটর', 'Bepari calculator'), onPress: () => navigation.navigate('CalculateBepari'), icon: 'dollar-sign' as const },
+    { label: L('আড়ত ক্যালকুলেটর', 'Arat calculator'), onPress: () => navigation.navigate('CalculateArat'), icon: 'percent' as const },
+    { label: L('খাদ্য ক্যালকুলেটর', 'Feed calculator'), onPress: () => navigation.navigate('CalculateFeed'), icon: 'box' as const },
+    { label: L('খাতা', 'Ledger'), onPress: () => navigation.navigate('CalculateLedger'), icon: 'book' as const },
+    { label: L('সেটিংস', 'Settings'), onPress: () => navigation.navigate('CalculateSettings'), icon: 'settings' as const },
   ];
 
   const handleLongPress = useCallback(() => {
@@ -58,13 +60,13 @@ export function CalculateHomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerRow}>
-          <ThemedText style={styles.sectionTitle}>{tr("ক্যালকুলেটর")}</ThemedText>
+          <ThemedText style={styles.sectionTitle}>{L('ক্যালকুলেটর', 'Calculators')}</ThemedText>
           <SyncIndicator />
         </View>
         
         <ModuleCard
           title={t('bepariCalculator', lang)}
-          subtitle="বিক্রি হিসাব, ওজন, দাম নির্ধারণ"
+          subtitle={L('বিক্রি হিসাব, ওজন, দাম নির্ধারণ', 'Sales, weight and pricing')}
           icon="dollar-sign"
           iconColor="#16A34A"
           onPress={() => navigation.navigate('CalculateBepari')}
@@ -73,7 +75,7 @@ export function CalculateHomeScreen() {
 
         <ModuleCard
           title={t('aratCalculator', lang)}
-          subtitle="আড়ত কমিশন, ফি, ট্যাক্স হিসাব"
+          subtitle={L('আড়ত কমিশন, ফি, ট্যাক্স হিসাব', 'Commission, fees and tax')}
           icon="percent"
           iconColor="#2563EB"
           onPress={() => navigation.navigate('CalculateArat')}
@@ -81,27 +83,27 @@ export function CalculateHomeScreen() {
 
         <ModuleCard
           title={t('feedCalculator', lang)}
-          subtitle="মাসিক খাদ্য পরিমাণ ও খরচ"
+          subtitle={L('মাসিক খাদ্য পরিমাণ ও খরচ', 'Monthly feed amount and cost')}
           icon="box"
           iconColor="#EA8A0C"
           onPress={() => navigation.navigate('CalculateFeed')}
         />
 
-        <ThemedText style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>{tr("হিসাব খাতা")}</ThemedText>
+        <ThemedText style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>{L('হিসাব খাতা', 'Ledger')}</ThemedText>
 
         <ModuleCard
           title={t('ledger', lang)}
-          subtitle="বেপারী/পাইকার হিসাব, বাকি"
+          subtitle={L('বেপারী/পাইকার হিসাব, বাকি', 'Trader accounts and dues')}
           icon="book"
           iconColor="#7C3AED"
           onPress={() => navigation.navigate('CalculateLedger')}
         />
 
-        <ThemedText style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>{tr("রিপোর্ট")}</ThemedText>
+        <ThemedText style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>{L('রিপোর্ট', 'Reports')}</ThemedText>
 
         <ModuleCard
           title={t('history', lang)}
-          subtitle="সব হিসাব দেখুন"
+          subtitle={L('সব হিসাব দেখুন', 'See all records')}
           icon="clock"
           iconColor="#EC4899"
           onPress={() => navigation.navigate('CalculateHistory')}
@@ -109,17 +111,17 @@ export function CalculateHomeScreen() {
 
         <ModuleCard
           title={t('monthlySummary', lang)}
-          subtitle="মাসিক সারাংশ ও রিপোর্ট"
+          subtitle={L('মাসিক সারাংশ ও রিপোর্ট', 'Monthly summary and reports')}
           icon="bar-chart-2"
           iconColor="#06B6D4"
           onPress={() => navigation.navigate('CalculateMonthlySummary')}
         />
 
-        <ThemedText style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>{tr("অন্যান্য")}</ThemedText>
+        <ThemedText style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>{L('অন্যান্য', 'Other')}</ThemedText>
 
         <ModuleCard
           title={t('settings', lang)}
-          subtitle="মূল্য নির্ধারণ, ব্যাকআপ"
+          subtitle={L('মূল্য নির্ধারণ, ব্যাকআপ', 'Rates and backup')}
           icon="settings"
           iconColor="#6B7280"
           onPress={() => navigation.navigate('CalculateSettings')}

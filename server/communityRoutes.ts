@@ -587,6 +587,39 @@ router.post("/posts/:id/like", requireAuth, async (req: Request, res: Response) 
   }
 });
 
+/**
+ * Tell everyone who follows the author that they posted (in-app notification + push).
+ * Followers who muted or blocked the author, or whom the author blocked, are skipped.
+ * Runs after the reply is sent so posting stays fast.
+ */
+async function notifyFollowersOfPost(authorId: string, post: any) {
+  try {
+    if (!post?.id) return;
+    await ensureRelations().catch(() => {});
+    const author = rowsOf(await db.execute(sql`SELECT name, username FROM users WHERE id = ${authorId} LIMIT 1`))[0];
+    const who = author?.name || author?.username || "Someone you follow";
+    const text = String(post.content || "").replace(/\s+/g, " ").trim();
+    const body = text ? text.slice(0, 140) : "Shared a new post";
+    let followers: any[] = [];
+    try {
+      followers = rowsOf(await db.execute(sql`
+        SELECT f.follower_id AS id FROM follows f
+        WHERE f.followee_id = ${authorId} AND f.follower_id <> ${authorId}
+          AND NOT EXISTS (SELECT 1 FROM user_relations ur WHERE
+               (ur.user_id = f.follower_id AND ur.target_id = ${authorId} AND ur.kind IN ('mute', 'block'))
+            OR (ur.user_id = ${authorId} AND ur.target_id = f.follower_id AND ur.kind = 'block'))
+        LIMIT 5000`));
+    } catch {
+      return; // no follows table yet = nobody follows anyone
+    }
+    for (const f of followers) {
+      await notify(String(f.id), "new_post", `${who} shared a new post`, body, { postId: post.id, userId: authorId });
+    }
+  } catch (e: any) {
+    console.error("[posts] follower notify error:", e?.message || e);
+  }
+}
+
 router.post("/posts", requireAuth, async (req: Request, res: Response) => {
   if (!db) return res.status(500).json({ error: "Database not available" });
 
@@ -605,6 +638,7 @@ router.post("/posts", requireAuth, async (req: Request, res: Response) => {
       .returning();
 
     res.status(201).json(newPost[0]);
+    void notifyFollowersOfPost(userId, newPost[0]);
   } catch (error) {
     console.error("Create post error:", error);
     res.status(500).json({ error: "Failed to create post" });

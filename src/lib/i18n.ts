@@ -79,6 +79,7 @@ const translations: Record<Language, Translations> = {
 
     // Navigation
     "nav.home": "Home",
+    "nav.connect": "Connect",
     "nav.market": "Market",
     "nav.chats": "Chats",
     "nav.profile": "Profile",
@@ -435,6 +436,7 @@ const translations: Record<Language, Translations> = {
 
     // Navigation
     "nav.home": "হোম",
+    "nav.connect": "কানেক্ট",
     "nav.market": "বাজার",
     "nav.chats": "চ্যাট",
     "nav.profile": "প্রোফাইল",

@@ -479,4 +479,9 @@ export const BN_OF_EN: Record<string, string> = {
   "Inside Dhaka delivery needs an address in Dhaka division": "ঢাকার ভিতরে ডেলিভারির জন্য ঢাকা বিভাগের ঠিকানা লাগবে",
   "Express delivery is only available inside Dhaka": "এক্সপ্রেস ডেলিভারি শুধু ঢাকার ভিতরে",
   "Choose inside Dhaka or outside Dhaka": "ঢাকার ভিতরে নাকি বাইরে, বেছে নিন",
+  "Photo": "ছবি",
+  "Photo not sent": "ছবি পাঠানো হয়নি",
+  "Couldn't open that photo. Please try another one.": "ছবিটি খোলা যায়নি। অন্য একটি ছবি চেষ্টা করুন।",
+  "Couldn't load photo · Tap to retry": "ছবি লোড হয়নি · আবার চেষ্টা করতে চাপুন",
+  "Post": "পোস্ট",
 };

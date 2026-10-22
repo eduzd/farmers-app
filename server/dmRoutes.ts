@@ -16,7 +16,8 @@ import { isBlockedBetween } from "./communityRoutes";
  *                                          header X-Seen-Until: newest of MY messages they have read
  *  POST /api/dm/:otherId/messages          send { content, clientId? }   (clientId makes retries safe)
  *  POST /api/dm/:otherId/voice             send a voice message { audio: base64, mime, durationMs, clientId? }
- *  GET  /api/dm/media/:mediaId             the audio file (only the sender and the recipient)
+ *  POST /api/dm/:otherId/image             send a photo { image: base64 or data URL, mime, width?, height?, clientId? }
+ *  GET  /api/dm/media/:mediaId             the audio or photo file (only the sender and the recipient)
  *  GET  /api/dm/:otherId/contact           { userId, name, phone } for the Call button
  *
  * :otherId may be a user id, "user_<id>", "store_<id>", a store id, a company id or a
@@ -96,6 +97,33 @@ const MAX_VOICE_BYTES = 3 * 1024 * 1024; // ~3 MB, about 6 minutes at 64 kbps (t
 const MAX_VOICE_MS = 3 * 60 * 1000;
 const VOICE_MIME = new Set(["audio/mp4", "audio/m4a", "audio/x-m4a", "audio/aac", "audio/webm", "audio/ogg", "audio/mpeg", "audio/3gpp", "audio/wav", "audio/x-wav"]);
 const VOICE_LABEL = "\u{1F3A4} Voice message";
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // the app shrinks photos to about 1600px first, usually well under 1 MB
+const IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif"]);
+const PHOTO_LABEL = "\u{1F4F7} Photo";
+
+/** Check a base64 / data-URL upload. Returns the clean base64, mime and byte size, or an error message. */
+function decodeUpload(raw: unknown, mimeIn: unknown, fallbackMime: string) {
+  let b64 = String(raw ?? "");
+  const dataUrl = /^data:([^;,]+)[^,]*,/.exec(b64);
+  if (dataUrl) b64 = b64.slice(dataUrl[0].length);
+  b64 = b64.replace(/\s+/g, "");
+  const mime = String(mimeIn || dataUrl?.[1] || fallbackMime).split(";")[0].trim().toLowerCase();
+  const ok = !!b64 && /^[A-Za-z0-9+/]+={0,2}$/.test(b64);
+  const size = ok ? Math.floor((b64.length * 3) / 4) - (b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0) : 0;
+  return { b64, mime, ok, size };
+}
+
+/** First bytes of real image files, so a renamed file can't be sent as a photo. */
+function looksLikeImage(b64: string, mime: string): boolean {
+  const head = Buffer.from(b64.slice(0, 24), "base64");
+  const hex = head.toString("hex");
+  if (mime === "image/jpeg") return hex.startsWith("ffd8ff");
+  if (mime === "image/png") return hex.startsWith("89504e47");
+  if (mime === "image/gif") return head.toString("ascii", 0, 3) === "GIF";
+  if (mime === "image/webp") return head.toString("ascii", 0, 4) === "RIFF" && head.toString("ascii", 8, 12) === "WEBP";
+  if (mime === "image/heic" || mime === "image/heif") return head.toString("ascii", 4, 8) === "ftyp";
+  return false;
+}
 
 async function first(q: any): Promise<any | null> {
   try {
@@ -128,11 +156,14 @@ export async function resolvePerson(raw: string): Promise<string | null> {
 }
 
 function msgOut(m: any, me: string) {
+  const size = m.kind === "image" ? /\|(\d+)x(\d+)$/.exec(String(m.content || "")) : null;
   return {
     id: m.id,
     senderId: m.sender_id,
     recipientId: m.recipient_id,
-    content: m.content,
+    content: size ? String(m.content).slice(0, size.index) : m.content,
+    width: size ? Number(size[1]) : null,
+    height: size ? Number(size[2]) : null,
     kind: m.kind || "text",
     mediaId: m.media_id || null,
     durationMs: m.duration_ms == null ? null : Number(m.duration_ms),
@@ -281,7 +312,7 @@ export function registerDmRoutes(app: Express, push: Pusher) {
           name: t.name || "Farmer",
           initials: initials(t.name),
           avatar: t.avatar || null,
-          lastMessage: t.kind === "voice" ? VOICE_LABEL : t.content,
+          lastMessage: t.kind === "voice" ? VOICE_LABEL : t.kind === "image" ? PHOTO_LABEL : t.content,
           lastKind: t.kind || "text",
           lastMessageAt: iso(t.created_at),
           lastFromMe: t.sender_id === me,
@@ -311,7 +342,7 @@ export function registerDmRoutes(app: Express, push: Pusher) {
       const me = (req as any).dmUserId as string;
       const m = await first(sql`SELECT sender_id, recipient_id, mime, encode(data, 'base64') AS b64 FROM dm_media WHERE id = ${req.params.mediaId} LIMIT 1`);
       // Same answer for "missing" and "not yours", so ids can't be probed.
-      if (!m || (m.sender_id !== me && m.recipient_id !== me)) return res.status(404).json({ error: "Voice message not found" });
+      if (!m || (m.sender_id !== me && m.recipient_id !== me)) return res.status(404).json({ error: "File not found" });
       const buf = Buffer.from(String(m.b64).replace(/\s+/g, ""), "base64");
       res.setHeader("Content-Type", m.mime);
       res.setHeader("Content-Length", String(buf.length));
@@ -319,7 +350,7 @@ export function registerDmRoutes(app: Express, push: Pusher) {
       res.end(buf);
     } catch (e: any) {
       console.error("[dm] media error:", e?.message || e);
-      res.status(500).json({ error: "Couldn't load the voice message" });
+      res.status(500).json({ error: "Couldn't load the file" });
     }
   });
 
@@ -446,6 +477,39 @@ export function registerDmRoutes(app: Express, push: Pusher) {
     } catch (e: any) {
       console.error("[dm] voice error:", e?.message || e);
       res.status(500).json({ error: "Couldn't send the voice message" });
+    }
+  });
+
+  app.post("/api/dm/:otherId/image", auth, async (req, res) => {
+    try {
+      await ensureTable();
+      const me = (req as any).dmUserId as string;
+      const { b64, mime, ok, size } = decodeUpload(req.body?.image, req.body?.mime, "image/jpeg");
+      if (!ok) return res.status(400).json({ error: "The photo is missing or damaged" });
+      if (!IMAGE_MIME.has(mime)) return res.status(400).json({ error: "That photo format isn't supported" });
+      if (size < 100 || !looksLikeImage(b64, mime)) return res.status(400).json({ error: "That file isn't a photo" });
+      if (size > MAX_IMAGE_BYTES) return res.status(413).json({ error: "The photo is too large (10 MB max)" });
+      const other = await recipientFor(req, res);
+      if (!other) return;
+      const { id, existing } = await messageId(req.body?.clientId, me);
+      if (existing) return res.json(msgOut(existing, me));
+      const mediaId = `im-${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
+      const createdAt = new Date().toISOString();
+      // width/height let the app reserve the right shape before the photo loads
+      const w = Math.max(0, Math.min(20000, Math.round(Number(req.body?.width) || 0)));
+      const h = Math.max(0, Math.min(20000, Math.round(Number(req.body?.height) || 0)));
+      const content = w && h ? `${PHOTO_LABEL}|${w}x${h}` : PHOTO_LABEL;
+      await db.execute(sql`INSERT INTO dm_media (id, sender_id, recipient_id, mime, size, data)
+        VALUES (${mediaId}, ${me}, ${other}, ${mime}, ${size}, decode(${b64}, 'base64'))`);
+      await db.execute(
+        sql`INSERT INTO direct_messages (id, sender_id, recipient_id, content, kind, media_id, created_at)
+            VALUES (${id}, ${me}, ${other}, ${content}, 'image', ${mediaId}, ${createdAt}) ON CONFLICT (id) DO NOTHING`
+      );
+      const row = { id, sender_id: me, recipient_id: other, content, kind: "image", media_id: mediaId, created_at: createdAt, read_at: null };
+      res.json(deliver(me, other, row, PHOTO_LABEL));
+    } catch (e: any) {
+      console.error("[dm] image error:", e?.message || e);
+      res.status(500).json({ error: "Couldn't send the photo" });
     }
   });
 }

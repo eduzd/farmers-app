@@ -149,16 +149,85 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
 - [x] PhotoViewer.tsx (PhotoViewer + PostPhoto thumb/full), CommunityScreen pickImage asks Full photo / Crop
 - [x] PostDetail ListHeaderComponent={renderHeader()} (header remounted every render -> photo jitter)
 - [x] liveStatus.ts (unread counts + presence + heartbeat), CountBadge.tsx, Messages tab badge, bell badge
-- [ ] refreshUnreadCounts after mark-read (Notifications, Chat), on push received
-- [ ] UserAvatar userId -> online dot bottom-right; pass userId in feed/chat list/chat header/post detail/profile
-- [ ] Connect tab + screen + server /api/connect/professionals
+- [x] refreshUnreadCounts after mark-read (Notifications, Chat); in-flight call re-runs once; bell clears at once on "mark all"/tap
+- [x] UserAvatar userId -> online dot bottom-right (feed, post detail, chat, chat list, followers/following, user profile, Connect)
+- [x] Connect tab + screen + server /api/connect/professionals (2026-10-22 web round, see below)
 - [x] 2026-10-22 round: fixed the two tsc errors (presence sweep `.unref` typed via `any` in server/communityRoutes.ts;
       `isSaved?: boolean` added to the PostDetail `Post` param type in RootStackNavigator.tsx). `npx tsc --noEmit` clean.
 - [x] Committed all saved UI work on ui-headers (ab49992), then merged main (calls2 fix 4be0d40: VoiceCallContext opens /ws/chat).
       Merge had no conflicts; tsc clean again after the merge.
-- [ ] USER DECISION 2026-10-22: no APK for now. Deliver the WEB version (Render https://farmers-2ybg.onrender.com) for the user
+- [x] (live a4bd5b9 on Render, health checked) USER DECISION 2026-10-22: no APK for now. Deliver the WEB version (Render https://farmers-2ybg.onrender.com) for the user
       to check first; they will confirm before any APK build.
-- [ ] Web: `npm run web:export` (dist is committed, served by server on Render), smoke test, merge ui-headers -> main, push origin main, verify Render /api/health shows the new commit.
-- [ ] Then: Connect tab + screen + server /api/connect/professionals; unread refresh after mark-read; UserAvatar online dot; narrow-width Bangla/English audit.
+- [x] Web: `npm run web:export` (dist is committed, served by server on Render), smoke test, merge ui-headers -> main, push origin main, verify Render /api/health shows the new commit.
+- [x] Then: Connect tab + screen + server; unread refresh after mark-read; UserAvatar online dot.
+
+## Web round "Connect + chat photos" (2026-10-22, WEB ONLY, no APK)
+- [x] Connect tab (2nd tab, right after Home; icon "users"; nav.connect "Connect"/"কানেক্ট"). src/screens/ConnectScreen.tsx.
+      Lists ONLY accounts with users.profile_role='expert' (not farmer/buyer/company), not banned, minus blocked both ways, minus me.
+      Verified first. Search (name/title/about), specialty chips (vet, fish, poultry, crops, soil, feed, dairy, other; en+bn labels).
+      Card -> UserProfile; Message -> Chat. Expert accounts get "Your Connect profile" card -> sheet to set field/title/about.
+      Server: server/connectRoutes.ts (GET /api/connect/fields, GET /api/connect/professionals, GET/PUT /api/me/expert-profile;
+      PUT is 403 unless profile_role='expert'). New columns users.expert_field/expert_title/expert_about. No seeded data.
+      NOTE: anyone can pick the expert role at sign-up today -> admin app must get "verify expert" (verified=true sorts first).
+- [x] Chat photos (user: "sending photo is still not supporting"): POST /api/dm/:otherId/image (base64/data URL, jpeg/png/webp/gif/heic,
+      magic-byte check, 10 MB max, idempotent clientId), stored in dm_media, served by GET /api/dm/media/:id (only the 2 people).
+      App shrinks to 1600px JPEG (expo-image-manipulator), shows at once "Sending…", retry on failure; ChatPhoto.tsx shows the
+      whole photo at its own shape, tap = PhotoViewer full screen. Chat list label "📷 Photo". Gallery + camera, no forced crop.
+- [x] Followers notified when someone they follow posts (POST /api/posts -> notifyFollowersOfPost: in-app + push, type new_post,
+      skips followers who muted/blocked the author). Tap (list or push) opens the post. Likes/comments in the list now open the post too.
+- [x] Calculator home: icons were invisible (icon box filled with the same colour as the icon) -> tinted box, coloured icon, all 7 cards.
+      Calculator home subtitles/section titles/shortcuts now follow the chosen language (were Bangla-only).
+- [x] Web: "duplicate column owner_user_id" page error on first load fixed (two screens opening the offline DB at once).
+- [x] Post detail: scrolling past the author row slides the header title "Post"/"পোস্ট" away and the author's name in (ScrollSwapTitle).
+- [x] Comments/replies: @mentions coloured (primary, bold); tapping a known person (post author/commenter, full-name match) opens
+      their profile (MentionText.tsx). Author/commenter taps no longer pass made-up follower numbers / fake ids.
+- [x] UserProfileScreen: real follower/following counts, follow/unfollow saved on the server, real bio/location.
+      STILL FAKE/EMPTY there: their posts list (SAMPLE_POSTS) -> part of the profile redesign round.
+- [x] Calculator auto-jump to the next row: 1 s -> 0.4 s (no pause at all would jump after the first digit of "125").
+- [x] tests/check-photos-connect.mjs 31/31, tests/check-chat.mjs 43/43, tsc clean.
+
+## LIVE on Render (2026-10-22 07:36 +06): commit b213ae9 pushed to origin/main (ui-headers -> main, fast-forward, contains calls2 fix 4be0d40)
+- /api/health reports version b213ae9. Site loads, serves bundle index-da0b2f5d...js (new). Live: GET /api/connect/fields +
+  /api/connect/professionals answer, /api/me/expert-profile 401 without sign-in (as designed). Bundle contains Connect profile,
+  chat photo upload and new_post notification code. Before push: tsc clean, check-photos-connect 31/31, check-chat 43/43 (local).
+- NOT checked live: signed-in screens clicked through; NOT tested on a phone: follower notifications, post title swap, @mention
+  taps, real follower counts, faster calculator jump, language switching of titles, chat photos. No APK this round.
+- Admin app: separate task builds it in /home/sprite/farmers-admin (branch admin-app) -- do not touch from here.
+- Still to do: Help icon support flow (see 3), ads in carousel (see 4), language gaps (see 0): English mode profile still shows
+  role কৃষক and ফলোয়িং button in Bangla; calculator inner pages, ledger, reports, seller hub, market, admin text stuck in one language.
+
+## NEXT ROUNDS (exact remaining work)
+0. LANGUAGE everywhere (user 2026-10-22): Bangla selected = Bangla everywhere, English = English everywhere. Audit every screen
+   for hard-coded single-language strings (calculator sub-screens, ledger, reports, seller hub, market, admin) and route
+   them through t()/tr()/L(bn,en); server texts (notifications) too. Do it screen by screen with the web build in both languages.
+1. Narrow-width (320/360px) audit in Bangla + English of the other screens not yet checked (Market tabs, Profile, Seller Hub).
+2. PROFILE screen redesign -- user said 2026-10-22 "profile is not looking good... we'll think about it later". Ask what they want first.
+3. HELP / SUPPORT (user asked 2026-10-22, then said "just create the connect page, we'll think about it later" -> PAUSED, not built):
+   Help icon in main headers -> message form -> support inbox in the admin app; admins reply from the dashboard; user sees the
+   replies in a Support conversation + notification. Existing src/screens/SupportScreen.tsx is FAKE (simulated submit) -> replace.
+   Server plan: support_messages table, user GET/POST /api/support/messages, admin GET /api/admin/support/threads, reply, close,
+   all behind requireAdmin (server/platformRoutes.ts) + audit log; notify() the user on reply.
+4. MARKETPLACE "strong and stunning" (user 2026-10-22): sells fish products, fish medicine, fish feed, every feed ingredient,
+   company feed. Product page must show everything needed and handle units properly: per-kg products ask "how many kg",
+   per-piece/pack products ask "how many" (unit, min order, step, stock, price per unit, total). Company pages stay as they are.
+   Product ads / listings all controlled from the admin app.
+   HOME CAROUSEL = product ads (user 2026-10-22): e.g. a product with a special discount shown as a carousel card; tap opens
+   the product. Admin creates/edits/orders/schedules/removes these cards from the dashboard (full control).
+5. ADMIN APP (separate app, same look) -- small rounds, web first, server-side admin check on EVERY request (requireAdmin), audit log:
+   a) shell + sign-in (admin only) + users list with block / restrict / ban / remove, verify (incl. experts)
+   b) products / listings / shops / companies, product ads
+   c) orders: order forms, approve/reject, status; payment system config (keys stay server-side, never shown back in full)
+   d) send notifications; posts + reports moderation; Connect management
+   e) support inbox (users' Help messages; reply from the panel) -- see 3
+   Never return passwords/tokens/secrets; private user fields (phone/email) only inside admin endpoints.
+- [ ] NEW REQUEST 2026-10-22: SEPARATE ADMIN APP (own app, same look/UI design as the main Farmers app, different functionality).
+      Two apps: (1) Farmers main app for everybody, (2) Farmers Admin app that controls the whole platform. Must include:
+      users (view/search, roles, verify, suspend/ban, delete), products + product listings (approve/reject/hide/edit/delete),
+      shops = different companies selling different products (approve companies/stores, suspend, per-company products),
+      orders (approve/reject, status, refunds/cancel), payment system setup (bKash etc. keys/config, payment records),
+      community posts/reports moderation, notifications/announcements, Connect (the "Connect" name/tab must be in it), app settings.
+      Starting point: existing AdminDashboardScreen + src/components/admin/* (orders/stores/listings/delivery tiles, 8 tabs)
+      and server/adminRoutes.ts. Plan: separate Expo entry/app (e.g. apps/admin or second app.json) sharing src/ components
+      and the same server; web first, user checks before any APK.
 - [ ] LAST (after user confirms everything is done): full source handoff zip + HANDOFF.md for another AI agent (what the app is,
       how to run server/web/APK, env keys needed, branches, what is done/pending). Not before.

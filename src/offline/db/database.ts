@@ -208,7 +208,12 @@ async function runMigrations(database: CalcDatabase): Promise<void> {
   // v2: which account a record belongs to, so sync only ever uploads to that account.
   const cols = await database.getAllAsync<{ name: string }>('PRAGMA table_info(calc_records)');
   if (!cols.some((c) => c.name === 'owner_user_id')) {
-    await database.execAsync('ALTER TABLE calc_records ADD COLUMN owner_user_id TEXT;');
+    try {
+      await database.execAsync('ALTER TABLE calc_records ADD COLUMN owner_user_id TEXT;');
+    } catch (e: any) {
+      // two screens can open the database at the same moment; the other one already added it
+      if (!/duplicate column/i.test(String(e?.message || e))) throw e;
+    }
   }
 }
 

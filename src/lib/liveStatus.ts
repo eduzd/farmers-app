@@ -28,14 +28,23 @@ export const useUnreadCounts = create<UnreadState>((set) => ({
 }));
 
 let unreadInflight: Promise<void> | null = null;
-/** Re-read both counts from the server. Called on a timer, and after anything is marked read. */
+let unreadAgain = false;
+/**
+ * Re-read both counts from the server. Called on a timer, and after anything is marked read.
+ * A call made while a read is already in flight runs once more afterwards, because that
+ * earlier read may have started before the server marked things read (it would bring back
+ * the old number and the badge would stay until the next timer).
+ */
 export function refreshUnreadCounts(): Promise<void> {
   const t = token();
   if (!t) {
     useUnreadCounts.getState().set({ notifications: 0, messages: 0 });
     return Promise.resolve();
   }
-  if (unreadInflight) return unreadInflight;
+  if (unreadInflight) {
+    unreadAgain = true;
+    return unreadInflight;
+  }
   unreadInflight = (async () => {
     const base = getApiUrl();
     const [n, m] = await Promise.all([
@@ -48,6 +57,10 @@ export function refreshUnreadCounts(): Promise<void> {
     useUnreadCounts.getState().set(patch);
   })().finally(() => {
     unreadInflight = null;
+    if (unreadAgain) {
+      unreadAgain = false;
+      refreshUnreadCounts();
+    }
   });
   return unreadInflight;
 }

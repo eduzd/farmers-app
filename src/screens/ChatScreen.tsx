@@ -43,6 +43,8 @@ import {
   clearReaction,
   sendText,
   sendVoice,
+  sendImage,
+  rememberLocalPhoto,
   fetchContact,
   newClientId,
   onLiveDm,
@@ -53,6 +55,9 @@ import {
 } from "@/lib/dmApi";
 import { useVoiceRecorder, type FinishedRecording } from "@/hooks/useVoiceRecorder";
 import { VoiceMessagePlayer, formatVoiceTime } from "@/components/VoiceMessagePlayer";
+import { ChatPhoto } from "@/components/ChatPhoto";
+import { PhotoViewer } from "@/components/PhotoViewer";
+import * as ImageManipulator from "expo-image-manipulator";
 
 import { useOptionalVoiceCall } from "@/contexts/VoiceCallContext";
 import { tr, useTr } from "@/lib/tr";
@@ -69,7 +74,10 @@ interface Message {
   durationMs?: number;
   mediaId?: string | null;
   localUri?: string; // my own recording, before/after upload
-  imageUri?: string;
+  imageUri?: string; // my own photo on this phone, before/after upload
+  photo?: { base64: string; mime: string; width?: number; height?: number }; // what gets uploaded
+  width?: number;
+  height?: number;
   replyTo?: { id: string; text: string; isMe: boolean };
   reactions?: string[];
   superReact?: boolean;
@@ -139,11 +147,13 @@ export default function ChatScreen() {
 
   const toMessage = (m: DmMessage): Message => ({
     id: m.id,
-    text: m.kind === "voice" ? "" : m.content,
+    text: m.kind === "voice" || m.kind === "image" ? "" : m.content,
     isMe: m.isMe,
     time: clock(m.createdAt),
-    type: m.kind === "voice" ? "voice" : "text",
+    type: m.kind === "voice" ? "voice" : m.kind === "image" ? "image" : "text",
     mediaId: m.mediaId,
+    width: m.width ?? undefined,
+    height: m.height ?? undefined,
     durationMs: m.durationMs ?? undefined,
     createdAt: m.createdAt,
     seen: !!m.readAt,
@@ -160,6 +170,7 @@ export default function ChatScreen() {
         const next = toMessage(m);
         // keep the local recording so my own voice message plays without a download
         if (old?.localUri) next.localUri = old.localUri;
+        if (old?.imageUri) next.imageUri = old.imageUri; // my photo shows from the phone, no download
         byId.set(m.id, old ? { ...old, ...next, reactions: old.reactions } : next);
       }
       return [...byId.values()].sort((a, b) => {
@@ -332,8 +343,11 @@ export default function ChatScreen() {
       const sent =
         msg.type === "voice"
           ? await sendVoice(otherIdRef.current, msg.localUri!, msg.durationMs || 0, msg.clientId!)
-          : await sendText(otherIdRef.current, msg.text, msg.clientId!);
+          : msg.type === "image"
+            ? await sendImage(otherIdRef.current, msg.photo!, msg.clientId!)
+            : await sendText(otherIdRef.current, msg.text, msg.clientId!);
       if (msg.type === "voice" && sent.mediaId && msg.localUri) rememberLocalVoice(sent.mediaId, msg.localUri);
+      if (msg.type === "image" && sent.mediaId && msg.imageUri) rememberLocalPhoto(sent.mediaId, msg.imageUri);
       // the server id is dm-<clientId>, the same id as the pending copy
       mergeServer([sent]);
     } catch (e: any) {
@@ -376,7 +390,7 @@ export default function ChatScreen() {
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setInputText("");
-    const replyTo = replyingTo ? { id: replyingTo.id, text: replyingTo.text || tr("Voice message"), isMe: replyingTo.isMe } : undefined;
+    const replyTo = replyingTo ? { id: replyingTo.id, text: replyingTo.text || (replyingTo.type === "image" ? tr("Photo") : tr("Voice message")), isMe: replyingTo.isMe } : undefined;
     setReplyingTo(null);
     queue({ text, type: "text", seen: false, replyTo });
   };
@@ -623,12 +637,12 @@ export default function ChatScreen() {
 
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ["images"],
-        allowsEditing: true,
-        quality: 0.8,
+        allowsEditing: false,
+        quality: 1,
       });
 
       if (!result.canceled && result.assets[0]) {
-        sendImageMessage(result.assets[0].uri);
+        sendImageMessage(result.assets[0].uri, result.assets[0].width, result.assets[0].height);
       }
     } catch (error) {
       console.error("Camera error:", error);
@@ -646,12 +660,12 @@ export default function ChatScreen() {
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
-        allowsEditing: true,
-        quality: 0.8,
+        allowsEditing: false,
+        quality: 1,
       });
 
       if (!result.canceled && result.assets[0]) {
-        sendImageMessage(result.assets[0].uri);
+        sendImageMessage(result.assets[0].uri, result.assets[0].width, result.assets[0].height);
       }
     } catch (error) {
       console.error("Gallery error:", error);
@@ -659,12 +673,43 @@ export default function ChatScreen() {
     }
   };
 
-  // Photos aren't uploaded to the server yet, so the other person would never see them.
-  // Say so instead of showing a photo that only exists on this phone.
-  const sendImageMessage = (_imageUri: string) => {
+  /**
+   * Send a photo: shrink it on the phone (longest side 1600px, JPEG) so it uploads fast on
+   * mobile data, show it at once as "Sending…", then upload it to the server so the other
+   * person gets it. A failed upload shows "Not sent · Tap to retry", like text.
+   */
+  const sendImageMessage = async (imageUri: string, w?: number, h?: number) => {
     setShowMediaMenu(false);
-    Alert.alert(tr("Photos"), tr("Sending photos in chat is coming soon. For now, send a text or a voice message."));
+    if (!isLive) {
+      Alert.alert(tr("Photo not sent"), blockedReason());
+      return;
+    }
+    try {
+      const longest = Math.max(w || 0, h || 0);
+      const resize = longest > 1600 ? [w! >= h! ? { resize: { width: 1600 } } : { resize: { height: 1600 } }] : [];
+      const out = await ImageManipulator.manipulateAsync(imageUri, resize as any, {
+        compress: 0.78,
+        format: ImageManipulator.SaveFormat.JPEG,
+        base64: true,
+      });
+      if (!out.base64) throw new Error("no image data");
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      queue({
+        text: "",
+        type: "image",
+        imageUri: out.uri,
+        width: out.width,
+        height: out.height,
+        photo: { base64: out.base64, mime: "image/jpeg", width: out.width, height: out.height },
+        seen: false,
+      });
+    } catch (e) {
+      console.error("Photo prepare error:", e);
+      Alert.alert(tr("Photo not sent"), tr("Couldn't open that photo. Please try another one."));
+    }
   };
+
+  const [viewerPhoto, setViewerPhoto] = useState<string | null>(null);
 
   const renderStatus = (item: Message, isLastInGroup: boolean) => {
     if (!item.isMe) return null;
@@ -755,7 +800,7 @@ export default function ChatScreen() {
       );
     }
 
-    if (item.type === "image" && item.imageUri) {
+    if (item.type === "image" && (item.imageUri || item.mediaId)) {
       return (
         <Pressable
           onPress={() => handleDoubleTap(item)}
@@ -777,14 +822,14 @@ export default function ChatScreen() {
             ) : null}
             <View style={[styles.messageContainer, item.isMe ? styles.myMessage : styles.theirMessage]}>
               <View style={[styles.bubbleWrapper, item.reactions && item.reactions.length > 0 && styles.bubbleWithReaction]}>
-                <Pressable style={styles.imageMessageBubble}>
-                  <Image
-                    source={{ uri: item.imageUri }}
-                    style={styles.messageImage}
-                    contentFit="cover"
-                    transition={200}
-                  />
-                </Pressable>
+                <ChatPhoto
+                  localUri={item.imageUri}
+                  mediaId={item.mediaId}
+                  width={item.width}
+                  height={item.height}
+                  onOpen={(uri) => setViewerPhoto(uri)}
+                  onLongPress={() => handleLongPress(item)}
+                />
                 {item.reactions && item.reactions.length > 0 ? (
                   <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                     {item.reactions.map((r, i) => (
@@ -1185,6 +1230,7 @@ export default function ChatScreen() {
         </View>
       ) : null}
 
+      <PhotoViewer images={viewerPhoto ? [viewerPhoto] : []} visible={!!viewerPhoto} onClose={() => setViewerPhoto(null)} />
       <Modal visible={showMediaMenu} transparent animationType="fade" onRequestClose={() => setShowMediaMenu(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowMediaMenu(false)}>
           <View style={[styles.mediaMenuContainer, { backgroundColor: theme.surface }]}>

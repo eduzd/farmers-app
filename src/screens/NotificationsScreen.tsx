@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { refreshUnreadCounts } from "@/lib/liveStatus";
+import { refreshUnreadCounts, useUnreadCounts } from "@/lib/liveStatus";
 import {
   View,
   StyleSheet,
@@ -27,9 +27,12 @@ import { useNotifications } from "@/contexts/NotificationContext";
 
 import { tr, useTr } from "@/lib/tr";
 import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
+import { fetchServerPost } from "@/lib/feedApi";
+import { useAuthStore } from "@/lib/authStore";
+import { useI18n } from "@/lib/i18n";
 interface Notification {
   id: string;
-  type: "like" | "comment" | "follow" | "mention" | "order" | "system" | "voice_room" | "badge" | "message" | "review" | "answer" | "rfq" | "price" | "reminder";
+  type: "like" | "comment" | "new_post" | "follow" | "mention" | "order" | "system" | "voice_room" | "badge" | "message" | "review" | "answer" | "rfq" | "price" | "reminder";
   title: string;
   message: string;
   userAvatar?: string;
@@ -48,6 +51,7 @@ const getNotificationIcon = (type: string): keyof typeof Feather.glyphMap => {
     like: "heart",
     comment: "message-circle",
     follow: "user-plus",
+    new_post: "edit-3",
     mention: "at-sign",
     order: "package",
     system: "bell",
@@ -68,6 +72,7 @@ const getNotificationColor = (type: string) => {
     like: "#DC2626",
     comment: "#2563EB",
     follow: "#2FA36B",
+    new_post: "#0E9F6E",
     mention: "#7C3AED",
     order: "#EA8A0C",
     system: "#475569",
@@ -201,6 +206,10 @@ export default function NotificationsScreen() {
       setLocalNotifications((prev) =>
         prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
       );
+      if (!notification.isRead) {
+        const u = useUnreadCounts.getState();
+        u.set({ notifications: Math.max(0, u.notifications - 1) });
+      }
       if (isLoggedIn()) apiPost("/api/me/notifications/read", { ids: [notification.id] }).then(() => refreshUnreadCounts()).catch(() => {});
       const d = notification.actionData || {};
       if (d.orderId) navigation.navigate("OrderDetail", { orderId: d.orderId });
@@ -210,6 +219,11 @@ export default function NotificationsScreen() {
       else if (d.questionId) navigation.navigate("ExpertQA");
       else if (d.diaryId) navigation.navigate("FarmDiary");
       else if (d.alertId) navigation.navigate("PriceAlert");
+      else if (d.postId)
+        // likes, comments and "someone you follow posted" open that post
+        fetchServerPost(String(d.postId), useI18n.getState().language === "bn", useAuthStore.getState().getToken())
+          .then((post) => navigation.navigate("PostDetail", { postId: post.id, post: post as any }))
+          .catch(() => {});
     }
   };
 
@@ -217,6 +231,7 @@ export default function NotificationsScreen() {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     markAllPushAsRead();
     setLocalNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    useUnreadCounts.getState().set({ notifications: 0 }); // the bell clears at once
     if (isLoggedIn()) apiPost("/api/me/notifications/read", { all: true }).then(() => refreshUnreadCounts()).catch(() => {});
   };
 

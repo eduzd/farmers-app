@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
   FlatList,
   Pressable,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -20,6 +21,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { PublicUser } from "@/lib/storage";
 
 import { tr, useTr } from "@/lib/tr";
+import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
 interface UserPost {
   id: string;
   content: string;
@@ -64,14 +66,48 @@ export default function UserProfileScreen() {
   const [posts, setPosts] = useState<UserPost[]>(SAMPLE_POSTS);
   const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set(SAMPLE_POSTS.filter(p => p.isLiked).map(p => p.id)));
 
+  // Real numbers from the server: followers, following, whether I follow them, and their about.
+  const [followingCount, setFollowingCount] = useState(user.followingCount || 0);
+  const [about, setAbout] = useState<{ bio: string; location: string }>({ bio: user.bio || "", location: user.location || "" });
+  useEffect(() => {
+    let alive = true;
+    apiGet<any>(`/api/follows/${encodeURIComponent(user.id)}`)
+      .then((f) => {
+        if (!alive || !f) return;
+        setFollowersCount(f.followerCount ?? 0);
+        setFollowingCount(f.followingCount ?? 0);
+        setIsFollowing(!!f.isFollowing);
+      })
+      .catch(() => {});
+    apiGet<any>(`/api/users/${encodeURIComponent(user.id)}/about`)
+      .then((a) => alive && a && setAbout({ bio: a.bio || "", location: a.location || "" }))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [user.id]);
+
   const handleFollow = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (isFollowing) {
-      setFollowersCount((prev) => prev - 1);
-    } else {
-      setFollowersCount((prev) => prev + 1);
+    if (!isLoggedIn()) {
+      Alert.alert(tr("Sign in"), tr("Please sign in to follow people."));
+      return;
     }
-    setIsFollowing(!isFollowing);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    const was = isFollowing;
+    setIsFollowing(!was);
+    setFollowersCount((prev) => Math.max(0, prev + (was ? -1 : 1)));
+    apiPost<{ following: boolean }>(`/api/follows/${encodeURIComponent(user.id)}`, {})
+      .then(() => apiGet<any>(`/api/follows/${encodeURIComponent(user.id)}`))
+      .then((f) => {
+        if (!f) return;
+        setFollowersCount(f.followerCount ?? 0);
+        setIsFollowing(!!f.isFollowing);
+      })
+      .catch((e) => {
+        setIsFollowing(was);
+        setFollowersCount((prev) => Math.max(0, prev + (was ? 1 : -1)));
+        Alert.alert(tr("Couldn't follow"), e?.message || tr("Please try again."));
+      });
   };
 
   const handleMessage = () => {
@@ -155,18 +191,18 @@ export default function UserProfileScreen() {
           </ThemedText>
         </View>
 
-        {user.location ? (
+        {about.location ? (
           <View style={styles.locationRow}>
             <Feather name="map-pin" size={14} color={theme.textSecondary} />
             <ThemedText style={[styles.locationText, { color: theme.textSecondary }]}>
-              {user.location}
+              {about.location}
             </ThemedText>
           </View>
         ) : null}
 
-        {user.bio ? (
+        {about.bio ? (
           <ThemedText style={[styles.bio, { color: theme.text }]}>
-            {user.bio}
+            {about.bio}
           </ThemedText>
         ) : null}
       </View>
@@ -206,7 +242,7 @@ export default function UserProfileScreen() {
           ]}
           onPress={handleFollowing}
         >
-          <ThemedText type="h4">{user.followingCount}</ThemedText>
+          <ThemedText type="h4">{followingCount}</ThemedText>
           <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
             {tr("ফলোয়িং")}
           </ThemedText>
