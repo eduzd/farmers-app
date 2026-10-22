@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -11,7 +11,9 @@ import {
 } from "react-native";
 import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated from "react-native-reanimated";
+import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
+import { ScrollSwapTitle } from "@/components/ScrollSwapTitle";
+import { MentionText, MentionPerson } from "@/components/MentionText";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -100,6 +102,23 @@ export default function PostDetailScreen() {
   const { post } = route.params;
 
   const flatListRef = useRef<FlatList>(null);
+
+  // Scroll past the author row and the header title "Post" slides away for the author's name.
+  const titleSwap = useSharedValue(0);
+  const nameShown = useRef(false);
+  const authorBottom = useRef(72);
+  useEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => <ScrollSwapTitle title={tr("Post")} swapTo={post.author.name} progress={titleSwap} />,
+    });
+  }, [navigation, post.author.name, tr("Post")]);
+  const onListScroll = (e: any) => {
+    const show = e.nativeEvent.contentOffset.y > authorBottom.current;
+    if (show !== nameShown.current) {
+      nameShown.current = show;
+      titleSwap.value = withTiming(show ? 1 : 0, { duration: 220 });
+    }
+  };
   // Shared posts: real comments from the server (the author is notified of each new one).
   const shared = !!post.shared || isSharedPostId(post.id);
   const getToken = useAuthStore((s) => s.getToken);
@@ -239,22 +258,40 @@ export default function PostDetailScreen() {
     }
   };
 
-  const handleAuthorPress = (author: { name: string; initials: string }) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  // Open the real profile of a post author, commenter or @mentioned person (no made-up numbers).
+  const handleAuthorPress = (author: MentionPerson) => {
+    if (!author.id) return; // an old comment without an account behind it
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     navigation.navigate("UserProfile", {
       user: {
-        id: `user-${author.name.replace(/\s+/g, "-").toLowerCase()}`,
+        id: author.id,
         name: author.name,
-        initials: author.initials,
+        initials: author.initials || author.name.charAt(0).toUpperCase(),
+        avatar: author.avatar,
         role: "farmer",
         verified: false,
-        followersCount: Math.floor(Math.random() * 500) + 50,
-        followingCount: Math.floor(Math.random() * 200) + 20,
-        location: "বাংলাদেশ",
-        bio: "একজন উদ্যমী কৃষক",
-      },
+        followersCount: 0,
+        followingCount: 0,
+        location: "",
+        bio: "",
+      } as any,
     });
   };
+
+  // Everyone in this thread who can be @mentioned: the post author and every commenter.
+  const mentionPeople = useMemo<MentionPerson[]>(() => {
+    const seen = new Map<string, MentionPerson>();
+    const add = (a: any) => {
+      if (a?.name && a?.id && !seen.has(a.name.toLowerCase())) seen.set(a.name.toLowerCase(), { id: a.id, name: a.name, initials: a.initials, avatar: a.avatar });
+    };
+    add(post.author);
+    for (const c of comments) {
+      add(c.author);
+      for (const r of c.replies || []) add(r.author);
+    }
+    return [...seen.values()];
+  }, [post.author, comments]);
+
 
   const handleCommentLike = (commentId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -381,9 +418,13 @@ export default function PostDetailScreen() {
                 {reply.author.name}
               </ThemedText>
             </Pressable>
-            <ThemedText style={[styles.replyText, { color: theme.text }]}>
-              {reply.content}
-            </ThemedText>
+            <MentionText
+              text={reply.content}
+              people={mentionPeople}
+              onPressPerson={handleAuthorPress}
+              mentionColor={theme.primary}
+              style={[styles.replyText, { color: theme.text }]}
+            />
           </View>
           <View style={styles.replyMeta}>
             <ThemedText style={[styles.replyTime, { color: theme.textSecondary }]}>
@@ -443,9 +484,13 @@ export default function PostDetailScreen() {
               {item.author.name}
             </ThemedText>
           </Pressable>
-          <ThemedText style={[styles.commentText, { color: theme.text }]}>
-            {item.content}
-          </ThemedText>
+          <MentionText
+            text={item.content}
+            people={mentionPeople}
+            onPressPerson={handleAuthorPress}
+            mentionColor={theme.primary}
+            style={[styles.commentText, { color: theme.text }]}
+          />
         </View>
         <View style={styles.commentMeta}>
           <ThemedText style={[styles.commentTime, { color: theme.textSecondary }]}>
@@ -487,7 +532,13 @@ export default function PostDetailScreen() {
 
   const renderHeader = () => (
     <View style={[styles.postContainer, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-      <View style={styles.postHeader}>
+      <View
+        style={styles.postHeader}
+        onLayout={(e) => {
+          const l = e.nativeEvent.layout;
+          authorBottom.current = Math.max(24, l.y + l.height); // once the author row has scrolled under the header
+        }}
+      >
         <Pressable 
           style={styles.authorPressable}
           onPress={() => handleAuthorPress(post.author)}
@@ -637,6 +688,8 @@ export default function PostDetailScreen() {
           { paddingTop: Spacing.md },
         ]}
         showsVerticalScrollIndicator={false}
+        onScroll={onListScroll}
+        scrollEventThrottle={16}
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
       />

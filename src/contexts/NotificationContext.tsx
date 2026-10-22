@@ -174,7 +174,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const name = String(data.userName || "Farmer");
         const initials = name.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").toUpperCase().slice(0, 2) || "F";
         navigateWhenReady("Chat", { conversationId: String(data.userId), userName: name, userInitials: initials });
-      } else if ((data.type === "like" || data.type === "comment") && data.postId) {
+      } else if ((data.type === "like" || data.type === "comment" || data.type === "new_post") && data.postId) {
         // A like or comment on your post opens that post.
         const token = useAuthStore.getState().getToken();
         fetchServerPost(String(data.postId), false, token)

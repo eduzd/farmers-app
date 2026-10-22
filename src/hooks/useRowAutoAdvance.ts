@@ -5,12 +5,12 @@ import type { TextInput } from "react-native";
  * Calculator rows: once both number fields of a row are filled, the cursor moves to the
  * first field of the next row by itself.
  *
- * It waits until the person stops typing for a moment (`delayMs`), so a number like "125"
- * can still be typed digit by digit. A value that ends in "." counts as unfinished.
+ * It waits only a blink (`delayMs`, 0.4 s; it was 1 s and felt slow) after the last key, so a
+ * number like "125" can still be typed digit by digit (with no pause at all it would jump after the "1"). A value that ends in "." counts as unfinished.
  * It only jumps into a row whose first field is still empty, so fixing an old row never
  * throws the cursor somewhere else. The keyboard's Next key jumps straight away.
  */
-export function useRowAutoAdvance(fieldsPerRow: number, delayMs = 1000) {
+export function useRowAutoAdvance(fieldsPerRow: number, delayMs = 400) {
   const refs = useRef<Record<string, TextInput | null>>({});
   const focused = useRef<{ row: number; col: number } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);

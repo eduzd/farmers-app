@@ -1,4 +1,5 @@
 import { registerDmRoutes } from "./dmRoutes";
+import { registerConnectRoutes } from "./connectRoutes";
 import { registerProfileRoutes } from "./profileRoutes";
 import { registerReactionRoutes } from "./reactionRoutes";
 import { initCalls, handleCallMessage, onCallClientAuthed, onCallClientGone, registerCallRoutes } from "./calls";
@@ -170,6 +171,7 @@ const demoProducts: Record<string, Array<{
 
 export async function registerRoutes(app: Express): Promise<Server> {
   registerDmRoutes(app, sendToUser);
+  registerConnectRoutes(app);
   registerCallRoutes(app);
   registerProfileRoutes(app);
   registerReactionRoutes(app, sendToUser);

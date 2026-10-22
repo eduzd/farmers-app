@@ -13,8 +13,11 @@ export interface DmMessage {
   senderId: string;
   recipientId: string;
   content: string;
-  kind: "text" | "voice";
+  kind: "text" | "voice" | "image";
   mediaId: string | null;
+  /** Photo size in pixels (photos only), so the bubble has the right shape before it loads. */
+  width?: number | null;
+  height?: number | null;
   durationMs: number | null;
   createdAt: string;
   readAt: string | null;
@@ -162,6 +165,74 @@ export async function sendVoice(otherId: string, recordingUri: string, durationM
     audio = await FileSystem.readAsStringAsync(recordingUri, { encoding: FileSystem.EncodingType.Base64 });
   }
   return request<DmMessage>("POST", `/api/dm/${enc(otherId)}/voice`, { audio, mime, durationMs: Math.round(durationMs), clientId }, VOICE_TIMEOUT_MS);
+}
+
+const PHOTO_TIMEOUT_MS = 90000;
+
+/**
+ * Send a photo. The picture is shrunk on the phone first (longest side 1600px, JPEG),
+ * so it uploads quickly on mobile data and the other person sees the whole photo.
+ */
+export async function sendImage(
+  otherId: string,
+  photo: { base64: string; mime: string; width?: number; height?: number },
+  clientId: string,
+): Promise<DmMessage> {
+  return request<DmMessage>(
+    "POST",
+    `/api/dm/${enc(otherId)}/image`,
+    { image: photo.base64, mime: photo.mime, width: photo.width, height: photo.height, clientId },
+    PHOTO_TIMEOUT_MS,
+  );
+}
+
+const photoUris = new Map<string, string>();
+
+/** Remember the photo I just sent, so it shows from the phone without downloading it again. */
+export function rememberLocalPhoto(mediaId: string, uri: string) {
+  if (mediaId && uri) photoUris.set(mediaId, uri);
+}
+
+/**
+ * Something an <Image> can show for a chat photo. The file needs the sign-in token
+ * (only the two people in the chat may see it), so it is downloaded once and reused.
+ */
+export async function photoDisplayUri(mediaId: string): Promise<string> {
+  const known = photoUris.get(mediaId);
+  if (known) return known;
+  const t = token();
+  if (!t) throw new DmError("Please sign in first", 401);
+  const src = url(`/api/dm/media/${enc(mediaId)}`);
+  if (Platform.OS === "web") {
+    const res = await fetch(src, { headers: { Authorization: `Bearer ${t}` } });
+    if (!res.ok) throw new DmError("Couldn't load the photo", res.status);
+    const objectUrl = URL.createObjectURL(await res.blob());
+    photoUris.set(mediaId, objectUrl);
+    return objectUrl;
+  }
+  const dir = `${FileSystem.cacheDirectory}chat-photos/`;
+  await FileSystem.makeDirectoryAsync(dir, { intermediates: true }).catch(() => {});
+  const safe = mediaId.replace(/[^A-Za-z0-9_-]/g, "");
+  for (const ext of ["jpg", "png", "webp", "gif", "heic"]) {
+    const p = `${dir}${safe}.${ext}`;
+    const info = await FileSystem.getInfoAsync(p);
+    if (info.exists && (info as any).size) {
+      photoUris.set(mediaId, p);
+      return p;
+    }
+  }
+  const tmp = `${dir}${safe}.part`;
+  const r = await FileSystem.downloadAsync(src, tmp, { headers: { Authorization: `Bearer ${t}` } });
+  if (r.status !== 200) {
+    await FileSystem.deleteAsync(tmp, { idempotent: true }).catch(() => {});
+    throw new DmError("Couldn't load the photo", r.status);
+  }
+  const type = String(r.mimeType || r.headers?.["Content-Type"] || r.headers?.["content-type"] || "image/jpeg").split(";")[0].trim();
+  const ext = ({ "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/heic": "heic", "image/heif": "heic" } as Record<string, string>)[type] || "jpg";
+  const target = `${dir}${safe}.${ext}`;
+  await FileSystem.moveAsync({ from: tmp, to: target });
+  photoUris.set(mediaId, target);
+  return target;
 }
 
 const playable = new Map<string, string>();

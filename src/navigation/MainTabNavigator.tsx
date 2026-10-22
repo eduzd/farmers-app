@@ -7,6 +7,7 @@ import { FontFamily } from "@/constants/theme";
 
 import CommunityScreen from "@/screens/CommunityScreen";
 import MarketScreen from "@/screens/MarketScreen";
+import ConnectScreen from "@/screens/ConnectScreen";
 import ChatListScreen from "@/screens/ChatListScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
 import { useTheme } from "@/hooks/useTheme";
@@ -20,6 +21,7 @@ import { useLiveStatus, useUnreadCounts } from "@/lib/liveStatus";
 
 export type MainTabParamList = {
   Community: undefined;
+  Connect: undefined;
   Market: undefined;
   Chats: undefined;
   Profile: undefined;
@@ -101,6 +103,15 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
+        name="Connect"
+        component={ConnectScreen}
+        options={{
+          title: t("nav.connect"),
+          headerTitle: t("nav.connect"),
+          tabBarIcon: renderIcon("users"),
+        }}
+      />
+      <Tab.Screen
         name="Market"
         component={MarketScreen}
         options={{
@@ -143,7 +154,7 @@ export default function MainTabNavigator() {
 
 const styles = StyleSheet.create({
   iconPill: {
-    width: 52,
+    width: 48,
     height: 30,
     borderRadius: 15,
     alignItems: "center",
@@ -151,6 +162,6 @@ const styles = StyleSheet.create({
   },
   tabBadge: {
     top: -5,
-    left: 29,
+    left: 27,
   },
 });

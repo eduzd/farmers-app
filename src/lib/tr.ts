@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { useI18n, Language } from "@/lib/i18n";
-import { BN_OF_EN } from "@/lib/trDict";
+import { BN_OF_EN as BASE_BN_OF_EN } from "@/lib/trDict";
+import { HEADER_BN_OF_EN } from "@/lib/trHeaders";
+
+// screen titles first, the main dictionary wins where both have a word
+const BN_OF_EN: Record<string, string> = { ...HEADER_BN_OF_EN, ...BASE_BN_OF_EN };
 
 /**
  * Phrase translation for text that used to be hard-coded in screens.

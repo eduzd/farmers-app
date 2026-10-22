@@ -53,7 +53,7 @@ export function ModuleCard({
       onLongPress={onLongPress}
       disabled={disabled}
     >
-      <View style={[styles.iconContainer, { backgroundColor: iconColor || colors.primary + '15' }]}>
+      <View style={[styles.iconContainer, { backgroundColor: (iconColor || colors.primary) + '1A' }]}>
         <Feather name={icon} size={24} color={iconColor || colors.primary} />
       </View>
       <View style={styles.content}>

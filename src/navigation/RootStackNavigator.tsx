@@ -1,3 +1,5 @@
+import { useI18n } from "@/lib/i18n";
+import { tr } from "@/lib/tr";
 import React from "react";
 import { ActivityIndicator, View, StyleSheet } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -313,6 +315,8 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootStackNavigator() {
+  // re-render every screen title when the language changes (Bangla <-> English)
+  useI18n((st) => st.language);
   const screenOptions = useScreenOptions();
   const { isAuthenticated, isLoading, onboardingComplete } = useAuthStore();
   const variant = getAppVariant();
@@ -397,7 +401,7 @@ export default function RootStackNavigator() {
             name="PostDetail"
             component={PostDetailScreen}
             options={{
-              headerTitle: "Post",
+              headerTitle: tr("Post"),
               headerBackTitle: "Back",
             }}
           />
@@ -414,7 +418,7 @@ export default function RootStackNavigator() {
             name="Rfq"
             component={RfqScreen}
             options={{
-              headerTitle: "RFQ",
+              headerTitle: tr("RFQ"),
               headerBackTitle: "Back",
             }}
           />
@@ -422,7 +426,7 @@ export default function RootStackNavigator() {
             name="Settings"
             component={SettingsScreen}
             options={{
-              headerTitle: "Settings",
+              headerTitle: tr("Settings"),
               headerBackTitle: "Back",
             }}
           />
@@ -437,7 +441,7 @@ export default function RootStackNavigator() {
             name="Cart"
             component={CartScreen}
             options={{
-              headerTitle: "My Cart",
+              headerTitle: tr("My Cart"),
               headerBackTitle: "Back",
             }}
           />
@@ -445,7 +449,7 @@ export default function RootStackNavigator() {
             name="Checkout"
             component={CheckoutScreen}
             options={{
-              headerTitle: "Checkout",
+              headerTitle: tr("Checkout"),
               headerBackTitle: "Cart",
               headerTransparent: false,
             }}
@@ -454,7 +458,7 @@ export default function RootStackNavigator() {
             name="Orders"
             component={OrdersScreen}
             options={{
-              headerTitle: "My Orders",
+              headerTitle: tr("My Orders"),
               headerBackTitle: "Back",
             }}
           />
@@ -462,7 +466,7 @@ export default function RootStackNavigator() {
             name="OrderDetail"
             component={OrderDetailScreen}
             options={{
-              headerTitle: "Order Details",
+              headerTitle: tr("Order Details"),
               headerBackTitle: "Orders",
             }}
           />
@@ -470,7 +474,7 @@ export default function RootStackNavigator() {
             name="Tools"
             component={ToolsScreen}
             options={{
-              headerTitle: "Tools",
+              headerTitle: tr("Tools"),
               headerBackTitle: "Back",
             }}
           />
@@ -478,7 +482,7 @@ export default function RootStackNavigator() {
             name="DiseaseDetector"
             component={DiseaseDetectorScreen}
             options={{
-              headerTitle: "Disease Detector",
+              headerTitle: tr("Disease Detector"),
               headerBackTitle: "Tools",
             }}
           />
@@ -486,7 +490,7 @@ export default function RootStackNavigator() {
             name="AIAssistant"
             component={AIAssistantScreen}
             options={{
-              headerTitle: "AI কৃষি সহায়ক",
+              headerTitle: tr("AI কৃষি সহায়ক"),
               headerBackTitle: "Tools",
             }}
           />
@@ -501,7 +505,7 @@ export default function RootStackNavigator() {
             name="Weather"
             component={WeatherScreen}
             options={{
-              headerTitle: "আবহাওয়া",
+              headerTitle: tr("আবহাওয়া"),
               headerBackTitle: "Tools",
             }}
           />
@@ -509,7 +513,7 @@ export default function RootStackNavigator() {
             name="FarmNotes"
             component={FarmNotesScreen}
             options={{
-              headerTitle: "ফার্ম নোটস",
+              headerTitle: tr("ফার্ম নোটস"),
               headerBackTitle: "Tools",
             }}
           />
@@ -517,7 +521,7 @@ export default function RootStackNavigator() {
             name="LandConverter"
             component={LandConverterScreen}
             options={{
-              headerTitle: "জমি পরিমাপ",
+              headerTitle: tr("জমি পরিমাপ"),
               headerBackTitle: "Tools",
             }}
           />
@@ -525,7 +529,7 @@ export default function RootStackNavigator() {
             name="FertilizerCalculator"
             component={FertilizerCalculatorScreen}
             options={{
-              headerTitle: "সার হিসাব",
+              headerTitle: tr("সার হিসাব"),
               headerBackTitle: "Tools",
             }}
           />
@@ -533,7 +537,7 @@ export default function RootStackNavigator() {
             name="CropCalendar"
             component={CropCalendarScreen}
             options={{
-              headerTitle: "ফসল ক্যালেন্ডার",
+              headerTitle: tr("ফসল ক্যালেন্ডার"),
               headerBackTitle: "Tools",
             }}
           />
@@ -541,7 +545,7 @@ export default function RootStackNavigator() {
             name="ProfitCalculator"
             component={ProfitCalculatorScreen}
             options={{
-              headerTitle: "লাভ-ক্ষতি হিসাব",
+              headerTitle: tr("লাভ-ক্ষতি হিসাব"),
               headerBackTitle: "Tools",
             }}
           />
@@ -549,7 +553,7 @@ export default function RootStackNavigator() {
             name="FeedCalculator"
             component={FeedCalculatorToolScreen}
             options={{
-              headerTitle: "খাদ্য হিসাব",
+              headerTitle: tr("খাদ্য হিসাব"),
               headerBackTitle: "Tools",
             }}
           />
@@ -557,7 +561,7 @@ export default function RootStackNavigator() {
             name="Experts"
             component={ExpertsScreen}
             options={{
-              headerTitle: "Experts",
+              headerTitle: tr("Experts"),
               headerBackTitle: "Back",
             }}
           />
@@ -573,7 +577,7 @@ export default function RootStackNavigator() {
             name="LikesList"
             component={LikesListScreen}
             options={{
-              headerTitle: "লাইক করেছেন",
+              headerTitle: tr("লাইক করেছেন"),
               headerBackTitle: "Back",
             }}
           />
@@ -581,7 +585,7 @@ export default function RootStackNavigator() {
             name="Followers"
             component={FollowersScreen}
             options={{
-              headerTitle: "ফলোয়ার্স",
+              headerTitle: tr("ফলোয়ার্স"),
               headerBackTitle: "Back",
             }}
           />
@@ -589,7 +593,7 @@ export default function RootStackNavigator() {
             name="Following"
             component={FollowingScreen}
             options={{
-              headerTitle: "ফলোয়িং",
+              headerTitle: tr("ফলোয়িং"),
               headerBackTitle: "Back",
             }}
           />
@@ -597,7 +601,7 @@ export default function RootStackNavigator() {
             name="Calculate"
             component={CalculateHomeScreen}
             options={{
-              headerTitle: "ক্যালকুলেট",
+              headerTitle: tr("ক্যালকুলেট"),
               headerBackTitle: "Back",
             }}
           />
@@ -605,7 +609,7 @@ export default function RootStackNavigator() {
             name="CalculateBepari"
             component={BepariCalculatorScreen}
             options={{
-              headerTitle: "ব্যাপারী ক্যালকুলেটর",
+              headerTitle: tr("ব্যাপারী ক্যালকুলেটর"),
               headerBackTitle: "Back",
             }}
           />
@@ -613,7 +617,7 @@ export default function RootStackNavigator() {
             name="CalculateArat"
             component={AratCalculatorScreen}
             options={{
-              headerTitle: "আড়ত ক্যালকুলেটর",
+              headerTitle: tr("আড়ত ক্যালকুলেটর"),
               headerBackTitle: "Back",
             }}
           />
@@ -621,7 +625,7 @@ export default function RootStackNavigator() {
             name="CalculateFeed"
             component={FeedCalculatorScreen}
             options={{
-              headerTitle: "খাদ্য ক্যালকুলেটর",
+              headerTitle: tr("খাদ্য ক্যালকুলেটর"),
               headerBackTitle: "Back",
             }}
           />
@@ -629,7 +633,7 @@ export default function RootStackNavigator() {
             name="CalculateLedger"
             component={LedgerScreen}
             options={{
-              headerTitle: "খাতা",
+              headerTitle: tr("খাতা"),
               headerBackTitle: "Back",
             }}
           />
@@ -637,7 +641,7 @@ export default function RootStackNavigator() {
             name="CalculateLedgerEntry"
             component={LedgerEntryScreen}
             options={{
-              headerTitle: "হিসাব এন্ট্রি",
+              headerTitle: tr("হিসাব এন্ট্রি"),
               headerBackTitle: "Back",
             }}
           />
@@ -645,7 +649,7 @@ export default function RootStackNavigator() {
             name="CalculateHistory"
             component={HistoryScreen}
             options={{
-              headerTitle: "ইতিহাস",
+              headerTitle: tr("ইতিহাস"),
               headerBackTitle: "Back",
             }}
           />
@@ -653,7 +657,7 @@ export default function RootStackNavigator() {
             name="CalculateMonthlySummary"
             component={MonthlySummaryScreen}
             options={{
-              headerTitle: "মাসিক সারাংশ",
+              headerTitle: tr("মাসিক সারাংশ"),
               headerBackTitle: "Back",
             }}
           />
@@ -661,7 +665,7 @@ export default function RootStackNavigator() {
             name="CalculateSettings"
             component={CalculateSettingsScreen}
             options={{
-              headerTitle: "সেটিংস",
+              headerTitle: tr("সেটিংস"),
               headerBackTitle: "Back",
             }}
           />
@@ -669,7 +673,7 @@ export default function RootStackNavigator() {
             name="CalculateRecordDetail"
             component={RecordDetailScreen}
             options={{
-              headerTitle: "হিসাব বিবরণ",
+              headerTitle: tr("হিসাব বিবরণ"),
               headerBackTitle: "Back",
             }}
           />
@@ -677,7 +681,7 @@ export default function RootStackNavigator() {
             name="CompanyDashboard"
             component={CompanyTabNavigator}
             options={{
-              headerTitle: "ভেন্ডর ড্যাশবোর্ড",
+              headerTitle: tr("ভেন্ডর ড্যাশবোর্ড"),
               headerBackTitle: "Back",
             }}
           />
@@ -692,7 +696,7 @@ export default function RootStackNavigator() {
             name="SmartFarming"
             component={SmartFarmingScreen}
             options={{
-              headerTitle: "স্মার্ট ফার্মিং",
+              headerTitle: tr("স্মার্ট ফার্মিং"),
               headerBackTitle: "Back",
             }}
           />
@@ -700,7 +704,7 @@ export default function RootStackNavigator() {
             name="WeatherForecast"
             component={WeatherForecastScreen}
             options={{
-              headerTitle: "আবহাওয়া পূর্বাভাস",
+              headerTitle: tr("আবহাওয়া পূর্বাভাস"),
               headerBackTitle: "Back",
             }}
           />
@@ -708,7 +712,7 @@ export default function RootStackNavigator() {
             name="MarketPrices"
             component={MarketPricesScreen}
             options={{
-              headerTitle: "বাজার দর",
+              headerTitle: tr("বাজার দর"),
               headerBackTitle: "Back",
             }}
           />
@@ -716,7 +720,7 @@ export default function RootStackNavigator() {
             name="FarmInventory"
             component={FarmInventoryScreen}
             options={{
-              headerTitle: "ইনভেন্টরি",
+              headerTitle: tr("ইনভেন্টরি"),
               headerBackTitle: "Back",
             }}
           />
@@ -724,7 +728,7 @@ export default function RootStackNavigator() {
             name="LivestockTracker"
             component={LivestockTrackerScreen}
             options={{
-              headerTitle: "পশু ট্র্যাকার",
+              headerTitle: tr("পশু ট্র্যাকার"),
               headerBackTitle: "Back",
             }}
           />
@@ -732,7 +736,7 @@ export default function RootStackNavigator() {
             name="ProductTraceability"
             component={ProductTraceabilityScreen}
             options={{
-              headerTitle: "পণ্য ট্রেসেবিলিটি",
+              headerTitle: tr("পণ্য ট্রেসেবিলিটি"),
               headerBackTitle: "Back",
             }}
           />
@@ -747,7 +751,7 @@ export default function RootStackNavigator() {
             name="ShopsHome"
             component={ShopsHomeScreen}
             options={{
-              headerTitle: "দোকান সমূহ",
+              headerTitle: tr("দোকান সমূহ"),
               headerBackTitle: "Back",
             }}
           />
@@ -762,7 +766,7 @@ export default function RootStackNavigator() {
             name="AddressManagement"
             component={AddressManagementScreen}
             options={{
-              headerTitle: "ঠিকানা ম্যানেজমেন্ট",
+              headerTitle: tr("ঠিকানা ম্যানেজমেন্ট"),
               headerBackTitle: "Back",
             }}
           />
@@ -770,7 +774,7 @@ export default function RootStackNavigator() {
             name="Polls"
             component={PollsScreen}
             options={{
-              headerTitle: "পোল ও সার্ভে",
+              headerTitle: tr("পোল ও সার্ভে"),
               headerBackTitle: "Back",
             }}
           />
@@ -778,7 +782,7 @@ export default function RootStackNavigator() {
             name="Groups"
             component={GroupsScreen}
             options={{
-              headerTitle: "গ্রুপ ও ফোরাম",
+              headerTitle: tr("গ্রুপ ও ফোরাম"),
               headerBackTitle: "Back",
             }}
           />
@@ -794,7 +798,7 @@ export default function RootStackNavigator() {
             name="Wishlist"
             component={WishlistScreen}
             options={{
-              headerTitle: "উইশলিস্ট",
+              headerTitle: tr("উইশলিস্ট"),
               headerBackTitle: "Back",
             }}
           />
@@ -802,7 +806,7 @@ export default function RootStackNavigator() {
             name="FlashSale"
             component={FlashSaleScreen}
             options={{
-              headerTitle: "ফ্ল্যাশ সেল",
+              headerTitle: tr("ফ্ল্যাশ সেল"),
               headerBackTitle: "Back",
             }}
           />
@@ -810,7 +814,7 @@ export default function RootStackNavigator() {
             name="Badges"
             component={BadgesScreen}
             options={{
-              headerTitle: "অ্যাচিভমেন্ট ব্যাজ",
+              headerTitle: tr("অ্যাচিভমেন্ট ব্যাজ"),
               headerBackTitle: "Back",
             }}
           />
@@ -818,7 +822,7 @@ export default function RootStackNavigator() {
             name="ExpertQA"
             component={ExpertQAScreen}
             options={{
-              headerTitle: "এক্সপার্ট Q&A",
+              headerTitle: tr("এক্সপার্ট Q&A"),
               headerBackTitle: "Back",
             }}
           />
@@ -826,7 +830,7 @@ export default function RootStackNavigator() {
             name="Wallet"
             component={WalletScreen}
             options={{
-              headerTitle: "ওয়ালেট",
+              headerTitle: tr("ওয়ালেট"),
               headerBackTitle: "Back",
             }}
           />
@@ -834,7 +838,7 @@ export default function RootStackNavigator() {
             name="MarketPrice"
             component={MarketPriceScreen}
             options={{
-              headerTitle: "বাজার দর",
+              headerTitle: tr("বাজার দর"),
               headerBackTitle: "Back",
             }}
           />
@@ -842,7 +846,7 @@ export default function RootStackNavigator() {
             name="ProductCompare"
             component={ProductCompareScreen}
             options={{
-              headerTitle: "পণ্য তুলনা",
+              headerTitle: tr("পণ্য তুলনা"),
               headerBackTitle: "Back",
             }}
           />
@@ -850,7 +854,7 @@ export default function RootStackNavigator() {
             name="Auction"
             component={AuctionScreen}
             options={{
-              headerTitle: "নিলাম",
+              headerTitle: tr("নিলাম"),
               headerBackTitle: "Back",
             }}
           />
@@ -858,7 +862,7 @@ export default function RootStackNavigator() {
             name="BulkOrder"
             component={BulkOrderScreen}
             options={{
-              headerTitle: "বাল্ক অর্ডার",
+              headerTitle: tr("বাল্ক অর্ডার"),
               headerBackTitle: "Back",
             }}
           />
@@ -866,7 +870,7 @@ export default function RootStackNavigator() {
             name="DailyTips"
             component={DailyTipsScreen}
             options={{
-              headerTitle: "দৈনিক টিপস",
+              headerTitle: tr("দৈনিক টিপস"),
               headerBackTitle: "Back",
             }}
           />
@@ -874,7 +878,7 @@ export default function RootStackNavigator() {
             name="NearbyFarmers"
             component={NearbyFarmersScreen}
             options={{
-              headerTitle: "কাছের কৃষক ও দোকান",
+              headerTitle: tr("কাছের কৃষক ও দোকান"),
               headerBackTitle: "Back",
             }}
           />
@@ -882,7 +886,7 @@ export default function RootStackNavigator() {
             name="DeliveryTracking"
             component={DeliveryTrackingScreen}
             options={{
-              headerTitle: "ডেলিভারি ট্র্যাকিং",
+              headerTitle: tr("ডেলিভারি ট্র্যাকিং"),
               headerBackTitle: "Back",
             }}
           />
@@ -890,7 +894,7 @@ export default function RootStackNavigator() {
             name="VideoCourses"
             component={VideoCoursesScreen}
             options={{
-              headerTitle: "ভিডিও কোর্স",
+              headerTitle: tr("ভিডিও কোর্স"),
               headerBackTitle: "Back",
             }}
           />
@@ -898,7 +902,7 @@ export default function RootStackNavigator() {
             name="Certification"
             component={CertificationScreen}
             options={{
-              headerTitle: "সার্টিফিকেশন",
+              headerTitle: tr("সার্টিফিকেশন"),
               headerBackTitle: "Back",
             }}
           />
@@ -906,7 +910,7 @@ export default function RootStackNavigator() {
             name="Inventory"
             component={InventoryScreen}
             options={{
-              headerTitle: "ইনভেন্টরি ম্যানেজমেন্ট",
+              headerTitle: tr("ইনভেন্টরি ম্যানেজমেন্ট"),
               headerBackTitle: "Back",
             }}
           />
@@ -914,7 +918,7 @@ export default function RootStackNavigator() {
             name="LoanCalculator"
             component={LoanCalculatorScreen}
             options={{
-              headerTitle: "ঋণ ক্যালকুলেটর",
+              headerTitle: tr("ঋণ ক্যালকুলেটর"),
               headerBackTitle: "Back",
             }}
           />
@@ -922,7 +926,7 @@ export default function RootStackNavigator() {
             name="EquipmentRental"
             component={EquipmentRentalScreen}
             options={{
-              headerTitle: "যন্ত্রপাতি ভাড়া",
+              headerTitle: tr("যন্ত্রপাতি ভাড়া"),
               headerBackTitle: "Back",
             }}
           />
@@ -930,7 +934,7 @@ export default function RootStackNavigator() {
             name="GovernmentSchemes"
             component={GovernmentSchemesScreen}
             options={{
-              headerTitle: "সরকারি প্রকল্প",
+              headerTitle: tr("সরকারি প্রকল্প"),
               headerBackTitle: "Back",
             }}
           />
@@ -938,7 +942,7 @@ export default function RootStackNavigator() {
             name="SuccessStories"
             component={SuccessStoriesScreen}
             options={{
-              headerTitle: "সফলতার গল্প",
+              headerTitle: tr("সফলতার গল্প"),
               headerBackTitle: "Back",
             }}
           />
@@ -946,7 +950,7 @@ export default function RootStackNavigator() {
             name="Podcasts"
             component={PodcastsScreen}
             options={{
-              headerTitle: "পডকাস্ট",
+              headerTitle: tr("পডকাস্ট"),
               headerBackTitle: "Back",
             }}
           />
@@ -954,7 +958,7 @@ export default function RootStackNavigator() {
             name="EventsCalendar"
             component={EventsCalendarScreen}
             options={{
-              headerTitle: "ইভেন্ট ক্যালেন্ডার",
+              headerTitle: tr("ইভেন্ট ক্যালেন্ডার"),
               headerBackTitle: "Back",
             }}
           />
@@ -962,7 +966,7 @@ export default function RootStackNavigator() {
             name="SoilTesting"
             component={SoilTestingScreen}
             options={{
-              headerTitle: "মাটি পরীক্ষা",
+              headerTitle: tr("মাটি পরীক্ষা"),
               headerBackTitle: "Back",
             }}
           />
@@ -970,7 +974,7 @@ export default function RootStackNavigator() {
             name="Transport"
             component={TransportScreen}
             options={{
-              headerTitle: "পরিবহন সেবা",
+              headerTitle: tr("পরিবহন সেবা"),
               headerBackTitle: "Back",
             }}
           />
@@ -978,7 +982,7 @@ export default function RootStackNavigator() {
             name="EmergencyServices"
             component={EmergencyServicesScreen}
             options={{
-              headerTitle: "জরুরি সেবা",
+              headerTitle: tr("জরুরি সেবা"),
               headerBackTitle: "Back",
             }}
           />
@@ -986,7 +990,7 @@ export default function RootStackNavigator() {
             name="InsuranceCalculator"
             component={InsuranceCalculatorScreen}
             options={{
-              headerTitle: "বীমা ক্যালকুলেটর",
+              headerTitle: tr("বীমা ক্যালকুলেটর"),
               headerBackTitle: "Back",
             }}
           />
@@ -994,7 +998,7 @@ export default function RootStackNavigator() {
             name="LaborHiring"
             component={LaborHiringScreen}
             options={{
-              headerTitle: "শ্রমিক নিয়োগ",
+              headerTitle: tr("শ্রমিক নিয়োগ"),
               headerBackTitle: "Back",
             }}
           />
@@ -1002,7 +1006,7 @@ export default function RootStackNavigator() {
             name="ColdStorage"
             component={ColdStorageScreen}
             options={{
-              headerTitle: "হিমাগার",
+              headerTitle: tr("হিমাগার"),
               headerBackTitle: "Back",
             }}
           />
@@ -1010,14 +1014,14 @@ export default function RootStackNavigator() {
             name="Cooperative"
             component={CooperativeScreen}
             options={{
-              headerTitle: "সমবায় সমিতি",
+              headerTitle: tr("সমবায় সমিতি"),
             }}
           />
           <Stack.Screen
             name="WelfareAssociation"
             component={WelfareAssociationScreen}
             options={{
-              headerTitle: "মৎস্য কল্যাণ সমিতি",
+              headerTitle: tr("মৎস্য কল্যাণ সমিতি"),
               headerBackTitle: "Back",
             }}
           />
@@ -1025,7 +1029,7 @@ export default function RootStackNavigator() {
             name="InternationalFishSummit"
             component={InternationalFishSummitScreen}
             options={{
-              headerTitle: "ইন্টারন্যাশনাল মৎস্য সামিট",
+              headerTitle: tr("ইন্টারন্যাশনাল মৎস্য সামিট"),
               headerBackTitle: "Back",
             }}
           />
@@ -1033,7 +1037,7 @@ export default function RootStackNavigator() {
             name="ApplicationsList"
             component={ApplicationsListScreen}
             options={{
-              headerTitle: "আবেদনসমূহ",
+              headerTitle: tr("আবেদনসমূহ"),
               headerBackTitle: "Back",
             }}
           />
@@ -1048,7 +1052,7 @@ export default function RootStackNavigator() {
             name="SeedFinder"
             component={SeedFinderScreen}
             options={{
-              headerTitle: "বীজ খুঁজুন",
+              headerTitle: tr("বীজ খুঁজুন"),
               headerBackTitle: "Back",
             }}
           />
@@ -1056,7 +1060,7 @@ export default function RootStackNavigator() {
             name="FarmDiary"
             component={FarmDiaryScreen}
             options={{
-              headerTitle: "খামার ডায়েরি",
+              headerTitle: tr("খামার ডায়েরি"),
               headerBackTitle: "Back",
             }}
           />
@@ -1064,7 +1068,7 @@ export default function RootStackNavigator() {
             name="VoiceRooms"
             component={VoiceRoomsScreen}
             options={{
-              headerTitle: "ভয়েস রুম",
+              headerTitle: tr("ভয়েস রুম"),
               headerBackTitle: "Back",
             }}
           />
@@ -1072,7 +1076,7 @@ export default function RootStackNavigator() {
             name="VoiceRoom"
             component={VoiceRoomScreen}
             options={{
-              headerTitle: "লাইভ রুম",
+              headerTitle: tr("লাইভ রুম"),
               headerBackTitle: "Back",
             }}
           />
@@ -1080,7 +1084,7 @@ export default function RootStackNavigator() {
             name="Stories"
             component={StoriesScreen}
             options={{
-              headerTitle: "স্টোরি",
+              headerTitle: tr("স্টোরি"),
               headerBackTitle: "Back",
             }}
           />
@@ -1088,7 +1092,7 @@ export default function RootStackNavigator() {
             name="Notifications"
             component={NotificationsScreen}
             options={{
-              headerTitle: "নোটিফিকেশন",
+              headerTitle: tr("নোটিফিকেশন"),
               headerBackTitle: "Back",
             }}
           />
@@ -1096,7 +1100,7 @@ export default function RootStackNavigator() {
             name="Leaderboard"
             component={LeaderboardScreen}
             options={{
-              headerTitle: "লিডারবোর্ড",
+              headerTitle: tr("লিডারবোর্ড"),
               headerBackTitle: "Back",
             }}
           />
@@ -1104,7 +1108,7 @@ export default function RootStackNavigator() {
             name="UserSearch"
             component={UserSearchScreen}
             options={{
-              headerTitle: "ব্যবহারকারী খুঁজুন",
+              headerTitle: tr("ব্যবহারকারী খুঁজুন"),
               headerBackTitle: "Back",
             }}
           />
@@ -1112,7 +1116,7 @@ export default function RootStackNavigator() {
             name="Announcements"
             component={AnnouncementsScreen}
             options={{
-              headerTitle: "ঘোষণা",
+              headerTitle: tr("ঘোষণা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1120,7 +1124,7 @@ export default function RootStackNavigator() {
             name="Rewards"
             component={RewardsScreen}
             options={{
-              headerTitle: "রিওয়ার্ড",
+              headerTitle: tr("রিওয়ার্ড"),
               headerBackTitle: "Back",
             }}
           />
@@ -1128,7 +1132,7 @@ export default function RootStackNavigator() {
             name="LiveStream"
             component={LiveStreamScreen}
             options={{
-              headerTitle: "লাইভ স্ট্রিম",
+              headerTitle: tr("লাইভ স্ট্রিম"),
               headerBackTitle: "Back",
             }}
           />
@@ -1136,7 +1140,7 @@ export default function RootStackNavigator() {
             name="Trending"
             component={TrendingScreen}
             options={{
-              headerTitle: "ট্রেন্ডিং",
+              headerTitle: tr("ট্রেন্ডিং"),
               headerBackTitle: "Back",
             }}
           />
@@ -1144,7 +1148,7 @@ export default function RootStackNavigator() {
             name="Challenges"
             component={ChallengesScreen}
             options={{
-              headerTitle: "চ্যালেঞ্জ",
+              headerTitle: tr("চ্যালেঞ্জ"),
               headerBackTitle: "Back",
             }}
           />
@@ -1152,7 +1156,7 @@ export default function RootStackNavigator() {
             name="SavedPosts"
             component={SavedPostsScreen}
             options={{
-              headerTitle: "সেভ করা",
+              headerTitle: tr("সেভ করা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1160,7 +1164,7 @@ export default function RootStackNavigator() {
             name="MyPosts"
             component={MyPostsScreen}
             options={{
-              headerTitle: "আমার পোস্ট",
+              headerTitle: tr("আমার পোস্ট"),
               headerBackTitle: "Back",
             }}
           />
@@ -1168,7 +1172,7 @@ export default function RootStackNavigator() {
             name="FeaturedFarmers"
             component={FeaturedFarmersScreen}
             options={{
-              headerTitle: "ফিচার্ড কৃষক",
+              headerTitle: tr("ফিচার্ড কৃষক"),
               headerBackTitle: "Back",
             }}
           />
@@ -1176,7 +1180,7 @@ export default function RootStackNavigator() {
             name="KnowledgeWiki"
             component={KnowledgeWikiScreen}
             options={{
-              headerTitle: "জ্ঞানভাণ্ডার",
+              headerTitle: tr("জ্ঞানভাণ্ডার"),
               headerBackTitle: "Back",
             }}
           />
@@ -1184,7 +1188,7 @@ export default function RootStackNavigator() {
             name="Mentorship"
             component={MentorshipScreen}
             options={{
-              headerTitle: "মেন্টরশিপ",
+              headerTitle: tr("মেন্টরশিপ"),
               headerBackTitle: "Back",
             }}
           />
@@ -1192,7 +1196,7 @@ export default function RootStackNavigator() {
             name="CommunityStats"
             component={CommunityStatsScreen}
             options={{
-              headerTitle: "কমিউনিটি স্ট্যাটস",
+              headerTitle: tr("কমিউনিটি স্ট্যাটস"),
               headerBackTitle: "Back",
             }}
           />
@@ -1200,7 +1204,7 @@ export default function RootStackNavigator() {
             name="DailyCheckIn"
             component={DailyCheckInScreen}
             options={{
-              headerTitle: "দৈনিক চেক-ইন",
+              headerTitle: tr("দৈনিক চেক-ইন"),
               headerBackTitle: "Back",
             }}
           />
@@ -1208,7 +1212,7 @@ export default function RootStackNavigator() {
             name="FarmTours"
             component={FarmToursScreen}
             options={{
-              headerTitle: "ফার্ম ট্যুর",
+              headerTitle: tr("ফার্ম ট্যুর"),
               headerBackTitle: "Back",
             }}
           />
@@ -1216,7 +1220,7 @@ export default function RootStackNavigator() {
             name="SkillExchange"
             component={SkillExchangeScreen}
             options={{
-              headerTitle: "দক্ষতা বিনিময়",
+              headerTitle: tr("দক্ষতা বিনিময়"),
               headerBackTitle: "Back",
             }}
           />
@@ -1224,7 +1228,7 @@ export default function RootStackNavigator() {
             name="HelpCenter"
             component={HelpCenterScreen}
             options={{
-              headerTitle: "সাহায্য কেন্দ্র",
+              headerTitle: tr("সাহায্য কেন্দ্র"),
               headerBackTitle: "Back",
             }}
           />
@@ -1232,7 +1236,7 @@ export default function RootStackNavigator() {
             name="CropEncyclopedia"
             component={CropEncyclopediaScreen}
             options={{
-              headerTitle: "ফসল বিশ্বকোষ",
+              headerTitle: tr("ফসল বিশ্বকোষ"),
               headerBackTitle: "Back",
             }}
           />
@@ -1240,7 +1244,7 @@ export default function RootStackNavigator() {
             name="ActivityFeed"
             component={ActivityFeedScreen}
             options={{
-              headerTitle: "অ্যাক্টিভিটি",
+              headerTitle: tr("অ্যাক্টিভিটি"),
               headerBackTitle: "Back",
             }}
           />
@@ -1248,7 +1252,7 @@ export default function RootStackNavigator() {
             name="Services"
             component={ServicesScreen}
             options={{
-              headerTitle: "সেবা সমূহ",
+              headerTitle: tr("সেবা সমূহ"),
               headerBackTitle: "Back",
             }}
           />
@@ -1256,7 +1260,7 @@ export default function RootStackNavigator() {
             name="QRScanner"
             component={QRScannerScreen}
             options={{
-              headerTitle: "QR স্ক্যানার",
+              headerTitle: tr("QR স্ক্যানার"),
               headerBackTitle: "Back",
             }}
           />
@@ -1264,7 +1268,7 @@ export default function RootStackNavigator() {
             name="FarmAnalytics"
             component={FarmAnalyticsScreen}
             options={{
-              headerTitle: "ফার্ম অ্যানালিটিক্স",
+              headerTitle: tr("ফার্ম অ্যানালিটিক্স"),
               headerBackTitle: "Back",
             }}
           />
@@ -1272,7 +1276,7 @@ export default function RootStackNavigator() {
             name="Veterinary"
             component={VeterinaryScreen}
             options={{
-              headerTitle: "পশু চিকিৎসা",
+              headerTitle: tr("পশু চিকিৎসা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1280,7 +1284,7 @@ export default function RootStackNavigator() {
             name="ContractFarming"
             component={ContractFarmingScreen}
             options={{
-              headerTitle: "চুক্তিভিত্তিক চাষ",
+              headerTitle: tr("চুক্তিভিত্তিক চাষ"),
               headerBackTitle: "Back",
             }}
           />
@@ -1288,7 +1292,7 @@ export default function RootStackNavigator() {
             name="AgriNews"
             component={AgriNewsScreen}
             options={{
-              headerTitle: "কৃষি সংবাদ",
+              headerTitle: tr("কৃষি সংবাদ"),
               headerBackTitle: "Back",
             }}
           />
@@ -1296,7 +1300,7 @@ export default function RootStackNavigator() {
             name="PriceAlert"
             component={PriceAlertScreen}
             options={{
-              headerTitle: "মূল্য সতর্কতা",
+              headerTitle: tr("মূল্য সতর্কতা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1304,7 +1308,7 @@ export default function RootStackNavigator() {
             name="RecipeFinder"
             component={RecipeFinderScreen}
             options={{
-              headerTitle: "রেসিপি খুঁজুন",
+              headerTitle: tr("রেসিপি খুঁজুন"),
               headerBackTitle: "Back",
             }}
           />
@@ -1312,7 +1316,7 @@ export default function RootStackNavigator() {
             name="Warehouse"
             component={WarehouseScreen}
             options={{
-              headerTitle: "গুদাম খুঁজুন",
+              headerTitle: tr("গুদাম খুঁজুন"),
               headerBackTitle: "Back",
             }}
           />
@@ -1320,7 +1324,7 @@ export default function RootStackNavigator() {
             name="QualityTesting"
             component={QualityTestingScreen}
             options={{
-              headerTitle: "গুণমান পরীক্ষা",
+              headerTitle: tr("গুণমান পরীক্ষা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1328,7 +1332,7 @@ export default function RootStackNavigator() {
             name="MedicalServices"
             component={MedicalServicesScreen}
             options={{
-              headerTitle: "স্বাস্থ্য সেবা",
+              headerTitle: tr("স্বাস্থ্য সেবা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1336,7 +1340,7 @@ export default function RootStackNavigator() {
             name="LandServices"
             component={LandServicesScreen}
             options={{
-              headerTitle: "ভূমি সেবা",
+              headerTitle: tr("ভূমি সেবা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1344,7 +1348,7 @@ export default function RootStackNavigator() {
             name="WasteManagement"
             component={WasteManagementScreen}
             options={{
-              headerTitle: "বর্জ্য ব্যবস্থাপনা",
+              headerTitle: tr("বর্জ্য ব্যবস্থাপনা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1352,7 +1356,7 @@ export default function RootStackNavigator() {
             name="WaterServices"
             component={WaterServicesScreen}
             options={{
-              headerTitle: "পানি সেবা",
+              headerTitle: tr("পানি সেবা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1360,7 +1364,7 @@ export default function RootStackNavigator() {
             name="ElectricityServices"
             component={ElectricityServicesScreen}
             options={{
-              headerTitle: "বিদ্যুৎ সেবা",
+              headerTitle: tr("বিদ্যুৎ সেবা"),
               headerBackTitle: "Back",
             }}
           />
@@ -1368,7 +1372,7 @@ export default function RootStackNavigator() {
             name="FishEncyclopedia"
             component={FishEncyclopediaScreen}
             options={{
-              headerTitle: "মাছ চাষ",
+              headerTitle: tr("মাছ চাষ"),
               headerBackTitle: "Back",
             }}
           />
@@ -1376,7 +1380,7 @@ export default function RootStackNavigator() {
             name="FishDetail"
             component={FishDetailScreen}
             options={{
-              headerTitle: "মাছের বিবরণ",
+              headerTitle: tr("মাছের বিবরণ"),
               headerBackTitle: "Back",
             }}
           />
