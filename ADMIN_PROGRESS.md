@@ -46,3 +46,16 @@ Plan:
   no API errors, no sideways page scroll. More items all open (Users, moderation, notify, delivery; classic Control Tower for
   posts/reports, content, analytics, settings, logs). Order detail opens. No-token /api/admin/manage/* = 401.
 - Not done: no global search bar across admin (per-tab search only); carousel ads not admin-managed; admin APK not built (user: wait).
+
+## 2026-10-22: hisendrag@gmail.com made admin on live DB
+- Existing account (id d8befc8d..., created 2026-10-21) set is_super_admin=true via PUT /api/admin/manage/users/:id (signed in as admin@farmers.app). No other fields changed. Verified: GET user shows isSuperAdmin true; admins filter lists hisendrag@gmail.com + admin@farmers.app. requireAdmin reads the flag from DB on every request; /api/auth/me refreshes it on app load.
+
+## Round: admin redesign + moderation + official page (task started 2026-10-22 10:01, branch admin-redesign in /home/sprite/farmers-adminfix, from main 7de207a)
+ a. [x] server: restrictions (users.restrictions jsonb, banned_until, deleted_at) enforced in platformGuard (code RESTRICTED: message/post/comment/sell/buy)
+ b. [x] server/moderationRoutes.ts: moderation GET/PUT restrictions, ban(days)/unban, remove-content, DELETE user (confirm username/email; anonymise shell if FKs), official page (/api/official/*, admin /official), carousel ads (/api/ads + admin CRUD), admin /search
+ c. [x] admin support photo reply POST /support/threads/:id/photo
+ d. [x] profile share button = post share (Feather upload, 44 round)
+ e. [ ] tests for b (extend tests/check-admin-app.mjs or new tests/check-moderation.mjs)
+ f. [ ] admin UI redesign (theme fonts, tab bar like main app, CustomSwitch + radio rows like Checkout), user moderation sheet, Official composer, Ads manager, global search, product form (unit radio, options)
+ g. [ ] main app: Farmers Official pinned in Chats + OfficialChatScreen, ads from /api/ads in Connect, RESTRICTED messages shown
+ h. [ ] web export, commit, push main, Render check

@@ -584,6 +584,32 @@ export function registerAdminAppRoutes(app: Express) {
     res.status(201).json({ message: msgOut(m) });
   }));
 
+  // Admin replies with a photo, the same way users send them (stored in the conversation, opened only by its user or an admin).
+  app.post(`${A}/support/threads/:id/photo`, requireAdmin, w(async (req, res) => {
+    const t = await threadRow(req.params.id);
+    if (!t) return res.status(404).json({ error: "Conversation not found" });
+    const { b64, mime, ok, size } = decodeUpload(req.body?.image, req.body?.mime, "image/jpeg");
+    if (!ok) return res.status(400).json({ error: "The photo is missing or damaged" });
+    if (!IMAGE_MIME.has(mime)) return res.status(400).json({ error: "That photo format isn't supported" });
+    if (size < 100 || !looksLikeImage(b64, mime)) return res.status(400).json({ error: "That file isn't a photo" });
+    if (size > MAX_IMAGE_BYTES) return res.status(413).json({ error: "The photo is too large (10 MB max)" });
+    const width = Math.max(0, Math.min(20000, Math.round(Number(req.body?.width) || 0)));
+    const height = Math.max(0, Math.min(20000, Math.round(Number(req.body?.height) || 0)));
+    const uid = (req as any).uid;
+    const mediaId = `sp-${Date.now()}-${crypto.randomBytes(8).toString("hex")}`;
+    await db.execute(sql`INSERT INTO support_media (id, thread_id, sender_id, mime, size, data)
+      VALUES (${mediaId}, ${t.id}, ${uid}, ${mime}, ${size}, decode(${b64}, 'base64'))`);
+    const mid = `sm-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+    await db.execute(sql`INSERT INTO support_messages (id, thread_id, sender_id, from_admin, body, kind, media_id, width, height)
+      VALUES (${mid}, ${t.id}, ${uid}, true, ${PHOTO_LABEL}, 'image', ${mediaId}, ${width || null}, ${height || null})`);
+    await db.execute(sql`UPDATE support_threads SET last_message = ${PHOTO_LABEL}, last_from_admin = true, user_unread = user_unread + 1,
+      admin_unread = 0, last_message_at = now(), status = 'open' WHERE id = ${t.id}`);
+    await notify(t.user_id, "support", "Farmers Support replied", PHOTO_LABEL, { screen: "Support", supportThreadId: t.id });
+    await audit(req, "SUPPORT_REPLY", "support", t.id, { kind: "image" });
+    const m = rows(await db.execute(sql`SELECT m.*, u.name AS sender_name FROM support_messages m LEFT JOIN users u ON u.id = m.sender_id WHERE m.id = ${mid}`))[0];
+    res.status(201).json({ message: msgOut(m) });
+  }));
+
   app.put(`${A}/support/threads/:id`, requireAdmin, w(async (req, res) => {
     const t = await threadRow(req.params.id);
     if (!t) return res.status(404).json({ error: "Conversation not found" });

@@ -42,6 +42,9 @@ export function ensurePlatform() {
       const q = (s: any) => db.execute(s);
       await q(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS banned boolean NOT NULL DEFAULT false`);
       await q(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_reason text`);
+      await q(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_until timestamp`);
+      await q(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS restrictions jsonb`);
+      await q(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_at timestamp`);
       await q(sql`CREATE TABLE IF NOT EXISTS catalog_items (
         id varchar PRIMARY KEY, kind varchar NOT NULL, data jsonb NOT NULL, owner_id varchar,
         created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now())`);
@@ -76,9 +79,66 @@ function tokenUid(req: Request): string | null {
 
 async function account(uid: string | null) {
   if (!uid) return null;
-  const r = rows(await db.execute(sql`SELECT id, email, name, username, is_super_admin, banned FROM users WHERE id = ${uid} LIMIT 1`));
-  return r[0] || null;
+  const r = rows(await db.execute(sql`SELECT id, email, name, username, is_super_admin, banned, banned_until, restrictions, deleted_at FROM users WHERE id = ${uid} LIMIT 1`));
+  const u = r[0] || null;
+  // A time-limited ban ends by itself.
+  if (u?.banned && u.banned_until && new Date(iso(u.banned_until) as string).getTime() <= Date.now()) {
+    await db.execute(sql`UPDATE users SET banned = false, banned_reason = null, banned_until = null WHERE id = ${u.id}`);
+    u.banned = false;
+  }
+  if (u?.deleted_at) u.banned = true;
+  return u;
 }
+
+// ---------- moderation restrictions ----------
+export const RESTRICTION_KEYS = ["message", "post", "comment", "sell", "buy"] as const;
+export type Restrictions = { message?: boolean; post?: boolean; comment?: boolean; sell?: boolean; buy?: boolean; until?: string | null; reason?: string };
+
+/** The restrictions that are switched on right now (an expired "until" switches them all off). */
+export function activeRestrictions(raw: any): Restrictions {
+  const r = (typeof raw === "string" ? JSON.parse(raw || "{}") : raw) || {};
+  if (r.until && new Date(r.until).getTime() <= Date.now()) return {};
+  const out: Restrictions = {};
+  for (const k of RESTRICTION_KEYS) if (r[k]) out[k] = true;
+  if (Object.keys(out).length) {
+    out.until = r.until || null;
+    out.reason = r.reason || "";
+  }
+  return out;
+}
+
+export function cleanRestrictions(b: any): Restrictions {
+  const out: Restrictions = {};
+  for (const k of RESTRICTION_KEYS) if (b?.[k]) out[k] = true;
+  const days = Number(b?.days);
+  if (b?.until) {
+    const t = new Date(b.until).getTime();
+    if (t > Date.now()) out.until = new Date(t).toISOString();
+  } else if (days > 0) out.until = new Date(Date.now() + Math.min(days, 3650) * 86400000).toISOString();
+  else out.until = null;
+  out.reason = str(b?.reason, 300);
+  return out;
+}
+
+/** Which restriction a write request needs to be free of (null = not a restricted action). */
+export function restrictionFor(method: string, p: string): keyof Restrictions | null {
+  if (method === "GET" || method === "HEAD" || method === "OPTIONS") return null;
+  if (method === "DELETE") return null; // people can always remove their own things
+  if (/^\/api\/dm\/[^/]+\/(messages|image|voice)$/.test(p) || p === "/api/dm/reactions" || /^\/api\/dm\/messages\/[^/]+\/reaction$/.test(p)) return "message";
+  if (/^\/api\/posts\/[^/]+\/comments$/.test(p) || /^\/api\/community\/questions\/[^/]+\/answers$/.test(p) || /^\/api\/reviews\/[^/]+$/.test(p) || /^\/api\/community\/rfqs\/[^/]+\/bids$/.test(p)) return "comment";
+  if (p === "/api/posts" || (method === "PATCH" && /^\/api\/posts\/[^/]+$/.test(p)) || /^\/api\/community\/(polls|questions|rfqs|diary)(\/[^/]+)?$/.test(p)) return "post";
+  if (/^\/api\/seller\/(products|register|store)(\/[^/]+)?$/.test(p) || /^\/api\/catalog\/listings(\/[^/]+)?$/.test(p)) return "sell";
+  if (p === "/api/shop-orders" || /^\/api\/bkash\//.test(p)) return "buy";
+  return null;
+}
+
+const RESTRICTION_MSG: Record<string, string> = {
+  message: "The admin has stopped your account from sending messages for now.",
+  post: "The admin has stopped your account from posting in the community for now.",
+  comment: "The admin has stopped your account from commenting for now.",
+  sell: "The admin has stopped your account from selling for now.",
+  buy: "The admin has stopped your account from placing orders for now.",
+};
 
 export const wrap = (fn: (req: Request, res: Response) => Promise<any>) => (req: Request, res: Response) => {
   ensurePlatform()
@@ -160,14 +220,26 @@ export function platformGuard(req: Request, res: Response, next: NextFunction) {
     await ensurePlatform();
     const uid = tokenUid(req);
     const me = await account(uid);
+    if (uid && !me) {
+      // The account behind this sign-in was deleted.
+      return res.status(401).json({ error: "This account no longer exists.", code: "NO_ACCOUNT" });
+    }
     if (me?.banned) {
       return res.status(403).json({ error: "Your account has been suspended by the admin.", code: "BANNED" });
     }
     if (req.method === "POST" && /^\/api\/auth\/login$/.test(p) && req.body?.email) {
-      const r = rows(await db.execute(sql`SELECT banned FROM users WHERE lower(email) = lower(${String(req.body.email)}) LIMIT 1`));
-      if (r[0]?.banned) return res.status(403).json({ error: "Your account has been suspended by the admin.", code: "BANNED" });
+      const r = rows(await db.execute(sql`SELECT id FROM users WHERE lower(email) = lower(${String(req.body.email)}) LIMIT 1`));
+      const who = r[0] ? await account(r[0].id) : null;
+      if (who?.banned) return res.status(403).json({ error: "Your account has been suspended by the admin.", code: "BANNED" });
     }
     const isAdmin = !!me?.is_super_admin;
+    if (!isAdmin && me?.restrictions) {
+      const need = restrictionFor(req.method, p);
+      const act = activeRestrictions(me.restrictions);
+      if (need && (act as any)[need]) {
+        return res.status(403).json({ error: RESTRICTION_MSG[need as string], code: "RESTRICTED", restriction: need, until: act.until || null, reason: act.reason || "" });
+      }
+    }
     if (!isAdmin) {
       const s = await appSettings();
       if (s.maintenanceMode && !p.startsWith("/api/auth/") && !p.startsWith("/api/admin/")) {
@@ -392,12 +464,12 @@ export function registerPlatformRoutes(app: Express) {
 
   const listUsers = async (q: string, filter: string) => {
     const like = `%${q.toLowerCase()}%`;
-    const r = rows(await db.execute(sql`SELECT u.id, u.username, u.email, u.name, u.phone, u.role, u.verified, u.is_super_admin, u.banned, u.banned_reason, u.created_at,
+    const r = rows(await db.execute(sql`SELECT u.id, u.username, u.email, u.name, u.phone, u.role, u.verified, u.is_super_admin, u.banned, u.banned_reason, u.banned_until, u.restrictions, u.avatar, u.created_at,
         s.id AS store_id, s.name AS store_name, s.status AS store_status,
         (SELECT count(*)::int FROM shop_orders o WHERE o.user_id = u.id) AS orders,
         (SELECT coalesce(sum(o.total),0)::float FROM shop_orders o WHERE o.user_id = u.id AND o.status <> 'cancelled') AS spent
       FROM users u LEFT JOIN stores s ON s.owner_id = u.id
-      WHERE (${q} = '' OR lower(coalesce(u.name,'')) LIKE ${like} OR lower(coalesce(u.email,'')) LIKE ${like} OR lower(u.username) LIKE ${like} OR coalesce(u.phone,'') LIKE ${like})
+      WHERE u.deleted_at IS NULL AND (${q} = '' OR lower(coalesce(u.name,'')) LIKE ${like} OR lower(coalesce(u.email,'')) LIKE ${like} OR lower(u.username) LIKE ${like} OR coalesce(u.phone,'') LIKE ${like})
       ORDER BY u.created_at DESC LIMIT 300`));
     return r
       .map((u: any) => ({
@@ -411,14 +483,18 @@ export function registerPlatformRoutes(app: Express) {
         isSuperAdmin: !!u.is_super_admin,
         banned: !!u.banned,
         bannedReason: u.banned_reason || "",
-        status: u.banned ? "banned" : "active",
+        bannedUntil: u.banned_until ? iso(u.banned_until) : null,
+        restrictions: activeRestrictions(u.restrictions),
+        restricted: RESTRICTION_KEYS.some((k) => (activeRestrictions(u.restrictions) as any)[k]),
+        avatar: u.avatar || "",
+        status: u.banned ? "banned" : RESTRICTION_KEYS.some((k) => (activeRestrictions(u.restrictions) as any)[k]) ? "restricted" : "active",
         store: u.store_id ? { id: u.store_id, name: u.store_name, status: u.store_status } : null,
         orders: Number(u.orders || 0),
         spent: Number(u.spent || 0),
         createdAt: iso(u.created_at),
       }))
       .filter((u: any) =>
-        filter === "banned" ? u.banned : filter === "admins" ? u.isSuperAdmin : filter === "sellers" ? !!u.store : filter === "buyers" ? u.orders > 0 : true,
+        filter === "banned" ? u.banned : filter === "restricted" ? u.restricted : filter === "admins" ? u.isSuperAdmin : filter === "sellers" ? !!u.store : filter === "buyers" ? u.orders > 0 : true,
       );
   };
 
@@ -452,8 +528,8 @@ export function registerPlatformRoutes(app: Express) {
       if (r.status !== "cancelled") revenue += Number(r.v);
     }
     res.json({
-      users: await one(sql`SELECT count(*)::int AS n FROM users`),
-      banned: await one(sql`SELECT count(*)::int AS n FROM users WHERE banned`),
+      users: await one(sql`SELECT count(*)::int AS n FROM users WHERE deleted_at IS NULL`),
+      banned: await one(sql`SELECT count(*)::int AS n FROM users WHERE banned AND deleted_at IS NULL`),
       admins: await one(sql`SELECT count(*)::int AS n FROM users WHERE is_super_admin`),
       stores: await one(sql`SELECT count(*)::int AS n FROM stores`),
       suspendedStores: await one(sql`SELECT count(*)::int AS n FROM stores WHERE status <> 'active'`),

@@ -179,10 +179,12 @@ export default function ProfileScreen() {
       headerRight: () =>
         user ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginRight: Spacing.lg }}>
-            <IconButton
-              icon="share-2"
-              size={38}
+            {/* Same share button as on posts: the round "upload" icon button, no label. */}
+            <Pressable
+              testID="profile-share-button"
+              accessibilityRole="button"
               accessibilityLabel={isBnHeader ? "প্রোফাইল শেয়ার করুন" : "Share profile"}
+              hitSlop={4}
               onPress={() =>
                 shareText(
                   user.name || "Farmers",
@@ -191,7 +193,10 @@ export default function ProfileScreen() {
                     : `Find ${user.name}${user.username ? ` (@${user.username})` : ""} on Farmers`,
                 )
               }
-            />
+              style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? theme.backgroundSecondary : "transparent" })}
+            >
+              <Feather name="upload" size={18} color={theme.textSecondary} />
+            </Pressable>
             <View testID="profile-edit-button">
               <IconButton
                 icon="edit-2"
@@ -203,7 +208,7 @@ export default function ProfileScreen() {
           </View>
         ) : null,
     } as any);
-  }, [navigation, user?.id, user?.name, user?.username, isBnHeader]);
+  }, [navigation, user?.id, user?.name, user?.username, isBnHeader, theme]);
 
   const handleMenuPress = (item: typeof MENU_ITEMS[0]) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

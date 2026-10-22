@@ -5,6 +5,7 @@ import { registerPushRoutes } from "./push";
 import { registerCheckoutRoutes } from "./checkoutRoutes";
 import { registerPlatformRoutes, platformGuard } from "./platformRoutes";
 import { registerAdminAppRoutes } from "./adminAppRoutes";
+import { registerModerationRoutes } from "./moderationRoutes";
 import { config } from "./config";
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
@@ -134,6 +135,7 @@ function setupErrorHandler(app: express.Application) {
 
   registerPlatformRoutes(app);
   registerAdminAppRoutes(app);
+  registerModerationRoutes(app);
   registerCatalogRoutes(app);
   registerFeatureRoutes(app);
   registerPushRoutes(app);
