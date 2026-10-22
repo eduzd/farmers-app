@@ -260,9 +260,9 @@ const { PGlite } = require('@electric-sql/pglite');
                                 await row.click()
                                 await pg.wait_for_timeout(2000)
                                 r["thread_text"] = (await pg.evaluate("()=>document.body.innerText"))[:400]
-                                inp = pg.locator('[data-testid="reply-input"]')
+                                inp = pg.locator('[data-testid="reply-input"], [data-testid="support-input"]').first
                                 await inp.fill("We're checking your order now. Sorry for the wait.")
-                                send = pg.locator('[data-testid="thread-send"], [data-testid="reply-send"]')
+                                send = pg.locator('[data-testid="thread-send"], [data-testid="reply-send"], [data-testid="support-send"]').first
                                 r["send_btn"] = await send.count()
                                 if r["send_btn"]:
                                     await send.first.click()
@@ -275,7 +275,7 @@ const { PGlite } = require('@electric-sql/pglite');
                                     r["overflow"]["thread"] = ov
                                 await pg.screenshot(path=f"{SHOTS}/{key}-support-thread.png")
                                 replied = True
-                                await pg.locator('[data-testid="admin-back"]').click()
+                                await pg.locator('[data-testid="support-back"], [data-testid="admin-back"]').first.click()
                                 await pg.wait_for_timeout(800)
                 r["errors"] = errs
                 await ctx.close()

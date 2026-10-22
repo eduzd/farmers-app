@@ -59,3 +59,12 @@ Plan:
  f. [ ] admin UI redesign (theme fonts, tab bar like main app, CustomSwitch + radio rows like Checkout), user moderation sheet, Official composer, Ads manager, global search, product form (unit radio, options)
  g. [ ] main app: Farmers Official pinned in Chats + OfficialChatScreen, ads from /api/ads in Connect, RESTRICTED messages shown
  h. [ ] web export, commit, push main, Render check
+
+## Round: redesign round 1 (look + chat), task 2026-10-21 22:48 PDT, branch admin-redesign
+ - [x] AdminAppScreen frame finished (header w/ app icon + ADMIN CONSOLE, search + support icons, 5-tab bar w/ badges, route stack); tsc 0 errors (fixed isDark)
+ - [x] fade+rise transition on tab/screen change; press "pop" (scale 0.96) on buttons, 0.92 on tab icons
+ - [x] Support thread = main app SupportConversation (same header, bubbles, composer, plus -> Camera/Gallery, mic); admin photo + voice replies (/support/threads/:id/photo|voice)
+ - [x] check-admin-app 57/57, check-moderation 58/58; web export rebuilt (0ee897c)
+ Later rounds: user moderation sheet UI (ban/remove/delete/restrict messaging/posting - server done), Farmers Official in users' Chats,
+ admin-editable carousel ads UI + Connect reading /api/ads, global search polish, "water product add" (ASK USER what it means),
+ profile share button = post share (done server/UI d. above, verify live), admin APK (wait for user OK).
