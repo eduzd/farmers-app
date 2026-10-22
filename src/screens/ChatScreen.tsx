@@ -868,6 +868,7 @@ export default function ChatScreen() {
         onPress={() => handleDoubleTap(item)}
         onLongPress={() => handleLongPress(item)}
         delayLongPress={300}
+        testID={item.isMe ? "dm-msg-mine" : "dm-msg-theirs"}
       >
         <View style={[styles.messageRow, item.isMe ? styles.myMessageRow : styles.theirMessageRow]}>
           {!item.isMe ? (
@@ -884,7 +885,7 @@ export default function ChatScreen() {
           ) : null}
           <View style={[styles.messageContainer, item.isMe ? styles.myMessage : styles.theirMessage]}>
             {item.replyTo ? (
-              <View style={[styles.replyPreview, { backgroundColor: theme.backgroundSecondary }]}>
+              <View style={[styles.replyPreview, { backgroundColor: theme.backgroundSecondary }]} testID="dm-reply-quote">
                 <ThemedText style={[styles.replyName, { color: theme.primary }]} testID="dm-reply-quote-name">
                   {item.replyTo.isMe ? tr("You") : userName}
                 </ThemedText>
@@ -1027,7 +1028,7 @@ export default function ChatScreen() {
           </Pressable>
         ) : null}
         {replyingTo ? (
-          <View style={[styles.replyBar, { backgroundColor: theme.surface, borderTopColor: theme.divider }]}>
+          <View style={[styles.replyBar, { backgroundColor: theme.surface, borderTopColor: theme.divider }]} testID="dm-reply-bar">
             <View style={styles.replyBarContent}>
               <View style={[styles.replyIndicator, { backgroundColor: theme.primary }]} />
               <View style={styles.replyInfo}>
@@ -1091,6 +1092,7 @@ export default function ChatScreen() {
                 style={[styles.textInput, { color: theme.text, height: inputHeight }]}
                 placeholder={tr("Type a message...")}
                 placeholderTextColor={theme.textSecondary}
+                testID="dm-input"
                 value={inputText}
                 onChangeText={setInputText}
                 onContentSizeChange={handleContentSizeChange}
@@ -1112,6 +1114,7 @@ export default function ChatScreen() {
                 onPress={handleSend}
                 accessibilityRole="button"
                 accessibilityLabel="Send message"
+                testID="dm-send"
               >
                 <MaterialCommunityIcons name="send" size={20} color={theme.white} />
               </Pressable>
@@ -1188,7 +1191,7 @@ export default function ChatScreen() {
             </View>
 
             <View style={[styles.messageActionsMenu, { backgroundColor: theme.white }]}>
-              <Pressable style={styles.menuItem} onPress={handleReply}>
+              <Pressable style={styles.menuItem} onPress={handleReply} testID="dm-menu-reply">
                 <Feather name="corner-up-left" size={22} color={theme.text} />
                 <ThemedText style={[styles.menuItemText, { color: theme.text }]}>{tr("Reply")}</ThemedText>
               </Pressable>

@@ -127,6 +127,7 @@ export default function MainTabNavigator() {
         options={{
           title: t("nav.chats"),
           headerTitle: t("chat.messages"),
+          tabBarButtonTestID: "tab-chats",
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconPill, focused && { backgroundColor: theme.primarySoft }]}>
               <ChatIcon size={20} color={color} />
