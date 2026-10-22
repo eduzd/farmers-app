@@ -88,6 +88,9 @@ Plan:
       clean at 360 en, 320 bn, 390 en. User text/photo/voice + admin replies all stored; retry with same clientId = 200 (no dup).
 - [x] tests/check-support-call-web.py 34/34: two-way messages via UI, unread counts, user->Support call and admin call-back both
       connect (fake mic), headers at 320/360/390 en+bn. check-admin-app 70/70, check-moderation 63/63, check-chat 43/43, tsc 0.
+- [x] Live bfc6f4d (tests/check-support-live.py, read-only, admin@farmers.app): all tabs, every More item, a user profile open with no
+      page/API errors; /api/support/unread adminsOnline=true; call-target 200 (401 signed out); Support page shows the call button.
+      Not done live: sending/calling (would reach the real admins), Bangla (language switch trick doesn't apply on live). callRelay=none.
 
 ## Round: product sell-as details, hold-to-reply, dark mode, Home icon (2026-10-22)
 - [x] Product form: How is it sold (weight kg/g/maund, packs bag/box/packet/sack/crate/bottle with amount kg/g/litre/ml/pieces,
