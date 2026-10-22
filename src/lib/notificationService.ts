@@ -6,15 +6,97 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApiUrl } from './query-client';
 
 const PUSH_TOKEN_KEY = 'push_notification_token';
+const PREFS_KEY = 'farmers:notificationPrefs';
+
+/**
+ * Android notification channels. Since Android 8 the CHANNEL decides whether a
+ * notification vibrates (a per-notification vibrate flag is ignored), and a channel's
+ * vibration can't be changed by the app once it exists. So there are two channels:
+ *  - "default": sound + vibration (the original channel, unchanged)
+ *  - "quiet":   sound, no vibration
+ * The server picks the channel for each phone from the prefs we send it
+ * (POST /api/me/push-tokens {vibrate}), so pushes that arrive while the app is
+ * closed follow the setting too.
+ */
+export const CHANNEL_VIBRATE = 'default';
+export const CHANNEL_QUIET = 'quiet';
+
+export interface NotificationPrefs {
+  /** Show notifications on this phone at all. */
+  enabled: boolean;
+  /** Vibrate when a notification arrives. */
+  vibrate: boolean;
+}
+export const DEFAULT_NOTIFICATION_PREFS: NotificationPrefs = { enabled: true, vibrate: true };
+
+let cachedPrefs: NotificationPrefs = { ...DEFAULT_NOTIFICATION_PREFS };
+let prefsLoaded: Promise<NotificationPrefs> | null = null;
+
+function normalizePrefs(raw: any): NotificationPrefs {
+  return {
+    enabled: typeof raw?.enabled === 'boolean' ? raw.enabled : DEFAULT_NOTIFICATION_PREFS.enabled,
+    vibrate: typeof raw?.vibrate === 'boolean' ? raw.vibrate : DEFAULT_NOTIFICATION_PREFS.vibrate,
+  };
+}
+
+/** This phone's notification settings (saved on the phone, default: on + vibrate). */
+export function getNotificationPrefs(): Promise<NotificationPrefs> {
+  if (!prefsLoaded) {
+    prefsLoaded = AsyncStorage.getItem(PREFS_KEY)
+      .then((s) => {
+        cachedPrefs = normalizePrefs(s ? JSON.parse(s) : null);
+        return cachedPrefs;
+      })
+      .catch(() => cachedPrefs);
+  }
+  return prefsLoaded;
+}
+
+/** Last known prefs without waiting (defaults until loaded). */
+export function getCachedNotificationPrefs(): NotificationPrefs {
+  return cachedPrefs;
+}
+
+export function channelForPrefs(prefs: NotificationPrefs): string {
+  return prefs.vibrate ? CHANNEL_VIBRATE : CHANNEL_QUIET;
+}
+
+/** Create both Android channels (safe to call often; does nothing elsewhere). */
+export async function ensureNotificationChannels(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  try {
+    await Notifications.setNotificationChannelAsync(CHANNEL_VIBRATE, {
+      name: 'Farmers App',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#2E7D32',
+      sound: 'default',
+    });
+    // No vibrationPattern here: setting a pattern turns vibration back on in Android.
+    await Notifications.setNotificationChannelAsync(CHANNEL_QUIET, {
+      name: 'Farmers App (no vibration)',
+      importance: Notifications.AndroidImportance.MAX,
+      enableVibrate: false,
+      lightColor: '#2E7D32',
+      sound: 'default',
+    });
+  } catch (e) {
+    console.log('Notifications: could not create channels', e);
+  }
+}
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  // Notifications that arrive while the app is open follow the setting too.
+  handleNotification: async () => {
+    const prefs = await getNotificationPrefs();
+    return {
+      shouldShowAlert: prefs.enabled,
+      shouldPlaySound: prefs.enabled,
+      shouldSetBadge: true,
+      shouldShowBanner: prefs.enabled,
+      shouldShowList: prefs.enabled,
+    };
+  },
 });
 
 export interface NotificationData {
@@ -55,15 +137,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
 
   try {
     // Android 13+ only shows the permission prompt once a channel exists.
-    if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('default', {
-        name: 'Farmers App',
-        importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#2E7D32',
-        sound: 'default',
-      });
-    }
+    await ensureNotificationChannels();
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -103,16 +177,20 @@ export async function getStoredPushToken(): Promise<string | null> {
   }
 }
 
-/** Save this phone's push token for the signed-in user. The server takes the user from authToken. */
+/**
+ * Save this phone's push token (and its notification settings) for the signed-in user.
+ * The server takes the user from authToken.
+ */
 export async function savePushTokenToServer(token: string, authToken: string): Promise<boolean> {
   try {
+    const prefs = await getNotificationPrefs();
     const response = await fetch(`${getApiUrl()}/api/me/push-tokens`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify({ token, platform: Platform.OS }),
+      body: JSON.stringify({ token, platform: Platform.OS, notify: prefs.enabled, vibrate: prefs.vibrate }),
     });
 
     return response.ok;
@@ -131,6 +209,31 @@ export async function syncPushTokenAfterSignIn(authToken: string | null | undefi
   } catch {}
 }
 
+/**
+ * Change this phone's notification settings: saved on the phone straight away, then sent
+ * to the server with this phone's push token so closed-app pushes follow it.
+ * Returns whether the server got it (false when signed out, offline, or no push token
+ * yet; it is sent again on the next sign-in / app start).
+ */
+export async function setNotificationPrefs(
+  patch: Partial<NotificationPrefs>,
+  authToken: string | null | undefined,
+): Promise<{ prefs: NotificationPrefs; synced: boolean }> {
+  const current = await getNotificationPrefs();
+  const next = normalizePrefs({ ...current, ...patch });
+  cachedPrefs = next;
+  prefsLoaded = Promise.resolve(next);
+  try {
+    await AsyncStorage.setItem(PREFS_KEY, JSON.stringify(next));
+  } catch {}
+  if (Platform.OS === 'web' || !authToken) return { prefs: next, synced: false };
+  await ensureNotificationChannels();
+  const pushToken = await getStoredPushToken();
+  if (!pushToken) return { prefs: next, synced: false };
+  const synced = await savePushTokenToServer(pushToken, authToken);
+  return { prefs: next, synced };
+}
+
 /** On logout: stop pushes for this phone. Never throws. */
 export async function removePushTokenFromServer(authToken: string | null | undefined): Promise<void> {
   try {
@@ -147,15 +250,19 @@ export async function removePushTokenFromServer(authToken: string | null | undef
   } catch {}
 }
 
+/** Show a notification now from the phone itself, on the channel the settings ask for. */
 export async function sendLocalNotification(title: string, body: string, data?: any): Promise<void> {
+  const prefs = await getNotificationPrefs();
+  if (!prefs.enabled) return;
+  await ensureNotificationChannels();
   await Notifications.scheduleNotificationAsync({
     content: {
       title,
       body,
-      data,
+      data: data || {},
       sound: true,
     },
-    trigger: null,
+    trigger: Platform.OS === 'android' ? { channelId: channelForPrefs(prefs) } : null,
   });
 }
 

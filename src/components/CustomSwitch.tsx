@@ -13,6 +13,9 @@ interface CustomSwitchProps {
   onValueChange: (value: boolean) => void;
   disabled?: boolean;
   style?: ViewStyle;
+  /** Read out by screen readers, e.g. "Vibration". */
+  accessibilityLabel?: string;
+  testID?: string;
 }
 
 const TRACK_WIDTH = 44;
@@ -25,6 +28,8 @@ export function CustomSwitch({
   onValueChange,
   disabled = false,
   style,
+  accessibilityLabel,
+  testID,
 }: CustomSwitchProps) {
   const progress = useSharedValue(value ? 1 : 0);
 
@@ -58,7 +63,16 @@ export function CustomSwitch({
   };
 
   return (
-    <Pressable onPress={handlePress} disabled={disabled} style={style}>
+    <Pressable
+      onPress={handlePress}
+      disabled={disabled}
+      style={style}
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ checked: value, disabled }}
+      aria-checked={value}
+      testID={testID}
+    >
       <Animated.View style={[styles.track, trackAnimatedStyle, disabled && styles.disabled]}>
         <Animated.View style={[styles.thumb, thumbAnimatedStyle]} />
       </Animated.View>
