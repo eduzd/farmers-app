@@ -10,7 +10,61 @@ import {
 } from "./ui";
 
 import { AppIcon } from "@/components/icons/AppIcon";
+import { useNavigation } from "@react-navigation/native";
 export type Category = { id: string; slug: string; nameEn: string; nameBn: string; icon: string; color: string; sortOrder: number; active: boolean; productCount?: number };
+
+/* ======================= VIEW AS BUYER ======================= */
+/**
+ * Opens the main app's own product page or shop page, exactly as buyers get it, in preview mode (a bar on top,
+ * and buttons that would buy, save, follow, message or call do nothing). Data comes from the admin-only
+ * preview routes, so hidden products and suspended shops open too, with a note that buyers can't see them.
+ */
+export function useBuyerPreview() {
+  const navigation = useNavigation<any>();
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const run = async (key: string, fn: () => Promise<void>) => {
+    if (busy) return;
+    setBusy(key); setError(null);
+    try { await fn(); } catch (e: any) { setError(e?.message || "Couldn't open the preview"); } finally { setBusy(null); }
+  };
+  const openProduct = (id: string) => run(`p-${id}`, async () => {
+    const r: any = await apiGet(`/api/admin/manage/preview/products/${encodeURIComponent(id)}`);
+    navigation.navigate("ProductDetail", { product: r.product, preview: { kind: "product", reasons: r.reasons || [] } });
+  });
+  const openStore = (id: string) => run(`s-${id}`, async () => {
+    navigation.navigate("ShopPage", { slug: id, preview: { kind: "shop" } });
+  });
+  return { openProduct, openStore, busy, error };
+}
+
+/** Products and shops made in this session: their page opens with a "see it as buyers do" prompt. */
+import { justCreatedProducts as justCreated } from "./productForm";
+
+function PreviewIconBtn({ testID, onPress, busy, label }: { testID: string; onPress: () => void; busy?: boolean; label: string }) {
+  const { theme } = useTheme();
+  return (
+    <Pressable testID={testID} onPress={onPress} hitSlop={6} accessibilityRole="button" accessibilityLabel={label}
+      style={({ pressed }) => ({ width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? theme.primary + "2A" : theme.primary + "14", opacity: busy ? 0.6 : 1 })}>
+      <Feather name="eye" size={17} color={theme.primary} />
+    </Pressable>
+  );
+}
+
+function JustCreatedCard({ text, label, onPress, busy, testID }: { text: string; label: string; onPress: () => void; busy?: boolean; testID: string }) {
+  const { theme } = useTheme();
+  return (
+    <Card testID={testID} style={{ backgroundColor: theme.primary + "12", borderWidth: 1, borderColor: theme.primary + "40" }}>
+      <View style={st.row}>
+        <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.primary, alignItems: "center", justifyContent: "center" }}>
+          <Feather name="check" size={18} color="#fff" />
+        </View>
+        <Text style={{ color: theme.text, fontWeight: "700", flex: 1, fontSize: 14 }}>{text}</Text>
+      </View>
+      <Btn testID={`${testID}-view`} icon="eye" label={label} busy={busy} onPress={onPress} style={{ marginTop: 12 }} />
+    </Card>
+  );
+}
 
 export function useCategories() {
   return useLoader<Category[]>(() => apiGet("/api/admin/manage/categories"), []);
@@ -45,7 +99,7 @@ export function ShopTab({ section, setSection }: { section: ShopSection; setSect
   );
 }
 
-function ProductRow({ p, cats, onPress }: { p: any; cats: Category[] | null; onPress: () => void }) {
+function ProductRow({ p, cats, onPress, onPreview, previewBusy }: { p: any; cats: Category[] | null; onPress: () => void; onPreview?: () => void; previewBusy?: boolean }) {
   const { theme } = useTheme();
   const L = useL();
   return (
@@ -64,6 +118,7 @@ function ProductRow({ p, cats, onPress }: { p: any; cats: Category[] | null; onP
             {p.orders ? <Pill label={`${p.orders} ${L("orders", "অর্ডার")}`} color="#1D4ED8" /> : null}
           </View>
         </View>
+        {onPreview ? <PreviewIconBtn testID={`product-preview-${p.id}`} onPress={onPreview} busy={previewBusy} label={L("View as buyer", "ক্রেতার চোখে দেখুন")} /> : null}
         <Feather name="chevron-right" size={18} color={theme.textTertiary} />
       </View>
     </Card>
@@ -78,6 +133,7 @@ function ProductsList() {
   const [status, setStatus] = useState("");
   const dq = useDebounced(q);
   const cats = useCategories();
+  const pv = useBuyerPreview();
   const list = useLoader<any[]>(
     () => apiGet(`/api/admin/manage/products?q=${encodeURIComponent(dq)}&category=${encodeURIComponent(cat)}&status=${status}`),
     [dq, cat, status],
@@ -102,11 +158,12 @@ function ProductsList() {
         ))}
       </ChipRow>
       {list.error ? <ErrorBox text={list.error} onRetry={list.load} /> : null}
+      {pv.error ? <ErrorBox text={pv.error} /> : null}
       {list.loading && !list.data ? <Loading /> : null}
       {list.data && !list.data.length ? <Empty icon="package" text={dq || cat || status ? L("No products match", "কোনো পণ্য মিলেনি") : L("No products yet", "এখনও কোনো পণ্য নেই")} /> : null}
       {list.data?.length ? <Text style={{ color: "#64748B", fontSize: 12, marginBottom: 8 }}>{list.data.length} {L("products", "টি পণ্য")}</Text> : null}
       {(list.data || []).map((p) => (
-        <ProductRow key={p.id} p={p} cats={cats.data} onPress={() => nav.push({ name: "product", id: p.id })} />
+        <ProductRow key={p.id} p={p} cats={cats.data} onPress={() => nav.push({ name: "product", id: p.id })} onPreview={() => pv.openProduct(p.id)} previewBusy={pv.busy === `p-${p.id}`} />
       ))}
     </Page>
   );
@@ -119,6 +176,7 @@ function ShopsList() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const list = useLoader<any[]>(() => apiGet("/api/admin/manage/stores"), []);
+  const pv = useBuyerPreview();
   const rowsF = useMemo(() => {
     const s = q.trim().toLowerCase();
     return (list.data || []).filter((x) => (!status || x.status === status) && (!s || `${x.name} ${x.ownerName} ${x.ownerEmail} ${x.location || ""} ${x.phone || ""}`.toLowerCase().includes(s)));
@@ -152,7 +210,10 @@ function ShopsList() {
                 <Pill label={`${s.orders} ${L("orders", "অর্ডার")}`} color="#1D4ED8" />
               </View>
             </View>
-            <Text style={{ color: theme.text, fontWeight: "800", fontSize: 13 }}>{taka(s.revenue)}</Text>
+            <View style={{ alignItems: "flex-end", gap: 6 }}>
+              <Text style={{ color: theme.text, fontWeight: "800", fontSize: 13 }}>{taka(s.revenue)}</Text>
+              <PreviewIconBtn testID={`shop-preview-${s.id}`} onPress={() => pv.openStore(s.id)} label={L("View shop as buyer", "ক্রেতার চোখে দোকান দেখুন")} />
+            </View>
           </View>
         </Card>
       ))}
@@ -309,6 +370,8 @@ export function ProductDetail({ id }: { id: string }) {
   const L = useL();
   const cats = useCategories();
   const p = useLoader<any>(() => apiGet(`/api/admin/manage/products/${id}`), [id]);
+  const pv = useBuyerPreview();
+  const [fresh] = useState(() => justCreated.delete(id));
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [stock, setStock] = useState<string>("");
@@ -323,6 +386,11 @@ export function ProductDetail({ id }: { id: string }) {
   return (
     <Page onRefresh={p.load} testID="product-detail">
       {err ? <ErrorBox text={err} /> : null}
+      {pv.error ? <ErrorBox text={pv.error} /> : null}
+      {fresh ? (
+        <JustCreatedCard testID="product-created" text={L("Product added. See how it looks to buyers.", "পণ্য যোগ হয়েছে। ক্রেতারা কেমন দেখবেন দেখে নিন।")}
+          label={L("View as buyer", "ক্রেতার চোখে দেখুন")} busy={pv.busy === `p-${id}`} onPress={() => pv.openProduct(id)} />
+      ) : null}
       <Card>
         <View style={st.row}>
           <Thumb uri={d.image} size={84} />
@@ -337,6 +405,10 @@ export function ProductDetail({ id }: { id: string }) {
           </View>
         </View>
         {d.description ? <Text style={{ color: theme.textSecondary, marginTop: 10, fontSize: 13.5 }}>{d.description}</Text> : null}
+        {fresh ? null : (
+          <Btn testID="product-view-as-buyer" kind="soft" icon="eye" label={L("View as buyer", "ক্রেতার চোখে দেখুন")} busy={pv.busy === `p-${id}`}
+            onPress={() => pv.openProduct(id)} style={{ marginTop: 12 }} />
+        )}
       </Card>
       <View style={[st.grid, { marginBottom: 10 }]}>
         <Stat label={L("In stock", "স্টকে")} value={d.quantity} icon="box" color={d.quantity > 0 ? "#047857" : "#B91C1C"} />
@@ -422,6 +494,8 @@ export function StoreDetail({ id }: { id: string }) {
   const L = useL();
   const cats = useCategories();
   const s = useLoader<any>(() => apiGet(`/api/admin/manage/stores/${id}`), [id]);
+  const pv = useBuyerPreview();
+  const [fresh] = useState(() => justCreated.delete(id));
   const [tab, setTab] = useState<"products" | "orders" | "customers">("products");
   const [q, setQ] = useState("");
   const [busy, setBusy] = useState(false);
@@ -442,6 +516,11 @@ export function StoreDetail({ id }: { id: string }) {
   return (
     <Page onRefresh={s.load} testID="store-detail">
       {err ? <ErrorBox text={err} /> : null}
+      {pv.error ? <ErrorBox text={pv.error} /> : null}
+      {fresh ? (
+        <JustCreatedCard testID="store-created" text={L("Shop opened. See how it looks to buyers.", "দোকান খোলা হয়েছে। ক্রেতারা কেমন দেখবেন দেখে নিন।")}
+          label={L("View shop as buyer", "ক্রেতার চোখে দোকান দেখুন")} busy={pv.busy === `s-${id}`} onPress={() => pv.openStore(id)} />
+      ) : null}
       <Card>
         <View style={st.row}>
           <Thumb uri={d.logo} icon="briefcase" size={64} />
@@ -462,6 +541,7 @@ export function StoreDetail({ id }: { id: string }) {
         </View>
         {d.description ? <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 6 }}>{d.description}</Text> : null}
         <View style={[st.grid, { marginTop: 10 }]}>
+          <Btn testID="store-view-as-buyer" small kind="primary" icon="eye" label={L("View as buyer", "ক্রেতার চোখে দেখুন")} onPress={() => pv.openStore(id)} />
           <Btn testID="edit-store" small kind="soft" icon="edit-2" label={L("Edit details", "তথ্য এডিট")} onPress={() => nav.push({ name: "storeForm", id })} />
           <Btn testID="store-add-product" small kind="soft" icon="plus" label={L("Add product", "পণ্য যোগ")} onPress={() => nav.push({ name: "productForm", storeId: id })} />
           <Btn testID="toggle-store" small kind={d.status === "active" ? "danger" : "primary"} icon={d.status === "active" ? "pause" : "play"} busy={busy}
@@ -480,7 +560,7 @@ export function StoreDetail({ id }: { id: string }) {
         <Chip testID="store-tab-customers" label={`${L("Customers", "ক্রেতা")} (${d.customers.length})`} on={tab === "customers"} onPress={() => setTab("customers")} />
       </ChipRow>
       <SearchBox value={q} onChange={setQ} placeholder={L("Search in this shop", "এই দোকানে খুঁজুন")} testID="store-search" />
-      {tab === "products" ? (products.length ? products.map((p: any) => <ProductRow key={p.id} p={p} cats={cats.data} onPress={() => nav.push({ name: "product", id: p.id })} />) : <Empty icon="package" text={L("No products", "কোনো পণ্য নেই")} />) : null}
+      {tab === "products" ? (products.length ? products.map((p: any) => <ProductRow key={p.id} p={p} cats={cats.data} onPress={() => nav.push({ name: "product", id: p.id })} onPreview={() => pv.openProduct(p.id)} previewBusy={pv.busy === `p-${p.id}`} />) : <Empty icon="package" text={L("No products", "কোনো পণ্য নেই")} />) : null}
       {tab === "orders" ? (orders.length ? orders.map((o: any) => <OrderRow key={o.id} o={o} />) : <Empty icon="shopping-bag" text={L("No orders", "কোনো অর্ডার নেই")} />) : null}
       {tab === "customers"
         ? customers.length
@@ -528,6 +608,7 @@ export function StoreForm({ id }: { id?: string }) {
       else {
         // a company shop has no owner account: the admins run it and add its products
         const r = await apiPost("/api/admin/manage/stores", { ...f, owner: kind === "company" ? "" : f.owner });
+        if (r?.id) justCreated.add(r.id);
         nav.pop(); nav.push({ name: "store", id: r.id });
       }
     } catch (e: any) { setErr(e?.message); } finally { setBusy(false); }

@@ -40,6 +40,7 @@ import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
 import { fetchCatalog } from "@/lib/catalog";
 import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { BuyerPreviewBar, readPreview, usePreviewNote } from "@/components/BuyerPreview";
 const money2 = (n: number) => (Math.round(n * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 import { sellRule, clampQty as clampToRule, upperLimit, perUnitText, amountText, totalContentText, unitWord, num } from "@shared/selling";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -52,12 +53,17 @@ const SAMPLE_IMAGES: any[] = [];
 
 export default function ProductDetailScreen() {
   const tr = useTr();
-  const insets = useSafeAreaInsets();
+  const realInsets = useSafeAreaInsets();
+  const route = useRoute<ProductDetailRouteProp>();
+  // Opened from the admin app's "View as buyer": same page, nothing on it buys, saves or sends.
+  const preview = readPreview(route.params);
+  // In preview the bar on top already sits under the status bar.
+  const insets = preview ? { ...realInsets, top: 0 } : realInsets;
+  const previewNote = usePreviewNote(110);
   // Footer (quantity box + buttons): above the navigation bar, and it rides on
   // top of the keyboard while the quantity is being typed.
   const footerKeyboard = useKeyboardAwareBottomPadding(12, { follow: true, min: 20 });
   const { theme, isDark } = useTheme();
-  const route = useRoute<ProductDetailRouteProp>();
   const navigation = useNavigation<NavigationProp>();
   // Listings from the Sell form may leave out seller, rating, location, currency or image.
   const raw: any = route.params.product || {};
@@ -107,7 +113,7 @@ export default function ProductDetailScreen() {
   ].filter(Boolean).join(" · ");
   const [related, setRelated] = useState<any[]>([]);
   useEffect(() => {
-    useRecentlyViewedStore.getState().add(product);
+    if (!preview) useRecentlyViewedStore.getState().add(product);
     fetchCatalog<any>("listings")
       .then((all) => {
         const others = all.filter((p) => String(p.id) !== String(product.id));
@@ -116,7 +122,9 @@ export default function ProductDetailScreen() {
       })
       .catch(() => {});
   }, [product.id]);
-  const isFavorite = useFavoritesStore((st) => st.items.some((i) => i.itemId === String(product.id)));
+  const savedByMe = useFavoritesStore((st) => st.items.some((i) => i.itemId === String(product.id)));
+  // in preview the heart shows as a new buyer sees it, not the admin's own saved list
+  const isFavorite = preview ? false : savedByMe;
   const toggleFavorite = useFavoritesStore((st) => st.toggle);
   const marketCats = useMarketCategories();
   const ownerId: string | undefined = (product as any).ownerId || undefined;
@@ -132,10 +140,11 @@ export default function ProductDetailScreen() {
   useEffect(() => {
     useFavoritesStore.getState().load();
     loadReviews();
-    if (ownerId && !companyShop) apiGet(`/api/follows/${ownerId}`).then((r) => setFollowing(!!r.isFollowing)).catch(() => {});
+    if (ownerId && !companyShop && !preview) apiGet(`/api/follows/${ownerId}`).then((r) => setFollowing(!!r.isFollowing)).catch(() => {});
   }, [product.id]);
   const handleFollow = async () => {
     if (!ownerId) return;
+    if (preview) return previewNote.show(tr("Follow"));
     if (!isLoggedIn()) return Alert.alert(tr("Log in to follow farmers"));
     try {
       const r = await apiPost(`/api/follows/${ownerId}`);
@@ -146,13 +155,15 @@ export default function ProductDetailScreen() {
   };
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showFullDescription, setShowFullDescription] = useState(false);
-  const cartCount = getItemCount();
+  // the admin's own cart has nothing to do with what a buyer sees
+  const cartCount = preview ? 0 : getItemCount();
   const scrollX = useRef(new Animated.Value(0)).current;
 
   const productImages = (product as any).images?.length ? (product as any).images : [product.image].filter(Boolean);
 
   const handleAddToCart = () => {
     if (outOfStock) return;
+    if (preview) return previewNote.show(tr("Add to cart"));
     if (missingOption) return Alert.alert(tr("Choose an option"), `${tr("Please choose")}: ${missingOption.name}`);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addItem({
@@ -171,6 +182,7 @@ export default function ProductDetailScreen() {
 
   const handleBuyNow = () => {
     if (outOfStock) return;
+    if (preview) return previewNote.show(language === "bn" ? "কিনুন" : "Buy");
     if (missingOption) return Alert.alert(tr("Choose an option"), `${tr("Please choose")}: ${missingOption.name}`);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     addItem({
@@ -199,6 +211,7 @@ export default function ProductDetailScreen() {
   };
 
   const handleToggleFavorite = () => {
+    if (preview) return previewNote.show(language === "bn" ? "পছন্দ" : "Save");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     toggleFavorite({
       itemId: String(product.id),
@@ -214,6 +227,7 @@ export default function ProductDetailScreen() {
   };
 
   const handleShare = async () => {
+    if (preview) return previewNote.show(language === "bn" ? "শেয়ার" : "Share");
     const message = `${product.name} - ৳${product.price}${product.unit ? "/" + product.unit : ""} (${product.seller}) on Farmers`;
     try {
       if (Platform.OS === "web" && typeof navigator !== "undefined") {
@@ -231,6 +245,7 @@ export default function ProductDetailScreen() {
   };
 
   const handleCallSeller = () => {
+    if (preview) return previewNote.show(language === "bn" ? "কল" : "Call");
     const phone = (product as any).phone || (product as any).company?.phone;
     if (phone) {
       Linking.openURL(`tel:${phone}`).catch(() => Alert.alert(tr("Call"), phone));
@@ -247,6 +262,7 @@ export default function ProductDetailScreen() {
   };
 
   const handleContactSeller = () => {
+    if (preview) return previewNote.show(language === "bn" ? "মেসেজ" : "Message");
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (companyShop) {
       navigation.navigate("Support" as any);
@@ -276,7 +292,8 @@ export default function ProductDetailScreen() {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
+    <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]} testID={preview ? "product-preview" : undefined}>
+      {preview ? <BuyerPreviewBar info={preview} topInset={realInsets.top} onClose={() => navigation.goBack()} /> : null}
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -477,7 +494,7 @@ export default function ProductDetailScreen() {
               onPress={() => {
                 if (storeSlug) {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  navigation.navigate("ShopPage", { slug: storeSlug });
+                  navigation.navigate("ShopPage", (preview ? { slug: storeSlug, preview: { kind: "shop" } } : { slug: storeSlug }) as any);
                 } else if (product.companyId) {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   navigation.navigate("StoreView", { companyId: product.companyId });
@@ -575,7 +592,7 @@ export default function ProductDetailScreen() {
               </ThemedText>
               {!isMine ? (
                 <Pressable
-                  onPress={() => (isLoggedIn() ? setReviewOpen(true) : Alert.alert(tr("Log in to write a review")))}
+                  onPress={() => (preview ? previewNote.show(tr("Write a review")) : isLoggedIn() ? setReviewOpen(true) : Alert.alert(tr("Log in to write a review")))}
                   accessibilityLabel={tr("Write a review")}
                 >
                   <ThemedText style={[styles.readMore, { color: theme.primary, marginTop: 0 }]}>{tr("Write a review")}</ThemedText>
@@ -680,7 +697,7 @@ export default function ProductDetailScreen() {
                 <Pressable
                   key={`rel-${p.id}`}
                   style={[styles.relatedCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
-                  onPress={() => (navigation as any).push("ProductDetail", { product: { rating: 0, currency: "৳", location: "", seller: "", ...p } })}
+                  onPress={() => (navigation as any).push("ProductDetail", { product: { rating: 0, currency: "৳", location: "", seller: "", ...p }, ...(preview ? { preview: {} } : {}) })}
                 >
                   <Image source={{ uri: p.image }} style={styles.relatedImage} contentFit="cover" />
                   <ThemedText style={[styles.relatedName, { color: theme.text }]} numberOfLines={1}>{p.name}</ThemedText>
@@ -764,7 +781,7 @@ export default function ProductDetailScreen() {
       {cartCount > 0 ? (
         <Pressable
           style={[styles.cartBadge, { backgroundColor: theme.primary, top: insets.top + 70 }]}
-          onPress={() => navigation.navigate("Cart")}
+          onPress={() => (preview ? previewNote.show(tr("Cart")) : navigation.navigate("Cart"))}
         >
           <Feather name="shopping-cart" size={18} color="#FFFFFF" />
           <View style={styles.cartCount}>
@@ -772,8 +789,9 @@ export default function ProductDetailScreen() {
           </View>
         </Pressable>
       ) : null}
+      {previewNote.node}
       <CatalogFormModal
-        visible={reviewOpen}
+        visible={reviewOpen && !preview}
         title={tr("Write a review")}
         fields={[
           { key: "rating", label: tr("Stars (1 to 5)"), numeric: true, required: true, placeholder: "5" },
