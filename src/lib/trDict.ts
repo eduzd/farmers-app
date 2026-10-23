@@ -98,6 +98,8 @@ export const BN_OF_EN: Record<string, string> = {
   "Posts": "পোস্ট",
   "Followers": "ফলোয়ার্স",
   "Following": "ফলোয়িং",
+  "Follow": "ফলো করুন",
+  "Couldn't load these numbers · Tap to retry": "সংখ্যা লোড হয়নি · আবার চেষ্টা করতে চাপুন",
   "Message": "মেসেজ",
   "All posts": "পোস্টসমূহ",
   "No posts yet": "এখনো কোনো পোস্ট নেই",

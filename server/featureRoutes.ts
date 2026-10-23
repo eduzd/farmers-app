@@ -337,9 +337,11 @@ export function registerFeatureRoutes(app: Express) {
     const rating = Math.round(Number(req.body?.rating));
     if (!(rating >= 1 && rating <= 5)) return res.status(400).json({ error: "Rating must be 1 to 5 stars" });
     const targetId = req.params.targetId.slice(0, 120);
-    let owner: string | null = req.body?.targetOwnerId ? String(req.body.targetOwnerId) : null;
+    // A review only counts toward a person's profile rating when the reviewed listing really is theirs.
+    // (Never trust an owner id sent by the client: that would let anyone add stars to anyone's profile.)
+    let owner: string | null = null;
     const cat = rows(await db.execute(sql`SELECT owner_id FROM catalog_items WHERE id = ${targetId} LIMIT 1`));
-    if (cat[0]?.owner_id) owner = cat[0].owner_id;
+    if (cat[0]?.owner_id) owner = String(cat[0].owner_id);
     if (owner === uid) return res.status(400).json({ error: "You can't review your own listing" });
     const comment = String(req.body?.comment || "").slice(0, 1000);
     const id = `rv-${crypto.randomUUID()}`;
