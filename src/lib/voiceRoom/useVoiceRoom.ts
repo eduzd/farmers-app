@@ -23,7 +23,8 @@ export interface FloatingReaction {
   userId: string;
 }
 
-export function useVoiceRoom(roomId: string) {
+/** roomId null = not in a room (the session provider keeps this hook mounted for the whole app). */
+export function useVoiceRoom(roomId: string | null) {
   const { isConnected, sendRoom, subscribeRoom, getIceServers } = (useOptionalVoiceCall() || {}) as any;
   const myId = String((useAuthStore((s: any) => s.user) as any)?.id || "");
   const [status, setStatus] = useState<RoomStatus>("connecting");
@@ -36,6 +37,8 @@ export function useVoiceRoom(roomId: string) {
   const meshRef = useRef<RoomMesh | null>(null);
   const statusRef = useRef<RoomStatus>("connecting");
   const joinedOnce = useRef(false);
+  // Which room the state below belongs to (it is reset when the room changes).
+  const [stateFor, setStateFor] = useState<string | null>(roomId);
 
   const setSt = (s: RoomStatus) => {
     statusRef.current = s;
@@ -44,6 +47,7 @@ export function useVoiceRoom(roomId: string) {
 
   const send = useCallback(
     (msg: any) => {
+      if (!roomId) return false;
       const okSent = sendRoom ? sendRoom({ ...msg, roomId }) : false;
       if (!okSent) setNotice({ kind: "error", reason: "offline" });
       return okSent;
@@ -52,9 +56,9 @@ export function useVoiceRoom(roomId: string) {
   );
 
   const mesh = useCallback(() => {
-    if (!meshRef.current && myId) {
+    if (!meshRef.current && myId && roomId) {
       meshRef.current = new RoomMesh(
-        roomId,
+        roomId as string,
         myId,
         (m) => (sendRoom ? sendRoom(m) : false),
         () => getIceServers(),
@@ -69,8 +73,22 @@ export function useVoiceRoom(roomId: string) {
     meshRef.current = null;
   };
 
+  // A new room (or none): start from a clean state.
   useEffect(() => {
-    if (!subscribeRoom) return;
+    statusRef.current = "connecting";
+    setStatus("connecting");
+    setReason("");
+    setRoom(null);
+    setChat([]);
+    setReactions([]);
+    setNotice(null);
+    setPendingInvite(null);
+    joinedOnce.current = false;
+    setStateFor(roomId);
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!subscribeRoom || !roomId) return;
     const off = subscribeRoom((m: any) => {
       if (m.type === "vr__ready") {
         // (Re)connected: join or re-join.
@@ -162,13 +180,13 @@ export function useVoiceRoom(roomId: string) {
 
   // Join once the socket is up.
   useEffect(() => {
-    if (isConnected && statusRef.current === "connecting") sendRoom?.({ type: "vr_join", roomId });
+    if (roomId && isConnected && statusRef.current === "connecting") sendRoom?.({ type: "vr_join", roomId });
   }, [isConnected, roomId, sendRoom]);
 
-  // Leave when the screen closes.
+  // Leave when the room changes or the session closes (not when the screen is minimized).
   useEffect(() => {
     return () => {
-      if (statusRef.current === "live") sendRoom?.({ type: "vr_leave", roomId });
+      if (roomId && statusRef.current === "live") sendRoom?.({ type: "vr_leave", roomId });
       stopMesh();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -200,7 +218,7 @@ export function useVoiceRoom(roomId: string) {
     setChatOn: (on: boolean) => send({ type: "vr_chat_toggle", on }),
     react: (emoji: string) => send({ type: "vr_react", emoji }),
     leave: () => {
-      if (statusRef.current === "live") sendRoom?.({ type: "vr_leave", roomId });
+      if (roomId && statusRef.current === "live") sendRoom?.({ type: "vr_leave", roomId });
       setSt("ended");
       setReason("left");
       stopMesh();
@@ -213,6 +231,7 @@ export function useVoiceRoom(roomId: string) {
   };
 
   return {
+    roomId: stateFor,
     status,
     reason,
     room,
