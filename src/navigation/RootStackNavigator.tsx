@@ -356,16 +356,22 @@ export default function RootStackNavigator() {
     >
       {!isAuthenticated ? (
         <>
+          {variant === "admin" ? (
+            // Admin app: open straight on the sign-in screen (the first screen is the start screen).
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+          ) : null}
           <Stack.Screen
             name="Landing"
             component={LandingScreen}
             options={{ headerShown: false }}
           />
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-            options={{ headerShown: false }}
-          />
+          {variant !== "admin" ? (
+            <Stack.Screen
+              name="Login"
+              component={LoginScreen}
+              options={{ headerShown: false }}
+            />
+          ) : null}
           <Stack.Screen
             name="Signup"
             component={SignupScreen}

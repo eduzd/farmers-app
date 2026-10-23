@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useLayoutEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -168,6 +168,23 @@ export default function ChatListScreen() {
     );
   };
 
+  // New message: a plus in the title bar, top right (was a pencil next to the filters). Opens Find people.
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ marginRight: Spacing.lg }} testID="messages-new-button">
+          <IconButton
+            icon="plus"
+            tone="primary"
+            size={38}
+            accessibilityLabel={isBn ? "নতুন বার্তা" : "New message"}
+            onPress={() => navigation.navigate("UserSearch")}
+          />
+        </View>
+      ),
+    } as any);
+  }, [navigation, isBn]);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <View style={styles.top}>
@@ -193,14 +210,6 @@ export default function ChatListScreen() {
             onPress={() => setFilter("unread")}
           />
           <Chip label={isBn ? "অনলাইন" : "Online"} selected={filter === "online"} onPress={() => setFilter("online")} />
-          <View style={{ flex: 1 }} />
-          <IconButton
-            icon="edit-3"
-            tone="primary"
-            size={40}
-            accessibilityLabel={isBn ? "নতুন বার্তা" : "New message"}
-            onPress={() => navigation.navigate("UserSearch")}
-          />
         </View>
       </View>
 

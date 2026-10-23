@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Modal, Pressable, TextInput, Alert, ActivityIndicator, ScrollView } from "react-native";
+import { View, StyleSheet, Modal, Pressable, TextInput, Alert, ActivityIndicator, useWindowDimensions } from "react-native";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import { Feather } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,6 +11,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
 import { Spacing, BorderRadius, FontFamily } from "@/constants/theme";
 import { deleteServerPost, editServerPost, reportServerPost, setUserRelation } from "@/lib/feedApi";
+import { ModalBottomInset } from "@/components/ModalBottomInset";
 
 import { AppIcon } from "@/components/icons/AppIcon";
 export interface PostActionsTarget {
@@ -45,6 +48,13 @@ const REASONS: { id: string; en: string; bn: string }[] = [
 
 type Mode = "menu" | "report" | "edit";
 
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
+/** Height the edit sheet needs besides the text box: handle, title, Save button, padding,
+ *  plus a strip of backdrop left showing above the sheet. */
+const EDIT_CHROME = 180;
+/** Same for the report sheet around its scrolling list. */
+const REPORT_CHROME = 64;
 /** The three-dot menu on a post: Edit / Delete for your own post; Save, Report, Mute, Block and
  *  Request quote for someone else's. Every action is saved on the server before it says so. */
 export function PostActionsSheet({ visible, post, onClose, onToggleSave, onDeleted, onEdited, onAuthorHidden }: Props) {
@@ -60,6 +70,28 @@ export function PostActionsSheet({ visible, post, onClose, onToggleSave, onDelet
   const [reason, setReason] = useState<string | null>(null);
   const [details, setDetails] = useState("");
   const [editText, setEditText] = useState("");
+
+  // The sheet rises above the keyboard (ModalBottomInset at its bottom). The text box and the
+  // report list shrink to the room left between the keyboard and the top of the screen, so the
+  // whole sheet, title and Save button included, stays in view while typing. A long post
+  // scrolls inside the box, which keeps the cursor visible.
+  const { height: windowHeight } = useWindowDimensions();
+  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
+  // On the web, useWindowDimensions already follows the visible part of the page (react-native-web
+  // reads visualViewport), so the keyboard is out of windowHeight there and isn't subtracted again.
+  const topInset = insets.top;
+  const bottomInset = insets.bottom;
+  const editInputStyle = useAnimatedStyle(() => {
+    const below = Math.max(bottomInset, -keyboardHeight.value);
+    const room = windowHeight - topInset - below - EDIT_CHROME;
+    const maxHeight = Math.max(72, room);
+    return { maxHeight, minHeight: Math.min(120, maxHeight) };
+  }, [windowHeight, topInset, bottomInset]);
+  const reportListStyle = useAnimatedStyle(() => {
+    const below = Math.max(bottomInset, -keyboardHeight.value);
+    const room = windowHeight - topInset - below - REPORT_CHROME;
+    return { maxHeight: Math.min(520, Math.max(160, room)) };
+  }, [windowHeight, topInset, bottomInset]);
 
   useEffect(() => {
     if (visible) {
@@ -215,7 +247,7 @@ export function PostActionsSheet({ visible, post, onClose, onToggleSave, onDelet
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent navigationBarTranslucent>
       <Pressable style={styles.backdrop} onPress={busy ? undefined : onClose} accessibilityLabel={L("Close", "বন্ধ")} />
-      <View style={[styles.sheet, { backgroundColor: theme.surface, paddingBottom: insets.bottom + Spacing.md }]}>
+      <View style={[styles.sheet, { backgroundColor: theme.surface, paddingBottom: Spacing.md }]}>
         <View style={[styles.handle, { backgroundColor: theme.border }]} />
         {mode === "menu" ? (
           items.map((it) => (
@@ -234,7 +266,7 @@ export function PostActionsSheet({ visible, post, onClose, onToggleSave, onDelet
             </Pressable>
           ))
         ) : mode === "report" ? (
-          <ScrollView style={{ maxHeight: 520 }} keyboardShouldPersistTaps="handled">
+          <Animated.ScrollView style={reportListStyle} keyboardShouldPersistTaps="handled">
             <ThemedText style={[styles.title, { color: theme.text }]}>{L("Why are you reporting this post?", "কেন রিপোর্ট করছেন?")}</ThemedText>
             {REASONS.map((r) => (
               <Pressable key={r.id} testID={`report-reason-${r.id}`} onPress={() => setReason(r.id)} style={({ pressed }) => [styles.row, pressed && { backgroundColor: theme.backgroundSecondary }]}>
@@ -254,24 +286,27 @@ export function PostActionsSheet({ visible, post, onClose, onToggleSave, onDelet
             <Pressable testID="report-send" onPress={sendReport} disabled={!reason || busy} style={[styles.primaryBtn, { backgroundColor: theme.error, opacity: !reason || busy ? 0.5 : 1 }]}>
               {busy ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.primaryText}>{L("Send report", "রিপোর্ট পাঠান")}</ThemedText>}
             </Pressable>
-          </ScrollView>
+          </Animated.ScrollView>
         ) : (
           <View>
             <ThemedText style={[styles.title, { color: theme.text }]}>{L("Edit post", "পোস্ট এডিট করুন")}</ThemedText>
-            <TextInput
+            <AnimatedTextInput
               value={editText}
               onChangeText={setEditText}
               multiline
+              scrollEnabled
               autoFocus
               maxLength={5000}
               testID="edit-post-input"
-              style={[styles.input, { minHeight: 120, color: theme.text, backgroundColor: theme.backgroundRoot }]}
+              accessibilityLabel={L("Edit post", "পোস্ট এডিট করুন")}
+              style={[styles.input, { color: theme.text, backgroundColor: theme.backgroundRoot }, editInputStyle]}
             />
             <Pressable testID="edit-post-save" onPress={saveEdit} disabled={!editText.trim() || busy} style={[styles.primaryBtn, { backgroundColor: theme.primary, opacity: !editText.trim() || busy ? 0.5 : 1 }]}>
               {busy ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.primaryText}>{L("Save", "সেভ করুন")}</ThemedText>}
             </Pressable>
           </View>
         )}
+        <ModalBottomInset />
       </View>
     </Modal>
   );

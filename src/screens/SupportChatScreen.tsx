@@ -431,10 +431,13 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
   const supportName = admin ? admin.userName || adminMeta?.name || L("User", "ব্যবহারকারী") : L("Support", "সাপোর্ট");
   const otherAvatar = admin ? admin.userAvatar || adminMeta?.avatar || undefined : undefined;
   const presence: "online" | "offline" | null = adminsOnline === null ? null : adminsOnline ? "online" : "offline";
+  // Admin side: just Online or Offline under the user's name, nothing while the server hasn't said yet.
   const headerStatus = admin
     ? presence === "online"
       ? L("Online", "অনলাইন")
-      : L("Offline · they'll see it in Support", "অফলাইন · সাপোর্টে দেখতে পাবেন")
+      : presence === "offline"
+        ? L("Offline", "অফলাইন")
+        : ""
     : !signedIn
     ? L("Sign in to chat with us", "চ্যাট করতে সাইন ইন করুন")
     : presence === "online"
@@ -543,13 +546,21 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
         <Pressable style={styles.backButton} onPress={() => (admin ? admin.onBack() : navigation.canGoBack() ? navigation.goBack() : navigation.navigate("Main"))} testID="support-back" accessibilityRole="button" accessibilityLabel={L("Back", "পিছনে")}>
           <Feather name="arrow-left" size={24} color={theme.text} />
         </Pressable>
-        <Pressable style={styles.headerTitleContainer} disabled={!admin?.onOpenUser} onPress={admin?.onOpenUser} testID="support-header-user">
+        <Pressable
+          style={styles.headerTitleContainer}
+          disabled={!admin?.onOpenUser}
+          onPress={admin?.onOpenUser}
+          testID="support-header-user"
+          {...(admin?.onOpenUser ? { accessibilityRole: "button" as const, accessibilityLabel: L(`Open ${supportName}'s profile`, `${supportName}-এর প্রোফাইল দেখুন`) } : {})}
+        >
           <View style={styles.headerAvatarContainer}>
             <UserAvatar name={supportName} avatar={otherAvatar} size={36} presence={signedIn ? presence : null} />
           </View>
           <View style={styles.headerInfo}>
             <ThemedText style={[styles.headerName, { color: theme.text }]} numberOfLines={1} testID="support-title">{supportName}</ThemedText>
-            <ThemedText style={[styles.headerStatus, { color: theme.textSecondary }]} numberOfLines={1} testID="support-status">{headerStatus}</ThemedText>
+            {headerStatus ? (
+              <ThemedText style={[styles.headerStatus, { color: theme.textSecondary }]} numberOfLines={1} testID="support-status">{headerStatus}</ThemedText>
+            ) : null}
           </View>
         </Pressable>
         {callButton}
