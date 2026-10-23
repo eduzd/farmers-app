@@ -156,11 +156,15 @@ export default function ChatListScreen() {
               <OfficialAvatar account={a} size={52} />
               <View style={styles.rowBody}>
                 <View style={styles.rowTop}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, flex: 1, minWidth: 0 }}>
-                    <ThemedText style={[styles.name, { flex: 0, flexShrink: 1 }, unread && { fontFamily: FontFamily.bold }]} numberOfLines={1}>
-                      {officialName(a)}
+                  {/* No `flex: 0` on the name: on the web that becomes CSS `flex: 0 1 0%`, which squeezed the
+                      name to zero width so only the tick showed. The name sizes to its text and shrinks with "…". */}
+                  <View testID={`chat-official-name-row-${a.id}`} style={styles.officialNameRow}>
+                    <ThemedText testID={`chat-official-name-${a.id}`} style={[styles.officialName, unread && { fontFamily: FontFamily.bold }]} numberOfLines={1}>
+                      {officialName(a) || a.nameEn || a.nameBn}
                     </ThemedText>
-                    <VerifiedTick size={15} />
+                    <View style={styles.tickWrap} accessibilityLabel={isBn ? "ভেরিফায়েড" : "Verified"}>
+                      <VerifiedTick size={15} />
+                    </View>
                   </View>
                   <ThemedText type="caption" style={{ color: unread ? theme.primary : theme.textTertiary }}>
                     {formatAgo(a.last?.createdAt)}
@@ -337,6 +341,9 @@ const styles = StyleSheet.create({
   rowBody: { flex: 1, gap: 3 },
   rowTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: Spacing.sm },
   name: { flex: 1, fontSize: 15, lineHeight: 20, fontFamily: FontFamily.semibold },
+  officialNameRow: { flexDirection: "row", alignItems: "center", gap: 5, flexGrow: 1, flexShrink: 1, flexBasis: "auto", minWidth: 0 },
+  officialName: { flexGrow: 0, flexShrink: 1, flexBasis: "auto", minWidth: 0, fontSize: 15, lineHeight: 20, fontFamily: FontFamily.semibold },
+  tickWrap: { flexShrink: 0 },
   online: {
     position: "absolute",
     right: 1,
