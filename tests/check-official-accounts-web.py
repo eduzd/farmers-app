@@ -69,6 +69,15 @@ async def main():
             row = (await pg.locator(T(f"chat-official-{safety['id']}")).first.inner_text()) if ok_s else ""
             want = "ফার্মার্স সেফটি" if lang == "bn" else "Farmers Safety"
             h.ok(want in row and "Flood warning" in row, f"[{lang}] Safety row shows its name and last message", row)
+            # The text being in the DOM is not enough: the name used to be squeezed to 0px wide on the web.
+            for acc_id, nm in ((safety['id'], want), ("farmers-official", "ফার্মার্স অফিসিয়াল" if lang == "bn" else "Farmers Official")):
+                nb = await pg.locator(T(f"chat-official-name-{acc_id}")).first.bounding_box()
+                rb = await pg.locator(T(f"chat-official-name-row-{acc_id}")).first.bounding_box()
+                vis = await pg.locator(T(f"chat-official-name-{acc_id}")).first.evaluate("e => { const r = document.createRange(); r.selectNodeContents(e); return Math.round(Math.min(r.getBoundingClientRect().width, e.getBoundingClientRect().width)); }")
+                h.ok(nb and nb["width"] >= 60 and vis >= 60, f"[{lang} {w}] {acc_id} name is visible in the row ({vis}px)", nb)
+                # The blue tick sits right after the name, inside the row.
+                tick_x = await pg.locator(T(f"chat-official-name-row-{acc_id}")).first.evaluate("e => { const k = e.children[e.children.length-1].getBoundingClientRect(); return [k.left, k.width]; }")
+                h.ok(nb and rb and tick_x[1] >= 12 and tick_x[0] >= nb["x"] + nb["width"] - 1 and tick_x[0] + tick_x[1] <= rb["x"] + rb["width"] + 1, f"[{lang} {w}] {acc_id} blue tick shows next to the name", tick_x)
             await pg.screenshot(path=f"{h.shots}/chats-{lang}-{w}.png")
             h.ok(await h.no_overflow(pg), f"[{lang} {w}] Chats fits the screen")
             if ok_s:
