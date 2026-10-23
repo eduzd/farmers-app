@@ -19,6 +19,7 @@ import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
 import { AdCarousel, AdCard } from "@/components/AdCarousel";
+import { useCarouselAds, adsToCards } from "@/lib/carouselAds";
 import { HelpFab } from "@/components/HelpButton";
 import { VoiceRoomConnectCard } from "@/components/VoiceRoomConnectCard";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
@@ -76,6 +77,7 @@ export default function ConnectScreen() {
   const bn = useI18n((s) => s.language) === "bn";
   const L = (en: string, b: string) => (bn ? b : en);
   const signedInId = useAuthStore((s) => s.user?.id);
+  const adminAds = useCarouselAds("connect");
 
   const [fields, setFields] = useState<Field[]>([]);
   const [field, setField] = useState<string | null>(null);
@@ -224,9 +226,10 @@ export default function ConnectScreen() {
     </Pressable>
   );
 
-  // Promo / ad cards at the top of Connect (replaces the old intro line). Ad space is sold
-  // through the Help chat for now; admin-managed ads are a later step.
-  const adCards: AdCard[] = [
+  // Promo / ad cards at the top of Connect. The admin's ads (admin app > More > Carousel ads,
+  // placed on Connect or Everywhere) all show here, in the admin's order, with no cap. Until the
+  // admin adds one, the built-in cards below show instead.
+  const builtInCards: AdCard[] = [
     {
       key: "advertise",
       icon: "volume-2",
@@ -255,11 +258,12 @@ export default function ConnectScreen() {
       onPress: () => setField("fish"),
     },
   ];
+  const adCards: AdCard[] = adminAds && adminAds.length ? adsToCards(adminAds, bn, navigation) : builtInCards;
 
   const header = (
     <View>
       <View style={{ marginBottom: Spacing.md }}>
-        <AdCarousel cards={adCards} testID="connect-carousel" />
+        <AdCarousel cards={adCards} loading={adminAds === null} testID="connect-carousel" />
       </View>
       <VoiceRoomConnectCard />
       <View style={[styles.search, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}>

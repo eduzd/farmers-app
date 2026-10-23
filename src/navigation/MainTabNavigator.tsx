@@ -24,7 +24,8 @@ import { AppIcon } from "@/components/icons/AppIcon";
 export type MainTabParamList = {
   Community: undefined;
   Connect: undefined;
-  Market: undefined;
+  /** `category` comes from a carousel ad that opens one shop category. */
+  Market: { category?: string; at?: number } | undefined;
   Chats: undefined;
   Profile: undefined;
 };
