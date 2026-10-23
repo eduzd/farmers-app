@@ -830,7 +830,7 @@ router.post("/posts/:id/comments", requireAuth, async (req: Request, res: Respon
     const u = rowsOf(await db.execute(sql`SELECT name, username, avatar FROM users WHERE id = ${uid} LIMIT 1`))[0] || {};
     const out = commentOut({ ...ins, ...u });
     if (post.author_id && post.author_id !== uid) {
-      void notify(post.author_id, "comment", `${out.userName} commented on your post`, body.slice(0, 140), { postId: post.id });
+      void notify(post.author_id, "comment", `${out.userName} commented on your post`, body.slice(0, 140), { postId: post.id, commentId: String(ins.id) });
     }
     res.status(201).json(out);
   } catch (error) {

@@ -155,6 +155,7 @@ export default function NotificationsScreen() {
       message: pn.body,
       isRead: pn.isRead,
       createdAt: pn.receivedAt,
+      actionData: pn.data || {},
     })),
     ...localNotifications,
   ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -203,6 +204,11 @@ export default function NotificationsScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (pushNotifications.find((pn) => pn.id === notification.id)) {
       markPushAsRead(notification.id);
+      // A push that came in while the app was open: open its source like any other notification.
+      const d = notification.actionData || {};
+      (navigation as any).navigate("NotificationOpen", {
+        payload: { id: d.notificationId ? String(d.notificationId) : undefined, type: String(d.type || notification.type), data: d, title: notification.title, body: notification.message, createdAt: notification.createdAt.toISOString() },
+      });
     } else {
       setLocalNotifications((prev) =>
         prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n))
@@ -212,19 +218,12 @@ export default function NotificationsScreen() {
         u.set({ notifications: Math.max(0, u.notifications - 1) });
       }
       if (isLoggedIn()) apiPost("/api/me/notifications/read", { ids: [notification.id] }).then(() => refreshUnreadCounts()).catch(() => {});
-      const d = notification.actionData || {};
-      if (d.orderId) navigation.navigate("OrderDetail", { orderId: d.orderId });
-      else if (notification.type === "message" && d.userId)
-        navigation.navigate("Chat", { conversationId: d.userId, userName: notification.title.replace(/^Message from /, ""), userInitials: "" });
-      else if (d.rfqId) navigation.navigate("Rfq");
-      else if (d.questionId) navigation.navigate("ExpertQA");
-      else if (d.diaryId) navigation.navigate("FarmDiary");
-      else if (d.alertId) navigation.navigate("PriceAlert");
-      else if (d.postId)
-        // likes, comments and "someone you follow posted" open that post
-        fetchServerPost(String(d.postId), useI18n.getState().language === "bn", useAuthStore.getState().getToken())
-          .then((post) => navigation.navigate("PostDetail", { postId: post.id, post: post as any }))
-          .catch(() => {});
+      // Open it where it came from: the comment on the post, the order, the chat, the profile...
+      // NotificationOpen checks with the server that it still exists and is this account's.
+      (navigation as any).navigate("NotificationOpen", {
+        payload: { id: notification.id, type: notification.type, data: notification.actionData || {}, title: notification.title, body: notification.message, createdAt: notification.createdAt.toISOString() },
+        markedRead: true,
+      });
     }
   };
 

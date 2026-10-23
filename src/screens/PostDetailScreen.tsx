@@ -168,6 +168,36 @@ export default function PostDetailScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [post.id, shared]);
+  // Opened from a notification: scroll to that comment and light it up for a few seconds
+  // (or to the comments, for older comment notifications), and say so if the comment is gone.
+  const deepLink = (route.params || {}) as { highlightCommentId?: string; scrollToComments?: boolean; commentMissing?: boolean };
+  const [highlightId, setHighlightId] = useState<string>(deepLink.highlightCommentId || "");
+  const [commentGone, setCommentGone] = useState(!!deepLink.commentMissing);
+  const deepLinked = useRef(false);
+  useEffect(() => {
+    if (deepLinked.current || (!deepLink.highlightCommentId && !deepLink.scrollToComments)) return;
+    if (!comments.length) return;
+    deepLinked.current = true;
+    const want = deepLink.highlightCommentId || "";
+    const index = want ? comments.findIndex((c) => String(c.id) === want) : 0;
+    if (index < 0) {
+      setCommentGone(true);
+      return;
+    }
+    const t = setTimeout(() => {
+      try {
+        flatListRef.current?.scrollToIndex({ index, animated: true, viewPosition: 0.3 });
+      } catch {}
+    }, 350);
+    const clear = want ? setTimeout(() => setHighlightId(""), 4000) : undefined;
+    return () => { clearTimeout(t); if (clear) clearTimeout(clear); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [comments]);
+  useEffect(() => {
+    if (!commentGone) return;
+    const t = setTimeout(() => setCommentGone(false), 6000);
+    return () => clearTimeout(t);
+  }, [commentGone]);
   const [newComment, setNewComment] = useState("");
   const [isLiked, setIsLiked] = useState(post.isLiked);
   const [likesCount, setLikesCount] = useState(post.likes);
@@ -483,7 +513,10 @@ export default function PostDetailScreen() {
   };
 
   const renderComment = ({ item }: { item: Comment }) => (
-    <View style={styles.commentItem}>
+    <View
+      testID={highlightId && String(item.id) === highlightId ? "comment-highlighted" : `comment-${item.id}`}
+      style={[styles.commentItem, highlightId && String(item.id) === highlightId ? { backgroundColor: theme.primary + "1F", borderRadius: 14, marginHorizontal: -8, paddingHorizontal: 8, paddingVertical: 6 } : null]}
+    >
       <Pressable onPress={() => handleAuthorPress(item.author)}>
         <UserAvatar
           initials={item.author.initials}
@@ -718,7 +751,22 @@ export default function PostDetailScreen() {
         scrollEventThrottle={16}
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
+        extraData={highlightId}
+        onScrollToIndexFailed={(info) => {
+          // Rows not measured yet: jump near it, then try again.
+          flatListRef.current?.scrollToOffset({ offset: info.averageItemLength * info.index, animated: false });
+          setTimeout(() => {
+            try { flatListRef.current?.scrollToIndex({ index: info.index, animated: true, viewPosition: 0.3 }); } catch {}
+          }, 300);
+        }}
       />
+      {commentGone ? (
+        <Pressable testID="comment-removed-note" onPress={() => setCommentGone(false)} style={{ position: "absolute", top: 10, alignSelf: "center", backgroundColor: theme.text, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 18 }}>
+          <ThemedText style={{ color: theme.backgroundRoot, fontSize: 13, fontWeight: "600" }}>
+            {isBn ? "এই মন্তব্যটি আর নেই" : "This comment was removed"}
+          </ThemedText>
+        </Pressable>
+      ) : null}
 
       <Animated.View
         style={[

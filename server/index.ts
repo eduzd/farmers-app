@@ -2,6 +2,7 @@ import { registerCatalogRoutes } from "./catalogRoutes";
 import { turnStatus } from "./calls";
 import { registerFeatureRoutes } from "./featureRoutes";
 import { registerPushRoutes } from "./push";
+import { registerNotificationTargetRoutes } from "./notificationTargets";
 import { registerCheckoutRoutes } from "./checkoutRoutes";
 import { registerLiveDataRoutes } from "./liveDataRoutes";
 import { registerPaymentRoutes } from "./paymentRoutes";
@@ -143,6 +144,7 @@ function setupErrorHandler(app: express.Application) {
   registerCatalogRoutes(app);
   registerFeatureRoutes(app);
   registerPushRoutes(app);
+  registerNotificationTargetRoutes(app);
   registerCheckoutRoutes(app);
   registerLiveDataRoutes(app);
   registerPaymentRoutes(app);

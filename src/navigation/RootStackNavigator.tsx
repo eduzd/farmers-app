@@ -101,6 +101,7 @@ import VoiceRoomScreen from "@/screens/VoiceRoomScreen";
 import VoiceRoomCreateScreen from "@/screens/VoiceRoomCreateScreen";
 import StoriesScreen from "@/screens/StoriesScreen";
 import NotificationsScreen from "@/screens/NotificationsScreen";
+import NotificationOpenScreen from "@/screens/NotificationOpenScreen";
 import LeaderboardScreen from "@/screens/LeaderboardScreen";
 import UserSearchScreen from "@/screens/UserSearchScreen";
 import AnnouncementsScreen from "@/screens/AnnouncementsScreen";
@@ -193,7 +194,8 @@ export type RootStackParamList = {
   SupportChat: undefined;
   Main: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList>;
-  PostDetail: { postId: string; post: Post };
+  PostDetail: { postId: string; post: Post; highlightCommentId?: string; scrollToComments?: boolean; commentMissing?: boolean };
+  NotificationOpen: { payload: any; markedRead?: boolean };
   Chat: { conversationId: string; userName: string; userInitials: string; isWelfareMember?: boolean; draft?: string };
   Rfq: undefined;
   Settings: { openEditProfile?: boolean } | undefined;
@@ -312,7 +314,7 @@ export type RootStackParamList = {
   WaterServices: undefined;
   ElectricityServices: undefined;
   AdminDashboard: undefined;
-  AdminApp: undefined;
+  AdminApp: { openThread?: string } | undefined;
   SellerApp: undefined;
   SmartFarming: undefined;
   WeatherForecast: undefined;
@@ -484,6 +486,7 @@ export default function RootStackNavigator() {
               headerBackTitle: "Back",
             }}
           />
+          <Stack.Screen name="NotificationOpen" component={NotificationOpenScreen} options={{ headerTitle: tr("Notification"), headerBackTitle: "Back" }} />
           <Stack.Screen
             name="OrderDetail"
             component={OrderDetailScreen}
