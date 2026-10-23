@@ -36,6 +36,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { useCommunityStore } from "@/lib/communityStore";
 import { useI18n } from "@/lib/i18n";
 import { VoiceCallProvider } from "@/contexts/VoiceCallContext";
+import { VoiceRoomSessionProvider } from "@/contexts/VoiceRoomSessionContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { SyncProvider } from "@/offline/providers/SyncProvider";
 
@@ -113,9 +114,11 @@ export default function App() {
     if (isAuthenticated && user && user.id) {
       return (
         <VoiceCallProvider userId={user.id} userName={user.name || user.username || "User"}>
-          <NavigationContainer ref={navigationRef} theme={navTheme}>
-            <RootStackNavigator />
-          </NavigationContainer>
+          <VoiceRoomSessionProvider>
+            <NavigationContainer ref={navigationRef} theme={navTheme}>
+              <RootStackNavigator />
+            </NavigationContainer>
+          </VoiceRoomSessionProvider>
         </VoiceCallProvider>
       );
     }
