@@ -179,6 +179,8 @@ interface Post {
   isSaved?: boolean;
   /** Set when the post is a poll. */
   poll?: import("@/lib/feedApi").PostPoll | null;
+  /** Set when the post shares a voice room. */
+  voiceRoom?: import("@/lib/voiceRoomApi").VoiceRoomCard | null;
 }
 
 export type RootStackParamList = {

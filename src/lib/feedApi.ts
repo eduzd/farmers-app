@@ -1,4 +1,5 @@
 import { getApiUrl } from "@/lib/query-client";
+import type { VoiceRoomCard } from "@/lib/voiceRoomApi";
 
 export interface PostPollOption {
   /** "a", "b", "c" ... (shown as A, B, C) */
@@ -44,6 +45,8 @@ export interface FeedPost {
   shared?: boolean;
   /** Set when the post is a poll. */
   poll?: PostPoll | null;
+  /** Set when the post shares a voice room (live, scheduled or ended). */
+  voiceRoom?: VoiceRoomCard | null;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -93,6 +96,7 @@ interface ServerPostRow {
   likedByMe?: boolean | null;
   savedByMe?: boolean | null;
   poll?: PostPoll | null;
+  voiceRoom?: VoiceRoomCard | null;
   author: {
     id: string;
     name: string | null;
@@ -133,6 +137,7 @@ function postFromRow(r: ServerPostRow, bn: boolean): FeedPost {
     createdAt: timeAgo(r.createdAt, bn),
     shared: true,
     poll: normalizePoll(r.poll),
+    voiceRoom: r.voiceRoom || null,
   };
 }
 

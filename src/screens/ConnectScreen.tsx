@@ -20,6 +20,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
 import { AdCarousel, AdCard } from "@/components/AdCarousel";
 import { HelpFab } from "@/components/HelpButton";
+import { VoiceRoomConnectCard } from "@/components/VoiceRoomConnectCard";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -260,6 +261,7 @@ export default function ConnectScreen() {
       <View style={{ marginBottom: Spacing.md }}>
         <AdCarousel cards={adCards} testID="connect-carousel" />
       </View>
+      <VoiceRoomConnectCard />
       <View style={[styles.search, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}>
         <Feather name="search" size={16} color={theme.textSecondary} />
         <TextInput

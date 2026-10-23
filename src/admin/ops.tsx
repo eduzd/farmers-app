@@ -8,6 +8,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import { AdminCatalogTab, AdminNotifyTab } from "@/components/admin/ManageTabs";
 import { OrderProgress, DeliveryInfo, PaymentInfo, DeliverySettings, payLabel } from "./orderflow";
 import { PaymentSettings, RocketPaymentCheck } from "./payments";
+import { VoiceRoomSettings } from "./voicerooms";
 import {
   useAdminNav, useL, useLoader, useDebounced, Page, Card, SectionTitle, Pill, Chip, ChipRow, SearchBox, Btn, Field, KV, Empty, Loading, ErrorBox, Thumb, Stat,
   taka, STATUS_COLOR, ORDER_STATUSES, statusLabel, fmtDate, st, confirmAsk,
@@ -378,15 +379,15 @@ export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminNa
   const nav = useAdminNav();
   const { theme } = useTheme();
   const L = useL();
-  const [panel, setPanel] = useState<null | "moderation" | "notify" | "delivery" | "payments">(null);
-  if (panel === "delivery" || panel === "payments") {
+  const [panel, setPanel] = useState<null | "moderation" | "notify" | "delivery" | "payments" | "voicerooms">(null);
+  if (panel === "delivery" || panel === "payments" || panel === "voicerooms") {
     return (
       <View style={{ flex: 1 }}>
         <Pressable onPress={() => setPanel(null)} style={[st.row, { padding: 12, gap: 8 }]} testID="more-back">
           <Feather name="arrow-left" size={18} color={theme.primary} />
           <Text style={{ color: theme.primary, fontWeight: "700" }}>{L("More", "আরও")}</Text>
         </Pressable>
-        {panel === "payments" ? <PaymentSettings /> : <DeliverySettings />}
+        {panel === "payments" ? <PaymentSettings /> : panel === "voicerooms" ? <VoiceRoomSettings /> : <DeliverySettings />}
       </View>
     );
   }
@@ -409,6 +410,7 @@ export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminNa
     ["notify", L("Send notification", "নোটিফিকেশন পাঠান"), L("To everyone or one person", "সবাইকে বা একজনকে"), "bell", () => setPanel("notify")],
     ["delivery", L("Delivery charges", "ডেলিভারি চার্জ"), L("Inside and outside Dhaka, free delivery, express", "ঢাকার ভেতরে ও বাইরে, ফ্রি ডেলিভারি, এক্সপ্রেস"), "truck", () => setPanel("delivery")],
     ["payments", L("Payment settings", "পেমেন্ট সেটিং"), L("Rocket and cash on delivery for every purchase", "সব কেনাকাটায় রকেট ও ক্যাশ অন ডেলিভারি"), "credit-card", () => setPanel("payments")],
+    ["voicerooms", L("Voice rooms", "ভয়েস রুম"), L("Who can start rooms, live rooms", "কারা রুম শুরু করতে পারবেন, লাইভ রুম"), "mic", () => setPanel("voicerooms")],
     ["posts", L("Posts & reports", "পোস্ট ও রিপোর্ট"), L("Community posts and user reports", "কমিউনিটি পোস্ট ও রিপোর্ট"), "flag", () => nav.openClassic("reports")],
     ["content", L("Content & announcements", "কন্টেন্ট ও ঘোষণা"), L("Banners, tips, announcements", "ব্যানার, টিপস, ঘোষণা"), "layout", () => nav.openClassic("content")],
     ["analytics", L("Analytics", "অ্যানালিটিক্স"), L("Growth and activity", "বৃদ্ধি ও কার্যকলাপ"), "bar-chart-2", () => nav.openClassic("analytics")],

@@ -40,6 +40,7 @@ import { badgeKeyFor } from "@/constants/profileBadges";
 import { useAuthStore } from "@/lib/authStore";
 import { PostActionsSheet } from "@/components/PostActionsSheet";
 import { PostPollCard, pollLetter } from "@/components/PostPollCard";
+import { VoiceRoomPostCard, VOICE_POST_RE, isVoiceRoomPostText } from "@/components/VoiceRoomPostCard";
 import { PostPhoto } from "@/components/PhotoViewer";
 import { CountBadge } from "@/components/CountBadge";
 import { useUnreadCounts } from "@/lib/liveStatus";
@@ -664,10 +665,14 @@ export default function CommunityScreen() {
         <IconButton icon="more-horizontal" tone="plain" size={34} accessibilityLabel={tr("More")} onPress={() => setMenuPost(item)} />
       </View>
 
-      {item.content ? (
+      {item.content && !item.voiceRoom && !isVoiceRoomPostText(item.content) ? (
         <ThemedText style={styles.postContent} numberOfLines={6}>
           {item.content}
         </ThemedText>
+      ) : null}
+
+      {item.voiceRoom || isVoiceRoomPostText(item.content) ? (
+        <VoiceRoomPostCard room={item.voiceRoom} fallbackTitle={item.content.match(VOICE_POST_RE)?.[2]} />
       ) : null}
 
       {item.poll ? <PostPollCard postId={item.id} poll={item.poll} canVote={!!item.shared} /> : null}

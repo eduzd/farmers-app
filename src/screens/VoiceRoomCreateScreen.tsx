@@ -48,7 +48,7 @@ export default function VoiceRoomCreateScreen() {
   });
   const [stageLimit, setStageLimit] = useState<number | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [shareToFeed, setShareToFeed] = useState(true);
+  const [shareToFeed, setShareToFeed] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [roleFor, setRoleFor] = useState<Picked | null>(null);
   const [busy, setBusy] = useState(false);
@@ -277,14 +277,39 @@ export default function VoiceRoomCreateScreen() {
               <CustomSwitch value={isPrivate} onValueChange={setIsPrivate} accessibilityLabel={bn ? "প্রাইভেট রুম" : "Private room"} />
             </View>
             <View style={[styles.divider, { backgroundColor: theme.border }]} />
-            <View style={[styles.settingRow, isPrivate && { opacity: 0.45 }]}>
-              <Feather name="share-2" size={18} color={theme.textSecondary} />
-              <View style={styles.settingText}>
-                <ThemedText style={styles.settingTitle}>{bn ? "কমিউনিটিতে শেয়ার" : "Share to community"}</ThemedText>
-                <ThemedText style={[styles.small, { color: theme.textSecondary }]}>{bn ? "ফিডে একটি পোস্ট যাবে" : "Posts the room to the feed"}</ThemedText>
+            <Pressable
+              onPress={() => !isPrivate && setShareToFeed((v) => !v)}
+              disabled={isPrivate}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: shareToFeed && !isPrivate, disabled: isPrivate }}
+              aria-checked={shareToFeed && !isPrivate}
+              accessibilityLabel={bn ? "কমিউনিটি ফিডে শেয়ার করুন" : "Share to community feed"}
+              style={[styles.settingRow, isPrivate && { opacity: 0.45 }]}
+              testID="voice-room-share"
+            >
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  borderWidth: 2,
+                  borderColor: shareToFeed && !isPrivate ? theme.primary : theme.textSecondary,
+                  backgroundColor: shareToFeed && !isPrivate ? theme.primary : "transparent",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {shareToFeed && !isPrivate ? <Feather name="check" size={14} color="#fff" /> : null}
               </View>
-              <CustomSwitch value={shareToFeed && !isPrivate} onValueChange={setShareToFeed} disabled={isPrivate} accessibilityLabel={bn ? "কমিউনিটিতে শেয়ার" : "Share to community"} />
-            </View>
+              <View style={styles.settingText}>
+                <ThemedText style={styles.settingTitle}>{bn ? "কমিউনিটি ফিডে শেয়ার করুন" : "Share to community feed"}</ThemedText>
+                <ThemedText style={[styles.small, { color: theme.textSecondary }]}>
+                  {isPrivate
+                    ? bn ? "প্রাইভেট রুম ফিডে যায় না" : "Private rooms aren't shared"
+                    : bn ? "রুমের বিবরণসহ একটি কার্ড যাবে, চাপ দিলেই যোগ দেওয়া যাবে" : "Posts a card with the room's details that people tap to join"}
+                </ThemedText>
+              </View>
+            </Pressable>
           </View>
 
           {error ? <ThemedText style={[styles.error, { color: theme.error }]}>{error}</ThemedText> : null}

@@ -44,6 +44,7 @@ import {
 import { PostActionsSheet } from "@/components/PostActionsSheet";
 import { PostPhoto } from "@/components/PhotoViewer";
 import { PostPollCard, usePollStore } from "@/components/PostPollCard";
+import { VoiceRoomPostCard, VOICE_POST_RE, isVoiceRoomPostText } from "@/components/VoiceRoomPostCard";
 import { ChatIcon } from "@/components/icons/ChatIcon";
 type PostDetailRouteProp = RouteProp<RootStackParamList, "PostDetail">;
 
@@ -596,10 +597,14 @@ export default function PostDetailScreen() {
         </Pressable>
       </View>
 
-      {postText || !post.poll ? (
+      {(postText || !post.poll) && !post.voiceRoom && !isVoiceRoomPostText(post.content) ? (
         <ThemedText style={[styles.postContent, { color: theme.text }]}>
           {postText}
         </ThemedText>
+      ) : null}
+
+      {post.voiceRoom || isVoiceRoomPostText(post.content) ? (
+        <VoiceRoomPostCard room={post.voiceRoom} fallbackTitle={post.content?.match(VOICE_POST_RE)?.[2]} />
       ) : null}
 
       {post.poll ? <PostPollCard postId={post.id} poll={post.poll} canVote={shared} style={styles.postPoll} /> : null}
