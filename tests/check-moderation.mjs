@@ -170,6 +170,50 @@ try {
   const sc2 = await call("GET", "/api/official/messages", cat.token);
   ok(sc2.data.messages.length === 1, "deleting an official message removes it");
 
+  // ---- more official accounts (Safety...) and sending from one ----
+  const oa0 = await call("GET", "/api/admin/manage/official-accounts", admin.token);
+  ok(oa0.status === 200 && oa0.data.length === 1 && oa0.data[0].id === "farmers-official" && oa0.data[0].isDefault, "Farmers Official is the default official account", oa0);
+  const oaSpoof = await call("POST", "/api/admin/manage/official-accounts", ann.token, { nameEn: "Fake" });
+  const oaList403 = await call("GET", "/api/admin/manage/official-accounts", ann.token);
+  ok(oaSpoof.status === 403 && oaList403.status === 403, "users can't see or create official accounts");
+  const oaBad = await call("POST", "/api/admin/manage/official-accounts", admin.token, { aboutEn: "no name" });
+  ok(oaBad.status === 400, "an official account needs a name");
+  const safety = await call("POST", "/api/admin/manage/official-accounts", admin.token, { nameEn: "Farmers Safety", nameBn: "ফার্মার্স সেফটি", aboutEn: "Safety alerts", icon: "shield", color: "#DC2626" });
+  ok(safety.status === 201 && safety.data.nameBn === "ফার্মার্স সেফটি" && safety.data.icon === "shield" && safety.data.color === "#DC2626", "admin creates a Safety official account", safety);
+  const dupe = await call("POST", "/api/admin/manage/official-accounts", admin.token, { nameEn: "farmers safety" });
+  ok(dupe.status === 409, "two official accounts can't share a name");
+  const fromSafety = await call("POST", "/api/admin/manage/official", admin.token, { accountId: safety.data.id, title: "Flood warning", body: "Move feed to higher ground" });
+  ok(fromSafety.status === 201 && fromSafety.data.message.accountId === safety.data.id && fromSafety.data.recipients >= 3, "admin sends a message from the Safety account", fromSafety);
+  const accs = await call("GET", "/api/official/accounts", ann.token);
+  const annSafety = (accs.data || []).find((a) => a.id === safety.data.id);
+  const annFarmers = (accs.data || []).find((a) => a.id === "farmers-official");
+  ok(accs.status === 200 && annSafety && annSafety.unread === 1 && annSafety.verified && annSafety.last.title === "Flood warning" && annFarmers, "the user's Chats list shows both official accounts", accs);
+  ok(accs.data[0].id === safety.data.id, "the newest official chat comes first");
+  const safetyMsgs = await call("GET", `/api/official/messages?account=${safety.data.id}`, ann.token);
+  ok(safetyMsgs.status === 200 && safetyMsgs.data.messages.length === 1 && safetyMsgs.data.account.nameEn === "Farmers Safety", "Safety's chat holds only Safety's messages", safetyMsgs);
+  const farmersMsgs = await call("GET", "/api/official/messages?account=official", ann.token);
+  ok(!farmersMsgs.data.messages.some((m) => m.body === "Move feed to higher ground"), "Farmers Official's chat doesn't get Safety's message");
+  const accs2 = await call("GET", "/api/official/accounts", ann.token);
+  ok(accs2.data.find((a) => a.id === safety.data.id).unread === 0, "opening the Safety chat marks it read");
+  const anN = await call("GET", "/api/me/notifications", ann.token);
+  const anNl = Array.isArray(anN.data) ? anN.data : anN.data?.notifications || [];
+  ok(anNl.some((n) => n.type === "official" && (n.data?.account === safety.data.id)), "the bell notification opens the Safety chat", anNl.slice(0, 2));
+  const fromBob = await call("POST", "/api/admin/manage/official", bob.token, { accountId: safety.data.id, body: "spoof" });
+  ok(fromBob.status === 403, "users can't send as an official account");
+  const offDefault = await call("PUT", "/api/admin/manage/official-accounts/farmers-official", admin.token, { active: false });
+  const delDefault = await call("DELETE", "/api/admin/manage/official-accounts/farmers-official", admin.token);
+  ok(offDefault.status === 400 && delDefault.status === 400, "Farmers Official can't be turned off or deleted");
+  const off = await call("PUT", `/api/admin/manage/official-accounts/${safety.data.id}`, admin.token, { active: false, aboutBn: "নিরাপত্তা সতর্কতা" });
+  ok(off.status === 200 && off.data.active === false && off.data.aboutBn === "নিরাপত্তা সতর্কতা", "admin edits and turns off the Safety account", off);
+  const sendOff = await call("POST", "/api/admin/manage/official", admin.token, { accountId: safety.data.id, body: "x" });
+  const hidden = await call("GET", "/api/official/accounts", ann.token);
+  ok(sendOff.status === 400 && !hidden.data.some((a) => a.id === safety.data.id), "a turned-off account can't send and leaves people's Chats");
+  const filt = await call("GET", `/api/admin/manage/official?account=${safety.data.id}`, admin.token);
+  ok(filt.data.length === 1 && filt.data[0].accountName === "Farmers Safety", "admin's sent list shows which account sent it", filt);
+  const delS = await call("DELETE", `/api/admin/manage/official-accounts/${safety.data.id}`, admin.token);
+  const afterDel = await call("GET", `/api/admin/manage/official?account=${safety.data.id}`, admin.token);
+  ok(delS.status === 200 && afterDel.data.length === 0, "deleting an account removes it and its messages");
+
   // ---- ads ----
   const bad = await call("POST", "/api/admin/manage/ads", admin.token, { titleEn: "x", color1: "red" });
   ok(bad.status === 400, "bad colour refused");

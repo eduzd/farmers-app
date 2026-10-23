@@ -317,9 +317,12 @@ export function SearchScreen() {
 /* =============================================================================================
  * Farmers Official: messages that show in people's Chats from the official page
  * ============================================================================================= */
-export function OfficialScreen({ target, targetName }: { target?: string; targetName?: string }) {
-  const { theme, isDark } = useTheme();
+export function OfficialScreen({ target, targetName, from: initialFrom }: { target?: string; targetName?: string; from?: string }) {
+  const { theme } = useTheme();
   const L = useL();
+  const nav = useAdminNav();
+  const accounts = useLoader<any[]>(() => apiGet("/api/admin/manage/official-accounts"), []);
+  const [from, setFrom] = useState(initialFrom || "farmers-official");
   const list = useLoader<any[]>(() => apiGet("/api/admin/manage/official"), []);
   const [to, setTo] = useState<"all" | "one">(target ? "one" : "all");
   const [who, setWho] = useState(target || "");
@@ -328,15 +331,18 @@ export function OfficialScreen({ target, targetName }: { target?: string; target
   const [push, setPush] = useState(true);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const active = (accounts.data || []).filter((a: any) => a.active);
+  const acct = active.find((a: any) => a.id === from) || active[0] || { id: "farmers-official", nameEn: "Farmers Official", nameBn: "ফার্মার্স অফিসিয়াল", icon: "check-circle", color: "#2563EB", aboutEn: "", aboutBn: "" };
+  const acctName = L(acct.nameEn, acct.nameBn);
   const send = async () => {
     const sendTo = to === "all" ? "all" : who.trim();
     if (!body.trim() || (to === "one" && !sendTo)) return;
-    if (to === "all" && !(await confirmAsk(L("Send to everyone?", "সবাইকে পাঠাবেন?"), L("Every user will get this in Chats.", "সব ব্যবহারকারী চ্যাটে এটি পাবেন।"), L("Send", "পাঠান"), L("Cancel", "বাতিল")))) return;
+    if (to === "all" && !(await confirmAsk(L("Send to everyone?", "সবাইকে পাঠাবেন?"), L(`Every user will get this in Chats from ${acct.nameEn}.`, `সব ব্যবহারকারী চ্যাটে ${acct.nameBn} থেকে এটি পাবেন।`), L("Send", "পাঠান"), L("Cancel", "বাতিল")))) return;
     setBusy(true);
     setMsg(null);
     try {
-      const r: any = await apiPost("/api/admin/manage/official", { title: title.trim(), body: body.trim(), target: sendTo, notify: push });
-      setMsg({ ok: true, text: L(`Sent to ${r.recipients} ${r.recipients === 1 ? "person" : "people"}`, `${r.recipients} জনকে পাঠানো হয়েছে`) });
+      const r: any = await apiPost("/api/admin/manage/official", { accountId: acct.id, title: title.trim(), body: body.trim(), target: sendTo, notify: push });
+      setMsg({ ok: true, text: L(`Sent from ${acct.nameEn} to ${r.recipients} ${r.recipients === 1 ? "person" : "people"}`, `${acct.nameBn} থেকে ${r.recipients} জনকে পাঠানো হয়েছে`) });
       setTitle("");
       setBody("");
       list.load();
@@ -346,16 +352,34 @@ export function OfficialScreen({ target, targetName }: { target?: string; target
     setBusy(false);
   };
   return (
-    <Page testID="admin-official" onRefresh={list.load}>
-      <LinearGradient colors={["#2563EB", "#0E7490"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 22, padding: 18, marginBottom: 16, flexDirection: "row", alignItems: "center", gap: 14 }}>
+    <Page testID="admin-official" onRefresh={() => { list.load(); accounts.load(); }}>
+      <LinearGradient colors={[acct.color || "#2563EB", "#0E7490"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 22, padding: 18, marginBottom: 16, flexDirection: "row", alignItems: "center", gap: 14 }}>
         <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}>
-          <Feather name="check-circle" size={26} color="#2563EB" />
+          <Feather name={(acct.icon in Feather.glyphMap ? acct.icon : "check-circle") as any} size={26} color={acct.color || "#2563EB"} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: "#fff", fontWeight: "800", fontSize: 17 }}>Farmers Official</Text>
-          <Text style={{ color: "rgba(255,255,255,.85)", fontSize: 12.5, marginTop: 2, lineHeight: 17 }}>{L("Messages appear in people's Chats from this verified page. Nobody can reply or pretend to be it.", "মেসেজ এই ভেরিফায়েড পেজ থেকে মানুষের চ্যাটে দেখাবে। কেউ উত্তর দিতে বা এর মতো সাজতে পারবে না।")}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text testID="official-from-name" style={{ color: "#fff", fontWeight: "800", fontSize: 17, flexShrink: 1 }} numberOfLines={1}>{acctName}</Text>
+            <Feather name="check-circle" size={15} color="#fff" />
+          </View>
+          <Text style={{ color: "rgba(255,255,255,.85)", fontSize: 12.5, marginTop: 2, lineHeight: 17 }}>{L("Messages appear in people's Chats from this verified account. Nobody can reply or pretend to be it.", "মেসেজ এই ভেরিফায়েড অ্যাকাউন্ট থেকে মানুষের চ্যাটে দেখাবে। কেউ উত্তর দিতে বা এর মতো সাজতে পারবে না।")}</Text>
         </View>
       </LinearGradient>
+      <Card>
+        <View style={[st.row, { marginBottom: 8 }]}>
+          <Text style={{ color: theme.textSecondary, fontWeight: "700", fontSize: 13, flex: 1 }}>{L("Send from", "কোন অ্যাকাউন্ট থেকে")}</Text>
+          <Pressable testID="official-manage-accounts" hitSlop={8} onPress={() => nav.push({ name: "officialAccounts" })} style={[st.row, { gap: 4 }]}>
+            <Feather name="settings" size={14} color={theme.primary} />
+            <Text style={{ color: theme.primary, fontWeight: "700", fontSize: 13 }}>{L("Manage accounts", "অ্যাকাউন্ট ম্যানেজ")}</Text>
+          </Pressable>
+        </View>
+        <ChipRow>
+          {active.map((a: any) => (
+            <Chip key={a.id} testID={`official-from-${a.id}`} label={L(a.nameEn, a.nameBn)} on={a.id === acct.id} color={a.color} onPress={() => setFrom(a.id)} />
+          ))}
+          <Chip testID="official-from-new" label={L("+ New account", "+ নতুন অ্যাকাউন্ট")} on={false} onPress={() => nav.push({ name: "officialAccounts", create: true })} />
+        </ChipRow>
+      </Card>
       <Card>
         <Text style={{ color: theme.textSecondary, fontWeight: "700", fontSize: 13, marginBottom: 8 }}>{L("Send to", "কাকে পাঠাবেন")}</Text>
         <RadioGroup row testID="official-to" value={to} onChange={(v) => setTo(v as any)} options={[
@@ -369,7 +393,7 @@ export function OfficialScreen({ target, targetName }: { target?: string; target
         <ToggleRow testID="official-push" icon="bell" label={L("Also notify", "নোটিফিকেশনও দিন")} sub={L("Adds it to the bell, and sends a phone push where push is turned on", "বেলে যোগ হবে, আর পুশ চালু থাকলে ফোনে পুশ যাবে")} value={push} onChange={setPush} />
         <View style={{ height: 14 }} />
         {msg ? <Text testID="official-result" style={{ color: msg.ok ? "#047857" : "#B91C1C", fontWeight: "700", marginBottom: 10 }}>{msg.text}</Text> : null}
-        <Btn testID="official-send" icon="send" label={L("Send as Farmers Official", "Farmers Official হিসেবে পাঠান")} busy={busy} disabled={!body.trim() || (to === "one" && !who.trim())} onPress={send} />
+        <Btn testID="official-send" icon="send" label={L(`Send as ${acct.nameEn}`, `${acct.nameBn} হিসেবে পাঠান`)} busy={busy} disabled={!body.trim() || (to === "one" && !who.trim())} onPress={send} />
       </Card>
       <SectionTitle title={L("Sent", "পাঠানো হয়েছে")} />
       {list.loading && !list.data ? <Loading rows={2} /> : null}
@@ -380,6 +404,7 @@ export function OfficialScreen({ target, targetName }: { target?: string; target
           <View style={[st.row, { alignItems: "flex-start" }]}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={{ flexDirection: "row", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
+                <Pill icon="check-circle" label={m.accountName || "Farmers Official"} color={m.accountColor || "#2563EB"} />
                 <Pill icon={m.toAll ? "users" : "user"} label={m.toAll ? L("Everyone", "সবাই") : m.targetName || L("One person", "একজন")} color={m.toAll ? "#2563EB" : "#7C3AED"} />
                 <Text style={{ color: theme.textTertiary, fontSize: 12 }}>{fmtDate(m.createdAt)}{m.adminName ? ` · ${m.adminName}` : ""}</Text>
               </View>

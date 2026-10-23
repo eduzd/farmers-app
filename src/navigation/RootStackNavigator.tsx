@@ -139,6 +139,7 @@ import ElectricityServicesScreen from "@/screens/ElectricityServicesScreen";
 import AdminDashboardScreen from "@/screens/AdminDashboardScreen";
 import AdminAppScreen from "@/admin/AdminAppScreen";
 import SupportChatScreen from "@/screens/SupportChatScreen";
+import OfficialChatScreen from "@/screens/OfficialChatScreen";
 import SellerAppScreen from "@/screens/seller/SellerAppScreen";
 import { getAppVariant } from "@/lib/appVariant";
 import SmartFarmingScreen from "@/screens/SmartFarmingScreen";
@@ -192,6 +193,7 @@ export type RootStackParamList = {
   OnboardingProfile: undefined;
   Support: undefined;
   SupportChat: undefined;
+  OfficialChat: { account?: string } | undefined;
   Main: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   PostDetail: { postId: string; post: Post; highlightCommentId?: string; scrollToComments?: boolean; commentMissing?: boolean };
@@ -421,6 +423,7 @@ export default function RootStackNavigator() {
             <Stack.Screen name="AdminApp" component={AdminAppScreen} options={{ headerShown: false, title: "Farmers Admin" }} />
           ) : null}
           <Stack.Screen name="SupportChat" component={SupportChatScreen} options={{ headerShown: false, title: "Help" }} />
+          <Stack.Screen name="OfficialChat" component={OfficialChatScreen} options={{ headerShown: false, title: "Official" }} />
           <Stack.Screen
             name="PostDetail"
             component={PostDetailScreen}

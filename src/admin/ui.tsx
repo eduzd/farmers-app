@@ -23,7 +23,8 @@ export type Route =
   | { name: "thread"; id: string }
   | { name: "categoryForm"; id?: string }
   | { name: "search" }
-  | { name: "official"; target?: string; targetName?: string }
+  | { name: "official"; target?: string; targetName?: string; from?: string }
+  | { name: "officialAccounts"; create?: boolean }
   | { name: "ads" }
   | { name: "adForm"; id?: string }
   | { name: "notifications" };

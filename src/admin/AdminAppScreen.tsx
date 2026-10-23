@@ -8,6 +8,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { apiGet } from "@/lib/api";
 import { AdminNav, Route, TabName, ShopSection, useL, Btn, Text, shadow } from "./ui";
 import { SearchScreen, OfficialScreen, AdsScreen, AdForm } from "./power";
+import { OfficialAccountsScreen } from "./officialAccounts";
 import { Image } from "expo-image";
 import { FontFamily } from "@/constants/theme";
 import { ShopTab, ProductDetail, ProductForm, StoreDetail, StoreForm, CategoryForm } from "./shop";
@@ -157,7 +158,9 @@ export default function AdminAppScreen() {
       case "search":
         return <SearchScreen />;
       case "official":
-        return <OfficialScreen target={r.target} targetName={r.targetName} />;
+        return <OfficialScreen key={key} target={r.target} targetName={r.targetName} from={r.from} />;
+      case "officialAccounts":
+        return <OfficialAccountsScreen key={key} create={r.create} />;
       case "ads":
         return <AdsScreen />;
       case "adForm":
