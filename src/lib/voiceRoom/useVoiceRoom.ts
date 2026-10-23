@@ -1,7 +1,7 @@
 // Being in a voice room: joins over the chat socket, keeps the room state, chat and reactions,
 // runs the voice (RoomMesh) and gives the screen every action the person's role allows.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useVoiceCall } from "@/contexts/VoiceCallContext";
+import { useOptionalVoiceCall } from "@/contexts/VoiceCallContext";
 import { useAuthStore } from "@/lib/authStore";
 import type { VoiceChatMessage, VoiceMember, VoiceRoomState } from "@/lib/voiceRoomApi";
 import { RoomMesh } from "@/lib/voiceRoom/mesh";
@@ -24,7 +24,7 @@ export interface FloatingReaction {
 }
 
 export function useVoiceRoom(roomId: string) {
-  const { isConnected, sendRoom, subscribeRoom, getIceServers } = useVoiceCall() as any;
+  const { isConnected, sendRoom, subscribeRoom, getIceServers } = (useOptionalVoiceCall() || {}) as any;
   const myId = String((useAuthStore((s: any) => s.user) as any)?.id || "");
   const [status, setStatus] = useState<RoomStatus>("connecting");
   const [reason, setReason] = useState<string>("");

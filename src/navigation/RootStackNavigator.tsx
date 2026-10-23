@@ -98,6 +98,7 @@ import SeedFinderScreen from "@/screens/SeedFinderScreen";
 import FarmDiaryScreen from "@/screens/FarmDiaryScreen";
 import VoiceRoomsScreen from "@/screens/VoiceRoomsScreen";
 import VoiceRoomScreen from "@/screens/VoiceRoomScreen";
+import VoiceRoomCreateScreen from "@/screens/VoiceRoomCreateScreen";
 import StoriesScreen from "@/screens/StoriesScreen";
 import NotificationsScreen from "@/screens/NotificationsScreen";
 import LeaderboardScreen from "@/screens/LeaderboardScreen";
@@ -269,6 +270,7 @@ export type RootStackParamList = {
   FarmDiary: undefined;
   VoiceRooms: undefined;
   VoiceRoom: { roomId: string; room?: any; isHost?: boolean };
+  VoiceRoomCreate: undefined;
   Stories: undefined;
   Notifications: undefined;
   Leaderboard: undefined;
@@ -1093,7 +1095,15 @@ export default function RootStackNavigator() {
             name="VoiceRoom"
             component={VoiceRoomScreen}
             options={{
-              headerTitle: tr("লাইভ রুম"),
+              headerShown: false,
+              gestureEnabled: false,
+            }}
+          />
+          <Stack.Screen
+            name="VoiceRoomCreate"
+            component={VoiceRoomCreateScreen}
+            options={{
+              headerTitle: tr("New Room"),
               headerBackTitle: "Back",
             }}
           />

@@ -79,6 +79,7 @@ export const HEADER_BN_OF_EN: Record<string, string> = {
   "Find People": "ব্যবহারকারী খুঁজুন",
   "Bepari Calculator": "ব্যাপারী ক্যালকুলেটর",
   "Voice Rooms": "ভয়েস রুম",
+  "New Room": "নতুন রুম",
   "Video Courses": "ভিডিও কোর্স",
   "Land Services": "ভূমি সেবা",
   "Vendor Dashboard": "ভেন্ডর ড্যাশবোর্ড",
