@@ -109,10 +109,47 @@ const { PGlite } = require('@electric-sql/pglite');
         await pg.locator('[data-testid="pf-unit-kg"]').click()
         await pg.locator('[data-testid="pf-price"]').fill("60")
         await pg.locator('[data-testid="pf-qty"]').fill("50")
+        # contradictory limits show under their fields straight away
+        await pg.locator('[data-testid="pf-step-0.5"]').click()
+        await pg.locator('[data-testid="pf-min"]').fill("10")
+        await pg.locator('[data-testid="pf-max"]').fill("5")
+        await pg.wait_for_timeout(300)
+        rep["err_max_below_min"] = await pg.locator('[data-testid="pf-err-maxOrder"]').inner_text() if await pg.locator('[data-testid="pf-err-maxOrder"]').count() else None
+        await pg.locator('[data-testid="pf-min"]').fill("0.7")
+        await pg.wait_for_timeout(300)
+        rep["err_min_off_step"] = await pg.locator('[data-testid="pf-err-minOrder"]').inner_text() if await pg.locator('[data-testid="pf-err-minOrder"]').count() else None
+        await pg.screenshot(path=f"{SHOTS}/3a-form-errors.png", full_page=True)
+        # kg -> gram offers to convert the numbers, then back
         await pg.locator('[data-testid="pf-min"]').fill("1")
+        await pg.locator('[data-testid="pf-max"]').fill("5")
+        await pg.locator('[data-testid="pf-unit-g"]').click()
+        await pg.wait_for_timeout(300)
+        rep["convert_offer"] = await pg.locator('[data-testid="pf-convert"]').count()
+        await pg.locator('[data-testid="pf-convert-yes"]').click()
+        await pg.wait_for_timeout(300)
+        rep["in_grams"] = {k: await pg.locator(f'[data-testid="{k}"]').input_value() for k in ("pf-price", "pf-qty", "pf-min", "pf-max", "pf-step")}
+        await pg.screenshot(path=f"{SHOTS}/3b-in-grams.png", full_page=True)
+        await pg.locator('[data-testid="pf-unit-kg"]').click()
+        await pg.wait_for_timeout(300)
+        await pg.locator('[data-testid="pf-convert-yes"]').click()
+        await pg.wait_for_timeout(300)
+        rep["back_in_kg"] = {k: await pg.locator(f'[data-testid="{k}"]').input_value() for k in ("pf-price", "pf-qty", "pf-min", "pf-max", "pf-step")}
         await pg.locator('[data-testid="pf-max"]').fill("20")
-        await pg.locator('[data-testid="pf-step"]').fill("0.5")
-        await pg.locator('[data-testid="pf-presets"]').fill("1, 5, 10")
+        # quick buttons: one typed, one out of range flagged, then suggestions
+        await pg.locator('[data-testid="pf-preset-input"]').fill("50")
+        await pg.locator('[data-testid="pf-preset-add"]').click()
+        await pg.wait_for_timeout(300)
+        rep["err_preset"] = await pg.locator('[data-testid="pf-err-presets"]').inner_text() if await pg.locator('[data-testid="pf-err-presets"]').count() else None
+        await pg.locator('[data-testid="pf-preset-suggest"]').click()
+        await pg.wait_for_timeout(300)
+        await pg.locator('[data-testid="pf-preset-2"]').click()   # remove 2 from the suggestions
+        await pg.wait_for_timeout(300)
+        rep["presets_chips"] = [v for v in ("1", "2", "5", "10", "50") if await pg.locator(f'[data-testid="pf-preset-{v}"]').count()]
+        rep["summary"] = await pg.locator('[data-testid="pf-rule-summary"]').inner_text() if await pg.locator('[data-testid="pf-rule-summary"]').count() else None
+        rep["price_also"] = await pg.locator('[data-testid="pf-price-also"]').inner_text() if await pg.locator('[data-testid="pf-price-also"]').count() else None
+        await pg.locator('[data-testid="pf-try-plus"]').click()
+        rep["try_qty"] = await pg.locator('[data-testid="pf-try-qty"]').inner_text()
+        rep["try_total"] = await pg.locator('[data-testid="pf-try-total"]').inner_text()
         await pg.wait_for_timeout(500)
         await pg.locator('[data-testid="pf-preview"]').scroll_into_view_if_needed()
         await pg.screenshot(path=f"{SHOTS}/3-product-form.png", full_page=True)

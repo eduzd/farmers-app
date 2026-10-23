@@ -314,7 +314,7 @@ export function storeFields(body: any) {
   return o;
 }
 
-/** weight = by kg/g/maund, piece = each, pack = a bag/box with a fixed amount, volume = litre, dozen = 12 pieces */
+/** weight = by kg/g/maund, piece = each, pack = a bag/box with a fixed amount, volume = litre, dozen = sets of pieces (dozen 12, hali 4, pair 2) */
 export const SELL_AS = ["weight", "piece", "pack", "volume", "dozen"];
 export function productFields(body: any, partial: boolean) {
   const o: any = {};

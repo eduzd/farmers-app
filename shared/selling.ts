@@ -2,11 +2,12 @@
  * How a shop product is sold, shared by the server, the admin dashboard and the main app's shop,
  * so the amount a buyer can pick is checked by the same rules everywhere.
  *
- *   weight  kg / g / maund                 e.g. rice, fish feed
+ *   weight  kg / g / maund / ton           e.g. rice, fish feed
  *   volume  litre / ml                     e.g. milk, oil, BKC
- *   pack    bag / box / packet / sack / crate / bottle, each holding a fixed amount (packSize + packUnit)
+ *   pack    bag / box / packet / sack / crate / bottle / jar / can / pouch / tray / carton / drum / bucket,
+ *           each holding a fixed amount (packSize + packUnit)
  *   piece   one at a time                  e.g. a fish, a plant
- *   dozen   12 pieces                      e.g. eggs
+ *   dozen   sets of pieces: dozen (12), hali (4), pair (2)   e.g. eggs, pigeons
  *
  * The admin sets per product: price per unit, stock (in the same unit), minimum, maximum, the step buyers
  * add at a time (e.g. 0.5 kg) and up to six quick amounts (e.g. 1, 5, 10 kg).
@@ -15,15 +16,22 @@
 export type SellAs = "weight" | "piece" | "pack" | "volume" | "dozen";
 export const SELL_AS_LIST: SellAs[] = ["weight", "piece", "pack", "volume", "dozen"];
 export const SELL_UNITS: Record<SellAs, string[]> = {
-  weight: ["kg", "g", "maund"],
+  weight: ["kg", "g", "maund", "ton"],
   piece: ["piece"],
-  pack: ["bag", "box", "packet", "sack", "crate", "bottle"],
+  pack: ["bag", "box", "packet", "sack", "crate", "bottle", "jar", "can", "pouch", "tray", "carton", "drum", "bucket"],
   volume: ["litre", "ml"],
-  dozen: ["dozen"],
+  dozen: ["dozen", "hali", "pair"],
+};
+/** How many pieces one set holds (sold "by dozen" family). */
+export const SET_SIZE: Record<string, number> = { dozen: 12, hali: 4, pair: 2 };
+/** Weight and volume units in their base unit (kg, litre), for converting between them. */
+export const UNIT_IN_BASE: Record<string, { base: "kg" | "litre"; factor: number }> = {
+  kg: { base: "kg", factor: 1 }, g: { base: "kg", factor: 0.001 }, maund: { base: "kg", factor: 40 }, ton: { base: "kg", factor: 1000 },
+  litre: { base: "litre", factor: 1 }, ml: { base: "litre", factor: 0.001 },
 };
 export const PACK_CONTENT = ["kg", "g", "litre", "ml", "pieces"];
 /** Units where a part amount (2.5 kg, 1.5 litre) makes sense, so the admin may set a step below 1. */
-export const PART_UNITS = ["kg", "maund", "litre"];
+export const PART_UNITS = ["kg", "maund", "ton", "litre"];
 export const MAX_QTY = 9999;
 
 const UNIT_NAMES: Record<string, [string, string, string]> = {
@@ -33,7 +41,9 @@ const UNIT_NAMES: Record<string, [string, string, string]> = {
   bag: ["bag", "bags", "ব্যাগ"], box: ["box", "boxes", "বক্স"], packet: ["packet", "packets", "প্যাকেট"],
   sack: ["sack", "sacks", "বস্তা"], crate: ["crate", "crates", "ক্রেট"], bottle: ["bottle", "bottles", "বোতল"],
   litre: ["litre", "litres", "লিটার"], liter: ["litre", "litres", "লিটার"], ml: ["ml", "ml", "মিলি"],
-  dozen: ["dozen", "dozen", "ডজন"],
+  dozen: ["dozen", "dozen", "ডজন"], hali: ["hali", "hali", "হালি"], pair: ["pair", "pairs", "জোড়া"],
+  ton: ["ton", "tons", "টন"], jar: ["jar", "jars", "জার"], can: ["can", "cans", "ক্যান"], pouch: ["pouch", "pouches", "পাউচ"],
+  tray: ["tray", "trays", "ট্রে"], carton: ["carton", "cartons", "কার্টন"], drum: ["drum", "drums", "ড্রাম"], bucket: ["bucket", "buckets", "বালতি"],
 };
 
 export const round3 = (n: number) => Math.round(n * 1000) / 1000;
@@ -145,7 +155,8 @@ export function checkQty(r: SellRule, q: any, name = "this product"): QtyProblem
 /** "per kg", "per bag (25 kg)", "per bottle (500 ml)" */
 export function perUnitText(r: SellRule, bn = false): string {
   const pack = r.sellAs === "pack" && r.packSize ? ` (${num(r.packSize, bn)} ${unitWord(r.packUnit, r.packSize, bn)})` : "";
-  const dozen = r.sellAs === "dozen" ? (bn ? " (১২ পিস)" : " (12 pieces)") : "";
+  const set = r.sellAs === "dozen" ? SET_SIZE[r.unit] || 12 : 0;
+  const dozen = set ? (bn ? ` (${num(set, true)} পিস)` : ` (${set} pieces)`) : "";
   return bn ? `প্রতি ${unitWord(r.unit, 1, true)}${pack}${dozen}` : `per ${unitWord(r.unit, 1)}${pack}${dozen}`;
 }
 
@@ -160,7 +171,10 @@ export function totalContentText(r: SellRule, qty: number, bn = false): string {
     const t = round3(r.packSize * qty);
     return bn ? `মোট ${num(t, bn)} ${unitWord(r.packUnit, t, true)}` : `${num(t)} ${unitWord(r.packUnit, t)} in all`;
   }
-  if (r.sellAs === "dozen") return bn ? `মোট ${num(qty * 12, true)} পিস` : `${num(qty * 12)} pieces in all`;
+  if (r.sellAs === "dozen") {
+    const n = qty * (SET_SIZE[r.unit] || 12);
+    return bn ? `মোট ${num(n, true)} পিস` : `${num(n)} pieces in all`;
+  }
   return "";
 }
 
