@@ -154,8 +154,14 @@ async def main():
 
                 async def tap(text):
                     await open_list()
-                    row = pg.get_by_text(text, exact=True).first
-                    await row.scroll_into_view_if_needed(timeout=8000)
+                    # Only the visible row: other screens in the stack (home bell) can hold the same text, hidden.
+                    row = pg.locator(f'text="{text}" >> visible=true').first
+                    try:
+                        await row.scroll_into_view_if_needed(timeout=8000)
+                    except Exception:
+                        await pg.screenshot(path=f"{SHOTS}/notif-list-fail-{key}.png")
+                        print("LISTTEXT", (await pg.locator("body").inner_text())[:1500])
+                        raise
                     await row.click()
                     await pg.wait_for_timeout(2500)
 
@@ -212,7 +218,7 @@ async def main():
                 # Someone else's order.
                 await tap("Order ord-88 is on its way.")
                 r = await route()
-                pr = pg.locator('[data-testid="notification-problem"]')
+                pr = pg.locator('[data-testid="notification-problem"] >> visible=true')
                 check(key, r["name"] == "NotificationOpen" and await pr.count() == 1 and T[lang]["na"] in await pr.inner_text(), "someone else's order -> not available")
                 await pg.screenshot(path=f"{SHOTS}/order-forbidden-{key}.png")
 
@@ -224,7 +230,7 @@ async def main():
 
                 # Deleted post.
                 await tap("Doomed comment")
-                pr = pg.locator('[data-testid="notification-problem"]')
+                pr = pg.locator('[data-testid="notification-problem"] >> visible=true')
                 check(key, await pr.count() == 1 and T[lang]["removed"] in await pr.inner_text(), "deleted post -> 'post removed'")
                 await pg.screenshot(path=f"{SHOTS}/post-removed-{key}.png")
 
