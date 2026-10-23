@@ -7,6 +7,7 @@ import { config } from "./config";
 import { onOrderCreated, ensureFeatures } from "./featureRoutes";
 import { quoteOrder, takeStock, ensureCheckout, validateCheckout } from "./checkoutRoutes";
 import { checkPayment, ensurePayments } from "./paymentRoutes";
+import { ensureGuestOrders, GUEST_KEY_RE, hashGuestKey, guestKeyMatches, guestOrderAllowed, guestLabel } from "./guestOrders";
 
 /**
  * Server-backed catalog for content that used to be hard-coded in the app.
@@ -122,6 +123,21 @@ export function registerCatalogRoutes(app: Express) {
     }
   });
 
+  // One shop product, for shared product links (/product/:id). Hidden or switched-off products are not shown.
+  app.get("/api/catalog/listings/:id", async (req, res) => {
+    try {
+      await ensure();
+      const r = rows(await db.execute(sql`SELECT * FROM catalog_items WHERE kind = 'listings' AND id = ${String(req.params.id).slice(0, 120)} LIMIT 1`))[0];
+      const d = r ? (typeof r.data === "string" ? JSON.parse(r.data) : r.data) || {} : null;
+      const me = userFrom(req);
+      if (!r || ((d.hidden || d.active === false) && !(me && r.owner_id === me))) return res.status(404).json({ error: "This product isn't available any more" });
+      res.json(out(r));
+    } catch (e: any) {
+      console.error("[catalog] one", e?.message);
+      res.status(500).json({ error: "Failed to load" });
+    }
+  });
+
   app.post("/api/catalog/events/:id/register", auth, async (req, res) => {
     try {
       await ensure();
@@ -203,7 +219,17 @@ export function registerCatalogRoutes(app: Express) {
     try {
       await ensure();
       const b = req.body || {};
-      const id = String(b.id || crypto.randomUUID()).slice(0, 80);
+      let id = String(b.id || crypto.randomUUID()).slice(0, 80);
+      const uid = userFrom(req);
+      // Guests (no account) can buy too, but only through the full checkout with name, phone and address,
+      // and with a random order key that later lets them (and only them) open the order.
+      const guestKey = uid ? "" : String(b.guestKey || "");
+      if (!uid) {
+        if (!b.checkout || typeof b.checkout !== "object")
+          return res.status(400).json({ error: "Please fill in your name, phone and delivery address to order without an account", code: "guest_checkout_required" });
+        // Older app versions send no key: the order still goes through, it just can't be opened later.
+        if (guestKey && !GUEST_KEY_RE.test(guestKey)) return res.status(400).json({ error: "Please update the app and try again", code: "guest_key_invalid" });
+      }
       let total = Number(b.total) || 0;
       let checkout: any = null;
       if (b.checkout && typeof b.checkout === "object") {
@@ -243,15 +269,23 @@ export function registerCatalogRoutes(app: Express) {
       // Payment settings (admin > Payment settings): only methods that are on; Rocket needs sender number + TrxID.
       await ensurePayments();
       // Same order sent twice (retry after a dropped connection): answer with the saved one, change nothing.
-      const dup = rows(await db.execute(sql`SELECT id, total, checkout, payment_method, payment, data FROM shop_orders WHERE id = ${id} LIMIT 1`))[0];
+      await ensureGuestOrders();
+      const dup = rows(await db.execute(sql`SELECT id, user_id, guest_key_hash, total, checkout, payment_method, payment, data FROM shop_orders WHERE id = ${id} LIMIT 1`))[0];
       if (dup) {
-        const P = (v: any) => (typeof v === "string" ? JSON.parse(v) : v);
-        return res.status(201).json({ success: true, id, total: Number(dup.total), checkout: P(dup.checkout) || null, paymentMethod: dup.payment_method, payment: P(dup.payment) || null, items: P(dup.data) || [], duplicate: true });
+        // Only the same buyer (or the same guest, by key) gets the saved order back. Anyone else
+        // who sends an id that is already taken just gets a fresh id, never another person's order.
+        const mine = uid ? dup.user_id === uid : !dup.user_id && guestKeyMatches(guestKey, dup.guest_key_hash);
+        if (mine) {
+          const P = (v: any) => (typeof v === "string" ? JSON.parse(v) : v);
+          return res.status(201).json({ success: true, id, total: Number(dup.total), checkout: P(dup.checkout) || null, paymentMethod: dup.payment_method, payment: P(dup.payment) || null, items: P(dup.data) || [], duplicate: true, ...(uid ? {} : { guest: true }) });
+        }
+        id = `ORD-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
       }
+      if (!uid && !guestOrderAllowed(req)) return res.status(429).json({ error: "Too many orders from this connection. Please try again later or call the shop.", code: "guest_rate_limited" });
       const pay = await checkPayment(b.paymentMethod, b.payment, total);
       if (!pay.ok) return res.status(pay.status).json({ error: pay.error, code: pay.code });
-      await db.execute(sql`INSERT INTO shop_orders (id, user_id, total, item_count, payment_method, data, payment)
-        VALUES (${id}, ${userFrom(req)}, ${total}, ${itemCount}, ${pay.method}, ${JSON.stringify(b.items || [])}::jsonb, ${pay.payment ? JSON.stringify(pay.payment) : null}::jsonb)
+      await db.execute(sql`INSERT INTO shop_orders (id, user_id, total, item_count, payment_method, data, payment, guest_key_hash)
+        VALUES (${id}, ${uid}, ${total}, ${itemCount}, ${pay.method}, ${JSON.stringify(b.items || [])}::jsonb, ${pay.payment ? JSON.stringify(pay.payment) : null}::jsonb, ${uid || !guestKey ? null : hashGuestKey(guestKey)})
         ON CONFLICT (id) DO NOTHING`);
       await ensureFeatures();
       if (checkout) {
@@ -259,8 +293,8 @@ export function registerCatalogRoutes(app: Express) {
         await db.execute(sql`UPDATE shop_orders SET checkout = ${JSON.stringify(checkout)}::jsonb WHERE id = ${id}`);
         await takeStock(Array.isArray(b.items) ? b.items : []);
       }
-      await onOrderCreated(id, userFrom(req), Array.isArray(b.items) ? b.items : [], b.shippingAddress || null);
-      res.status(201).json({ success: true, id, total, checkout, paymentMethod: pay.method, payment: pay.payment, items: Array.isArray(b.items) ? b.items : [] });
+      await onOrderCreated(id, uid, Array.isArray(b.items) ? b.items : [], b.shippingAddress || null, uid ? null : guestLabel(checkout));
+      res.status(201).json({ success: true, id, total, checkout, paymentMethod: pay.method, payment: pay.payment, items: Array.isArray(b.items) ? b.items : [], ...(uid ? {} : { guest: true }) });
     } catch (e: any) {
       console.error("[shop-orders]", e?.message);
       res.status(500).json({ error: "Failed to record order" });

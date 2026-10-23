@@ -22,6 +22,7 @@ import { useI18n } from "@/lib/i18n";
 
 import { tr, useTr } from "@/lib/tr";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { listGuestOrders } from "@/lib/guestOrders";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const STATUS_CONFIG: Record<OrderStatus, { color: string; icon: string; label: string }> = {
@@ -41,9 +42,12 @@ export default function OrdersScreen() {
   const { t } = useI18n();
   const { orders, sales, isLoading, loadOrders, loadSales } = useOrdersStore();
   const [tab, setTab] = useState<"buying" | "selling">("buying");
+  const [guestCount, setGuestCount] = useState(0);
+  const bn = useI18n().language === "bn";
 
   useFocusEffect(
     useCallback(() => {
+      listGuestOrders().then((l) => setGuestCount(l.length)).catch(() => {});
       loadOrders();
       loadSales();
     }, [loadOrders, loadSales])
@@ -56,6 +60,17 @@ export default function OrdersScreen() {
 
   const pendingSales = sales.filter((o) => o.status === "pending").length;
   const renderTabs = () => (
+    <>
+    {guestCount > 0 && tab === "buying" ? (
+      // orders placed without an account on this phone
+      <Pressable testID="orders-guest-link" onPress={() => navigation.navigate("GuestOrder" as any)} style={[styles.guestRow, { backgroundColor: theme.primarySoft }]}>
+        <Feather name="user-check" size={16} color={theme.primary} />
+        <ThemedText style={{ color: theme.text, flex: 1, fontSize: 13 }}>
+          {bn ? `অ্যাকাউন্ট ছাড়া করা অর্ডার (${guestCount})` : `Orders placed without an account (${guestCount})`}
+        </ThemedText>
+        <Feather name="chevron-right" size={16} color={theme.primary} />
+      </Pressable>
+    ) : null}
     <View style={styles.tabRow}>
       {(["buying", "selling"] as const).map((k) => {
         const active = tab === k;
@@ -73,6 +88,7 @@ export default function OrdersScreen() {
         );
       })}
     </View>
+    </>
   );
 
   const handleOrderPress = (order: Order) => {
@@ -245,6 +261,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  guestRow: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, marginBottom: Spacing.sm },
   tabRow: {
     flexDirection: "row",
     gap: Spacing.sm,

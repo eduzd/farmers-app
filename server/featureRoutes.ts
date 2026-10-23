@@ -157,7 +157,7 @@ function orderOut(r: any) {
 }
 
 /** Called by POST /api/shop-orders after the order row is written. */
-export async function onOrderCreated(orderId: string, buyerId: string | null, items: any[], address: any) {
+export async function onOrderCreated(orderId: string, buyerId: string | null, items: any[], address: any, guestName: string | null = null) {
   try {
     await ensureFeatures();
     const sellers = new Set<string>();
@@ -174,7 +174,7 @@ export async function onOrderCreated(orderId: string, buyerId: string | null, it
     const buyer = await publicUser(buyerId);
     for (const s of sellers) {
       if (s === buyerId) continue;
-      await notify(s, "order", "New order", `${buyer?.name || "A buyer"} ordered ${items.length} item(s). Order ${orderId}`, { orderId, role: "seller" });
+      await notify(s, "order", "New order", `${buyer?.name || guestName || "A buyer"} ordered ${items.length} item(s). Order ${orderId}`, { orderId, role: "seller" });
     }
     if (buyerId) await notify(buyerId, "order", "Order placed", `Your order ${orderId} was placed. We'll let you know when the seller confirms it.`, { orderId, role: "buyer" });
   } catch (e: any) {
@@ -398,7 +398,12 @@ export function registerFeatureRoutes(app: Express) {
     const uid = (req as any).uid;
     const r = rows(await db.execute(sql`SELECT * FROM shop_orders WHERE (',' || seller_ids || ',') LIKE ${"%," + uid + ",%"} ORDER BY created_at DESC LIMIT 200`));
     const out = [] as any[];
-    for (const o of r.map(orderOut)) out.push({ ...o, buyer: await publicUser(o.buyerId) });
+    for (const o of r.map(orderOut)) {
+      // guest orders (no account): show the receiver's name, clearly marked as a guest
+      const guestName = String(o.checkout?.contactName || "").trim();
+      const buyer = o.buyerId ? await publicUser(o.buyerId) : { id: "", username: "", name: guestName ? `${guestName} (Guest)` : "Guest", avatar: null, role: "guest", verified: false, initials: (guestName || "G").slice(0, 2).toUpperCase(), guest: true };
+      out.push({ ...o, buyer });
+    }
     res.json(out);
   }));
   app.get("/api/orders/:id", auth, wrap("orders", async (req, res) => {

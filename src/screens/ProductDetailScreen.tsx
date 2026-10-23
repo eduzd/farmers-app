@@ -34,6 +34,7 @@ import { useI18n } from "@/lib/i18n";
 
 import { tr, useTr } from "@/lib/tr";
 import { useFavoritesStore } from "@/lib/favoritesStore";
+import { publicLink } from "@/lib/guestOrders";
 import { apiGet, apiPost, isLoggedIn, currentUserId, timeAgo } from "@/lib/api";
 import { CatalogFormModal } from "@/components/CatalogFormModal";
 import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
@@ -228,18 +229,21 @@ export default function ProductDetailScreen() {
 
   const handleShare = async () => {
     if (preview) return previewNote.show(language === "bn" ? "শেয়ার" : "Share");
+    // Shop products get their own link that opens without an account (guest checkout).
+    const linkable = !!((product as any).storeSlug || (product as any).ownerId) && !product.companyId;
+    const url = linkable ? publicLink(`/product/${encodeURIComponent(String(product.id))}`) : publicLink("/");
     const message = `${product.name} - ৳${product.price}${product.unit ? "/" + product.unit : ""} (${product.seller}) on Farmers`;
     try {
       if (Platform.OS === "web" && typeof navigator !== "undefined") {
         const nav: any = navigator;
         if (nav.share) {
-          await nav.share({ title: product.name, text: message, url: window.location.origin });
+          await nav.share({ title: product.name, text: message, url });
         } else if (nav.clipboard) {
-          await nav.clipboard.writeText(`${message} ${window.location.origin}`);
-          Alert.alert(tr("Copied"), tr("Product details copied."));
+          await nav.clipboard.writeText(`${message} ${url}`);
+          Alert.alert(tr("Copied"), language === "bn" ? "পণ্যের লিংক কপি হয়েছে।" : "Product link copied.");
         }
       } else {
-        await Share.share({ message });
+        await Share.share({ message: `${message}\n${url}` });
       }
     } catch {}
   };
@@ -266,6 +270,19 @@ export default function ProductDetailScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (companyShop) {
       navigation.navigate("Support" as any);
+      return;
+    }
+    if (!isLoggedIn()) {
+      // Guests can buy without an account, but chat needs one.
+      const bn = language === "bn";
+      Alert.alert(
+        bn ? "মেসেজ পাঠাতে লগ ইন করুন" : "Log in to message the seller",
+        bn ? "অ্যাকাউন্ট ছাড়াই কেনা যায়। বিক্রেতাকে মেসেজ পাঠাতে লগ ইন করুন।" : "You can buy without an account. To chat with the seller, please log in.",
+        [
+          { text: bn ? "বাতিল" : "Cancel", style: "cancel" },
+          { text: bn ? "লগ ইন" : "Log in", onPress: () => navigation.navigate("Login" as any) },
+        ]
+      );
       return;
     }
     navigation.navigate("Chat", {
@@ -340,7 +357,7 @@ export default function ProductDetailScreen() {
           <View style={[styles.floatingHeader, { paddingTop: insets.top + Spacing.sm }]}>
             <Pressable
               style={[styles.headerButton, { backgroundColor: "rgba(255,255,255,0.95)" }]}
-              onPress={() => navigation.goBack()}
+              onPress={() => (navigation.canGoBack() ? navigation.goBack() : null)}
             >
               <Feather name="arrow-left" size={22} color="#1A1A1A" />
             </Pressable>
@@ -780,6 +797,7 @@ export default function ProductDetailScreen() {
 
       {cartCount > 0 ? (
         <Pressable
+          testID="product-cart-badge"
           style={[styles.cartBadge, { backgroundColor: theme.primary, top: insets.top + 70 }]}
           onPress={() => (preview ? previewNote.show(tr("Cart")) : navigation.navigate("Cart"))}
         >

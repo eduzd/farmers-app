@@ -149,6 +149,9 @@ import LivestockTrackerScreen from "@/screens/LivestockTrackerScreen";
 import ProductTraceabilityScreen from "@/screens/ProductTraceabilityScreen";
 import FishEncyclopediaScreen, { Fish } from "@/screens/FishEncyclopediaScreen";
 import FishDetailScreen from "@/screens/FishDetailScreen";
+import ProductLinkScreen from "@/screens/ProductLinkScreen";
+import GuestOrderScreen from "@/screens/GuestOrderScreen";
+import { startLinkCapture, consumeLinks } from "@/lib/deepLinks";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { Product } from "@/screens/MarketScreen";
 
@@ -234,6 +237,8 @@ export type RootStackParamList = {
   StoreView: { companyId: string };
   /** a shop from the server (company shop or seller's shop); no slug = list of all shops */
   ShopPage: { slug?: string } | undefined;
+  ProductLink: { productId: string };
+  GuestOrder: { orderId?: string; k?: string } | undefined;
   ShopsHome: undefined;
   SellerOnboarding: undefined;
   AddressManagement: undefined;
@@ -336,6 +341,13 @@ export default function RootStackNavigator() {
   const variant = getAppVariant();
   const { theme } = useTheme();
 
+  // Shared shop / product / order links (/shop/<slug>, /product/<id>, /order/<id>) open without an account.
+  React.useEffect(() => {
+    if (isLoading || variant !== "main") return;
+    startLinkCapture();
+    return consumeLinks();
+  }, [isLoading, isAuthenticated, onboardingComplete, variant]);
+
   if (isLoading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
@@ -387,6 +399,17 @@ export default function RootStackNavigator() {
               headerBackTitle: "Back",
             }}
           />
+          {variant === "main" ? (
+            // Guest shopping: browse shops, open shared links and buy without an account.
+            <>
+              <Stack.Screen name="ShopPage" component={ShopPageScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="ProductLink" component={ProductLinkScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="Cart" component={CartScreen} options={{ headerTitle: tr("My Cart"), headerBackTitle: "Back" }} />
+              <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ headerTitle: tr("Checkout"), headerBackTitle: "Cart", headerTransparent: false }} />
+              <Stack.Screen name="GuestOrder" component={GuestOrderScreen} options={{ headerShown: false }} />
+            </>
+          ) : null}
         </>
       ) : !onboardingComplete && variant === "main" ? (
         <>
@@ -779,6 +802,8 @@ export default function RootStackNavigator() {
               headerShown: false,
             }}
           />
+          <Stack.Screen name="ProductLink" component={ProductLinkScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="GuestOrder" component={GuestOrderScreen} options={{ headerShown: false }} />
           <Stack.Screen
             name="ShopsHome"
             component={ShopsHomeScreen}

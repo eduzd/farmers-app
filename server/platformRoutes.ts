@@ -6,6 +6,7 @@ import { sql } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { config } from "./config";
 import { notify, ensureFeatures } from "./featureRoutes";
+import { guestLabel } from "./guestOrders";
 import { cleanOptions, cleanDeliveryConfig, deliveryConfig, ensureCheckout } from "./checkoutRoutes";
 import { PART_UNITS, MAX_QTY, isStepMultiple, round3, SELL_UNITS } from "@shared/selling";
 
@@ -735,8 +736,9 @@ export function registerPlatformRoutes(app: Express) {
     const out = r.map((o: any) => ({
       id: o.id,
       buyerId: o.user_id,
-      buyerName: o.buyer_name || "Guest",
+      buyerName: o.buyer_name || guestLabel(J(o.checkout)),
       buyerEmail: o.buyer_email || "",
+      isGuest: !o.user_id,
       sellerIds: String(o.seller_ids || "").split(",").filter(Boolean),
       total: Number(o.total),
       itemCount: Number(o.item_count),

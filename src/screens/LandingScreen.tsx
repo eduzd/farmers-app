@@ -14,6 +14,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 
 import { AppIcon } from "@/components/icons/AppIcon";
+import { listGuestOrders } from "@/lib/guestOrders";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const COPY = {
@@ -30,6 +31,8 @@ const COPY = {
     guest: "Explore as guest",
     login: "Log in",
     support: "Support",
+    shop: "Shop without an account",
+    myOrders: "My orders",
     trust: "Trusted by 50k+ farmers",
   },
   bn: {
@@ -45,6 +48,8 @@ const COPY = {
     guest: "অতিথি হিসেবে দেখুন",
     login: "লগ ইন",
     support: "সহায়তা",
+    shop: "অ্যাকাউন্ট ছাড়াই কিনুন",
+    myOrders: "আমার অর্ডার",
     trust: "৫০ হাজারেরও বেশি কৃষকের আস্থা",
   },
 } as const;
@@ -57,6 +62,13 @@ export default function LandingScreen() {
   const t = COPY[language === "bn" ? "bn" : "en"];
 
   const tap = (style = Haptics.ImpactFeedbackStyle.Light) => Haptics.impactAsync(style).catch(() => {});
+  // Orders placed without an account on this phone / browser
+  const [guestOrderCount, setGuestOrderCount] = React.useState(0);
+  React.useEffect(() => {
+    const load = () => listGuestOrders().then((l) => setGuestOrderCount(l.length)).catch(() => {});
+    load();
+    return navigation.addListener("focus", load);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -154,7 +166,28 @@ export default function LandingScreen() {
             <ThemedText style={styles.secondaryText}>{t.guest}</ThemedText>
           </Pressable>
 
+          <Pressable
+            testID="button-shop-no-account"
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.shopLink, pressed && styles.pressed]}
+            onPress={() => {
+              tap();
+              navigation.navigate("ShopPage", undefined);
+            }}
+          >
+            <Feather name="shopping-bag" size={15} color="#FFFFFF" />
+            <ThemedText style={styles.shopLinkText}>{t.shop}</ThemedText>
+          </Pressable>
+
           <View style={styles.links}>
+            {guestOrderCount > 0 ? (
+              <>
+                <Pressable testID="link-guest-orders" onPress={() => navigation.navigate("GuestOrder", undefined)} hitSlop={8} accessibilityRole="link">
+                  <ThemedText style={styles.linkText}>{t.myOrders} ({guestOrderCount})</ThemedText>
+                </Pressable>
+                <View style={styles.linkDot} />
+              </>
+            ) : null}
             <Pressable onPress={() => navigation.navigate("Login")} hitSlop={8} accessibilityRole="link">
               <ThemedText style={styles.linkText}>{t.login}</ThemedText>
             </Pressable>
@@ -272,6 +305,19 @@ const styles = StyleSheet.create({
   },
   secondaryText: { color: "#FFFFFF", fontSize: 15, lineHeight: 20, fontFamily: FontFamily.semibold },
   pressed: { opacity: 0.85, transform: [{ scale: 0.985 }] },
+  shopLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    alignSelf: "center",
+    marginTop: Spacing.lg,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.14)",
+  },
+  shopLinkText: { color: "#FFFFFF", fontSize: 14, lineHeight: 20, fontFamily: FontFamily.semibold },
   links: {
     flexDirection: "row",
     alignItems: "center",

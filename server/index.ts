@@ -1,4 +1,5 @@
 import { registerCatalogRoutes } from "./catalogRoutes";
+import { registerGuestOrderRoutes } from "./guestOrders";
 import { turnStatus } from "./calls";
 import { registerFeatureRoutes } from "./featureRoutes";
 import { registerPushRoutes } from "./push";
@@ -53,7 +54,7 @@ function setupCors(app: express.Application) {
     if (origin && isAllowedOrigin(origin)) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+      res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Guest-Key");
       res.header("Access-Control-Allow-Credentials", "true");
       res.header("Vary", "Origin");
     }
@@ -143,6 +144,7 @@ function setupErrorHandler(app: express.Application) {
   registerModerationRoutes(app);
   registerPreviewRoutes(app);
   registerCatalogRoutes(app);
+  registerGuestOrderRoutes(app);
   registerFeatureRoutes(app);
   registerPushRoutes(app);
   registerNotificationTargetRoutes(app);

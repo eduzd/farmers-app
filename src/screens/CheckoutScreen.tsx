@@ -19,6 +19,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
 import { getApiUrl } from "@/lib/query-client";
 import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
+import { makeGuestKey, saveGuestOrder } from "@/lib/guestOrders";
 import { DIVISIONS, divisionOf, divisionLabel } from "@/lib/bdLocations";
 import { useTr } from "@/lib/tr";
 
@@ -276,7 +277,9 @@ export default function CheckoutScreen() {
     if (!canPlace) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsProcessing(true);
-    const orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
+    let orderId = `ORD-${Date.now().toString(36).toUpperCase()}`;
+    // No account: the order gets a random key; only this phone/browser (and the order link) can open it.
+    const guestKey = loggedIn ? "" : makeGuestKey();
     const ship = shipping();
     const checkout = {
       deliveryMethod: method,
@@ -303,6 +306,7 @@ export default function CheckoutScreen() {
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
           id: orderId,
+          ...(guestKey ? { guestKey } : {}),
           shippingAddress: { fullName: checkout.contactName || ship.fullName, address: ship.address, city: ship.city, phone: checkout.contactPhone || ship.phone },
           total: quote.total,
           itemCount: items.reduce((n, i) => n + (Number.isInteger(i.quantity) ? i.quantity || 1 : 1), 0),
@@ -343,10 +347,22 @@ export default function CheckoutScreen() {
       }
       if (r.ok) {
         savedOnServer = !!token;
+        if (typeof data?.id === "string" && data.id) orderId = data.id;
         if (typeof data?.total === "number") finalTotal = data.total;
         serverCheckout = data?.checkout || null;
+      } else if (guestKey) {
+        // A guest order only exists on the server, so don't pretend it went through.
+        setIsProcessing(false);
+        if (r.status === 429) Alert.alert(isBn ? "একটু পরে চেষ্টা করুন" : "Please try again later", isBn ? "এই সংযোগ থেকে অনেকগুলো অর্ডার হয়েছে। একটু পরে আবার চেষ্টা করুন বা দোকানে কল করুন।" : data?.error || "");
+        else Alert.alert(isBn ? "অর্ডার হয়নি" : "Order not placed", isBn ? "সার্ভারে সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।" : "Something went wrong on our side. Please try again in a moment.");
+        return;
       }
     } catch {
+      if (guestKey) {
+        setIsProcessing(false);
+        Alert.alert(isBn ? "ইন্টারনেট সংযোগ নেই" : "You're offline", isBn ? "অ্যাকাউন্ট ছাড়া অর্ডার করতে ইন্টারনেট লাগবে। সংযোগ পেলে আবার চেষ্টা করুন।" : "Ordering without an account needs the internet. Please try again when you're connected.");
+        return;
+      }
       // offline: keep the local order only (cash on delivery). A Rocket payment must reach the server with its TrxID.
       if (payment === "rocket") {
         setIsProcessing(false);
@@ -365,6 +381,15 @@ export default function CheckoutScreen() {
         upazila: ship.upazila,
         address: form.address.trim(),
       }).catch(() => {});
+    }
+
+    if (guestKey) {
+      await saveGuestOrder({ id: orderId, key: guestKey, total: finalTotal, createdAt: new Date().toISOString(), contactName: checkout.contactName }).catch(() => {});
+      setIsProcessing(false);
+      clearCart();
+      setPlaced({ id: orderId, total: finalTotal });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return;
     }
 
     await addOrder({
@@ -413,6 +438,17 @@ export default function CheckoutScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <KeyboardAwareScrollViewCompat contentContainerStyle={[styles.scrollContent, { paddingTop: Spacing.md, paddingBottom: 140 + insets.bottom }]} showsVerticalScrollIndicator={false}>
         <View style={styles.inner}>
+          {!loggedIn ? (
+            <View testID="checkout-guest-note" style={[card, { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: theme.primarySoft, borderColor: theme.primarySoft }]}>
+              <Feather name="user-check" size={18} color={theme.primary} />
+              <ThemedText style={{ color: theme.text, flex: 1, fontSize: 13 }}>
+                {isBn ? "অ্যাকাউন্ট ছাড়াই অর্ডার করছেন। শুধু নাম, ফোন নম্বর আর ঠিকানা দিন।" : "You're ordering without an account. Just add your name, phone and address."}
+              </ThemedText>
+              <Pressable testID="checkout-guest-login" hitSlop={8} onPress={() => navigation.navigate("Login" as any)}>
+                <ThemedText style={{ color: theme.primary, fontWeight: "700", fontSize: 13 }}>{isBn ? "লগ ইন" : "Log in"}</ThemedText>
+              </Pressable>
+            </View>
+          ) : null}
           {/* Address */}
           <View style={card}>
             <Header icon="map-pin" title={tr("Delivery address")} />
@@ -894,14 +930,19 @@ export default function CheckoutScreen() {
               </ThemedText>
             ) : null}
             <ThemedText style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs, fontSize: 12 }}>
-              {tr("You'll get a notification each time the seller updates it.")}
+              {loggedIn
+                ? tr("You'll get a notification each time the seller updates it.")
+                : isBn
+                  ? "অ্যাকাউন্ট ছাড়াই অর্ডার হয়েছে। দোকান নিশ্চিত করতে আপনাকে কল করতে পারে। অর্ডারের অবস্থা দেখতে \"অর্ডার দেখুন\" চাপুন।"
+                  : "Ordered without an account. The shop may call you to confirm. Tap Track order to see its status any time."}
             </ThemedText>
             <Pressable
               style={[styles.placeBtn, { backgroundColor: theme.primary, alignSelf: "stretch", marginTop: Spacing.lg }]}
               onPress={() => {
                 const id = placed!.id;
                 setPlaced(null);
-                navigation.replace("OrderDetail", { orderId: id });
+                if (!loggedIn) navigation.replace("GuestOrder", { orderId: id });
+                else navigation.replace("OrderDetail", { orderId: id });
               }}
             >
               <ThemedText style={styles.placeText}>{tr("Track order")}</ThemedText>
@@ -910,7 +951,8 @@ export default function CheckoutScreen() {
               style={[styles.placeBtn, { borderColor: theme.primary, borderWidth: 1, alignSelf: "stretch", marginTop: Spacing.sm }]}
               onPress={() => {
                 setPlaced(null);
-                navigation.navigate("Main" as any, { screen: "Market" });
+                if (!loggedIn) navigation.navigate("ShopPage", undefined as any);
+                else navigation.navigate("Main" as any, { screen: "Market" });
               }}
             >
               <ThemedText style={[styles.placeText, { color: theme.primary }]}>{tr("Continue shopping")}</ThemedText>

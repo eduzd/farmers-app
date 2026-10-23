@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, RefreshControl, TextInput } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, RefreshControl, TextInput, Share, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -13,6 +13,8 @@ import { apiGet } from "@/lib/api";
 import { sellRule, perUnitText } from "@shared/selling";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { BuyerPreviewBar, readPreview, BuyerPreviewInfo } from "@/components/BuyerPreview";
+import { useCartStore } from "@/lib/cartStore";
+import { publicLink } from "@/lib/guestOrders";
 
 /**
  * Shops in the main app. With a slug: one shop (a company or a seller) and all its products.
@@ -85,14 +87,41 @@ export default function ShopPageScreen() {
     return s ? shops.filter((x) => `${x.name} ${x.tagline || ""} ${x.location || ""} ${x.category || ""}`.toLowerCase().includes(s)) : shops;
   }, [shops, q]);
 
+  const cartCount = useCartStore((c) => c.items.length);
+  const shareShop = async () => {
+    if (!slug) return;
+    const url = publicLink(`/shop/${encodeURIComponent(slug)}`);
+    const name = shop?.store?.name || "";
+    const message = bn ? `${name} — Farmers-এ দোকান দেখুন, অ্যাকাউন্ট ছাড়াই কিনুন: ${url}` : `${name} on Farmers — shop here, no account needed: ${url}`;
+    try {
+      if (Platform.OS === "web" && typeof navigator !== "undefined" && (navigator as any).share) await (navigator as any).share({ title: name, text: message, url });
+      else if (Platform.OS === "web" && typeof navigator !== "undefined" && navigator.clipboard) { await navigator.clipboard.writeText(url); }
+      else await Share.share({ message, url });
+    } catch {}
+  };
   const header = (title: string) => (
     <>
     {previewInfo ? <BuyerPreviewBar info={previewInfo} topInset={realInsets.top} onClose={() => navigation.goBack()} /> : null}
     <View style={[styles.topBar, { paddingTop: insets.top + 8, backgroundColor: theme.backgroundRoot }]}>
-      <Pressable testID="shop-back" hitSlop={10} onPress={() => navigation.goBack()} style={styles.backBtn}>
+      <Pressable testID="shop-back" hitSlop={10} onPress={() => (navigation.canGoBack() ? navigation.goBack() : null)} style={styles.backBtn}>
         <Feather name="arrow-left" size={22} color={theme.text} />
       </Pressable>
       <ThemedText type="h4" style={{ color: theme.text, flex: 1 }} numberOfLines={1}>{title}</ThemedText>
+      {!preview && slug && shop ? (
+        <Pressable testID="shop-share" hitSlop={10} onPress={shareShop} style={styles.backBtn} accessibilityLabel={bn ? "দোকানের লিংক শেয়ার করুন" : "Share shop link"}>
+          <Feather name="share-2" size={20} color={theme.text} />
+        </Pressable>
+      ) : null}
+      {!preview ? (
+        <Pressable testID="shop-cart" hitSlop={10} onPress={() => navigation.navigate("Cart")} style={styles.backBtn} accessibilityLabel={bn ? "কার্ট" : "Cart"}>
+          <Feather name="shopping-cart" size={21} color={theme.text} />
+          {cartCount > 0 ? (
+            <View style={[styles.cartBadge, { backgroundColor: theme.primary }]}>
+              <ThemedText style={styles.cartBadgeText}>{cartCount > 9 ? "9+" : cartCount}</ThemedText>
+            </View>
+          ) : null}
+        </Pressable>
+      ) : null}
     </View>
     </>
   );
@@ -249,6 +278,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   topBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 12, paddingBottom: 10 },
   backBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  cartBadge: { position: "absolute", top: 1, right: 0, minWidth: 17, height: 17, borderRadius: 9, paddingHorizontal: 4, alignItems: "center", justifyContent: "center" },
+  cartBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", lineHeight: 13 },
   search: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, paddingHorizontal: 12, height: 42, marginBottom: 10 },
   searchInput: { flex: 1, fontSize: 14, height: 42 },
   shopRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: 14, borderWidth: 1 },

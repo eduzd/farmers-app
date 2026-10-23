@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { sql } from "drizzle-orm";
 import { db } from "./db";
 import { notify } from "./featureRoutes";
+import { guestLabel } from "./guestOrders";
 import { decodeUpload, looksLikeImage, IMAGE_MIME, MAX_IMAGE_BYTES, VOICE_MIME, MAX_VOICE_BYTES, MAX_VOICE_MS } from "./dmRoutes";
 import { isUserPresent } from "./communityRoutes";
 import {
@@ -133,9 +134,10 @@ function orderOut(o: any) {
   return {
     id: o.id,
     buyerId: o.user_id,
-    buyerName: o.buyer_name || "Guest",
+    buyerName: o.buyer_name || guestLabel(J(o.checkout)),
     buyerEmail: o.buyer_email || "",
-    buyerPhone: o.buyer_phone || "",
+    buyerPhone: o.buyer_phone || (!o.user_id ? String(J(o.checkout)?.contactPhone || "") : ""),
+    isGuest: !o.user_id,
     sellerIds: String(o.seller_ids || "").split(",").filter(Boolean),
     total: Number(o.total),
     itemCount: Number(o.item_count),
