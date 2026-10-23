@@ -1,5 +1,24 @@
 import { getApiUrl } from "@/lib/query-client";
 
+export interface PostPollOption {
+  /** "a", "b", "c" ... (shown as A, B, C) */
+  id: string;
+  text: string;
+  votes: number;
+}
+
+/** A poll inside a community post: the title, the options and the vote counts. */
+export interface PostPoll {
+  question: string;
+  options: PostPollOption[];
+  totalVotes: number;
+  /** The option the signed-in person voted for, or null. */
+  myVote: string | null;
+}
+
+export const POLL_MIN_OPTIONS = 2;
+export const POLL_MAX_OPTIONS = 6;
+
 export interface FeedPost {
   id: string;
   author: {
@@ -23,6 +42,8 @@ export interface FeedPost {
   createdAt: string;
   /** true when the post lives on the server and other members can see it */
   shared?: boolean;
+  /** Set when the post is a poll. */
+  poll?: PostPoll | null;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -71,6 +92,7 @@ interface ServerPostRow {
   likeCount?: number | string | null;
   likedByMe?: boolean | null;
   savedByMe?: boolean | null;
+  poll?: PostPoll | null;
   author: {
     id: string;
     name: string | null;
@@ -82,6 +104,17 @@ interface ServerPostRow {
 
 function authHeaders(token?: string | null): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export function normalizePoll(p: any): PostPoll | null {
+  if (!p || !Array.isArray(p.options) || !p.options.length) return null;
+  const options = p.options.map((o: any) => ({ id: String(o.id), text: String(o.text ?? ""), votes: Number(o.votes || 0) }));
+  return {
+    question: String(p.question ?? ""),
+    options,
+    totalVotes: options.reduce((a: number, o: PostPollOption) => a + o.votes, 0),
+    myVote: p.myVote ? String(p.myVote) : null,
+  };
 }
 
 function postFromRow(r: ServerPostRow, bn: boolean): FeedPost {
@@ -99,6 +132,7 @@ function postFromRow(r: ServerPostRow, bn: boolean): FeedPost {
     isSaved: !!r.savedByMe,
     createdAt: timeAgo(r.createdAt, bn),
     shared: true,
+    poll: normalizePoll(r.poll),
   };
 }
 
@@ -229,12 +263,35 @@ export function isSharedPostId(id: string): boolean {
   return UUID.test(id);
 }
 
-export async function createServerPost(token: string, communityId: string, content: string, media: string[]) {
+export async function createServerPost(
+  token: string,
+  communityId: string,
+  content: string,
+  media: string[],
+  poll?: { question: string; options: string[] } | null,
+) {
   const res = await fetch(`${getApiUrl()}/api/posts`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ communityId, content, media }),
+    body: JSON.stringify(poll ? { communityId, content, media, poll } : { communityId, content, media }),
   });
-  if (!res.ok) throw new Error(`create post ${res.status}`);
+  if (!res.ok) {
+    const err: any = new Error(await errorText(res, `create post ${res.status}`));
+    err.status = res.status;
+    throw err;
+  }
   return res.json();
+}
+
+/** Vote on a poll post (voting again moves your vote). Returns the poll with fresh counts. */
+export async function voteServerPoll(token: string, postId: string, optionId: string): Promise<PostPoll> {
+  const res = await fetch(`${getApiUrl()}/api/posts/${encodeURIComponent(postId)}/poll/vote`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders(token) },
+    body: JSON.stringify({ optionId }),
+  });
+  if (!res.ok) throw new Error(await errorText(res, `vote ${res.status}`));
+  const poll = normalizePoll((await res.json()).poll);
+  if (!poll) throw new Error("vote");
+  return poll;
 }

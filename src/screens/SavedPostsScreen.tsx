@@ -87,7 +87,7 @@ export default function SavedPostsScreen() {
           id: p.id,
           post: p,
           type: "post",
-          title: p.content.split("\n")[0].slice(0, 120) || (bn ? "ছবি" : "Photo"),
+          title: p.content.split("\n")[0].slice(0, 120) || (p.poll ? `${bn ? "জরিপ" : "Poll"}: ${p.poll.question}`.slice(0, 120) : bn ? "ছবি" : "Photo"),
           description: p.content.length > 120 ? p.content : undefined,
           image: p.image,
           author: { name: p.author.name, avatar: p.author.avatar || "" },
