@@ -176,6 +176,8 @@ interface Post {
   shared?: boolean;
   /** Saved by the signed-in user (server posts only). */
   isSaved?: boolean;
+  /** Set when the post is a poll. */
+  poll?: import("@/lib/feedApi").PostPoll | null;
 }
 
 export type RootStackParamList = {

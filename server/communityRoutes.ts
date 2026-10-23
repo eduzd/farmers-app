@@ -496,6 +496,100 @@ function postSelect(uid: string | null) {
   };
 }
 
+// ---------- Polls inside community posts ----------
+// A post can carry one poll: a title (question) and 2 to 6 options, each person votes for one
+// option (they can switch to another later). One vote per person per poll is enforced by the
+// primary key, and only the counts (never who voted) go back to the app.
+//  POST /api/posts                      { communityId, content?, media?, poll: { question, options: string[] } }
+//  POST /api/posts/:id/poll/vote        { optionId }  (signed in) -> the poll with fresh counts
+export const POLL_MIN_OPTIONS = 2;
+export const POLL_MAX_OPTIONS = 6;
+let pollsReady: Promise<void> | null = null;
+function ensurePolls() {
+  if (!pollsReady) {
+    pollsReady = (async () => {
+      await db.execute(sql`CREATE TABLE IF NOT EXISTS post_polls (
+        post_id varchar PRIMARY KEY REFERENCES posts(id) ON DELETE CASCADE,
+        question text NOT NULL,
+        options jsonb NOT NULL,
+        created_at timestamp NOT NULL DEFAULT now()
+      )`);
+      await db.execute(sql`CREATE TABLE IF NOT EXISTS post_poll_votes (
+        post_id varchar NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+        user_id varchar NOT NULL,
+        option_id text NOT NULL,
+        created_at timestamp NOT NULL DEFAULT now(),
+        updated_at timestamp NOT NULL DEFAULT now(),
+        PRIMARY KEY (post_id, user_id)
+      )`);
+    })().catch((e) => {
+      pollsReady = null;
+      throw e;
+    });
+  }
+  return pollsReady;
+}
+
+type PollOption = { id: string; text: string };
+/** Checks a poll sent by the app. Returns the clean poll, or an error message for the person. */
+function cleanPoll(raw: any): { question: string; options: PollOption[] } | { error: string } {
+  const question = String(raw?.question ?? "").replace(/\s+/g, " ").trim().slice(0, 300);
+  if (!question) return { error: "Write the poll question" };
+  if (!Array.isArray(raw?.options)) return { error: "Add at least 2 options" };
+  const seen = new Set<string>();
+  const options: PollOption[] = [];
+  for (const o of raw.options) {
+    const text = String(typeof o === "string" ? o : o?.text ?? "").replace(/\s+/g, " ").trim().slice(0, 120);
+    if (!text) continue;
+    const key = text.toLowerCase();
+    if (seen.has(key)) return { error: "Two options are the same" };
+    seen.add(key);
+    options.push({ id: String.fromCharCode(97 + options.length), text }); // a, b, c ...
+  }
+  if (options.length < POLL_MIN_OPTIONS) return { error: "Add at least 2 options" };
+  if (options.length > POLL_MAX_OPTIONS) return { error: `A poll can have at most ${POLL_MAX_OPTIONS} options` };
+  return { question, options };
+}
+
+/** The polls (with vote counts and this person's vote) for these posts, by post id. */
+async function pollsFor(postIds: string[], uid: string | null): Promise<Map<string, any>> {
+  const out = new Map<string, any>();
+  const ids = Array.from(new Set(postIds.filter(Boolean)));
+  if (!ids.length) return out;
+  await ensurePolls();
+  const list = sql.join(ids.map((id) => sql`${id}`), sql`, `);
+  const polls = rowsOf(await db.execute(sql`SELECT post_id, question, options FROM post_polls WHERE post_id IN (${list})`));
+  if (!polls.length) return out;
+  const counts = rowsOf(await db.execute(sql`SELECT post_id, option_id, count(*)::int AS n FROM post_poll_votes
+    WHERE post_id IN (${list}) GROUP BY post_id, option_id`));
+  const mine = uid
+    ? rowsOf(await db.execute(sql`SELECT post_id, option_id FROM post_poll_votes WHERE user_id = ${uid} AND post_id IN (${list})`))
+    : [];
+  for (const p of polls) {
+    let opts: PollOption[] = typeof p.options === "string" ? JSON.parse(p.options) : p.options || [];
+    if (!Array.isArray(opts)) opts = [];
+    const options = opts.map((o) => ({
+      id: String(o.id),
+      text: String(o.text),
+      votes: Number(counts.find((c) => c.post_id === p.post_id && String(c.option_id) === String(o.id))?.n || 0),
+    }));
+    const my = mine.find((m) => m.post_id === p.post_id)?.option_id;
+    out.set(String(p.post_id), {
+      question: String(p.question),
+      options,
+      totalVotes: options.reduce((a, o) => a + o.votes, 0),
+      myVote: my && options.some((o) => o.id === String(my)) ? String(my) : null,
+    });
+  }
+  return out;
+}
+
+/** Adds `poll` (or null) to each post row. */
+async function withPolls<T extends { id: string }>(rows: T[], uid: string | null): Promise<(T & { poll: any })[]> {
+  const polls = await pollsFor(rows.map((r) => r.id), uid);
+  return rows.map((r) => ({ ...r, poll: polls.get(r.id) || null }));
+}
+
 router.get("/posts", async (req: Request, res: Response) => {
   if (!db) return res.status(500).json({ error: "Database not available" });
 
@@ -522,7 +616,7 @@ router.get("/posts", async (req: Request, res: Response) => {
       .orderBy(desc(posts.createdAt))
       .limit(50);
 
-    res.json(result);
+    res.json(await withPolls(result as any[], uid));
   } catch (error) {
     console.error("Get posts error:", error);
     res.status(500).json({ error: "Failed to get posts" });
@@ -535,14 +629,15 @@ router.get("/posts/:id", async (req: Request, res: Response) => {
   try {
     await ensureProfileColumns();
     await ensureSaves();
+    const uid = optionalUserId(req);
     const result = await db
-      .select(postSelect(optionalUserId(req)))
+      .select(postSelect(uid))
       .from(posts)
       .leftJoin(users, eq(posts.authorId, users.id))
       .where(eq(posts.id, req.params.id))
       .limit(1);
     if (!result[0]) return res.status(404).json({ error: "This post was removed" });
-    res.json(result[0]);
+    res.json((await withPolls(result as any[], uid))[0]);
   } catch (error) {
     console.error("Get post error:", error);
     res.status(500).json({ error: "Failed to get post" });
@@ -627,21 +722,69 @@ router.post("/posts", requireAuth, async (req: Request, res: Response) => {
     const { communityId, content, media } = req.body;
     const userId = req.user!.userId;
 
+    // Optional poll: checked before anything is saved.
+    let poll: { question: string; options: PollOption[] } | null = null;
+    if (req.body?.poll != null) {
+      const p = cleanPoll(req.body.poll);
+      if ("error" in p) return res.status(400).json({ error: p.error });
+      poll = p;
+      await ensurePolls();
+    }
+
     const newPost = await db
       .insert(posts)
       .values({
         communityId,
         authorId: userId,
-        content,
+        content: typeof content === "string" ? content.slice(0, 5000) : content,
         media: media || [],
       })
       .returning();
 
-    res.status(201).json(newPost[0]);
-    void notifyFollowersOfPost(userId, newPost[0]);
+    let pollOut: any = null;
+    if (poll) {
+      try {
+        await db.execute(sql`INSERT INTO post_polls (post_id, question, options)
+          VALUES (${newPost[0].id}, ${poll.question}, ${JSON.stringify(poll.options)}::jsonb)`);
+        pollOut = (await pollsFor([newPost[0].id], userId)).get(newPost[0].id) || null;
+      } catch (e) {
+        // Never leave a poll post without its poll.
+        await db.execute(sql`DELETE FROM posts WHERE id = ${newPost[0].id}`).catch(() => {});
+        throw e;
+      }
+    }
+
+    res.status(201).json({ ...newPost[0], poll: pollOut });
+    void notifyFollowersOfPost(userId, { ...newPost[0], content: newPost[0].content || (poll ? `Poll: ${poll.question}` : "") });
   } catch (error) {
     console.error("Create post error:", error);
     res.status(500).json({ error: "Failed to create post" });
+  }
+});
+
+router.post("/posts/:id/poll/vote", requireAuth, async (req: Request, res: Response) => {
+  if (!db) return res.status(500).json({ error: "Database not available" });
+  try {
+    await ensurePolls();
+    const uid = req.user!.userId;
+    const optionId = String(req.body?.optionId ?? "");
+    const row = rowsOf(await db.execute(sql`SELECT p.id, p.author_id, pp.options FROM posts p
+      JOIN post_polls pp ON pp.post_id = p.id WHERE p.id = ${req.params.id} LIMIT 1`))[0];
+    if (!row) return res.status(404).json({ error: "This poll was removed" });
+    if (row.author_id && row.author_id !== uid) {
+      await ensureRelations();
+      if (await isBlockedBetween(uid, String(row.author_id))) return res.status(403).json({ error: "You can't vote on this poll" });
+    }
+    const opts: PollOption[] = typeof row.options === "string" ? JSON.parse(row.options) : row.options || [];
+    if (!opts.some((o) => String(o.id) === optionId)) return res.status(400).json({ error: "Pick one of the options" });
+    // One row per person per poll: a second vote replaces the first, it never adds a vote.
+    await db.execute(sql`INSERT INTO post_poll_votes (post_id, user_id, option_id) VALUES (${row.id}, ${uid}, ${optionId})
+      ON CONFLICT (post_id, user_id) DO UPDATE SET option_id = EXCLUDED.option_id, updated_at = now()`);
+    const poll = (await pollsFor([row.id], uid)).get(row.id);
+    res.json({ ok: true, postId: row.id, poll });
+  } catch (error) {
+    console.error("Poll vote error:", error);
+    res.status(500).json({ error: "Couldn't save your vote" });
   }
 });
 
@@ -750,7 +893,12 @@ router.patch("/posts/:id", requireAuth, async (req: Request, res: Response) => {
     if (!post) return res.status(404).json({ error: "This post was removed" });
     if (post.author_id !== uid) return res.status(403).json({ error: "You can only edit your own posts" });
     const media = Array.isArray(post.media) ? post.media : [];
-    if (!content && !media.length) return res.status(400).json({ error: "Post is empty" });
+    let hasPoll = false;
+    if (!content && !media.length) {
+      await ensurePolls();
+      hasPoll = rowsOf(await db.execute(sql`SELECT 1 FROM post_polls WHERE post_id = ${post.id} LIMIT 1`)).length > 0;
+    }
+    if (!content && !media.length && !hasPoll) return res.status(400).json({ error: "Post is empty" });
     const out = rowsOf(await db.execute(sql`UPDATE posts SET content = ${content} WHERE id = ${post.id} AND author_id = ${uid} RETURNING id, content`))[0];
     if (!out) return res.status(403).json({ error: "You can only edit your own posts" });
     res.json({ ok: true, id: out.id, content: out.content });
@@ -889,7 +1037,7 @@ router.get("/me/saved-posts", requireAuth, async (req: Request, res: Response) =
       .where(inArray(posts.id, ids));
     const order = new Map(ids.map((id, i) => [id, i]));
     result.sort((x: any, y: any) => (order.get(x.id) ?? 0) - (order.get(y.id) ?? 0));
-    res.json(result);
+    res.json(await withPolls(result as any[], uid));
   } catch (error) {
     console.error("Saved posts error:", error);
     res.status(500).json({ error: "Failed to load saved posts" });

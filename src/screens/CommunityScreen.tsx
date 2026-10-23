@@ -39,6 +39,7 @@ import { useCommunityStore, CommunityType } from "@/lib/communityStore";
 import { badgeKeyFor } from "@/constants/profileBadges";
 import { useAuthStore } from "@/lib/authStore";
 import { PostActionsSheet } from "@/components/PostActionsSheet";
+import { PostPollCard, pollLetter } from "@/components/PostPollCard";
 import { PostPhoto } from "@/components/PhotoViewer";
 import { CountBadge } from "@/components/CountBadge";
 import { useUnreadCounts } from "@/lib/liveStatus";
@@ -52,6 +53,8 @@ import {
   likeServerPost,
   initialsOf,
   resolveServerCommunityId,
+  POLL_MIN_OPTIONS,
+  POLL_MAX_OPTIONS,
 } from "@/lib/feedApi";
 
 import { AppIcon } from "@/components/icons/AppIcon";
@@ -105,6 +108,10 @@ export default function CommunityScreen() {
   const [posting, setPosting] = useState(false);
   const [newPostContent, setNewPostContent] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  // New poll (shown in the new-post page after tapping "Create poll").
+  const [pollMode, setPollMode] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [slide, setSlide] = useState(0);
   const carouselRef = useRef<ScrollView>(null);
   const slideRef = useRef(0);
@@ -236,7 +243,58 @@ export default function CommunityScreen() {
     });
   };
 
+  const resetComposer = () => {
+    setNewPostContent("");
+    setSelectedImage(null);
+    setPollMode(false);
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+  };
+
+  const filledPollOptions = pollOptions.map((o) => o.trim()).filter(Boolean);
+  const pollProblem = (() => {
+    if (!pollMode) return null;
+    if (!pollQuestion.trim()) return isBn ? "জরিপের প্রশ্ন লিখুন" : "Write the poll question";
+    if (filledPollOptions.length < POLL_MIN_OPTIONS) return isBn ? "অন্তত ২টি অপশন লিখুন" : "Add at least 2 options";
+    if (new Set(filledPollOptions.map((o) => o.toLowerCase())).size !== filledPollOptions.length)
+      return isBn ? "দুটি অপশন একই হয়েছে" : "Two options are the same";
+    return null;
+  })();
+  const canPost = pollMode ? !pollProblem : !!newPostContent.trim() || !!selectedImage;
+
+  const handleCreatePoll = async () => {
+    if (pollProblem) {
+      Alert.alert(isBn ? "জরিপ পূর্ণ করুন" : "Finish your poll", pollProblem);
+      return;
+    }
+    const token = getToken();
+    if (!token) {
+      Alert.alert(isBn ? "সাইন ইন করুন" : "Sign in", isBn ? "জরিপ পোস্ট করতে সাইন ইন করুন।" : "Sign in to post a poll.");
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setPosting(true);
+    try {
+      const id = serverCommunityId ?? (await resolveServerCommunityId(activeCommunity));
+      if (!id) throw new Error(isBn ? "সার্ভারে পৌঁছানো যাচ্ছে না।" : "Can't reach the server.");
+      await createServerPost(token, id, newPostContent.trim(), selectedImage ? [selectedImage] : [], {
+        question: pollQuestion.trim(),
+        options: filledPollOptions,
+      });
+      await loadFeed();
+      resetComposer();
+      setShowCreatePost(false);
+    } catch (e: any) {
+      // A poll needs the server (people vote on it), so it is never kept only on this phone.
+      const msg = e?.status === 400 || e?.status === 403 ? e.message : isBn ? "ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।" : "Check your internet and try again.";
+      Alert.alert(isBn ? "জরিপ পোস্ট হয়নি" : "Couldn't post the poll", msg);
+    } finally {
+      setPosting(false);
+    }
+  };
+
   const handleCreatePost = async () => {
+    if (pollMode) return handleCreatePoll();
     const content = newPostContent.trim();
     if (!content && !selectedImage) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -265,8 +323,7 @@ export default function CommunityScreen() {
       setLocalPosts((prev) => [draft, ...prev]);
     } finally {
       setPosting(false);
-      setNewPostContent("");
-      setSelectedImage(null);
+      resetComposer();
       setShowCreatePost(false);
     }
   };
@@ -613,6 +670,8 @@ export default function CommunityScreen() {
         </ThemedText>
       ) : null}
 
+      {item.poll ? <PostPollCard postId={item.id} poll={item.poll} canVote={!!item.shared} /> : null}
+
       {item.image ? (
         <PostPhoto uri={item.image} style={styles.postImage} mode="thumb" />
       ) : null}
@@ -740,13 +799,14 @@ export default function CommunityScreen() {
             <Pressable onPress={() => setShowCreatePost(false)} hitSlop={10} accessibilityRole="button">
               <ThemedText muted>{isBn ? "বাতিল" : "Cancel"}</ThemedText>
             </Pressable>
-            <ThemedText type="h4">{isBn ? "নতুন পোস্ট" : "New post"}</ThemedText>
+            <ThemedText type="h4">{pollMode ? (isBn ? "নতুন জরিপ" : "New poll") : isBn ? "নতুন পোস্ট" : "New post"}</ThemedText>
             <Button
               title={isBn ? "পোস্ট" : "Post"}
               size="sm"
               loading={posting}
-              disabled={!newPostContent.trim() && !selectedImage}
+              disabled={!canPost}
               onPress={handleCreatePost}
+              testID="new-post-submit"
             />
           </View>
           <ScrollView contentContainerStyle={{ padding: Spacing.lg }} keyboardShouldPersistTaps="handled">
@@ -761,13 +821,98 @@ export default function CommunityScreen() {
             </View>
             <TextInput
               style={[styles.postInput, { color: theme.text, fontFamily: isBn ? "HindSiliguri_400Regular" : FontFamily.regular }]}
-              placeholder={isBn ? "আজ খামারে কী হলো?" : "What happened on the farm today?"}
+              placeholder={
+                pollMode
+                  ? isBn ? "জরিপ নিয়ে কিছু বলুন (ঐচ্ছিক)" : "Say something about your poll (optional)"
+                  : isBn ? "আজ খামারে কী হলো?" : "What happened on the farm today?"
+              }
               placeholderTextColor={theme.textTertiary}
               multiline
               value={newPostContent}
               onChangeText={setNewPostContent}
               autoFocus
             />
+            {pollMode ? (
+              <View style={[styles.pollEditor, { borderColor: theme.divider, backgroundColor: theme.backgroundRoot }]} testID="poll-editor">
+                <View style={styles.pollEditorHead}>
+                  <AppIcon name="bar-chart-2" size={16} color={theme.primary} />
+                  <ThemedText style={[styles.pollEditorTitle, { color: theme.primary }]}>{isBn ? "জরিপ" : "Poll"}</ThemedText>
+                  <View style={{ flex: 1 }} />
+                  <Pressable
+                    onPress={() => {
+                      setPollMode(false);
+                      setPollQuestion("");
+                      setPollOptions(["", ""]);
+                    }}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel={isBn ? "জরিপ বাদ দিন" : "Remove poll"}
+                    testID="poll-remove"
+                  >
+                    <Feather name="x" size={18} color={theme.textSecondary} />
+                  </Pressable>
+                </View>
+                <ThemedText type="caption" muted style={styles.pollFieldLabel}>
+                  {isBn ? "প্রশ্ন (শিরোনাম)" : "Question (title)"}
+                </ThemedText>
+                <TextInput
+                  testID="poll-question-input"
+                  style={[styles.pollInput, { color: theme.text, borderColor: theme.inputBorder, backgroundColor: theme.backgroundDefault, fontFamily: isBn ? "HindSiliguri_400Regular" : FontFamily.regular }]}
+                  placeholder={isBn ? "যেমন: কোন মাছের খাবার ভালো?" : "e.g. Which fish feed is better?"}
+                  placeholderTextColor={theme.textTertiary}
+                  value={pollQuestion}
+                  onChangeText={setPollQuestion}
+                  maxLength={300}
+                />
+                <ThemedText type="caption" muted style={styles.pollFieldLabel}>
+                  {isBn ? "অপশন" : "Options"}
+                </ThemedText>
+                {pollOptions.map((opt, i) => (
+                  <View key={i} style={styles.pollOptionRow}>
+                    <View style={[styles.pollRadio, { borderColor: theme.textTertiary }]} />
+                    <ThemedText style={[styles.pollLetter, { color: theme.textSecondary }]}>{pollLetter(i, isBn)}.</ThemedText>
+                    <TextInput
+                      testID={`poll-option-input-${i}`}
+                      style={[styles.pollInput, { flex: 1, marginBottom: 0, color: theme.text, borderColor: theme.inputBorder, backgroundColor: theme.backgroundDefault, fontFamily: isBn ? "HindSiliguri_400Regular" : FontFamily.regular }]}
+                      placeholder={isBn ? `অপশন ${pollLetter(i, true)}` : `Option ${pollLetter(i, false)}`}
+                      placeholderTextColor={theme.textTertiary}
+                      value={opt}
+                      onChangeText={(t) => setPollOptions((prev) => prev.map((x, j) => (j === i ? t : x)))}
+                      maxLength={120}
+                    />
+                    {pollOptions.length > POLL_MIN_OPTIONS ? (
+                      <Pressable
+                        onPress={() => setPollOptions((prev) => prev.filter((_, j) => j !== i))}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={isBn ? `অপশন ${pollLetter(i, true)} সরান` : `Remove option ${pollLetter(i, false)}`}
+                        style={styles.pollOptionRemove}
+                      >
+                        <Feather name="minus-circle" size={18} color={theme.textSecondary} />
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ))}
+                {pollOptions.length < POLL_MAX_OPTIONS ? (
+                  <Pressable
+                    onPress={() => setPollOptions((prev) => [...prev, ""])}
+                    accessibilityRole="button"
+                    testID="poll-add-option"
+                    style={({ pressed }) => [styles.pollAddOption, { opacity: pressed ? 0.6 : 1 }]}
+                  >
+                    <Feather name="plus" size={16} color={theme.primary} />
+                    <ThemedText type="caption" style={{ color: theme.primary, fontFamily: FontFamily.semibold }}>
+                      {isBn ? "অপশন যোগ করুন" : "Add option"}
+                    </ThemedText>
+                  </Pressable>
+                ) : null}
+                <ThemedText type="caption" muted style={{ marginTop: Spacing.xs }}>
+                  {isBn
+                    ? `${toBnDigits(POLL_MIN_OPTIONS)} থেকে ${toBnDigits(POLL_MAX_OPTIONS)}টি অপশন। প্রত্যেকে একটি অপশনে ভোট দিতে পারবেন।`
+                    : `${POLL_MIN_OPTIONS} to ${POLL_MAX_OPTIONS} options. Everyone can vote for one option.`}
+                </ThemedText>
+              </View>
+            ) : null}
             {selectedImage ? (
               <View style={styles.selectedImageWrap}>
                 <Image source={{ uri: selectedImage }} style={styles.selectedImage} contentFit="cover" />
@@ -779,6 +924,19 @@ export default function CommunityScreen() {
           </ScrollView>
           <Animated.View style={[styles.modalToolbar, { borderTopColor: theme.divider }, toolbarPadding]}>
             <Button title={isBn ? "ছবি যোগ করুন" : "Add photo"} icon="image" variant="secondary" size="sm" onPress={pickImage} />
+            {!pollMode ? (
+              <Button
+                title={isBn ? "জরিপ তৈরি করুন" : "Create poll"}
+                icon="bar-chart-2"
+                variant="secondary"
+                size="sm"
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setPollMode(true);
+                }}
+                testID="create-poll-button"
+              />
+            ) : null}
           </Animated.View>
         </KeyboardAvoidingView>
       </Modal>
@@ -1022,8 +1180,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  pollEditor: { marginTop: Spacing.lg, borderWidth: 1, borderRadius: BorderRadius.md, padding: Spacing.md },
+  pollEditorHead: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: Spacing.sm },
+  pollEditorTitle: { fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 20 },
+  pollFieldLabel: { marginTop: Spacing.sm, marginBottom: 6 },
+  pollInput: {
+    borderWidth: 1,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Platform.OS === "web" ? 10 : 8,
+    fontSize: 15,
+    minHeight: 42,
+    marginBottom: Spacing.xs,
+  },
+  pollOptionRow: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginBottom: Spacing.sm },
+  pollRadio: { width: 18, height: 18, borderRadius: 9, borderWidth: 2 },
+  pollLetter: { fontFamily: FontFamily.semibold, fontSize: 14, minWidth: 16 },
+  pollOptionRemove: { padding: 2 },
+  pollAddOption: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: Spacing.sm },
   modalToolbar: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,

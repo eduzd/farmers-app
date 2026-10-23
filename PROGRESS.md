@@ -282,3 +282,21 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
   the user can also change each channel in Android's app notification settings. iPhone: vibration follows iOS settings.
 - Checks: tsc 0 errors; tests/check-push-prefs.mjs 15/15 (fake Expo push server: channel per phone, notify off, re-save keeps
   prefs, own account only); check-chat 50/50; tests/check-notif-settings-web.py en+bn 320/360/390 16/16 each.
+
+## Community feed polls (branch post-polls)
+- New post page: "Create poll" / "জরিপ তৈরি করুন" button next to Add photo. Opens a poll editor: question (title), options
+  A, B (Bangla ক, খ), "Add option" up to 6, remove button past 2. The post text above becomes optional. Post stays off
+  until the poll has a question and 2+ different options. Polls are never saved offline-only (they need the server).
+- Feed card + post page: src/components/PostPollCard.tsx. Title, radio buttons (role=radio, aria-checked), Vote button,
+  "See results" peek. After voting: % bar + vote count per option, total, your option marked, tap another option to move
+  your vote. A small zustand store keeps feed and post page counts in sync. Taps inside the poll don't open the post.
+  Comments/likes/save/share/edit/delete work as on any post. Saved posts list titles poll posts "Poll: question".
+- Server (server/communityRoutes.ts): tables post_polls (post_id PK -> posts ON DELETE CASCADE, question, options jsonb
+  [{id:"a",text}]) and post_poll_votes (PK post_id+user_id -> one vote per person; ON CONFLICT moves the vote), created
+  lazily by ensurePolls(). POST /api/posts takes optional poll {question, options[]} (validated: question <=300, 2-6
+  non-empty unique options <=120 chars; refused poll saves no post). POST /api/posts/:id/poll/vote {optionId} (signed in,
+  blocked users refused). GET /api/posts, /api/posts/:id, /api/me/saved-posts return poll {question, options[{id,text,votes}],
+  totalVotes, myVote}; never who voted. PATCH allows empty text on a poll post.
+- Checks: tsc 0 errors; tests/check-post-polls.mjs 30/30; tests/check-post-polls-web.py en+bn 320/360/390 28/28 each;
+  check-moderation 63/63, check-live-data 22/22, check-photos-connect 31/31, check-reactions 12/12.
+- Needs a NEW APK for phones; old APKs ignore the poll field (poll posts show only their text there).

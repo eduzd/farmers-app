@@ -39,9 +39,11 @@ import {
   timeAgo,
   ServerComment,
   setServerPostSaved,
+  fetchServerPost,
 } from "@/lib/feedApi";
 import { PostActionsSheet } from "@/components/PostActionsSheet";
 import { PostPhoto } from "@/components/PhotoViewer";
+import { PostPollCard, usePollStore } from "@/components/PostPollCard";
 import { ChatIcon } from "@/components/icons/ChatIcon";
 type PostDetailRouteProp = RouteProp<RootStackParamList, "PostDetail">;
 
@@ -144,6 +146,20 @@ export default function PostDetailScreen() {
     fetchServerComments(post.id)
       .then((list) => {
         if (alive) setComments(list.map(toComment));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [post.id, shared]);
+  // Poll posts: fetch fresh vote counts when the page opens.
+  useEffect(() => {
+    if (!shared || !post.poll) return;
+    let alive = true;
+    fetchServerPost(post.id, isBn, getToken())
+      .then((fresh) => {
+        if (alive && fresh.poll) usePollStore.getState().setPoll(post.id, fresh.poll);
       })
       .catch(() => {});
     return () => {
@@ -580,9 +596,13 @@ export default function PostDetailScreen() {
         </Pressable>
       </View>
 
-      <ThemedText style={[styles.postContent, { color: theme.text }]}>
-        {postText}
-      </ThemedText>
+      {postText || !post.poll ? (
+        <ThemedText style={[styles.postContent, { color: theme.text }]}>
+          {postText}
+        </ThemedText>
+      ) : null}
+
+      {post.poll ? <PostPollCard postId={post.id} poll={post.poll} canVote={shared} style={styles.postPoll} /> : null}
 
       {post.image ? (
         <PostPhoto uri={post.image} style={styles.postImage} radius={BorderRadius.md} />
@@ -740,6 +760,9 @@ export default function PostDetailScreen() {
             ]}
             onPress={handleSendComment}
             disabled={!newComment.trim()}
+            accessibilityRole="button"
+            accessibilityLabel={isBn ? "মন্তব্য পাঠান" : "Send comment"}
+            testID="comment-send"
           >
             <Feather name="send" size={18} color={newComment.trim() ? theme.white : theme.textSecondary} />
           </Pressable>
@@ -811,6 +834,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: Spacing.lg,
   },
+  postPoll: { marginHorizontal: 0, marginTop: 0, marginBottom: Spacing.lg },
   postImage: {
     marginBottom: Spacing.lg,
   },
