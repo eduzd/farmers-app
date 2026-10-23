@@ -1,3 +1,4 @@
+import os
 """Web check (throwaway local server, needs ./dist): tapping a notification opens where it came from.
 English + Bangla, 360 wide (plus 320 / 390 for the comment scroll).
 
@@ -104,9 +105,9 @@ await add("n-warn", "warning", "Warning from Farmers", "Please keep posts about 
 await pg.query("DELETE FROM post_comments WHERE id::text = $1", [{json.dumps(str(doomed['id']))}]);
 await pg.close();
 """
-open("/home/sprite/farmers-deeplink/.notif-open-seed.mjs", "w").write(node)
-subprocess.run(["node", ".notif-open-seed.mjs"], check=True, cwd="/home/sprite/farmers-deeplink")
-os.remove("/home/sprite/farmers-deeplink/.notif-open-seed.mjs")
+open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".notif-open-seed.mjs"), "w").write(node)
+subprocess.run(["node", ".notif-open-seed.mjs"], check=True, cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.remove(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".notif-open-seed.mjs"))
 start()
 A = api("POST", "/api/auth/login", {"email": f"ann{s}@check.test", "password": "Check-pass-123"})["token"]
 notes = api("GET", "/api/me/notifications", token=A)

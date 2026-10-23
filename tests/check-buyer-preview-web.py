@@ -125,7 +125,11 @@ const { PGlite } = require('@electric-sql/pglite');
         await pg.locator('[data-testid="pf-unit-kg"]').click()
         await pg.locator('[data-testid="pf-price"]').fill("60")
         await pg.locator('[data-testid="pf-qty"]').fill("50")
-        await pg.locator('[data-testid="pf-presets"]').fill("1, 5, 10")
+        for v in ("1", "5", "10"):
+            if await cnt(pg, f"pf-preset-{v}") == 0:
+                await pg.locator('[data-testid="pf-preset-input"]').fill(v)
+                await pg.locator('[data-testid="pf-preset-add"]').click()
+                await pg.wait_for_timeout(150)
         await pg.locator('[data-testid="save-product"]').click()
         await pg.wait_for_timeout(2500)
         rep["product_created_card"] = await cnt(pg, "product-created")

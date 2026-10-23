@@ -6,6 +6,7 @@ import { registerNotificationTargetRoutes } from "./notificationTargets";
 import { registerCheckoutRoutes } from "./checkoutRoutes";
 import { registerLiveDataRoutes } from "./liveDataRoutes";
 import { registerPaymentRoutes } from "./paymentRoutes";
+import { registerMarketPriceRoutes } from "./marketPriceRoutes";
 import { registerPlatformRoutes, platformGuard } from "./platformRoutes";
 import { registerAdminAppRoutes } from "./adminAppRoutes";
 import { registerModerationRoutes } from "./moderationRoutes";
@@ -148,6 +149,7 @@ function setupErrorHandler(app: express.Application) {
   registerCheckoutRoutes(app);
   registerLiveDataRoutes(app);
   registerPaymentRoutes(app);
+  registerMarketPriceRoutes(app);
   app.use("/api/admin", adminRoutes);
   app.use("/api", communityRoutes);
   app.use("/api/auth", authRoutes);
