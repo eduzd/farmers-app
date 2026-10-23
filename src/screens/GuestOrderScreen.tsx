@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { askConfirm } from "@/components/ConfirmSheet";
 import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert, Platform, Share, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -99,7 +100,7 @@ export default function GuestOrderScreen() {
       }
     };
     if (Platform.OS === "web") {
-      if (typeof window === "undefined" || window.confirm(L("Cancel this order?", "এই অর্ডারটি বাতিল করবেন?"))) go();
+      void askConfirm({ title: L("Cancel this order?", "এই অর্ডারটি বাতিল করবেন?"), confirmText: L("Cancel order", "অর্ডার বাতিল"), cancelText: L("Keep order", "অর্ডার রাখুন"), tone: "danger" }).then((ok) => { if (ok) void go(); });
       return;
     }
     Alert.alert(L("Cancel this order?", "এই অর্ডারটি বাতিল করবেন?"), "", [

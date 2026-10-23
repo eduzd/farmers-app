@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { askConfirm, type ConfirmTone } from "@/components/ConfirmSheet";
 import { View, Text as RNText, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView, RefreshControl, Platform, type TextProps, type TextStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { FontFamily, BanglaFontFamily } from "@/constants/theme";
@@ -527,16 +528,13 @@ export async function pickAndUpload(): Promise<string | null> {
   return mediaUrl(await uploadImage(dataUrl));
 }
 
-/** Cross-platform confirm (Alert on phones, window.confirm on web). */
-export function confirmAsk(title: string, msg: string, ok: string, cancel: string): Promise<boolean> {
-  if (Platform.OS === "web") return Promise.resolve(typeof window !== "undefined" ? window.confirm(`${title}\n\n${msg}`) : true);
-  const { Alert } = require("react-native");
-  return new Promise((resolve) =>
-    Alert.alert(title, msg, [
-      { text: cancel, style: "cancel", onPress: () => resolve(false) },
-      { text: ok, style: "destructive", onPress: () => resolve(true) },
-    ], { cancelable: true, onDismiss: () => resolve(false) }),
-  );
+/**
+ * Cross-platform confirm. Opens the Farmers bottom sheet (slides up, soft
+ * spring, haptic tap) on phones and on the web. Resolves true only when the
+ * confirm button is tapped; cancel, backdrop, Escape and back resolve false.
+ */
+export function confirmAsk(title: string, msg: string, ok: string, cancel: string, tone?: ConfirmTone): Promise<boolean> {
+  return askConfirm({ title, message: msg, confirmText: ok, cancelText: cancel, tone });
 }
 
 export const st = StyleSheet.create({

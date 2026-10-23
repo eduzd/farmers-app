@@ -337,7 +337,15 @@ export function OfficialScreen({ target, targetName, from: initialFrom }: { targ
   const send = async () => {
     const sendTo = to === "all" ? "all" : who.trim();
     if (!body.trim() || (to === "one" && !sendTo)) return;
-    if (to === "all" && !(await confirmAsk(L("Send to everyone?", "সবাইকে পাঠাবেন?"), L(`Every user will get this in Chats from ${acct.nameEn}.`, `সব ব্যবহারকারী চ্যাটে ${acct.nameBn} থেকে এটি পাবেন।`), L("Send", "পাঠান"), L("Cancel", "বাতিল")))) return;
+    if (to === "all") {
+      const preview = (title.trim() ? `${title.trim()} — ` : "") + body.trim();
+      const short = preview.length > 140 ? `${preview.slice(0, 140)}…` : preview;
+      const summary = L(
+        `From: ${acct.nameEn}\nTo: Everyone\n\n“${short}”\n\nEvery user will get this in Chats.`,
+        `যার পক্ষ থেকে: ${acct.nameBn}\nযাদের কাছে: সবাই\n\n“${short}”\n\nসব ব্যবহারকারী চ্যাটে এটি পাবেন।`,
+      );
+      if (!(await confirmAsk(L("Send to everyone?", "সবাইকে পাঠাবেন?"), summary, L("Send", "পাঠান"), L("Cancel", "বাতিল"), "send"))) return;
+    }
     setBusy(true);
     setMsg(null);
     try {
