@@ -27,7 +27,7 @@ import { registerOfficialRoutes } from "./officialRoutes";
  *    POST /api/admin/manage/official { body, title?, target: "all" | userId, link? }   GET /official, DELETE /official/:id
  *
  *  Carousel ads:
- *    GET  /api/ads?placement=connect|home|market      active ads in the admin's order (public)
+ *    GET  /api/ads?placement=connect|home|market      every active ad in the admin's order (public; safety cap 50)
  *    GET/POST /api/admin/manage/ads, PUT/DELETE /api/admin/manage/ads/:id, POST /api/admin/manage/ads/reorder
  *
  *  Search:  GET /api/admin/manage/search?q=   users, products, shops, orders and support conversations at once
@@ -406,7 +406,7 @@ export function registerModerationRoutes(app: Express) {
     const r = rows(await db.execute(sql`SELECT * FROM carousel_ads WHERE active
       AND (placement = 'all' OR placement = ${placement})
       AND (starts_at IS NULL OR starts_at <= now()) AND (ends_at IS NULL OR ends_at > now())
-      ORDER BY sort_order ASC, created_at ASC LIMIT 12`));
+      ORDER BY sort_order ASC, created_at ASC LIMIT 50`));
     res.json(r.map(adOut));
   }));
 

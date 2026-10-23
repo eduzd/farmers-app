@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
@@ -105,6 +105,16 @@ export default function MarketScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  // A carousel ad can open one category: match it by slug or by its English/Bangla name.
+  const routeParams = (useRoute() as any)?.params as { category?: string; at?: number } | undefined;
+  useEffect(() => {
+    const want = String(routeParams?.category || "").trim().toLowerCase();
+    if (!want) return;
+    const hit = CATEGORIES.find(
+      (c) => c.id.toLowerCase() === want || c.labelEn.toLowerCase() === want || (c.labelBn || "").trim() === want,
+    );
+    setSelectedCategory(hit ? hit.id : "all");
+  }, [routeParams?.category, routeParams?.at, CATEGORIES]);
 
   const cartCount = getItemCount();
   const loggedIn = useAuthStore((st) => st.isAuthenticated && !!st.token);

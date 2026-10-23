@@ -31,6 +31,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
 import HelpButton from "@/components/HelpButton";
+import { CarouselDots } from "@/components/AdCarousel";
+import { useCarouselAds, adsToCards } from "@/lib/carouselAds";
 import { Card, Button, IconButton, SectionHeader, EmptyState, PostSkeleton } from "@/components/ui";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, FontFamily, Palette, Shadows } from "@/constants/theme";
@@ -95,6 +97,8 @@ export default function CommunityScreen() {
   const carouselStep = carouselCardWidth + Spacing.md;
   const isFocused = useIsFocused();
   const myBadge = badgeKeyFor(user);
+  // Admin carousel ads placed on Home (or Everywhere): all of them, in the admin's order.
+  const homeAds = useCarouselAds("home");
 
   const communityType = (activeCommunity?.type || "agriculture") as CommunityType;
 
@@ -375,14 +379,18 @@ export default function CommunityScreen() {
     { key: "disease", icon: "crosshair", label: isBn ? "রোগ শনাক্ত" : "Disease", color: Palette.clay, soft: Palette.claySoft, onPress: () => navigation.navigate("DiseaseDetector") },
   ];
 
-  const featured: {
+  type FeaturedCard = {
     key: string;
     icon: keyof typeof Feather.glyphMap;
     title: string;
     subtitle: string;
+    cta?: string;
+    image?: string;
     colors: [string, string];
-    onPress: () => void;
-  }[] = [
+    onPress?: () => void;
+  };
+  // Built-in cards, shown only until the admin adds a Home ad.
+  const builtInFeatured: FeaturedCard[] = [
     {
       key: "welfare",
       icon: "heart",
@@ -408,6 +416,8 @@ export default function CommunityScreen() {
       onPress: () => navigation.navigate("EventsCalendar"),
     },
   ];
+  const featured: FeaturedCard[] = homeAds && homeAds.length ? adsToCards(homeAds, isBn, navigation) : builtInFeatured;
+  const featuredLoading = homeAds === null;
 
   const onCarouselScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const i = Math.max(0, Math.min(featured.length - 1, Math.round(e.nativeEvent.contentOffset.x / carouselStep)));
@@ -422,6 +432,13 @@ export default function CommunityScreen() {
   // Auto-play: next card every 4 seconds, looping back to the first. Waits a few seconds
   // after the user swipes, and stops while the Home tab isn't on screen.
   const featuredCount = featured.length;
+  const featuredKeys = featured.map((f) => f.key).join("|");
+  // New set of cards (the admin's ads arrived or changed): start again from the first.
+  useEffect(() => {
+    slideRef.current = 0;
+    setSlide(0);
+    carouselRef.current?.scrollTo({ x: 0, animated: false });
+  }, [featuredKeys]);
   useEffect(() => {
     if (!isFocused || featuredCount < 2) return;
     const timer = setInterval(() => {
@@ -502,7 +519,13 @@ export default function CommunityScreen() {
   const renderHeader = () => (
     <View>
       {/* Featured carousel */}
+      {featuredLoading ? (
+        <View style={{ paddingHorizontal: carouselSidePad }} testID="home-carousel-loading">
+          <View style={[styles.featureCard, { backgroundColor: theme.backgroundDefault }]} />
+        </View>
+      ) : (
       <ScrollView
+        testID="home-carousel"
         ref={carouselRef}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -519,16 +542,20 @@ export default function CommunityScreen() {
         {featured.map((f) => (
           <Pressable
             key={f.key}
+            testID={`home-carousel-card-${f.key}`}
             onPress={f.onPress}
-            accessibilityRole="button"
+            disabled={!f.onPress}
+            accessibilityRole={f.onPress ? "button" : "image"}
+            accessibilityLabel={f.subtitle ? `${f.title}. ${f.subtitle}` : f.title}
             style={({ pressed }) => [{ width: carouselCardWidth, opacity: pressed ? 0.92 : 1 }]}
           >
             <LinearGradient colors={f.colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.featureCard}>
               <View style={styles.featureDecor} />
+              {f.image ? <Image source={{ uri: f.image }} style={styles.featureImage} contentFit="cover" transition={150} /> : null}
               <View style={styles.featureIcon}>
                 <AppIcon name={f.icon} size={22} color="#FFFFFF" />
               </View>
-              <View style={{ flex: 1, justifyContent: "flex-end" }}>
+              <View style={{ flex: 1, justifyContent: "flex-end", paddingRight: f.image ? 96 : 0 }}>
                 <ThemedText type="h3" style={styles.featureTitle} numberOfLines={1}>
                   {f.title}
                 </ThemedText>
@@ -536,25 +563,22 @@ export default function CommunityScreen() {
                   {f.subtitle}
                 </ThemedText>
               </View>
-              <View style={styles.featureCta}>
-                <ThemedText style={styles.featureCtaText}>{isBn ? "দেখুন" : "Open"}</ThemedText>
-                <Feather name="arrow-right" size={14} color="#0F1A14" />
-              </View>
+              {f.cta === undefined || f.cta ? (
+                <View style={styles.featureCta}>
+                  <ThemedText style={styles.featureCtaText} numberOfLines={1}>{f.cta || (isBn ? "দেখুন" : "Open")}</ThemedText>
+                  {f.onPress ? <Feather name="arrow-right" size={14} color="#0F1A14" /> : null}
+                </View>
+              ) : null}
             </LinearGradient>
           </Pressable>
         ))}
       </ScrollView>
-      <View style={styles.dots}>
-        {featured.map((f, i) => (
-          <View
-            key={f.key}
-            style={[
-              styles.dot,
-              { backgroundColor: i === slide ? theme.primary : theme.backgroundTertiary, width: i === slide ? 18 : 6 },
-            ]}
-          />
-        ))}
-      </View>
+      )}
+      {!featuredLoading ? (
+        <View style={{ marginTop: Spacing.md - Spacing.sm }}>
+          <CarouselDots count={featured.length} index={Math.min(slide, Math.max(0, featured.length - 1))} testID="home-carousel-dots" />
+        </View>
+      ) : null}
 
       {/* Quick actions */}
       <View style={styles.section}>
@@ -1050,6 +1074,7 @@ const styles = StyleSheet.create({
   featureCta: {
     position: "absolute",
     right: Spacing.lg,
+    maxWidth: "55%",
     top: Spacing.lg,
     flexDirection: "row",
     alignItems: "center",
@@ -1060,6 +1085,15 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   featureCtaText: { color: "#0F1A14", fontSize: 12, lineHeight: 16, fontFamily: FontFamily.bold },
+  featureImage: {
+    position: "absolute",
+    right: Spacing.lg,
+    bottom: Spacing.lg,
+    width: 84,
+    height: 84,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
   dots: {
     flexDirection: "row",
     justifyContent: "center",
