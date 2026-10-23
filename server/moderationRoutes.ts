@@ -7,6 +7,7 @@ import { notify } from "./featureRoutes";
 import {
   rows, J, iso, str, wrap, requireUser, requireAdmin, audit, ensurePlatform, activeRestrictions, cleanRestrictions, RESTRICTION_KEYS,
 } from "./platformRoutes";
+import { registerOfficialRoutes } from "./officialRoutes";
 
 /**
  * Admin moderation, the Farmers official page, carousel ads and admin search.
@@ -57,6 +58,20 @@ export function ensureModeration() {
         image text, link_type varchar NOT NULL DEFAULT 'none', link_target text, active boolean NOT NULL DEFAULT true,
         sort_order integer NOT NULL DEFAULT 0, starts_at timestamp, ends_at timestamp,
         created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now())`);
+      // Official accounts: Farmers Official (the default, can't be removed) plus any the admins create
+      // (Safety, Market news...). Each one is its own verified chat in people's Chats.
+      await q(sql`CREATE TABLE IF NOT EXISTS official_accounts (
+        id varchar PRIMARY KEY, name_en text NOT NULL, name_bn text NOT NULL DEFAULT '', about_en text NOT NULL DEFAULT '',
+        about_bn text NOT NULL DEFAULT '', icon varchar NOT NULL DEFAULT 'check-circle', color varchar NOT NULL DEFAULT '#2563EB',
+        is_default boolean NOT NULL DEFAULT false, active boolean NOT NULL DEFAULT true, created_by varchar,
+        created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now())`);
+      await q(sql`INSERT INTO official_accounts (id, name_en, name_bn, about_en, about_bn, is_default)
+        VALUES (${OFFICIAL_ID}, ${OFFICIAL_NAME}, ${"ফার্মার্স অফিসিয়াল"}, ${"News and updates from the Farmers team"}, ${"ফার্মার্স টিমের খবর ও আপডেট"}, true)
+        ON CONFLICT (id) DO NOTHING`);
+      await q(sql`ALTER TABLE official_messages ADD COLUMN IF NOT EXISTS account_id varchar NOT NULL DEFAULT 'farmers-official'`);
+      await q(sql`CREATE INDEX IF NOT EXISTS official_messages_account_idx ON official_messages (account_id, created_at)`);
+      await q(sql`CREATE TABLE IF NOT EXISTS official_account_reads (
+        user_id varchar NOT NULL, account_id varchar NOT NULL, read_at timestamp NOT NULL DEFAULT now(), PRIMARY KEY (user_id, account_id))`);
     })();
     ready.catch(() => (ready = null));
   }
@@ -109,7 +124,7 @@ export async function sendOfficial(createdBy: string | null, targetId: string, t
   const id = `off-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
   await db.execute(sql`INSERT INTO official_messages (id, target_user_id, title, body, link, created_by)
     VALUES (${id}, ${targetId}, ${title || null}, ${body}, ${null}::jsonb, ${createdBy})`);
-  await notify(targetId, "official", title || OFFICIAL_NAME, body.slice(0, 200), { screen: "OfficialChat" });
+  await notify(targetId, "official", title || OFFICIAL_NAME, body.slice(0, 200), { screen: "OfficialChat", account: OFFICIAL_ID });
   return id;
 }
 
@@ -364,6 +379,7 @@ export function registerModerationRoutes(app: Express) {
       sql`DELETE FROM user_oauth_providers WHERE user_id = ${id}`,
       sql`DELETE FROM official_messages WHERE target_user_id = ${id}`,
       sql`DELETE FROM official_reads WHERE user_id = ${id}`,
+      sql`DELETE FROM official_account_reads WHERE user_id = ${id}`,
     ];
     for (const s of steps) await tryRun(s);
     // Remove the account row; if old records (orders) still point at it, keep an empty shell instead.
@@ -382,75 +398,7 @@ export function registerModerationRoutes(app: Express) {
     res.json({ success: true, deleted: true });
   }));
 
-  // ================= OFFICIAL PAGE =================
-  const officialOut = (m: any) => ({
-    id: m.id, title: m.title || "", body: m.body, link: J(m.link) || null, toAll: !m.target_user_id, createdAt: iso(m.created_at),
-  });
-  const readAt = async (uid: string) => rows(await db.execute(sql`SELECT read_at FROM official_reads WHERE user_id = ${uid} LIMIT 1`))[0]?.read_at || null;
-  const officialFor = (uid: string) => sql`(target_user_id IS NULL OR target_user_id = ${uid})`;
-
-  app.get("/api/official/summary", requireUser, w(async (req, res) => {
-    const uid = (req as any).uid;
-    const ra = await readAt(uid);
-    const last = rows(await db.execute(sql`SELECT * FROM official_messages WHERE ${officialFor(uid)} ORDER BY created_at DESC LIMIT 1`))[0];
-    const unread = await one(ra
-      ? sql`SELECT count(*)::int AS n FROM official_messages WHERE ${officialFor(uid)} AND created_at > ${iso(ra)}`
-      : sql`SELECT count(*)::int AS n FROM official_messages WHERE ${officialFor(uid)}`);
-    res.json({ id: OFFICIAL_ID, name: OFFICIAL_NAME, unread, last: last ? officialOut(last) : null });
-  }));
-
-  app.get("/api/official/messages", requireUser, w(async (req, res) => {
-    const uid = (req as any).uid;
-    const r = rows(await db.execute(sql`SELECT * FROM official_messages WHERE ${officialFor(uid)} ORDER BY created_at DESC LIMIT 200`)).reverse();
-    await db.execute(sql`INSERT INTO official_reads (user_id, read_at) VALUES (${uid}, now()) ON CONFLICT (user_id) DO UPDATE SET read_at = now()`);
-    res.json({ id: OFFICIAL_ID, name: OFFICIAL_NAME, messages: r.map(officialOut) });
-  }));
-
-  app.get(`${A}/official`, requireAdmin, w(async (_req, res) => {
-    const r = rows(await db.execute(sql`SELECT m.*, u.name AS target_name, u.username AS target_username, a.name AS admin_name
-      FROM official_messages m LEFT JOIN users u ON u.id = m.target_user_id LEFT JOIN users a ON a.id = m.created_by
-      ORDER BY m.created_at DESC LIMIT 200`));
-    res.json(r.map((m: any) => ({ ...officialOut(m), targetUserId: m.target_user_id || null, targetName: m.target_name || m.target_username || "", adminName: m.admin_name || "" })));
-  }));
-
-  app.post(`${A}/official`, requireAdmin, w(async (req, res) => {
-    const b = req.body || {};
-    const body = str(b.body, 2000);
-    if (!body) return res.status(400).json({ error: "Write the message first" });
-    const title = str(b.title, 120);
-    const to = str(b.target, 80) || "all";
-    let targetId: string | null = null;
-    if (to !== "all") {
-      const u = rows(await db.execute(sql`SELECT id FROM users WHERE (id = ${to} OR lower(username) = lower(${to}) OR lower(coalesce(email,'')) = lower(${to})) AND deleted_at IS NULL LIMIT 1`))[0];
-      if (!u) return res.status(404).json({ error: "No account found for that person" });
-      targetId = u.id;
-    }
-    let link: any = null;
-    if (b.link?.type && ["product", "category", "shop", "support"].includes(b.link.type)) link = { type: b.link.type, target: str(b.link.target, 200) };
-    const id = `off-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
-    await db.execute(sql`INSERT INTO official_messages (id, target_user_id, title, body, link, created_by)
-      VALUES (${id}, ${targetId}, ${title || null}, ${body}, ${link ? JSON.stringify(link) : null}::jsonb, ${(req as any).uid})`);
-    // A bell notification (and a phone push where the person has the app installed with push on).
-    const ids = targetId ? [targetId] : rows(await db.execute(sql`SELECT id FROM users WHERE NOT banned AND deleted_at IS NULL`)).map((r: any) => r.id);
-    let notified = 0;
-    if (b.notify !== false) {
-      for (const uid of ids) {
-        await notify(uid, "official", title || OFFICIAL_NAME, body.slice(0, 200), { screen: "OfficialChat" });
-        notified++;
-      }
-    }
-    await audit(req, "OFFICIAL_MESSAGE", "official", id, { to: targetId || "all", title, length: body.length });
-    const m = rows(await db.execute(sql`SELECT * FROM official_messages WHERE id = ${id}`))[0];
-    res.status(201).json({ message: officialOut(m), recipients: ids.length, notified });
-  }));
-
-  app.delete(`${A}/official/:id`, requireAdmin, w(async (req, res) => {
-    const m = rows(await db.execute(sql`SELECT id FROM official_messages WHERE id = ${String(req.params.id)} LIMIT 1`))[0];
-    if (!m) return res.status(404).json({ error: "Message not found" });
-    await db.execute(sql`DELETE FROM official_messages WHERE id = ${m.id}`);
-    await audit(req, "OFFICIAL_MESSAGE_DELETE", "official", m.id, "");
-    res.json({ success: true });
-  }));
+  registerOfficialRoutes(app, A);
 
   // ================= CAROUSEL ADS =================
   app.get("/api/ads", w(async (req, res) => {

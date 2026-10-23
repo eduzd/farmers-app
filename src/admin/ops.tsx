@@ -399,6 +399,7 @@ export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminNa
     ["users", L("Users", "ব্যবহারকারী"), L("Search, verify, ban, roles", "খুঁজুন, যাচাই, ব্যান, ভূমিকা"), "users", () => nav.push({ name: "users" })],
     ["moderation", L("Listings moderation", "তালিকা মডারেশন"), L("Jobs, rentals, services and more", "চাকরি, ভাড়া, সেবা ইত্যাদি"), "shield", () => setPanel("moderation")],
     ["notify", L("Send notification", "নোটিফিকেশন পাঠান"), L("To everyone or one person", "সবাইকে বা একজনকে"), "bell", () => setPanel("notify")],
+    ["officialAccounts", L("Official accounts", "অফিসিয়াল অ্যাকাউন্ট"), L("Farmers Official, Safety and more: create and send from them", "Farmers Official, Safety ইত্যাদি: তৈরি করুন ও পাঠান"), "check-circle", () => nav.push({ name: "officialAccounts" })],
     ["delivery", L("Delivery charges", "ডেলিভারি চার্জ"), L("Inside and outside Dhaka, free delivery, express", "ঢাকার ভেতরে ও বাইরে, ফ্রি ডেলিভারি, এক্সপ্রেস"), "truck", () => setPanel("delivery")],
     ["payments", L("Payment settings", "পেমেন্ট সেটিং"), L("Rocket and cash on delivery for every purchase", "সব কেনাকাটায় রকেট ও ক্যাশ অন ডেলিভারি"), "credit-card", () => setPanel("payments")],
     ["prices", L("Market prices", "বাজার দর"), L("Daily prices by district, price alerts", "জেলাভিত্তিক দৈনিক দর, দামের অ্যালার্ট"), "bar-chart-2", () => setPanel("prices")],

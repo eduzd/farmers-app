@@ -22,6 +22,8 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, FontFamily, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
+import { apiGet } from "@/lib/api";
+import { OfficialAvatar, VerifiedTick, type OfficialAccount } from "@/screens/OfficialChatScreen";
 
 import { tr, useTr } from "@/lib/tr";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -102,13 +104,86 @@ export default function ChatListScreen() {
   );
   const allConversations = getToken() ? liveConversations : CONVERSATIONS;
 
+  // Official accounts (Farmers Official, Safety...) that have sent this person something, pinned on top.
+  const [officials, setOfficials] = useState<OfficialAccount[]>([]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!getToken()) return;
+      let alive = true;
+      const load = () => apiGet<OfficialAccount[]>("/api/official/accounts").then((r) => alive && Array.isArray(r) && setOfficials(r)).catch(() => {});
+      load();
+      const timer = setInterval(load, 15000);
+      return () => {
+        alive = false;
+        clearInterval(timer);
+      };
+    }, [getToken])
+  );
+  const officialName = (a: OfficialAccount) => (isBn ? a.nameBn : a.nameEn);
+  const officialLast = (a: OfficialAccount) => (a.last ? (a.last.title ? `${a.last.title}: ` : "") + a.last.body : "");
+  const shownOfficials = officials.filter((a) => {
+    if (filter === "unread" && !a.unread) return false;
+    if (filter === "online") return false;
+    const q = searchQuery.trim().toLowerCase();
+    return !q || officialName(a).toLowerCase().includes(q) || a.nameEn.toLowerCase().includes(q) || officialLast(a).toLowerCase().includes(q);
+  });
+
   const filteredConversations = allConversations.filter((conv) => {
     if (filter === "unread" && conv.unreadCount === 0) return false;
     if (filter === "online" && !conv.user.isOnline) return false;
     const q = searchQuery.trim().toLowerCase();
     return !q || conv.user.name.toLowerCase().includes(q) || conv.lastMessage.toLowerCase().includes(q);
   });
-  const unreadTotal = allConversations.reduce((n, c) => n + (c.unreadCount > 0 ? 1 : 0), 0);
+  const unreadTotal = allConversations.reduce((n, c) => n + (c.unreadCount > 0 ? 1 : 0), 0) + officials.filter((a) => (a.unread || 0) > 0).length;
+
+  const officialRows = shownOfficials.length ? (
+    <View testID="chat-official-list">
+      {shownOfficials.map((a) => {
+        const unread = (a.unread || 0) > 0;
+        return (
+          <View key={a.id}>
+            <Pressable
+              testID={`chat-official-${a.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${officialName(a)}, ${isBn ? "ভেরিফায়েড অফিসিয়াল অ্যাকাউন্ট" : "verified official account"}`}
+              style={({ pressed }) => [styles.row, { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setOfficials((list) => list.map((x) => (x.id === a.id ? { ...x, unread: 0 } : x)));
+                navigation.navigate("OfficialChat", { account: a.id });
+              }}
+            >
+              <OfficialAvatar account={a} size={52} />
+              <View style={styles.rowBody}>
+                <View style={styles.rowTop}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, flex: 1, minWidth: 0 }}>
+                    <ThemedText style={[styles.name, { flex: 0, flexShrink: 1 }, unread && { fontFamily: FontFamily.bold }]} numberOfLines={1}>
+                      {officialName(a)}
+                    </ThemedText>
+                    <VerifiedTick size={15} />
+                  </View>
+                  <ThemedText type="caption" style={{ color: unread ? theme.primary : theme.textTertiary }}>
+                    {formatAgo(a.last?.createdAt)}
+                  </ThemedText>
+                </View>
+                <View style={styles.rowTop}>
+                  <ThemedText type="small" numberOfLines={1} style={[{ flex: 1, color: unread ? theme.text : theme.textSecondary }, unread && { fontFamily: FontFamily.medium }]}>
+                    {officialLast(a)}
+                  </ThemedText>
+                  {unread ? (
+                    <View style={[styles.unread, { backgroundColor: theme.primary }]}>
+                      <ThemedText style={styles.unreadText}>{a.unread}</ThemedText>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+            </Pressable>
+            <View style={[styles.separator, { backgroundColor: theme.divider }]} />
+          </View>
+        );
+      })}
+    </View>
+  ) : null;
 
   const handleConversationPress = (conversation: ChatConversation) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -217,14 +292,15 @@ export default function ChatListScreen() {
         data={filteredConversations}
         keyExtractor={(item) => item.id}
         renderItem={renderConversation}
+        ListHeaderComponent={officialRows}
         contentContainerStyle={[
           { paddingBottom: tabBarHeight + Spacing["5xl"], width: "100%", maxWidth: 720, alignSelf: "center" },
-          filteredConversations.length === 0 && { flexGrow: 1, justifyContent: "center" },
+          filteredConversations.length === 0 && !officialRows && { flexGrow: 1, justifyContent: "center" },
         ]}
         scrollIndicatorInsets={{ bottom: insets.bottom }}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: theme.divider }]} />}
-        ListEmptyComponent={
+        ListEmptyComponent={officialRows ? null : (
           <EmptyState
             icon="message-circle"
             title={searchQuery ? (isBn ? "কিছু পাওয়া যায়নি" : "No matches") : isBn ? "এখনও কোনো কথোপকথন নেই" : "No conversations yet"}
@@ -232,7 +308,7 @@ export default function ChatListScreen() {
             actionLabel={isBn ? "কৃষক খুঁজুন" : "Find farmers"}
             onAction={() => navigation.navigate("UserSearch")}
           />
-        }
+        )}
       />
 
     </View>
