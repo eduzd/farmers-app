@@ -21,6 +21,7 @@ import {
   chatMembers,
 } from "@shared/schema";
 import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { attachVoiceRooms } from "./voiceRooms";
 import { notify } from "./featureRoutes";
 import { ensureProfileColumns } from "./profileColumns";
 
@@ -522,7 +523,7 @@ router.get("/posts", async (req: Request, res: Response) => {
       .orderBy(desc(posts.createdAt))
       .limit(50);
 
-    res.json(result);
+    res.json(await attachVoiceRooms(result));
   } catch (error) {
     console.error("Get posts error:", error);
     res.status(500).json({ error: "Failed to get posts" });
@@ -542,7 +543,7 @@ router.get("/posts/:id", async (req: Request, res: Response) => {
       .where(eq(posts.id, req.params.id))
       .limit(1);
     if (!result[0]) return res.status(404).json({ error: "This post was removed" });
-    res.json(result[0]);
+    res.json((await attachVoiceRooms([result[0]]))[0]);
   } catch (error) {
     console.error("Get post error:", error);
     res.status(500).json({ error: "Failed to get post" });
@@ -889,7 +890,7 @@ router.get("/me/saved-posts", requireAuth, async (req: Request, res: Response) =
       .where(inArray(posts.id, ids));
     const order = new Map(ids.map((id, i) => [id, i]));
     result.sort((x: any, y: any) => (order.get(x.id) ?? 0) - (order.get(y.id) ?? 0));
-    res.json(result);
+    res.json(await attachVoiceRooms(result));
   } catch (error) {
     console.error("Saved posts error:", error);
     res.status(500).json({ error: "Failed to load saved posts" });

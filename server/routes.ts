@@ -3,6 +3,7 @@ import { registerConnectRoutes } from "./connectRoutes";
 import { registerProfileRoutes } from "./profileRoutes";
 import { registerReactionRoutes } from "./reactionRoutes";
 import { initCalls, handleCallMessage, onCallClientAuthed, onCallClientGone, registerCallRoutes } from "./calls";
+import { initVoiceRooms, handleVoiceRoomMessage, onVoiceClientGone, registerVoiceRoomRoutes } from "./voiceRooms";
 import type { Express } from "express";
 import { createServer, type Server } from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
@@ -173,6 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerDmRoutes(app, sendToUser);
   registerConnectRoutes(app);
   registerCallRoutes(app);
+  registerVoiceRoomRoutes(app);
   registerProfileRoutes(app);
   registerReactionRoutes(app, sendToUser);
   
@@ -1065,6 +1067,7 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
 
   const wss = new WebSocketServer({ server: httpServer, path: "/ws/chat", maxPayload: 256 * 1024 });
   initCalls({ sendToUser, userOnline });
+  initVoiceRooms({ sendToUser, userOnline });
 
   // Keep idle sockets alive through Render's proxy and drop dead ones.
   const heartbeat = setInterval(() => {
@@ -1118,6 +1121,11 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
           void handleCallMessage(clientId, ws, message, reply).catch((e) => console.error("Call message error:", e?.message || e));
           return;
         }
+        if (mtype.startsWith("vr_")) {
+          // Voice rooms: see server/voiceRooms.ts (stage, hands, host controls, WebRTC relay).
+          void handleVoiceRoomMessage(clientId, ws, message, reply).catch((e) => console.error("Voice room message error:", e?.message || e));
+          return;
+        }
 
         switch (message.type) {
           default:
@@ -1135,6 +1143,7 @@ h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5
       if (clientId && client) removeChatClient(clientId, client);
       // A person whose last socket closed gets a short grace period before their call ends.
       if (clientId) onCallClientGone(clientId);
+      if (clientId) onVoiceClientGone(clientId, ws);
       client = null;
     };
     ws.on("close", cleanup);

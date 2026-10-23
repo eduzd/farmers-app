@@ -43,6 +43,11 @@ interface VoiceCallContextValue {
   hangup: () => void;
   toggleMute: () => void;
   toggleSpeaker: () => void;
+  /** Voice rooms: send a vr_* message on the live connection (false when it is down). */
+  sendRoom: (msg: any) => boolean;
+  /** Voice rooms: get every vr_* message, plus { type: "vr__ready" } each time the connection signs in. */
+  subscribeRoom: (fn: (msg: any) => void) => () => void;
+  getIceServers: () => Promise<any[]>;
 }
 
 const VoiceCallContext = createContext<VoiceCallContextValue | null>(null);
@@ -78,6 +83,14 @@ export function VoiceCallProvider({ children, userId }: Props) {
     clearTimer: ReturnType<typeof setTimeout> | null;
   }>({ pc: null, local: null, remoteSet: false, pending: [], clientRef: null, connectTimer: null, dropTimer: null, ringTimer: null, clearTimer: null });
   const iceCache = useRef<{ at: number; servers: any[] } | null>(null);
+  const roomListeners = useRef(new Set<(msg: any) => void>());
+  const emitRoom = (msg: any) => {
+    for (const fn of Array.from(roomListeners.current)) {
+      try {
+        fn(msg);
+      } catch {}
+    }
+  };
   // A call hung up before the server gave it an id: end it as soon as the id arrives.
   const cancelledRefs = useRef<Set<string>>(new Set());
 
@@ -534,11 +547,16 @@ export function VoiceCallProvider({ children, userId }: Props) {
           authedRef.current = true;
           attempts = 0;
           setIsConnected(true);
+          emitRoom({ type: "vr__ready" });
           return;
         }
         if (message.type === "auth_failed") {
           authedRef.current = false;
           setIsConnected(false);
+          return;
+        }
+        if (typeof message?.type === "string" && message.type.startsWith("vr_")) {
+          emitRoom(message);
           return;
         }
         void handlerRef.current(message);
@@ -590,9 +608,17 @@ export function VoiceCallProvider({ children, userId }: Props) {
     };
   }, [userId, send, teardownMedia]);
 
+  const sendRoom = useCallback((msg: any) => send(msg), [send]);
+  const subscribeRoom = useCallback((fn: (msg: any) => void) => {
+    roomListeners.current.add(fn);
+    return () => {
+      roomListeners.current.delete(fn);
+    };
+  }, []);
+
   const value = useMemo<VoiceCallContextValue>(
-    () => ({ isConnected, call, startCall, accept, reject, hangup, toggleMute, toggleSpeaker }),
-    [isConnected, call, startCall, accept, reject, hangup, toggleMute, toggleSpeaker],
+    () => ({ isConnected, call, startCall, accept, reject, hangup, toggleMute, toggleSpeaker, sendRoom, subscribeRoom, getIceServers }),
+    [isConnected, call, startCall, accept, reject, hangup, toggleMute, toggleSpeaker, sendRoom, subscribeRoom, getIceServers],
   );
 
   return (
