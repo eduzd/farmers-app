@@ -28,11 +28,37 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { useI18n } from "@/lib/i18n";
 import { initialsOf } from "@/lib/feedApi";
 import { useVoiceRoom, type FloatingReaction } from "@/lib/voiceRoom/useVoiceRoom";
+import { useVoiceRoomSession, type VoiceRoomSession } from "@/contexts/VoiceRoomSessionContext";
 import { REACTIONS, onStage, voiceCategoryLabel, voiceReasonText, type VoiceMember, type VoiceRole } from "@/lib/voiceRoomApi";
 
 const ROLE_ORDER: Record<VoiceRole, number> = { host: 0, moderator: 1, speaker: 2, audience: 3 };
 
+/**
+ * The room itself lives in VoiceRoomSessionProvider (above the navigator), so this screen can be minimized into a
+ * floating bubble and re-opened without dropping the voice.
+ */
 export default function VoiceRoomScreen() {
+  const route = useRoute<any>();
+  const roomId: string = route.params?.roomId;
+  const session = useVoiceRoomSession();
+
+  useEffect(() => {
+    if (session && roomId) session.open(roomId, route.params?.room);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId]);
+
+  if (!session) return <ThemedView style={{ flex: 1 }} />;
+  if (session.roomId !== roomId || session.vr.roomId !== roomId) {
+    return (
+      <ThemedView style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator />
+      </ThemedView>
+    );
+  }
+  return <VoiceRoomView vr={session.vr} session={session} />;
+}
+
+function VoiceRoomView({ vr, session }: { vr: ReturnType<typeof useVoiceRoom>; session: VoiceRoomSession }) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -42,7 +68,6 @@ export default function VoiceRoomScreen() {
   const { language } = useI18n();
   const bn = language === "bn";
   const { height } = useWindowDimensions();
-  const vr = useVoiceRoom(roomId);
   const { room, me, myId, actions } = vr;
 
   const [person, setPerson] = useState<VoiceMember | null>(null);
@@ -115,19 +140,26 @@ export default function VoiceRoomScreen() {
     setTimeout(() => chatScroll.current?.scrollToEnd({ animated: true }), 50);
   }, [vr.chat.length, chatOpen]);
 
-  // The host leaving ends the room: ask first.
+  // Going back (swipe, system back) minimizes: the room keeps running in the floating bubble.
+  // Leaving or ending is always the explicit Leave / End button. A room that is over just closes.
+  const statusRef = useRef(vr.status);
+  statusRef.current = vr.status;
   useEffect(() => {
-    const off = navigation.addListener("beforeRemove", (e: any) => {
-      if (allowLeave.current || vr.status !== "live" || !isHost) return;
-      e.preventDefault();
-      confirmEnd(() => {
-        allowLeave.current = true;
-        navigation.dispatch(e.data.action);
-      });
+    const off = navigation.addListener("beforeRemove", () => {
+      if (allowLeave.current) return;
+      if (statusRef.current === "live" || statusRef.current === "connecting") session.minimize();
+      else session.close();
     });
     return off;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigation, vr.status, isHost]);
+  }, [navigation]);
+
+  const minimize = () => {
+    allowLeave.current = true;
+    session.minimize();
+    if (navigation.canGoBack()) navigation.goBack();
+    else navigation.navigate("Main");
+  };
 
   const ask = (title: string, body: string, yes: string, onYes: () => void) => {
     if (Platform.OS === "web") {
@@ -145,6 +177,7 @@ export default function VoiceRoomScreen() {
     ask(L("End the room?", "রুম শেষ করবেন?"), L("You're the host, so the room ends for everyone.", "আপনি হোস্ট, তাই সবার জন্য রুম শেষ হবে।"), L("End room", "শেষ করুন"), () => {
       actions.end();
       allowLeave.current = true;
+      session.close();
       if (after) after();
       else navigation.goBack();
     });
@@ -153,6 +186,7 @@ export default function VoiceRoomScreen() {
     if (isHost && vr.status === "live") return confirmEnd();
     actions.leave();
     allowLeave.current = true;
+    session.close();
     navigation.goBack();
   };
 
@@ -187,7 +221,7 @@ export default function VoiceRoomScreen() {
           <Feather name={icon as any} size={30} color={theme.primary} />
         </View>
         <ThemedText style={styles.endText}>{text}</ThemedText>
-        <Pressable onPress={() => { allowLeave.current = true; navigation.goBack(); }} style={[styles.endBtn, { backgroundColor: theme.primary }]}>
+        <Pressable onPress={() => { allowLeave.current = true; session.close(); navigation.goBack(); }} style={[styles.endBtn, { backgroundColor: theme.primary }]}>
           <ThemedText style={styles.endBtnText}>{L("Back to rooms", "রুমের তালিকায় ফিরুন")}</ThemedText>
         </Pressable>
       </ThemedView>
@@ -226,8 +260,14 @@ export default function VoiceRoomScreen() {
     <ThemedView style={[styles.container, { paddingTop: insets.top }]}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <Pressable onPress={leave} hitSlop={10} style={styles.iconBtn} accessibilityLabel={L("Back", "ফিরে যান")}>
-          <Feather name="chevron-down" size={26} color={theme.text} />
+        <Pressable
+          onPress={minimize}
+          hitSlop={10}
+          style={({ pressed }) => [styles.minBtn, { backgroundColor: theme.primary + "15" }, pressed && { opacity: 0.7 }]}
+          accessibilityLabel={L("Minimize room", "রুম ছোট করুন")}
+          testID="vr-minimize"
+        >
+          <Feather name="minimize-2" size={18} color={theme.primary} />
         </Pressable>
         <View style={{ flex: 1, alignItems: "center" }}>
           <View style={styles.rowCenter}>
@@ -566,6 +606,10 @@ export default function VoiceRoomScreen() {
         {Platform.OS !== "web" ? (
           <SpeakerRow bn={bn} onChange={actions.setSpeaker} />
         ) : null}
+        <Pressable style={styles.menuRow} onPress={() => { setMenu(false); minimize(); }} testID="vr-menu-minimize">
+          <Feather name="minimize-2" size={18} color={theme.text} />
+          <ThemedText style={styles.menuText}>{L("Minimize and keep listening", "ছোট করে শুনতে থাকুন")}</ThemedText>
+        </Pressable>
         <Pressable style={styles.menuRow} onPress={() => { setMenu(false); leave(); }}>
           <Feather name="log-out" size={18} color={theme.error} />
           <ThemedText style={[styles.menuText, { color: theme.error }]}>{isHost ? L("End room for everyone", "সবার জন্য রুম শেষ করুন") : L("Leave quietly", "চুপচাপ ছেড়ে যান")}</ThemedText>
@@ -766,6 +810,7 @@ const styles = StyleSheet.create({
   endBtnText: { color: "#fff", fontWeight: "700" },
   topBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: Spacing.sm, height: 50 },
   iconBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  minBtn: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", marginHorizontal: 3 },
   rowCenter: { flexDirection: "row", alignItems: "center" },
   liveDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
   small: { fontSize: 12 },
