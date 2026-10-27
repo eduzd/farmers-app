@@ -117,6 +117,18 @@ const { PGlite } = require('@electric-sql/pglite');
             return False
 
     @staticmethod
+    async def sheet_ok(pg, ms=4000):
+        """Tap the main button of the Farmers confirmation sheet if it opens (it replaced window.confirm)."""
+        try:
+            await pg.locator(T("confirm-sheet-ok")).first.wait_for(state="visible", timeout=ms)
+            await pg.wait_for_timeout(500)
+            await pg.locator(T("confirm-sheet-ok")).first.click()
+            await pg.wait_for_timeout(600)
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
     async def text(pg, tid):
         loc = pg.locator(T(tid))
         return (await loc.first.inner_text()).strip() if await loc.count() else None

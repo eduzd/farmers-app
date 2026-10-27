@@ -1,5 +1,6 @@
 // Voice rooms list: rooms that are live now (with Join) and talks coming up.
 import React, { useCallback, useState } from "react";
+import { askConfirm } from "@/components/ConfirmSheet";
 import { View, StyleSheet, ScrollView, Pressable, RefreshControl, ActivityIndicator, Alert, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -83,8 +84,7 @@ export default function VoiceRoomsScreen() {
       }
     };
     if (Platform.OS === "web") {
-      // eslint-disable-next-line no-alert
-      if (typeof window !== "undefined" && window.confirm(bn ? "এই রুমটি বাতিল করবেন?" : "Cancel this room?")) void go();
+      void askConfirm({ title: bn ? "রুম বাতিল" : "Cancel room", message: bn ? "এই রুমটি বাতিল করবেন?" : "Cancel this room?", confirmText: bn ? "বাতিল" : "Cancel room", cancelText: bn ? "না" : "No", tone: "danger" }).then((ok) => { if (ok) void go(); });
       return;
     }
     Alert.alert(bn ? "রুম বাতিল" : "Cancel room", bn ? "এই রুমটি বাতিল করবেন?" : "Cancel this room?", [

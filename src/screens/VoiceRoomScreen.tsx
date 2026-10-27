@@ -1,6 +1,7 @@
 // Inside a voice room: the stage (host, moderators, speakers), the listeners, raised hands,
 // emoji reactions, the room's text chat, and mic / hand / leave controls.
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { askConfirm } from "@/components/ConfirmSheet";
 import {
   View,
   StyleSheet,
@@ -163,8 +164,7 @@ function VoiceRoomView({ vr, session }: { vr: ReturnType<typeof useVoiceRoom>; s
 
   const ask = (title: string, body: string, yes: string, onYes: () => void) => {
     if (Platform.OS === "web") {
-      // eslint-disable-next-line no-alert
-      if (typeof window !== "undefined" && window.confirm(`${title}\n\n${body}`)) onYes();
+      void askConfirm({ title, message: body, confirmText: yes, cancelText: L("Cancel", "বাতিল"), tone: "danger" }).then((ok) => { if (ok) onYes(); });
       return;
     }
     Alert.alert(title, body, [
