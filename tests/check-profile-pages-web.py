@@ -76,7 +76,7 @@ BACK_CLICK = r"""() => { const pages = [...document.querySelectorAll('[data-test
   if (!r.width || r.top > 64 || r.bottom < 4 || r.left > x0 + 70 || r.left < x0 - 40) return false;
   const at = document.elementFromPoint(r.left + r.width/2, r.top + r.height/2); return at && (e === at || e.contains(at)); }).pop(); }"""
 
-OPT_TITLE = {"en": "Profile options", "bn": "প্রোফাইল অপশন"}
+OPT_TITLE = {"en": "Profile", "bn": "প্রোফাইল"}
 EDIT_TITLE = {"en": "Edit profile", "bn": "প্রোফাইল এডিট"}
 SETTINGS_TITLE = {"en": "Settings", "bn": "সেটিংস"}
 ROWS = ["profile-vendor-dashboard", "profile-seller-hub", "profile-my-listings", "profile-admin-dashboard", "profile-my-posts",

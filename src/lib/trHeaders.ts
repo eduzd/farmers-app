@@ -4,6 +4,7 @@
  */
 export const HEADER_BN_OF_EN: Record<string, string> = {
   Post: "পোস্ট",
+  Profile: "প্রোফাইল",
   "Profile options": "প্রোফাইল অপশন",
   "Edit profile": "প্রোফাইল এডিট",
   Notifications: "নোটিফিকেশন",
