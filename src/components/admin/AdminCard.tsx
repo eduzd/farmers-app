@@ -4,6 +4,7 @@ import { Feather } from "@/components/icons/Feather";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { MayaRadius } from "@/constants/mayaTheme";
 
 import { AppIcon } from "@/components/icons/AppIcon";
 interface AdminCardProps {
@@ -93,7 +94,7 @@ export function AdminCard({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 36,
     height: 36,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     alignItems: "center",
     justifyContent: "center",
     marginRight: Spacing.sm,

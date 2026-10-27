@@ -9,6 +9,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { useCommunityStore } from "@/lib/communityStore";
 import { useI18n } from "@/lib/i18n";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { MayaRadius } from "@/constants/mayaTheme";
 import { getApiUrl } from "@/lib/query-client";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ThemedText } from "@/components/ThemedText";
@@ -1156,7 +1157,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     gap: Spacing.xs,
     // Uniform tab size: never squeezed by its neighbours or its label length.
     flexShrink: 0,
@@ -1196,7 +1197,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     marginBottom: Spacing.sm,
   },
@@ -1230,7 +1231,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     fontSize: 15,
@@ -1255,7 +1256,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     alignItems: "center",
   },
   announcementItem: {

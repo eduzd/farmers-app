@@ -4,6 +4,7 @@ import { TextInput } from "@/components/MayaText";
 import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { MayaRadius } from "@/constants/mayaTheme";
 
 interface SearchBarProps {
   value: string;
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     gap: Spacing.sm,
   },

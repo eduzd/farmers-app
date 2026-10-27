@@ -2,8 +2,8 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { askConfirm, type ConfirmTone } from "@/components/ConfirmSheet";
 import { View, Text as RNText, StyleSheet, Pressable, ActivityIndicator, ScrollView, RefreshControl, Platform, type TextProps, type TextStyle } from "react-native";
 import { TextInput } from "@/components/MayaText";
-import { LinearGradient } from "expo-linear-gradient";
 import { FontFamily, BanglaFontFamily } from "@/constants/theme";
+import { MayaColors, MayaFontFamily, MayaPalette, MayaRadius } from "@/constants/mayaTheme";
 import { CustomSwitch } from "@/components/CustomSwitch";
 import { Feather } from "@/components/icons/Feather";
 import * as ImagePicker from "expo-image-picker";
@@ -53,6 +53,15 @@ export const STATUS_COLOR: Record<string, string> = {
   pending: "#B25E09", confirmed: "#3D38D0", processing: "#3D38D0", shipped: "#1F86DB", delivered: "#00875A", cancelled: "#DA2F2F",
   open: "#00875A", closed: "#7A8CA3", active: "#00875A", suspended: "#DA2F2F", hidden: "#B25E09",
 };
+/**
+ * The darker Maya accents (violet, amber, deep green, red, link blue) read poorly on the navy
+ * dark-mode surfaces, so in dark mode they switch to the lighter step of the same Maya colour.
+ */
+const DARK_TONE: Record<string, string> = {
+  "#3D38D0": "#8F8BFF", "#00875A": "#22D193", "#00BB77": "#22D193", "#B25E09": "#F2A23A", "#DA2F2F": "#F05252",
+  "#1F86DB": "#6CC6FF", "#2E96EF": "#6CC6FF", "#7A8CA3": "#A9C2DC", "#4A5568": "#A9C2DC", "#FF4BB7": "#FF6EC4",
+};
+export const tone = (color: string, dark: boolean) => (dark ? DARK_TONE[String(color).toUpperCase()] || color : color);
 export const statusLabel = (s: string, L: ReturnType<typeof useL>) =>
   (({
     pending: L("Pending", "অপেক্ষমাণ"), confirmed: L("Confirmed", "নিশ্চিত"), processing: L("Processing", "প্রস্তুত হচ্ছে"), shipped: L("Shipped", "পাঠানো হয়েছে"),
@@ -100,8 +109,10 @@ export function useDebounced<T>(v: T, ms = 300) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Look and feel. The admin app uses the same fonts, colours, switches, radio buttons, chat icon
-// and soft cards as the main Farmers app, with a few admin-only pieces (stat tiles, hero card).
+// Look and feel. The admin app uses the main app's Maya look (maya.net): Maya navy, sky blue and
+// pink, DM Sans text with the condensed display face for big headings, solid navy buttons, flat
+// white cards with a pale-blue 1px hairline and 12px corners, thin outline icons. Same switches,
+// radio buttons and chat icon as the main app, plus a few admin-only pieces (stat tiles, hero band).
 // ---------------------------------------------------------------------------------------------
 
 const WEIGHT_FAMILY: Record<string, string> = {
@@ -124,12 +135,18 @@ export function Text({ style, children, ...rest }: TextProps & { children?: Reac
   );
 }
 
-export const R = { card: 18, tile: 16, field: 14, pill: 999 };
-export const shadow = (dark: boolean) =>
-  Platform.select({
-    web: { boxShadow: dark ? "0 1px 2px rgba(0,0,0,.4)" : "0 1px 2px rgba(16,24,40,.04), 0 4px 14px rgba(16,24,40,.06)" } as any,
-    default: { shadowColor: "#202936", shadowOpacity: dark ? 0.3 : 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
-  });
+export const R = { card: MayaRadius.lg, tile: MayaRadius.md, field: MayaRadius.md, pill: MayaRadius.pill };
+/**
+ * Maya surfaces are flat: no drop shadow, just a 1px pale-blue hairline (navy-blue in dark
+ * mode). Kept under the old name so every card, tile and panel in the admin app picks it up.
+ */
+export const shadow = (dark: boolean) => ({ borderWidth: 1, borderColor: MayaColors[dark ? "dark" : "light"].cardBorder });
+
+/** Maya's heavy condensed display face for big headings (Bangla falls back to Hind Siliguri Bold). */
+export const DISPLAY: TextStyle = { fontFamily: MayaFontFamily.display, fontWeight: "400", letterSpacing: 0.3 };
+
+/** Maya's solid button colour: navy in light mode, sky blue in dark mode (navy would vanish on navy). */
+export const mayaSolid = (dark: boolean, theme: { primary: string }) => (dark ? theme.primary : MayaPalette.ink);
 
 export function Page({ children, onRefresh, refreshing, testID, pad = true }: { children: React.ReactNode; onRefresh?: () => void; refreshing?: boolean; testID?: string; pad?: boolean }) {
   const { theme } = useTheme();
@@ -162,7 +179,7 @@ export function SectionTitle({ title, action, onAction, testID }: { title: strin
   const { theme } = useTheme();
   return (
     <View style={st.sectionRow}>
-      <Text style={[st.section, { color: theme.text }]} numberOfLines={1}>{title}</Text>
+      <Text style={[st.section, DISPLAY, { color: theme.text }]} numberOfLines={1}>{title}</Text>
       {action ? (
         <Pressable testID={testID} onPress={onAction} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
           <Text style={{ color: theme.primary, fontWeight: "700", fontSize: 13 }}>{action}</Text>
@@ -173,7 +190,9 @@ export function SectionTitle({ title, action, onAction, testID }: { title: strin
   );
 }
 
-export function Pill({ label, color, icon }: { label: string; color: string; icon?: keyof typeof Feather.glyphMap }) {
+export function Pill({ label, color: raw, icon }: { label: string; color: string; icon?: keyof typeof Feather.glyphMap }) {
+  const { isDark } = useTheme();
+  const color = tone(raw, isDark);
   return (
     <View style={[st.pill, { backgroundColor: color + "1A" }]}>
       {icon ? <Feather name={icon} size={11} color={color} /> : <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }} />}
@@ -215,7 +234,7 @@ export function ChipRow({ children }: { children: React.ReactNode }) {
 export function SearchBox({ value, onChange, placeholder, testID, autoFocus }: { value: string; onChange: (s: string) => void; placeholder: string; testID?: string; autoFocus?: boolean }) {
   const { theme } = useTheme();
   return (
-    <View style={[st.search, { backgroundColor: theme.backgroundSecondary }]}>
+    <View style={[st.search, { backgroundColor: theme.inputBackground, borderColor: theme.inputBorder }]}>
       <Feather name="search" size={17} color={theme.textSecondary} />
       <TextInput
         testID={testID}
@@ -240,16 +259,19 @@ export function SearchBox({ value, onChange, placeholder, testID, autoFocus }: {
 export function Btn({ label, onPress, icon, kind = "primary", busy, disabled, testID, small, style }: {
   label: string; onPress: () => void; icon?: keyof typeof Feather.glyphMap; kind?: "primary" | "ghost" | "danger" | "soft" | "dangerSoft"; busy?: boolean; disabled?: boolean; testID?: string; small?: boolean; style?: any;
 }) {
-  const { theme } = useTheme();
-  const bg = kind === "primary" ? theme.primary : kind === "danger" ? "#DA2F2F" : kind === "soft" ? theme.primary + "16" : kind === "dangerSoft" ? "#DA2F2F14" : theme.card;
-  const fg = kind === "primary" || kind === "danger" ? "#fff" : kind === "dangerSoft" ? "#DA2F2F" : kind === "ghost" ? theme.text : theme.primary;
+  const { theme, isDark } = useTheme();
+  // Maya buttons: solid navy primary (sky blue in dark mode), white with a dark 1px outline as the
+  // second choice (ghost), pale-blue soft buttons, Maya red for destructive actions.
+  const bg = kind === "primary" ? mayaSolid(isDark, theme) : kind === "danger" ? theme.error : kind === "soft" ? theme.primarySoft : kind === "dangerSoft" ? theme.error + "14" : theme.backgroundDefault;
+  const fg = kind === "primary" || kind === "danger" ? "#FFFFFF" : kind === "dangerSoft" ? theme.error : kind === "ghost" ? theme.text : isDark ? theme.link : theme.primary;
+  const border = kind === "ghost" ? theme.text : kind === "soft" ? theme.primarySoft : bg;
   return (
     <Pressable
       testID={testID}
       accessibilityRole="button"
       onPress={onPress}
       disabled={disabled || busy}
-      style={({ pressed }) => [st.btn, small && st.btnSmall, { backgroundColor: bg, borderColor: kind === "ghost" ? theme.cardBorder : bg, opacity: disabled ? 0.5 : pressed ? 0.9 : 1, transform: [{ scale: pressed && !disabled ? 0.96 : 1 }] }, Platform.OS === "web" ? ({ transitionProperty: "transform, opacity", transitionDuration: "120ms" } as any) : null, style]}
+      style={({ pressed }) => [st.btn, small && st.btnSmall, { backgroundColor: bg, borderColor: border, opacity: disabled ? 0.5 : pressed ? 0.9 : 1, transform: [{ scale: pressed && !disabled ? 0.96 : 1 }] }, Platform.OS === "web" ? ({ transitionProperty: "transform, opacity", transitionDuration: "120ms" } as any) : null, style]}
     >
       {busy ? <ActivityIndicator size="small" color={fg} /> : icon ? <AppIcon name={icon} size={small ? 14 : 17} color={fg} /> : null}
       <Text style={{ color: fg, fontWeight: "700", fontSize: small ? 12.5 : 14.5 }} numberOfLines={1}>{label}</Text>
@@ -265,7 +287,7 @@ export function Field({ label, value, onChange, placeholder, multiline, keyboard
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={[st.label, { color: theme.textSecondary }]}>{label}</Text>
-      <View style={[st.inputWrap, { backgroundColor: theme.backgroundSecondary, borderColor: focus ? theme.primary : "transparent" }, multiline && { alignItems: "flex-start" }]}>
+      <View style={[st.inputWrap, { backgroundColor: theme.inputBackground, borderColor: focus ? theme.primary : theme.inputBorder }, multiline && { alignItems: "flex-start" }]}>
         {prefix ? <Text style={{ color: theme.textSecondary, fontWeight: "700", fontSize: 15, marginRight: 4, marginTop: multiline ? 12 : 0 }}>{prefix}</Text> : null}
         <TextInput
           testID={testID}
@@ -302,7 +324,7 @@ export function Empty({ icon = "inbox", text, action, onAction }: { icon?: keyof
   const { theme } = useTheme();
   return (
     <View style={{ alignItems: "center", paddingVertical: 40, paddingHorizontal: 20, gap: 12 }} testID="admin-empty">
-      <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: theme.primary + "14", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: theme.primarySoft, alignItems: "center", justifyContent: "center" }}>
         <AppIcon name={icon} size={30} color={theme.primary} />
       </View>
       <Text style={{ color: theme.textSecondary, textAlign: "center", fontSize: 14.5, lineHeight: 21, maxWidth: 320 }}>{text}</Text>
@@ -318,7 +340,7 @@ export function Loading({ rows: n = 3 }: { rows?: number }) {
     <View testID="admin-loading" style={{ paddingVertical: 4 }}>
       {Array.from({ length: n }).map((_, i) => (
         <View key={i} style={[st.card, shadow(isDark), { backgroundColor: theme.card, flexDirection: "row", alignItems: "center", gap: 12 }]}>
-          <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: theme.backgroundSecondary }} />
+          <View style={{ width: 46, height: 46, borderRadius: MayaRadius.md, backgroundColor: theme.backgroundSecondary }} />
           <View style={{ flex: 1, gap: 8 }}>
             <View style={{ height: 12, width: "60%", borderRadius: 6, backgroundColor: theme.backgroundSecondary }} />
             <View style={{ height: 10, width: "35%", borderRadius: 5, backgroundColor: theme.backgroundSecondary }} />
@@ -332,10 +354,11 @@ export function Loading({ rows: n = 3 }: { rows?: number }) {
 
 export function ErrorBox({ text, onRetry }: { text: string; onRetry?: () => void }) {
   const L = useL();
+  const { theme } = useTheme();
   return (
-    <View style={st.error} testID="admin-error">
-      <Feather name="alert-circle" size={18} color="#DA2F2F" />
-      <Text style={{ color: "#DA2F2F", flex: 1, fontSize: 13.5, lineHeight: 19 }}>{text}</Text>
+    <View style={[st.error, { backgroundColor: theme.error + "14", borderColor: theme.error + "33" }]} testID="admin-error">
+      <Feather name="alert-circle" size={18} color={theme.error} />
+      <Text style={{ color: theme.error, flex: 1, fontSize: 13.5, lineHeight: 19 }}>{text}</Text>
       {onRetry ? <Btn small kind="dangerSoft" icon="refresh-cw" label={L("Retry", "আবার")} onPress={onRetry} /> : null}
     </View>
   );
@@ -361,12 +384,13 @@ export function Avatar({ name, uri, size = 44, dot }: { name?: string; uri?: str
   return <UserAvatar name={name || "?"} avatar={uri || undefined} size={size} presence={dot ?? null} />;
 }
 
-export function Stat({ label, value, icon, color, onPress, testID, hint }: { label: string; value: string | number; icon: keyof typeof Feather.glyphMap; color: string; onPress?: () => void; testID?: string; hint?: string }) {
+export function Stat({ label, value, icon, color: raw, onPress, testID, hint }: { label: string; value: string | number; icon: keyof typeof Feather.glyphMap; color: string; onPress?: () => void; testID?: string; hint?: string }) {
   const { theme, isDark } = useTheme();
+  const color = tone(raw, isDark);
   return (
     <Pressable testID={testID} onPress={onPress} disabled={!onPress} style={({ pressed }) => [st.stat, shadow(isDark), { backgroundColor: theme.card, opacity: pressed ? 0.85 : 1 }]}>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-        <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: color + "18", alignItems: "center", justifyContent: "center" }}>
+        <View style={{ width: 38, height: 38, borderRadius: MayaRadius.md, backgroundColor: color + "1A", alignItems: "center", justifyContent: "center" }}>
           <AppIcon name={icon} size={19} color={color} />
         </View>
         {onPress ? <Feather name="arrow-up-right" size={15} color={theme.textTertiary} /> : null}
@@ -378,15 +402,16 @@ export function Stat({ label, value, icon, color, onPress, testID, hint }: { lab
   );
 }
 
-/** The green gradient banner at the top of Home. */
+/** The Maya navy band at the top of Home, with Maya's sky-blue and pink shapes. */
 export function Hero({ children, testID }: { children: React.ReactNode; testID?: string }) {
-  const { theme } = useTheme();
+  const { isDark } = useTheme();
   return (
-    <LinearGradient testID={testID} colors={[theme.primary, "#3D38D0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.hero}>
-      <View style={{ position: "absolute", right: -40, top: -40, width: 160, height: 160, borderRadius: 80, backgroundColor: "rgba(255,255,255,0.08)" }} />
-      <View style={{ position: "absolute", right: 40, bottom: -60, width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(255,255,255,0.06)" }} />
+    <View testID={testID} style={[st.hero, { backgroundColor: isDark ? "#1B2A40" : MayaPalette.ink }, isDark ? { borderWidth: 1, borderColor: MayaColors.dark.cardBorder } : null]}>
+      <View style={{ position: "absolute", right: -46, top: -54, width: 170, height: 170, borderRadius: 85, backgroundColor: MayaPalette.sky, opacity: 0.22 }} />
+      <View style={{ position: "absolute", right: 56, bottom: -64, width: 120, height: 120, borderRadius: 60, backgroundColor: MayaPalette.pink, opacity: 0.16 }} />
+      <View style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, backgroundColor: MayaPalette.sky }} />
       {children}
-    </LinearGradient>
+    </View>
   );
 }
 
@@ -460,7 +485,7 @@ export function RadioGroup<T extends string>({ options, value, onChange, testID,
             style={({ pressed }) => [
               st.radioRow,
               row && { flexGrow: 1, flexBasis: 140 },
-              { borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primary + "0D" : theme.card, opacity: pressed ? 0.85 : 1 },
+              { borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primarySoft : theme.card, opacity: pressed ? 0.85 : 1 },
             ]}
           >
             <Radio on={on} />
@@ -480,8 +505,8 @@ export function RadioGroup<T extends string>({ options, value, onChange, testID,
 export function ListRow({ icon, label, sub, onPress, testID, color, right, badge, last }: {
   icon: keyof typeof Feather.glyphMap; label: string; sub?: string; onPress?: () => void; testID?: string; color?: string; right?: React.ReactNode; badge?: number; last?: boolean;
 }) {
-  const { theme } = useTheme();
-  const c = color || theme.primary;
+  const { theme, isDark } = useTheme();
+  const c = tone(color || theme.primary, isDark);
   return (
     <Pressable testID={testID} onPress={onPress} disabled={!onPress} style={({ pressed }) => [st.rowLine, { borderBottomColor: last ? "transparent" : theme.divider || theme.cardBorder, opacity: pressed ? 0.75 : 1 }]}>
       <View style={[st.rowIcon, { backgroundColor: c + "16" }]}>
@@ -492,7 +517,7 @@ export function ListRow({ icon, label, sub, onPress, testID, color, right, badge
         {sub ? <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 1 }} numberOfLines={2}>{sub}</Text> : null}
       </View>
       {badge ? (
-        <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: "#DA2F2F", alignItems: "center", justifyContent: "center", paddingHorizontal: 5 }}>
+        <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: theme.error, alignItems: "center", justifyContent: "center", paddingHorizontal: 5 }}>
           <Text style={{ color: "#fff", fontSize: 11, fontWeight: "800" }}>{badge > 99 ? "99+" : badge}</Text>
         </View>
       ) : null}
@@ -539,29 +564,29 @@ export function confirmAsk(title: string, msg: string, ok: string, cancel: strin
 }
 
 export const st = StyleSheet.create({
-  card: { borderRadius: 18, padding: 16, marginBottom: 12 },
+  card: { borderRadius: MayaRadius.lg, padding: 16, marginBottom: 12 },
   sectionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 14, marginBottom: 10, gap: 10 },
-  section: { fontSize: 16.5, fontWeight: "800", flex: 1, letterSpacing: -0.2 },
+  section: { fontSize: 18, flex: 1 },
   pill: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, alignSelf: "flex-start" },
   chip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 15, height: 36, borderRadius: 18, borderWidth: 1 },
-  search: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 14, paddingHorizontal: 14, height: 46, marginBottom: 12 },
-  searchInput: { flex: 1, fontSize: 15, paddingVertical: 0, height: 46 },
-  btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 48, paddingHorizontal: 18, borderRadius: 14, borderWidth: 1 },
-  btnSmall: { height: 36, paddingHorizontal: 13, borderRadius: 12 },
+  search: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: MayaRadius.md, borderWidth: 1, paddingHorizontal: 14, height: 46, marginBottom: 12 },
+  searchInput: { flex: 1, fontSize: 15, paddingVertical: 0, height: 44 },
+  btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 48, paddingHorizontal: 18, borderRadius: MayaRadius.md, borderWidth: 1 },
+  btnSmall: { height: 36, paddingHorizontal: 13, borderRadius: MayaRadius.sm },
   label: { fontSize: 13, fontWeight: "700", marginBottom: 7 },
-  inputWrap: { flexDirection: "row", alignItems: "center", borderRadius: 14, borderWidth: 1.5, paddingHorizontal: 14 },
+  inputWrap: { flexDirection: "row", alignItems: "center", borderRadius: MayaRadius.md, borderWidth: 1, paddingHorizontal: 14 },
   input: { flex: 1, minHeight: 48, fontSize: 15, paddingVertical: 10 },
   kv: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
-  error: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#FEF2F2", borderRadius: 14, padding: 12, marginBottom: 12 },
-  stat: { flexGrow: 1, flexBasis: 150, minWidth: 140, borderRadius: 18, padding: 14 },
-  hero: { borderRadius: 22, padding: 20, marginBottom: 16, overflow: "hidden" },
+  error: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderRadius: MayaRadius.md, padding: 12, marginBottom: 12 },
+  stat: { flexGrow: 1, flexBasis: 150, minWidth: 140, borderRadius: MayaRadius.lg, padding: 14 },
+  hero: { borderRadius: MayaRadius.xl, padding: 20, paddingLeft: 22, marginBottom: 16, overflow: "hidden" },
   rowLine: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 13, borderBottomWidth: StyleSheet.hairlineWidth },
-  rowIcon: { width: 36, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center" },
+  rowIcon: { width: 36, height: 36, borderRadius: MayaRadius.sm + 2, alignItems: "center", justifyContent: "center" },
   radioOuter: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   radioInner: { width: 10, height: 10, borderRadius: 5 },
-  radioRow: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12 },
-  segWrap: { flexDirection: "row", borderRadius: 14, padding: 4, marginBottom: 14 },
-  seg: { flex: 1, height: 36, borderRadius: 11, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
+  radioRow: { flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderRadius: MayaRadius.md, paddingHorizontal: 14, paddingVertical: 12 },
+  segWrap: { flexDirection: "row", borderRadius: MayaRadius.md, padding: 4, marginBottom: 14 },
+  seg: { flex: 1, height: 36, borderRadius: MayaRadius.sm, borderWidth: 1, borderColor: "transparent", alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 6 },
 });

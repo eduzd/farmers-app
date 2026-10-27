@@ -108,14 +108,14 @@ export function MarketPricesAdmin() {
           )}
         </Text>
         <View style={[st.row, { gap: 10 }]}>
-          <Pressable onPress={() => setPickDistrict((v) => !v)} testID="mp-district" style={{ flex: 1, borderWidth: 1, borderColor: theme.border, borderRadius: 14, padding: 10 }}>
+          <Pressable onPress={() => setPickDistrict((v) => !v)} testID="mp-district" style={{ flex: 1, borderWidth: 1, borderColor: theme.border, borderRadius: 12, padding: 10 }}>
             <Text style={{ color: theme.textSecondary, fontSize: 11.5 }}>{L("District", "জেলা")}</Text>
             <View style={[st.row, { justifyContent: "space-between" }]}>
               <Text style={{ fontWeight: "800", fontSize: 15 }}>{districtLabel(district, bn)}</Text>
               <Feather name={pickDistrict ? "chevron-up" : "chevron-down"} size={16} color={theme.textSecondary} />
             </View>
           </Pressable>
-          <View style={{ flex: 1, borderWidth: 1, borderColor: theme.border, borderRadius: 14, padding: 10 }}>
+          <View style={{ flex: 1, borderWidth: 1, borderColor: theme.border, borderRadius: 12, padding: 10 }}>
             <Text style={{ color: theme.textSecondary, fontSize: 11.5 }}>{L("Day", "দিন")}</Text>
             <View style={[st.row, { justifyContent: "space-between" }]}>
               <Pressable onPress={() => setDate(shift(date, -1))} hitSlop={10} testID="mp-day-prev">

@@ -14,11 +14,12 @@ import { MarketPricesAdmin } from "./marketprices";
 import {
   useAdminNav, useL, useLoader, useDebounced, Page, Card, SectionTitle, Pill, Chip, ChipRow, SearchBox, Btn, Field, KV, Empty, Loading, ErrorBox, Thumb, Stat,
   taka, STATUS_COLOR, ORDER_STATUSES, statusLabel, fmtDate, st, confirmAsk,
-  Text, Hero, shadow, ListRow, ToggleRow, RadioGroup, Avatar, Segmented,
+  Text, Hero, shadow, ListRow, ToggleRow, RadioGroup, Avatar, Segmented, DISPLAY, tone,
 } from "./ui";
 import { OrderRow } from "./shop";
 
 import { AppIcon } from "@/components/icons/AppIcon";
+import { MayaPalette } from "@/constants/mayaTheme";
 import { ChatPhoto } from "@/components/ChatPhoto";
 import { VoiceMessagePlayer } from "@/components/VoiceMessagePlayer";
 import { PhotoViewer } from "@/components/PhotoViewer";
@@ -48,15 +49,15 @@ export function HomeTab({ supportUnread }: { supportUnread: number }) {
     <Page onRefresh={reload} testID="admin-home">
       <Hero testID="admin-hero">
         <Text style={{ color: "rgba(255,255,255,.85)", fontSize: 13.5, fontWeight: "600" }}>{hello}</Text>
-        <Text style={{ color: "#fff", fontSize: 22, fontWeight: "800", marginTop: 2, letterSpacing: -0.3 }} numberOfLines={1}>{L("Farmers at a glance", "এক নজরে Farmers")}</Text>
+        <Text style={[DISPLAY, { color: "#FFFFFF", fontSize: 26, lineHeight: 32, marginTop: 2 }]} numberOfLines={1}>{L("Farmers at a glance", "এক নজরে Farmers")}</Text>
         <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 10, marginTop: 16, flexWrap: "wrap" }}>
           <View style={{ flex: 1, minWidth: 150 }}>
             <Text style={{ color: "rgba(255,255,255,.8)", fontSize: 12.5, fontWeight: "600" }}>{L("Sales (all orders except cancelled)", "বিক্রি (বাতিল ছাড়া সব অর্ডার)")}</Text>
-            <Text testID="hero-revenue" style={{ color: "#fff", fontSize: 30, fontWeight: "800", letterSpacing: -0.5 }} numberOfLines={1}>{s.revenue !== undefined ? taka(s.revenue) : "…"}</Text>
+            <Text testID="hero-revenue" style={[DISPLAY, { color: "#FFFFFF", fontSize: 34, lineHeight: 42 }]} numberOfLines={1}>{s.revenue !== undefined ? taka(s.revenue) : "…"}</Text>
           </View>
-          <Pressable testID="hero-pending" onPress={() => nav.goTab("orders")} style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,.18)", paddingHorizontal: 12, height: 36, borderRadius: 18, opacity: pressed ? 0.8 : 1 })}>
-            <Feather name="clock" size={14} color="#fff" />
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>{`${o.pendingOrders ?? "…"} ${L("to approve", "অনুমোদন বাকি")}`}</Text>
+          <Pressable testID="hero-pending" onPress={() => nav.goTab("orders")} style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: MayaPalette.sky, paddingHorizontal: 12, height: 36, borderRadius: 12, opacity: pressed ? 0.8 : 1 })}>
+            <Feather name="clock" size={14} color={MayaPalette.ink} />
+            <Text style={{ color: MayaPalette.ink, fontWeight: "700", fontSize: 13 }}>{`${o.pendingOrders ?? "…"} ${L("to approve", "অনুমোদন বাকি")}`}</Text>
           </Pressable>
         </View>
       </Hero>
@@ -71,14 +72,14 @@ export function HomeTab({ supportUnread }: { supportUnread: number }) {
       </View>
       <SectionTitle title={L("Quick actions", "দ্রুত কাজ")} />
       <View style={[st.grid, { marginBottom: 6 }]}>
-        {shortcuts.map(([k, label, icon, color, fn]) => (
-          <Pressable key={k} testID={`shortcut-${k}`} onPress={fn} style={({ pressed }) => [{ flexBasis: "22%", minWidth: 132, flexGrow: 1, padding: 14, borderRadius: 18, backgroundColor: theme.card, opacity: pressed ? 0.82 : 1, gap: 10 }, shadow(isDark)]}>
-            <View style={{ width: 40, height: 40, borderRadius: 13, backgroundColor: color + "18", alignItems: "center", justifyContent: "center" }}>
+        {shortcuts.map(([k, label, icon, raw, fn]) => { const color = tone(raw, isDark); return (
+          <Pressable key={k} testID={`shortcut-${k}`} onPress={fn} style={({ pressed }) => [{ flexBasis: "22%", minWidth: 132, flexGrow: 1, padding: 14, borderRadius: 12, backgroundColor: theme.card, opacity: pressed ? 0.82 : 1, gap: 10 }, shadow(isDark)]}>
+            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: color + "18", alignItems: "center", justifyContent: "center" }}>
               <AppIcon name={icon} size={19} color={color} />
             </View>
             <Text style={{ color: theme.text, fontWeight: "700", fontSize: 13.5 }} numberOfLines={1}>{label}</Text>
           </Pressable>
-        ))}
+        ); })}
       </View>
       <SectionTitle title={L("Recent orders", "সাম্প্রতিক অর্ডার")} action={L("All", "সব")} onAction={() => nav.goTab("orders")} />
       {shop.loading && !shop.data ? <Loading rows={2} /> : null}
@@ -356,7 +357,7 @@ function ThemeCard() {
           const on = pref === k;
           return (
             <Pressable key={k} testID={`theme-${k}`} accessibilityRole="radio" accessibilityState={{ selected: on }} accessibilityLabel={label} onPress={() => setPref(k)}
-              style={({ pressed }) => ({ flex: 1, alignItems: "center", gap: 6, paddingVertical: 12, borderRadius: 14, borderWidth: 2, borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primary + "14" : "transparent", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
+              style={({ pressed }) => ({ flex: 1, alignItems: "center", gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 2, borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primary + "14" : "transparent", transform: [{ scale: pressed ? 0.96 : 1 }] })}>
               <Feather name={icon} size={20} color={on ? theme.primary : theme.textSecondary} />
               <Text style={{ color: on ? theme.primary : theme.text, fontWeight: on ? "800" : "600", fontSize: 13 }}>{label}</Text>
             </Pressable>

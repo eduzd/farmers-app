@@ -31,7 +31,7 @@ const actionIcon = (a: string): keyof typeof Feather.glyphMap =>
 
 function Banner({ color, icon, title, sub, action }: { color: string; icon: keyof typeof Feather.glyphMap; title: string; sub?: string; action?: React.ReactNode }) {
   return (
-    <View style={{ flexDirection: "row", gap: 10, alignItems: "center", padding: 12, borderRadius: 14, backgroundColor: color + "14", borderWidth: 1, borderColor: color + "33" }}>
+    <View style={{ flexDirection: "row", gap: 10, alignItems: "center", padding: 12, borderRadius: 12, backgroundColor: color + "14", borderWidth: 1, borderColor: color + "33" }}>
       <Feather name={icon} size={18} color={color} />
       <View style={{ flex: 1 }}>
         <Text style={{ color, fontWeight: "800" }}>{title}</Text>

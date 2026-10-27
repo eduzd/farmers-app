@@ -90,7 +90,7 @@ export function ModerationPanel({ user, onChanged }: { user: any; onChanged: () 
     <View testID="moderation-panel">
       <Card style={{ borderLeftWidth: 4, borderLeftColor: statusColor }}>
         <View style={st.row}>
-          <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: statusColor + "18", alignItems: "center", justifyContent: "center" }}>
+          <View style={{ width: 42, height: 42, borderRadius: 10, backgroundColor: statusColor + "18", alignItems: "center", justifyContent: "center" }}>
             <Feather name={status === "active" ? "check-circle" : status === "banned" ? "slash" : "shield"} size={20} color={statusColor} />
           </View>
           <View style={{ flex: 1 }}>
@@ -115,7 +115,7 @@ export function ModerationPanel({ user, onChanged }: { user: any; onChanged: () 
         </View>
       </Card>
       {msg ? (
-        <View testID="moderation-msg" style={{ flexDirection: "row", gap: 8, alignItems: "center", padding: 12, borderRadius: 14, marginBottom: 12, backgroundColor: msg.ok ? "#D8FFF2" : "#FEF2F2" }}>
+        <View testID="moderation-msg" style={{ flexDirection: "row", gap: 8, alignItems: "center", padding: 12, borderRadius: 12, marginBottom: 12, backgroundColor: (msg.ok ? theme.success : theme.error) + "14" }}>
           <Feather name={msg.ok ? "check-circle" : "alert-circle"} size={17} color={msg.ok ? "#00875A" : "#DA2F2F"} />
           <Text style={{ flex: 1, color: msg.ok ? "#00875A" : "#DA2F2F", fontSize: 13.5 }}>{msg.text}</Text>
         </View>
@@ -361,7 +361,7 @@ export function OfficialScreen({ target, targetName, from: initialFrom }: { targ
   };
   return (
     <Page testID="admin-official" onRefresh={() => { list.load(); accounts.load(); }}>
-      <LinearGradient colors={[acct.color || "#2E96EF", "#1F86DB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 22, padding: 18, marginBottom: 16, flexDirection: "row", alignItems: "center", gap: 14 }}>
+      <LinearGradient colors={[acct.color || "#2E96EF", "#1F86DB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 16, padding: 18, marginBottom: 16, flexDirection: "row", alignItems: "center", gap: 14 }}>
         <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}>
           <Feather name={(acct.icon in Feather.glyphMap ? acct.icon : "check-circle") as any} size={26} color={acct.color || "#2E96EF"} />
         </View>

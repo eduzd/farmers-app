@@ -6,11 +6,10 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/lib/authStore";
 import { apiGet } from "@/lib/api";
-import { AdminNav, Route, TabName, ShopSection, useL, Btn, Text, shadow } from "./ui";
+import { AdminNav, Route, TabName, ShopSection, useL, Btn, Text, shadow, DISPLAY } from "./ui";
 import { SearchScreen, OfficialScreen, AdsScreen, AdForm } from "./power";
 import { OfficialAccountsScreen } from "./officialAccounts";
 import { Image } from "expo-image";
-import { FontFamily } from "@/constants/theme";
 import { ShopTab, ProductDetail, ProductForm, StoreDetail, StoreForm, CategoryForm } from "./shop";
 import { HomeTab, OrdersTab, OrderDetail, SupportTab, ThreadView, UsersList, UserDetail, MoreTab } from "./ops";
 
@@ -128,7 +127,7 @@ export default function AdminAppScreen() {
 
   const top = stack[stack.length - 1];
   const bellBadge = bellCount > 0 ? (
-    <View testID="header-bell-badge" style={{ position: "absolute", top: 3, right: 1, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DA2F2F", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.backgroundRoot }}>
+    <View testID="header-bell-badge" style={{ position: "absolute", top: 3, right: 1, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: theme.error, alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.backgroundRoot }}>
       <Text style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}>{bellCount > 99 ? "99+" : bellCount}</Text>
     </View>
   ) : null;
@@ -184,7 +183,7 @@ export default function AdminAppScreen() {
     <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} hitSlop={6}
       style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? theme.backgroundSecondary : "transparent" })}>
       {child}
-      {dot ? <View style={{ position: "absolute", top: 8, right: 8, width: 9, height: 9, borderRadius: 5, backgroundColor: "#DA2F2F", borderWidth: 1.5, borderColor: theme.backgroundRoot }} /> : null}
+      {dot ? <View style={{ position: "absolute", top: 8, right: 8, width: 9, height: 9, borderRadius: 5, backgroundColor: theme.error, borderWidth: 1.5, borderColor: theme.backgroundRoot }} /> : null}
     </Pressable>
   );
   return (
@@ -196,18 +195,18 @@ export default function AdminAppScreen() {
               {top ? (
                 iconBtn("admin-back", nav.pop, <Feather name="arrow-left" size={22} color={theme.text} />, false, L("Back", "পেছনে"))
               ) : (
-                <View style={[{ width: 38, height: 38, borderRadius: 12, overflow: "hidden", marginLeft: 4, marginRight: 4, backgroundColor: theme.card }, shadow(isDark)]}>
+                <View style={[{ width: 38, height: 38, borderRadius: 10, overflow: "hidden", marginLeft: 4, marginRight: 4, backgroundColor: theme.card }, shadow(isDark)]}>
                   <Image source={require("../../assets/images/icon.png")} style={{ width: 38, height: 38 }} contentFit="cover" />
                 </View>
               )}
               <View style={{ flex: 1, minWidth: 0 }}>
                 {!top && tab === "home" ? (
                   <>
-                    <Text style={{ color: theme.text, fontSize: 20, fontFamily: FontFamily.bold, letterSpacing: -0.3 }} numberOfLines={1} testID="admin-title">Farmers</Text>
-                    <Text style={{ color: theme.primary, fontSize: 11.5, fontWeight: "700", marginTop: -2, letterSpacing: 0.4 }} numberOfLines={1}>{L("ADMIN CONSOLE", "অ্যাডমিন কনসোল")}</Text>
+                    <Text style={[DISPLAY, { color: theme.text, fontSize: 22, lineHeight: 28 }]} numberOfLines={1} testID="admin-title">Farmers</Text>
+                    <Text style={{ color: isDark ? theme.link : theme.primary, fontSize: 11, fontWeight: "700", marginTop: -1, letterSpacing: 1.2 }} numberOfLines={1}>{L("ADMIN CONSOLE", "অ্যাডমিন কনসোল")}</Text>
                   </>
                 ) : (
-                  <Text style={{ color: theme.text, fontSize: 19, fontWeight: "800", letterSpacing: -0.2 }} numberOfLines={1} testID="admin-title">
+                  <Text style={[DISPLAY, { color: theme.text, fontSize: 22, lineHeight: 28 }]} numberOfLines={1} testID="admin-title">
                     {top ? routeTitle(top) : tabTitle[tab]}
                   </Text>
                 )}
@@ -232,14 +231,14 @@ export default function AdminAppScreen() {
                 const on = tab === k && !top;
                 return (
                   <Pressable key={k} testID={`admin-tab-${k}`} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => { if (on && !stack.length) return; nav.goTab(k); }} style={({ pressed }) => ({ flex: 1, alignItems: "center", gap: 3, transform: [{ scale: pressed ? 0.92 : 1 }] })}>
-                    <View style={{ width: 56, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: on ? theme.primary + "1F" : "transparent" }}>
+                    <View style={{ width: 56, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", backgroundColor: on ? theme.primarySoft : "transparent" }}>
                       {k === "home" ? (
                         <HomeIcon size={20} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
                       ) : (
                         <AppIcon name={icon} size={22} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
                       )}
                       {badge ? (
-                        <View style={{ position: "absolute", top: -4, right: 4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DA2F2F", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.card }}>
+                        <View style={{ position: "absolute", top: -4, right: 4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: theme.error, alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.card }}>
                           <Text style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}>{badge > 99 ? "99+" : badge}</Text>
                         </View>
                       ) : null}
