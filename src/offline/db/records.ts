@@ -91,11 +91,12 @@ export async function saveCalcRecord(
        WHERE id = ?`,
       [
         now,
-        options.title || existing.title || null,
+        // Editing keeps what the caller did not send (title, notes, tags); an empty title clears it.
+        options.title !== undefined ? (options.title || null) : (existing.title || null),
         JSON.stringify(inputs),
         JSON.stringify(outputs),
-        options.notes || null,
-        options.tags ? JSON.stringify(options.tags) : null,
+        options.notes !== undefined ? (options.notes || null) : (existing.notes || null),
+        options.tags ? JSON.stringify(options.tags) : (existing.tags_json || null),
         id
       ]
     );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { View, Text, StyleSheet, Pressable, TextInput, Modal, ScrollView, Platform, Alert, KeyboardAvoidingView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderButton, useHeaderHeight } from '@react-navigation/elements';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
@@ -9,7 +9,7 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
-import { saveCalcRecord, getCalcRecords, CalcRecord } from '@/offline/db/records';
+import { saveCalcRecord, getCalcRecords, getCalcRecord, CalcRecord } from '@/offline/db/records';
 import { saveDraft, getDraft, deleteDraft } from '@/offline/db/drafts';
 import { getSetting, setSetting } from '@/offline/db/database';
 
@@ -59,6 +59,22 @@ interface CalculationResult {
   rowCount: number;
 }
 
+function parseJson(s: string | null | undefined): any {
+  try { return s ? JSON.parse(s) : {}; } catch { return {}; }
+}
+const n0 = (v: any) => { const x = Number(v); return Number.isFinite(x) ? x : 0; };
+/** Reads a saved result safely (older records used other key names). */
+function toResult(o: any): CalculationResult {
+  return {
+    totalWeight: n0(o?.totalWeight ?? o?.weight_kg),
+    rawAmount: n0(o?.rawAmount ?? o?.gross_amount),
+    commission: n0(o?.commission ?? o?.commission_amount),
+    netAmount: n0(o?.netAmount ?? o?.net_amount),
+    avgRate: n0(o?.avgRate ?? o?.rate_per_kg),
+    rowCount: n0(o?.rowCount),
+  };
+}
+
 function calculateResults(rows: RowData[], settings: AratSettings): CalculationResult | null {
   const validRows = rows.filter(r => parseFloat(r.rate) > 0 && parseFloat(r.weight) > 0);
   if (validRows.length === 0) return null;
@@ -85,13 +101,6 @@ function calculateResults(rows: RowData[], settings: AratSettings): CalculationR
     avgRate,
     rowCount: validRows.length,
   };
-}
-
-interface LocalRecord {
-  id: string;
-  created_at: number;
-  outputs_json: string;
-  inputs_json: string;
 }
 
 function SettingsModal({ colors, settings, onSave, onClose }: {
@@ -209,9 +218,19 @@ export function AratCalculatorScreen() {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settings, setSettings] = useState<AratSettings>(defaultSettings);
   const [savedRecords, setSavedRecords] = useState<CalcRecord[]>([]);
-  const [localRecords, setLocalRecords] = useState<LocalRecord[]>([]);
   const [calculationName, setCalculationName] = useState('');
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  const [savedFlash, setSavedFlash] = useState(false);
+  const savingRef = useRef(false);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
+  // Opened from a saved record (Saved tab -> Edit): load that record instead of the draft.
+  const route = useRoute<any>();
+  const openRecordId: string | undefined = route.params?.recordId;
+  const openNonce = route.params?.openedAt;
+  const draftReady = useRef(false);
+  // Settings that came with an opened record win over the general settings loading in parallel.
+  const recordSettingsLoaded = useRef(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
 
   const loadRecords = useCallback(async () => {
@@ -222,7 +241,7 @@ export function AratCalculatorScreen() {
   }, []);
 
   useEffect(() => {
-    loadDraft();
+    if (!openRecordId) loadDraft(); else draftReady.current = true;
     loadSettings();
     loadRecords();
   }, []);
@@ -233,13 +252,16 @@ export function AratCalculatorScreen() {
       if (draft?.rows && Array.isArray(draft.rows)) {
         setRows(draft.rows.length > 0 ? draft.rows : [{ fishName: '', rate: '', weight: '' }]);
       }
+      if (typeof draft?.name === 'string') setCalculationName(draft.name);
+      if (typeof draft?.editingRecordId === 'string') setEditingRecordId(draft.editingRecordId);
     } catch {}
+    draftReady.current = true;
   };
 
   const loadSettings = async () => {
     try {
       const saved = await getSetting('arat_settings_v1');
-      if (saved) setSettings(JSON.parse(saved));
+      if (saved && !recordSettingsLoaded.current) setSettings(JSON.parse(saved));
     } catch {}
   };
 
@@ -252,11 +274,12 @@ export function AratCalculatorScreen() {
 
   useEffect(() => {
     if (autoSaveRef.current) clearTimeout(autoSaveRef.current);
+    if (!draftReady.current) return;
     autoSaveRef.current = setTimeout(() => {
-      saveDraft('arat', { rows }).catch(() => {});
+      saveDraft('arat', { rows, name: calculationName, editingRecordId }).catch(() => {});
     }, 300);
     return () => { if (autoSaveRef.current) clearTimeout(autoSaveRef.current); };
-  }, [rows]);
+  }, [rows, calculationName, editingRecordId]);
 
   const results = calculateResults(rows, settings);
 
@@ -300,34 +323,44 @@ export function AratCalculatorScreen() {
     }
   };
 
-  const handleSaveCalculation = async () => {
-    if (!results) return;
-    
-    const recordId = editingRecordId || `local-${Date.now()}`;
-    const newLocalRecord: LocalRecord = {
-      id: recordId,
-      created_at: Date.now(),
-      outputs_json: JSON.stringify(results),
-      inputs_json: JSON.stringify({ rows, settings, name: calculationName }),
-    };
-    
-    if (editingRecordId) {
-      setLocalRecords(prev => prev.map(r => r.id === editingRecordId ? newLocalRecord : r));
-    } else {
-      setLocalRecords(prev => [newLocalRecord, ...prev]);
-    }
-    
+  /**
+   * Saves this calculation in the phone's encrypted calculator database (works with no internet).
+   * The first save makes a new record; later saves of the same calculation update that record,
+   * so editing an old calculation never makes a copy.
+   */
+  const handleSaveCalculation = async (opts: { quiet?: boolean } = {}): Promise<boolean> => {
+    if (!results) return true;
+    if (savingRef.current) return false;
+    savingRef.current = true;
     try {
-      await saveCalcRecord('ARAT', { rows, settings, name: calculationName }, results, { 
+      const id = await saveCalcRecord('ARAT', { rows, settings, name: calculationName }, results, {
+        id: editingRecordId || undefined,
         language: lang,
-        title: calculationName || undefined,
+        title: calculationName.trim(),
       });
-      loadRecords();
-    } catch {}
+      setEditingRecordId(id);
+      await loadRecords();
+      if (!opts.quiet) {
+        setSavedFlash(true);
+        if (flashTimer.current) clearTimeout(flashTimer.current);
+        flashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
+      }
+      return true;
+    } catch {
+      const msg = tr('Could not save. Please try again.');
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert(tr('Error'), msg);
+      return false;
+    } finally {
+      savingRef.current = false;
+    }
   };
 
   const handleNewCalculation = async () => {
-    await handleSaveCalculation();
+    // Keep the current calculation first; if that fails, nothing is cleared.
+    const ok = await handleSaveCalculation({ quiet: true });
+    if (!ok) return;
+    autoAdvance.cancel();
     setRows([{ fishName: '', rate: '', weight: '' }]);
     setCalculationName('');
     setEditingRecordId(null);
@@ -336,7 +369,7 @@ export function AratCalculatorScreen() {
 
   // Set up header buttons
   useLayoutEffect(() => {
-    const savedCount = localRecords.length + savedRecords.length;
+    const savedCount = savedRecords.length;
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerRight}>
@@ -353,7 +386,7 @@ export function AratCalculatorScreen() {
               ) : null}
             </View>
           </HeaderButton>
-          <HeaderButton onPress={handleNewCalculation}>
+          <HeaderButton onPress={handleNewCalculation} accessibilityLabel={tr("নতুন হিসাব")}>
             <Feather name="plus" size={22} color={colors.primary} />
           </HeaderButton>
           <HeaderButton onPress={() => setSettingsVisible(true)}>
@@ -362,24 +395,38 @@ export function AratCalculatorScreen() {
         </View>
       ),
     });
-  }, [navigation, colors, results, rows, settings, calculationName, localRecords, savedRecords]);
+  }, [navigation, colors, results, rows, settings, calculationName, savedRecords, editingRecordId]);
 
-  const loadLocalRecord = (record: LocalRecord) => {
-    try {
-      const inputs = JSON.parse(record.inputs_json);
-      if (inputs.rows && Array.isArray(inputs.rows)) {
-        setRows([...inputs.rows, { fishName: '', rate: '', weight: '' }]);
-      }
-      if (inputs.settings) {
-        setSettings(inputs.settings);
-      }
-      if (inputs.name) {
-        setCalculationName(inputs.name);
-      }
-      setEditingRecordId(record.id);
+  /** Opens a saved calculation exactly as it was saved; Save then updates that same record. */
+  const loadRecord = (record: CalcRecord) => {
+    const inputs = parseJson(record.inputs_json);
+    if (!Array.isArray(inputs.rows)) {
+      // Not made by this screen's table (very old record): show its details instead.
       setDrawerVisible(false);
-    } catch {}
+      navigation.navigate('CalculateRecordDetail', { id: record.id });
+      return;
+    }
+    autoAdvance.cancel();
+    const loaded = inputs.rows.map((r: any) => ({ ...{ fishName: '', rate: '', weight: '' }, ...r }));
+    const last = loaded[loaded.length - 1];
+    if (!last || last.rate || last.weight) loaded.push({ fishName: '', rate: '', weight: '' });
+    setRows(loaded);
+    if (inputs.settings) { recordSettingsLoaded.current = true; setSettings({ ...defaultSettings, ...inputs.settings }); }
+    setCalculationName(typeof inputs.name === 'string' ? inputs.name : (record.title || ''));
+    setEditingRecordId(record.id);
+    setDrawerVisible(false);
+    draftReady.current = true;
   };
+
+  useEffect(() => {
+    if (!openRecordId) return;
+    let alive = true;
+    getCalcRecord(openRecordId)
+      .then((rec) => { if (alive && rec) loadRecord(rec); })
+      .catch(() => {});
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRecordId, openNonce]);
 
   const formatNum = (n: number, d = 2) => n.toFixed(d);
   const fmtTaka = (n: number) => `৳${formatNum(n, 0)}`;
@@ -459,14 +506,15 @@ export function AratCalculatorScreen() {
   };
 
   const renderSavedRecord = ({ item }: { item: CalcRecord }) => {
-    const r = JSON.parse(item.outputs_json) as CalculationResult;
+    const r = toResult(parseJson(item.outputs_json));
+    const active = editingRecordId === item.id;
     return (
       <Pressable
-        style={[styles.recordCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-        onPress={() => navigation.navigate('CalculateRecordDetail', { id: item.id })}
+        style={[styles.recordCard, { backgroundColor: active ? colors.primary + '20' : colors.card, borderColor: active ? colors.primary : colors.border }]}
+        onPress={() => loadRecord(item)}
       >
         <View style={styles.recordHeader}>
-          <Text style={[styles.recordDate, { color: colors.textSecondary }]}>{formatDate(item.created_at)}</Text>
+          <Text style={[styles.recordDate, { color: colors.textSecondary }]} numberOfLines={1}>{item.title ? `${item.title} • ` : ''}{formatDate(item.created_at)}</Text>
           <Text style={[styles.recordAmount, { color: colors.primary }]}>{fmtTaka(r.netAmount)}</Text>
         </View>
         <View style={styles.recordStats}>
@@ -528,6 +576,22 @@ export function AratCalculatorScreen() {
             placeholderTextColor={colors.textTertiary}
           />
         </View>
+
+        {/* Save on the phone (encrypted, offline). Editing a saved calculation updates it. */}
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => { handleSaveCalculation(); }}
+          disabled={!results}
+          style={[styles.saveCalcBtn, { backgroundColor: savedFlash ? colors.primary + '20' : colors.primary, opacity: results ? 1 : 0.5 }]}
+        >
+          <Feather name={savedFlash ? 'check' : 'save'} size={18} color={savedFlash ? colors.primary : '#FFFFFF'} />
+          <Text style={[styles.saveCalcText, { color: savedFlash ? colors.primary : '#FFFFFF' }]}>
+            {savedFlash ? tr('সংরক্ষিত হয়েছে') : editingRecordId ? tr('আপডেট করুন') : tr('সংরক্ষণ করুন')}
+          </Text>
+        </Pressable>
+        <Text style={[styles.saveCalcHint, { color: colors.textSecondary }]}>
+          {editingRecordId ? tr('একই হিসাব আপডেট হবে, নতুন কপি হবে না।') : tr('ফোনে এনক্রিপ্ট করে রাখা হয়, ইন্টারনেট ছাড়াও কাজ করে।')}
+        </Text>
 
         {/* Column Headers */}
         <View style={styles.columnHeaders}>
@@ -597,31 +661,11 @@ export function AratCalculatorScreen() {
         </View>
 
         {/* Saved Records List */}
-        {(savedRecords.length > 0 || localRecords.length > 0) ? (
+        {savedRecords.length > 0 ? (
           <View style={styles.savedSection}>
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-              সংরক্ষিত হিসাব ({savedRecords.length + localRecords.length})
+              {tr("সংরক্ষিত হিসাব")} ({savedRecords.length})
             </Text>
-            {localRecords.map((record) => {
-              const r = JSON.parse(record.outputs_json) as CalculationResult;
-              return (
-                <Pressable
-                  key={record.id}
-                  style={[styles.recordCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => loadLocalRecord(record)}
-                >
-                  <View style={styles.recordHeader}>
-                    <Text style={[styles.recordDate, { color: colors.textSecondary }]}>{formatDate(record.created_at)}</Text>
-                    <Text style={[styles.recordAmount, { color: colors.primary }]}>{fmtTaka(r.netAmount)}</Text>
-                  </View>
-                  <View style={styles.recordStats}>
-                    <Text style={[styles.recordStat, { color: colors.text }]}>{formatNum(r.totalWeight)} কেজি</Text>
-                    <Text style={[styles.recordStat, { color: colors.textSecondary }]}>{r.rowCount} আইটেম</Text>
-                    <Text style={[styles.recordStat, { color: colors.textSecondary }]}>{fmtTaka(r.avgRate)}/কেজি</Text>
-                  </View>
-                </Pressable>
-              );
-            })}
             {savedRecords.map((record) => (
               <View key={record.id}>
                 {renderSavedRecord({ item: record })}
@@ -646,7 +690,7 @@ export function AratCalculatorScreen() {
             </View>
             
             <ScrollView style={styles.drawerList} showsVerticalScrollIndicator={false}>
-              {localRecords.length === 0 && savedRecords.length === 0 ? (
+              {savedRecords.length === 0 ? (
                 <View style={styles.emptyDrawer}>
                   <Feather name="bookmark" size={48} color={colors.textTertiary} />
                   <Text style={[styles.emptyDrawerText, { color: colors.textSecondary }]}>
@@ -655,9 +699,9 @@ export function AratCalculatorScreen() {
                 </View>
               ) : null}
               
-              {localRecords.map((record) => {
-                const r = JSON.parse(record.outputs_json) as CalculationResult;
-                const inputs = JSON.parse(record.inputs_json);
+              {savedRecords.map((record) => {
+                const r = toResult(parseJson(record.outputs_json));
+                const inputs = parseJson(record.inputs_json);
                 return (
                   <Pressable
                     key={record.id}
@@ -665,11 +709,11 @@ export function AratCalculatorScreen() {
                       backgroundColor: editingRecordId === record.id ? colors.primary + '20' : colors.background,
                       borderColor: editingRecordId === record.id ? colors.primary : colors.border 
                     }]}
-                    onPress={() => loadLocalRecord(record)}
+                    onPress={() => loadRecord(record)}
                   >
                     <View style={styles.drawerItemHeader}>
                       <Text style={[styles.drawerItemName, { color: colors.text }]} numberOfLines={1}>
-                        {inputs.name || 'হিসাব'}
+                        {inputs.name || record.title || tr('হিসাব')}
                       </Text>
                       <Text style={[styles.drawerItemAmount, { color: colors.primary }]}>{fmtTaka(r.netAmount)}</Text>
                     </View>
@@ -690,6 +734,9 @@ export function AratCalculatorScreen() {
 }
 
 const styles = StyleSheet.create({
+  saveCalcBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 46, borderRadius: BorderRadius.md, marginTop: Spacing.sm },
+  saveCalcText: { fontSize: 15, fontWeight: '700' },
+  saveCalcHint: { fontSize: 12, textAlign: 'center', marginTop: 4, marginBottom: Spacing.sm },
   container: { flex: 1 },
   scrollView: { flex: 1 },
   content: { paddingHorizontal: Spacing.md },
