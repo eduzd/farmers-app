@@ -1,28 +1,28 @@
-"""Web check (throwaway local server, needs ./dist): the Voice rooms tile sits next to the ad carousel on Connect.
+"""Web check (throwaway local server, needs ./dist): the Voice rooms card is the first card of the Connect ad carousel.
 
-  python3 tests/check-connect-voice-tile-web.py [shots_dir]
+  python3 tests/check-connect-voice-card-web.py [shots_dir]
 
-- Farmer and admin see a small Voice rooms tile beside the ad card: same top, same height as the ad card, no overlap, on screen.
-- The tile has no create / Start a room button; the mic icon next to the filter stays the only way to start a room.
-- Tapping the tile opens the Voice rooms list; with a room live, the tile says "1 live" and the farmer joins it from the list.
-- Search sits right under the ad row, no gap. English + Bangla, light + dark, phone and computer widths. No page errors.
+- Farmer and admin see Voice rooms as the first card of the ad carousel: same size, row and rounded shape as the ad cards.
+- The carousel still moves on its own. The card has an Open button and no create / Start a room button.
+- Tapping it opens the Voice rooms list; with a room live it says "1 live now" and the farmer joins from the list.
+- The mic icon next to the filter is still the only way to start a room. English + Bangla, light + dark, phone and computer.
 """
 import asyncio, json, os, random, subprocess, sys, tempfile, time, urllib.request
 from playwright.async_api import async_playwright
 
 PORT = 6800 + random.randint(0, 90)
 BASE = f"http://127.0.0.1:{PORT}"
-SHOTS = sys.argv[1] if len(sys.argv) > 1 else "/home/sprite/farmers-shots/connect-voice-tile"
+SHOTS = sys.argv[1] if len(sys.argv) > 1 else "/home/sprite/farmers-shots/connect-voice-card"
 os.makedirs(SHOTS, exist_ok=True)
-data_dir = tempfile.mkdtemp(prefix="cvt-web-")
+data_dir = tempfile.mkdtemp(prefix="cvc-web-")
 env = dict(os.environ, PORT=str(PORT), NODE_ENV="development", DATA_DIR=data_dir, DATABASE_URL="", FIREBASE_PROJECT_ID="",
-           PUSH_DISABLED="1", ADMIN_EMAIL="", JWT_SECRET="cvt-web-secret-0123456789abcdef0123456789abcdef")
+           PUSH_DISABLED="1", ADMIN_EMAIL="", JWT_SECRET="cvc-web-secret-0123456789abcdef0123456789abcdef")
 srv = None
 
 
 def start():
     global srv
-    srv = subprocess.Popen(["npx", "tsx", "server/index.ts"], env=env, stdout=open("/tmp/cvt-web-server.log", "a"),
+    srv = subprocess.Popen(["npx", "tsx", "server/index.ts"], env=env, stdout=open("/tmp/cvc-web-server.log", "a"),
                            stderr=subprocess.STDOUT, start_new_session=True)
     for _ in range(120):
         try:
@@ -117,44 +117,44 @@ async def visible(loc):
     return None
 
 
-async def card_box(pg):
-    return await pg.evaluate("""()=>{
-      const c=[...document.querySelectorAll('[data-testid^="connect-carousel-card-"]')].map(e=>e.getBoundingClientRect()).filter(r=>r.width>0&&r.x>=-1&&r.x<window.innerWidth-5);
-      if(!c.length) return null; const r=c[0]; return {x:r.x,y:r.y,w:r.width,h:r.height};
-    }""")
+VC = "connect-carousel-card-voice-rooms"
+
+
+async def boxes(pg):
+    return await pg.evaluate("""()=>[...document.querySelectorAll('[data-testid^="connect-carousel-card-"]')].map(e=>{const r=e.getBoundingClientRect();const g=e.firstElementChild?getComputedStyle(e.firstElementChild):null;return {id:e.dataset.testid,x:r.x,y:r.y,w:r.width,h:r.height,rad:g?g.borderTopLeftRadius:''}})""")
+
+
+async def show_voice(pg):
+    await pg.evaluate(f"()=>document.querySelector('[data-testid=\"{VC}\"]')?.scrollIntoView({{inline:'start',block:'nearest'}})")
+    await pg.wait_for_timeout(400)
 
 
 async def connect_checks(key, pg, w, who, lang):
-    tile = await visible(pg.get_by_test_id("connect-voice-rooms"))
-    check(key, tile is not None, f"Voice rooms tile is on Connect ({who})")
-    cb = await card_box(pg)
-    check(key, cb is not None, f"ad card is on Connect ({who})")
-    if tile and cb:
-        tb = await tile.bounding_box()
-        check(key, abs(tb["y"] - cb["y"]) <= 2, f"tile top lines up with the ad card ({who}, {tb['y']:.0f} vs {cb['y']:.0f})")
-        check(key, abs(tb["height"] - cb["h"]) <= 2, f"tile is the ad card's height ({who}, {tb['height']:.0f} vs {cb['h']:.0f})")
-        check(key, tb["x"] >= cb["x"] + cb["w"] + 4, f"tile is right of the ad card with a gap, no overlap ({who})")
-        check(key, tb["x"] + tb["width"] <= w, f"tile is inside the screen ({who})")
-        check(key, 90 <= tb["width"] <= 180, f"tile is small ({who}, {tb['width']:.0f}px)")
-        txt = (await tile.inner_text()).strip()
-        check(key, ("ভয়েস রুম" if lang == "bn" else "Voice rooms") in txt, f"tile says Voice rooms ({who}): {txt!r}")
+    bs = await boxes(pg)
+    ids = [b["id"] for b in bs]
+    check(key, ids[:1] == [VC], f"Voice rooms is the first card of the carousel ({who}): {ids[:3]}")
+    check(key, len(ids) >= 2, f"ad cards still follow it ({who}, {len(ids)} cards)")
+    check(key, await pg.locator('[data-testid="connect-top-row"]').count() == 0 and await pg.get_by_test_id("connect-voice-rooms").count() == 0, f"no separate side tile any more ({who})")
+    if len(bs) >= 2:
+        v, o = bs[0], bs[1]
+        check(key, abs(v["w"] - o["w"]) <= 1 and abs(v["h"] - o["h"]) <= 1, f"Voice rooms card is the same size as the ad cards ({who}, {v['w']:.0f}x{v['h']:.0f} vs {o['w']:.0f}x{o['h']:.0f})")
+        check(key, abs(v["y"] - o["y"]) <= 1 and v["rad"] == o["rad"], f"same row and same rounded shape ({who}, {v['rad']})")
+    card = pg.get_by_test_id(VC)
+    if await card.count():
+        txt = (await card.inner_text()).strip()
+        check(key, ("ভয়েস রুম" if lang == "bn" else "Voice rooms") in txt and ("খুলুন" if lang == "bn" else "Open") in txt, f"card says Voice rooms with an Open button ({who}): {txt!r}")
         bad = ["start", "new room", "create", "শুরু", "নতুন রুম", "তৈরি"]
-        check(key, not any(x in txt.lower() for x in bad), f"tile has no create / start button text ({who})")
-        inner = await tile.evaluate("(e)=>e.querySelectorAll('[role=button],button,a').length")
-        check(key, inner == 0, f"tile has no buttons inside it ({who})")
-        over = await tile.evaluate("(e)=>[...e.querySelectorAll('*')].filter(c=>{const r=c.getBoundingClientRect(),p=e.getBoundingClientRect();return r.width>0&&(r.right>p.right+1||r.bottom>p.bottom+1)}).length")
-        check(key, over == 0, f"nothing spills out of the tile ({who})")
-        cta = await pg.evaluate("""()=>{const out=[];document.querySelectorAll('[data-testid^="connect-carousel-card-"]').forEach(c=>{const p=c.getBoundingClientRect();if(p.x<-1||p.x>window.innerWidth-5)return;c.querySelectorAll('*').forEach(k=>{if(k.children.length||!(k.innerText||'').trim())return;const r=k.getBoundingClientRect();if(r.width>0&&(r.right>p.right+1||r.x<p.x-1))out.push(k.innerText)})});return out.length}""")
-        check(key, cta == 0, f"ad card content stays inside the narrower ad card ({who})")
-    srch = await visible(pg.get_by_test_id("connect-search"))
-    row = await visible(pg.get_by_test_id("connect-top-row"))
-    if srch and row:
-        rb = await row.bounding_box()
-        sb = await srch.evaluate("(e)=>{let p=e; for(let i=0;i<3&&p.parentElement;i++){p=p.parentElement; const s=getComputedStyle(p); if(s.borderTopWidth!=='0px') break;} const r=p.getBoundingClientRect(); return {y:r.y}}")
-        gap = sb["y"] - (rb["y"] + rb["height"])
-        check(key, -1 <= gap <= 24, f"search sits right under the ad row ({who}, {gap:.0f}px)")
+        check(key, not any(x in txt.lower() for x in bad), f"card has no create / start text ({who})")
     check(key, await width(pg) <= w, f"Connect fits the screen ({who})")
-    return tile
+
+
+async def moves(key, pg):
+    # the carousel moves on its own: after a while the first card is no longer the one in view
+    await show_voice(pg)
+    x0 = await pg.evaluate(f"()=>document.querySelector('[data-testid=\"{VC}\"]').getBoundingClientRect().x")
+    await pg.wait_for_timeout(10500)
+    x1 = await pg.evaluate(f"()=>document.querySelector('[data-testid=\"{VC}\"]').getBoundingClientRect().x")
+    check(key, x1 < x0 - 50, f"carousel moves on its own past the Voice rooms card ({x0:.0f} -> {x1:.0f})")
 
 
 async def main():
@@ -184,9 +184,8 @@ const { PGlite } = require('@electric-sql/pglite');
                 await fpg.wait_for_timeout(1000)
                 await connect_checks(key, fpg, w, "farmer", lang)
                 check(key, await visible(fpg.locator(mic_sel)) is None, "plain farmer has no mic icon")
-                none_txt = "এখন লাইভ নেই" if lang == "bn" else "None live"
-                st = await visible(fpg.get_by_test_id("connect-voice-rooms-status"))
-                check(key, st is not None and (await st.inner_text()).strip() == none_txt, f"tile says {none_txt} with no rooms")
+                if w in (390, 1280):
+                    await moves(key, fpg)
                 await fpg.screenshot(path=f"{SHOTS}/{key}-1-farmer-connect.png")
 
                 hctx, hpg, herrs = await open_app(b, boss, lang, w, scheme)
@@ -212,16 +211,18 @@ const { PGlite } = require('@electric-sql/pglite');
                 await go(fpg, "Main", {"screen": "Community"})
                 await go(fpg, "Main", {"screen": "Connect"})
                 await fpg.wait_for_timeout(1500)
-                live_txt = "১টি লাইভ" if lang == "bn" else "1 live"
-                st = await visible(fpg.get_by_test_id("connect-voice-rooms-status"))
-                check(key, st is not None and (await st.inner_text()).strip() == live_txt, f"tile says {live_txt} with one room live")
-                check(key, await visible(fpg.get_by_test_id("connect-voice-rooms-live-dot")) is not None, "red live dot shows")
+                live_txt = "এখন ১টি লাইভ" if lang == "bn" else "1 live now"
+                await show_voice(fpg)
+                vt = (await fpg.get_by_test_id(VC).inner_text()) if await fpg.get_by_test_id(VC).count() else ""
+                check(key, live_txt in vt, f"card says {live_txt!r} with one room live: {vt!r}")
                 await fpg.screenshot(path=f"{SHOTS}/{key}-2-farmer-connect-live.png")
-                tile = await visible(fpg.get_by_test_id("connect-voice-rooms"))
+                await show_voice(fpg)
+                tile = await visible(fpg.get_by_test_id(VC))
+                check(key, tile is not None, "Voice rooms card is in view to tap")
                 if tile:
                     await tile.click()
                     await fpg.wait_for_timeout(2500)
-                    check(key, await route(fpg) == "VoiceRooms", "tapping the tile opens the Voice rooms list")
+                    check(key, await route(fpg) == "VoiceRooms", "tapping the card opens the Voice rooms list")
                     check(key, await fpg.get_by_text("New room", exact=True).count() == 0 and await fpg.get_by_text("নতুন রুম", exact=True).count() == 0, "Voice rooms list still has no New room button")
                     await fpg.screenshot(path=f"{SHOTS}/{key}-3-voice-rooms-list.png")
                     if room:
