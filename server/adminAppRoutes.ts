@@ -382,7 +382,7 @@ export function registerAdminAppRoutes(app: Express) {
       return res.status(400).json({ error: "Minimum order can't be more than the stock" });
     await db.execute(sql`UPDATE catalog_items SET data = ${JSON.stringify(data)}::jsonb, updated_at = now() WHERE id = ${p.id}`);
     if (b.hidden !== undefined && !!before.hidden !== !!b.hidden && p.owner_id && p.owner_id !== (req as any).uid) {
-      await notify(p.owner_id, "moderation", b.hidden ? "Product hidden by admin" : "Product visible again", `${data.name} was ${b.hidden ? "hidden from the marketplace" : "made visible again"} by the admin.`, { itemId: p.id });
+      await notify(p.owner_id, "moderation", b.hidden ? "Product hidden by admin" : "Product visible again", `${data.name} was ${b.hidden ? "hidden from the marketplace" : "made visible again"} by the admin.`, { itemId: p.id, market: true });
     }
     await audit(req, "UPDATE_PRODUCT", "listings", p.id, b);
     res.json(productOut(await productRow(p.id)));
@@ -393,7 +393,7 @@ export function registerAdminAppRoutes(app: Express) {
     if (!p) return res.status(404).json({ error: "Product not found" });
     await db.execute(sql`DELETE FROM catalog_items WHERE id = ${p.id}`);
     if (p.owner_id && p.owner_id !== (req as any).uid) {
-      await notify(p.owner_id, "moderation", "Product removed by admin", `${(J(p.data) || {}).name || "Your product"} was removed by the admin.`, { itemId: p.id });
+      await notify(p.owner_id, "moderation", "Product removed by admin", `${(J(p.data) || {}).name || "Your product"} was removed by the admin.`, { itemId: p.id, market: true });
     }
     await audit(req, "DELETE_PRODUCT", "listings", p.id, { name: (J(p.data) || {}).name });
     res.json({ success: true });

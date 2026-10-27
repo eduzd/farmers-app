@@ -298,7 +298,7 @@ export default function MarketScreen() {
     setSelectedCategory(categoryId);
   }, []);
 
-  const unreadNotifications = useUnreadCounts((st) => st.notifications);
+  const unreadNotifications = useUnreadCounts((st) => st.notificationsMarket); // only marketplace notifications on this bell
 
   const handleCartPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -320,7 +320,7 @@ export default function MarketScreen() {
               }
               testID="market-bell"
               style={[styles.cartHeaderButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
-              onPress={() => navigation.navigate("Notifications" as any)}
+              onPress={() => navigation.navigate("Notifications" as any, { scope: "market" })}
             >
               <AppIcon name="bell" size={20} color={theme.text} />
               <CountBadge count={unreadNotifications} style={{ top: -2, right: -2 }} testID="market-bell-badge" />
