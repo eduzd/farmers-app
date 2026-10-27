@@ -1,4 +1,4 @@
-// Web keeps this calculator as it was; the phone app uses AratCalculatorScreen.tsx (save / edit / saved list).
+// Web calculator; the phone app uses AratCalculatorScreen.tsx (encrypted phone DB). Same 3 s typing pause and the same slide-up saved list.
 // Both share the 3-second pause after typing (hooks/useRowAutoAdvance).
 import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { View, StyleSheet, Pressable, Modal, ScrollView, Platform, Alert, KeyboardAvoidingView } from 'react-native';
@@ -346,7 +346,7 @@ export function AratCalculatorScreen() {
           <HeaderButton onPress={handleDownloadPDF}>
             <Feather name="download" size={20} color={results ? colors.primary : colors.textTertiary} />
           </HeaderButton>
-          <HeaderButton onPress={() => setDrawerVisible(true)}>
+          <HeaderButton onPress={() => { loadRecords(); setDrawerVisible(true); }} accessibilityLabel={tr("সংরক্ষিত হিসাব")} testID="calc-saved-open">
             <View style={styles.badgeContainer}>
               <Feather name="bookmark" size={20} color={colors.textSecondary} />
               {savedCount > 0 ? (
@@ -638,12 +638,17 @@ export function AratCalculatorScreen() {
         <SettingsModal colors={colors} settings={settings} onSave={saveSettingsHandler} onClose={() => setSettingsVisible(false)} />
       </Modal>
 
+      {/* Saved calculations: the same slide-up panel as the app's other bottom menus: backdrop
+          (tap to close), rounded top, handle, and bottom padding that keeps it clear of the phone's
+          bottom bar. */}
       <Modal visible={drawerVisible} animationType="slide" transparent onRequestClose={() => setDrawerVisible(false)}>
         <View style={styles.drawerOverlay}>
-          <View style={[styles.drawerContent, { backgroundColor: colors.card }]}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setDrawerVisible(false)} accessibilityLabel={tr("বন্ধ")} testID="calc-saved-backdrop" />
+          <View testID="calc-saved-sheet" style={[styles.drawerContent, { backgroundColor: colors.card, paddingBottom: insets.bottom + Spacing.md }]}>
+            <View style={[styles.drawerHandle, { backgroundColor: colors.border }]} />
             <View style={styles.drawerHeader}>
               <Text style={[styles.drawerTitle, { color: colors.text }]}>{tr("সংরক্ষিত হিসাব")}</Text>
-              <Pressable onPress={() => setDrawerVisible(false)} hitSlop={12}>
+              <Pressable onPress={() => setDrawerVisible(false)} hitSlop={12} accessibilityLabel={tr("বন্ধ")}>
                 <Feather name="x" size={24} color={colors.textSecondary} />
               </Pressable>
             </View>
@@ -978,9 +983,11 @@ const styles = StyleSheet.create({
   drawerContent: {
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
     maxHeight: '80%',
   },
+  drawerHandle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, marginBottom: Spacing.sm },
   drawerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
