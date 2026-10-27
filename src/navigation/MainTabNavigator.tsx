@@ -7,7 +7,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FontFamily } from "@/constants/theme";
 
 import CommunityScreen from "@/screens/CommunityScreen";
-import MarketScreen from "@/screens/MarketScreen";
+import MarketScreenBase from "@/screens/MarketScreen";
+import { withMayaScope } from "@/contexts/ThemeScope";
+import { MayaColors, MayaFontFamily } from "@/constants/mayaTheme";
+
+// The Market tab uses the Maya-style marketplace theme; the tab bar and other tabs do not.
+const MarketScreen = withMayaScope(MarketScreenBase);
 import ConnectScreen from "@/screens/ConnectScreen";
 import ChatListScreen from "@/screens/ChatListScreen";
 import ProfileScreen from "@/screens/ProfileScreen";
@@ -125,6 +130,14 @@ export default function MainTabNavigator() {
         options={{
           title: t("nav.market"),
           headerTitle: t("market.marketplace"),
+          headerStyle: { backgroundColor: MayaColors[isDark ? "dark" : "light"].backgroundRoot },
+          headerTintColor: MayaColors[isDark ? "dark" : "light"].text,
+          headerTitleStyle: {
+            fontFamily: MayaFontFamily.display,
+            fontSize: 24,
+            letterSpacing: 0.2,
+            color: MayaColors[isDark ? "dark" : "light"].text,
+          },
           tabBarIcon: renderIcon("shopping-bag"),
         }}
       />

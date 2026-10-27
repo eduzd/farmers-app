@@ -20,11 +20,11 @@ import RfqScreen from "@/screens/RfqScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 import ApplicationDetailScreen from "@/screens/ApplicationDetailScreen";
 import ApplicationsListScreen from "@/screens/ApplicationsListScreen";
-import ProductDetailScreen from "@/screens/ProductDetailScreen";
-import CartScreen from "@/screens/CartScreen";
-import CheckoutScreen from "@/screens/CheckoutScreen";
-import OrdersScreen from "@/screens/OrdersScreen";
-import OrderDetailScreen from "@/screens/OrderDetailScreen";
+import ProductDetailScreenBase from "@/screens/ProductDetailScreen";
+import CartScreenBase from "@/screens/CartScreen";
+import CheckoutScreenBase from "@/screens/CheckoutScreen";
+import OrdersScreenBase from "@/screens/OrdersScreen";
+import OrderDetailScreenBase from "@/screens/OrderDetailScreen";
 import ToolsScreen from "@/screens/ToolsScreen";
 import DiseaseDetectorScreen from "@/screens/DiseaseDetectorScreen";
 import AIAssistantScreen from "@/screens/AIAssistantScreen";
@@ -56,15 +56,15 @@ import {
 } from "@/screens/calculate";
 import MainTabNavigator, { MainTabParamList } from "@/navigation/MainTabNavigator";
 import CompanyTabNavigator from "@/navigation/CompanyTabNavigator";
-import StoreViewScreen from "@/screens/StoreViewScreen";
-import ShopPageScreen from "@/screens/ShopPageScreen";
-import ShopsHomeScreen from "@/screens/ShopsHomeScreen";
+import StoreViewScreenBase from "@/screens/StoreViewScreen";
+import ShopPageScreenBase from "@/screens/ShopPageScreen";
+import ShopsHomeScreenBase from "@/screens/ShopsHomeScreen";
 import SellerOnboardingScreen from "@/screens/SellerOnboardingScreen";
 import AddressManagementScreen from "@/screens/AddressManagementScreen";
 import PollsScreen from "@/screens/PollsScreen";
 import GroupsScreen from "@/screens/GroupsScreen";
 import GroupDetailScreen from "@/screens/GroupDetailScreen";
-import WishlistScreen from "@/screens/WishlistScreen";
+import WishlistScreenBase from "@/screens/WishlistScreen";
 import FlashSaleScreen from "@/screens/FlashSaleScreen";
 import BadgesScreen from "@/screens/BadgesScreen";
 import ExpertQAScreen from "@/screens/ExpertQAScreen";
@@ -72,7 +72,7 @@ import WalletScreen from "@/screens/WalletScreen";
 import MarketPriceScreen from "@/screens/MarketPriceScreen";
 import ProductCompareScreen from "@/screens/ProductCompareScreen";
 import AuctionScreen from "@/screens/AuctionScreen";
-import BulkOrderScreen from "@/screens/BulkOrderScreen";
+import BulkOrderScreenBase from "@/screens/BulkOrderScreen";
 import DailyTipsScreen from "@/screens/DailyTipsScreen";
 import NearbyFarmersScreen from "@/screens/NearbyFarmersScreen";
 import DeliveryTrackingScreen from "@/screens/DeliveryTrackingScreen";
@@ -150,8 +150,25 @@ import LivestockTrackerScreen from "@/screens/LivestockTrackerScreen";
 import ProductTraceabilityScreen from "@/screens/ProductTraceabilityScreen";
 import FishEncyclopediaScreen, { Fish } from "@/screens/FishEncyclopediaScreen";
 import FishDetailScreen from "@/screens/FishDetailScreen";
-import ProductLinkScreen from "@/screens/ProductLinkScreen";
-import GuestOrderScreen from "@/screens/GuestOrderScreen";
+import ProductLinkScreenBase from "@/screens/ProductLinkScreen";
+import GuestOrderScreenBase from "@/screens/GuestOrderScreen";
+import { withMayaScope } from "@/contexts/ThemeScope";
+import { MayaColors, MayaFontFamily } from "@/constants/mayaTheme";
+
+// Marketplace screens use the Maya-style theme (colours, DM Sans, buttons, thin icons).
+// Wrapped once here at module level so the screens never remount.
+const ProductDetailScreen = withMayaScope(ProductDetailScreenBase);
+const CartScreen = withMayaScope(CartScreenBase);
+const CheckoutScreen = withMayaScope(CheckoutScreenBase);
+const OrdersScreen = withMayaScope(OrdersScreenBase);
+const OrderDetailScreen = withMayaScope(OrderDetailScreenBase);
+const StoreViewScreen = withMayaScope(StoreViewScreenBase);
+const ShopPageScreen = withMayaScope(ShopPageScreenBase);
+const ShopsHomeScreen = withMayaScope(ShopsHomeScreenBase);
+const WishlistScreen = withMayaScope(WishlistScreenBase);
+const BulkOrderScreen = withMayaScope(BulkOrderScreenBase);
+const ProductLinkScreen = withMayaScope(ProductLinkScreenBase);
+const GuestOrderScreen = withMayaScope(GuestOrderScreenBase);
 import { startLinkCapture, consumeLinks } from "@/lib/deepLinks";
 import { useScreenOptions } from "@/hooks/useScreenOptions";
 import { Product } from "@/screens/MarketScreen";
@@ -341,7 +358,15 @@ export default function RootStackNavigator() {
   const screenOptions = useScreenOptions();
   const { isAuthenticated, isLoading, onboardingComplete } = useAuthStore();
   const variant = getAppVariant();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
+  // Native header for the marketplace screens that show one (cart, checkout, orders...).
+  const maya = MayaColors[isDark ? "dark" : "light"];
+  const mayaHeader = {
+    headerStyle: { backgroundColor: maya.backgroundRoot },
+    headerTintColor: maya.text,
+    headerTitleStyle: { fontFamily: MayaFontFamily.bold, color: maya.text },
+    headerShadowVisible: false,
+  } as const;
 
   // Shared shop / product / order links (/shop/<slug>, /product/<id>, /order/<id>) open without an account.
   React.useEffect(() => {
@@ -404,12 +429,12 @@ export default function RootStackNavigator() {
           {variant === "main" ? (
             // Guest shopping: browse shops, open shared links and buy without an account.
             <>
-              <Stack.Screen name="ShopPage" component={ShopPageScreen} options={{ headerShown: false }} />
-              <Stack.Screen name="ProductLink" component={ProductLinkScreen} options={{ headerShown: false }} />
-              <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ headerShown: false }} />
-              <Stack.Screen name="Cart" component={CartScreen} options={{ headerTitle: tr("My Cart"), headerBackTitle: "Back" }} />
-              <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ headerTitle: tr("Checkout"), headerBackTitle: "Cart", headerTransparent: false }} />
-              <Stack.Screen name="GuestOrder" component={GuestOrderScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="ShopPage" component={ShopPageScreen} options={{ ...mayaHeader, headerShown: false }} />
+              <Stack.Screen name="ProductLink" component={ProductLinkScreen} options={{ ...mayaHeader, headerShown: false }} />
+              <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ ...mayaHeader, headerShown: false }} />
+              <Stack.Screen name="Cart" component={CartScreen} options={{ ...mayaHeader, headerTitle: tr("My Cart"), headerBackTitle: "Back" }} />
+              <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ ...mayaHeader, headerTitle: tr("Checkout"), headerBackTitle: "Cart", headerTransparent: false }} />
+              <Stack.Screen name="GuestOrder" component={GuestOrderScreen} options={{ ...mayaHeader, headerShown: false }} />
             </>
           ) : null}
         </>
@@ -483,14 +508,14 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="ProductDetail"
             component={ProductDetailScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerShown: false,
             }}
           />
           <Stack.Screen
             name="Cart"
             component={CartScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerTitle: tr("My Cart"),
               headerBackTitle: "Back",
             }}
@@ -498,7 +523,7 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Checkout"
             component={CheckoutScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerTitle: tr("Checkout"),
               headerBackTitle: "Cart",
               headerTransparent: false,
@@ -507,7 +532,7 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Orders"
             component={OrdersScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerTitle: tr("My Orders"),
               headerBackTitle: "Back",
             }}
@@ -516,7 +541,7 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="OrderDetail"
             component={OrderDetailScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerTitle: tr("Order Details"),
               headerBackTitle: "Orders",
             }}
@@ -794,23 +819,23 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="StoreView"
             component={StoreViewScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerShown: false,
             }}
           />
           <Stack.Screen
             name="ShopPage"
             component={ShopPageScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerShown: false,
             }}
           />
-          <Stack.Screen name="ProductLink" component={ProductLinkScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="GuestOrder" component={GuestOrderScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="ProductLink" component={ProductLinkScreen} options={{ ...mayaHeader, headerShown: false }} />
+          <Stack.Screen name="GuestOrder" component={GuestOrderScreen} options={{ ...mayaHeader, headerShown: false }} />
           <Stack.Screen
             name="ShopsHome"
             component={ShopsHomeScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerTitle: tr("দোকান সমূহ"),
               headerBackTitle: "Back",
             }}
@@ -857,7 +882,7 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="Wishlist"
             component={WishlistScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerTitle: tr("উইশলিস্ট"),
               headerBackTitle: "Back",
             }}
@@ -921,7 +946,7 @@ export default function RootStackNavigator() {
           <Stack.Screen
             name="BulkOrder"
             component={BulkOrderScreen}
-            options={{
+            options={{ ...mayaHeader,
               headerTitle: tr("বাল্ক অর্ডার"),
               headerBackTitle: "Back",
             }}

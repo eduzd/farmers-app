@@ -2,6 +2,8 @@ import { useColorScheme as useDeviceColorScheme } from "react-native";
 import { Colors, CommunityAccents, ThemeColors } from "@/constants/theme";
 import { useThemeStore } from "@/lib/themeStore";
 import { useCommunityStore } from "@/lib/communityStore";
+import { useThemeScope } from "@/contexts/ThemeScope";
+import { MayaColors } from "@/constants/mayaTheme";
 
 /**
  * Returns the active colour set. Communities only change the accent
@@ -12,6 +14,7 @@ export function useTheme() {
   const deviceScheme = useDeviceColorScheme();
   const { preference } = useThemeStore();
   const { activeCommunity } = useCommunityStore();
+  const scope = useThemeScope();
 
   const colorScheme: "light" | "dark" =
     preference === "system" ? (deviceScheme === "dark" ? "dark" : "light") : preference;
@@ -19,8 +22,10 @@ export function useTheme() {
   const baseTheme = Colors[colorScheme];
 
   const accent = activeCommunity ? CommunityAccents[activeCommunity.type] : undefined;
-  const theme: ThemeColors =
-    accent && activeCommunity?.type !== "agriculture"
+  // The Maya-style marketplace has one fixed palette, whatever the community.
+  const theme: ThemeColors = scope === "maya"
+    ? MayaColors[colorScheme]
+    : accent && activeCommunity?.type !== "agriculture"
       ? {
           ...baseTheme,
           primary: isDark ? accent.dark : accent.light,
@@ -37,6 +42,7 @@ export function useTheme() {
     theme,
     isDark,
     colorScheme,
+    scope,
     communityTheme: activeCommunity?.theme?.[colorScheme],
   };
 }

@@ -1,6 +1,65 @@
 import React from "react";
 import { Feather } from "@expo/vector-icons";
+import { StyleSheet } from "react-native";
+import Svg, { Circle, Ellipse, Line, Path, Polygon, Polyline, Rect } from "react-native-svg";
 import { ChatIcon } from "./ChatIcon";
+import { FEATHER_PATHS } from "./featherPaths";
+import { useThemeScope } from "@/contexts/ThemeScope";
+import { MAYA_ICON_STROKE } from "@/constants/mayaTheme";
+
+const SVG_TAGS: Record<string, React.ComponentType<any>> = {
+  path: Path,
+  circle: Circle,
+  line: Line,
+  polyline: Polyline,
+  polygon: Polygon,
+  rect: Rect,
+  ellipse: Ellipse,
+};
+
+const camel = (k: string) => k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+
+/** Feather geometry drawn with Maya's thin 1.5px rounded outline stroke. */
+export function ThinIcon({
+  name,
+  size = 20,
+  color = "#202936",
+  style,
+  testID,
+  strokeWidth = MAYA_ICON_STROKE,
+}: {
+  name: string;
+  size?: number;
+  color?: string;
+  style?: any;
+  testID?: string;
+  strokeWidth?: number;
+}) {
+  const els = FEATHER_PATHS[name];
+  if (!els) return null;
+  return (
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={StyleSheet.flatten(style)}
+      testID={testID}
+    >
+      {els.map(([tag, attrs], i) => {
+        const El = SVG_TAGS[tag];
+        if (!El) return null;
+        const props: Record<string, string> = {};
+        for (const k of Object.keys(attrs)) props[camel(k)] = attrs[k];
+        return <El key={i} {...props} />;
+      })}
+    </Svg>
+  );
+}
 
 /** Feather icon names that mean chat / message / comment. They all draw the app's own ChatIcon. */
 export const CHAT_ICON_NAMES = new Set<string>(["message-circle", "message-square"]);
@@ -17,8 +76,13 @@ type Props = React.ComponentProps<typeof Feather>;
  */
 export function AppIcon(props: Props) {
   const { name, size = 20, color, style, testID } = props as any;
+  const scope = useThemeScope();
   if (isChatIconName(name)) {
     return <ChatIcon size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} />;
+  }
+  // Maya marketplace: thin outline icons instead of the Feather font's 2px stroke.
+  if (scope === "maya" && typeof name === "string" && FEATHER_PATHS[name]) {
+    return <ThinIcon name={name} size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} />;
   }
   return <Feather {...props} />;
 }

@@ -60,6 +60,13 @@ export default function App() {
     HindSiliguri_500Medium,
     HindSiliguri_600SemiBold,
     HindSiliguri_700Bold,
+    // Maya-style marketplace faces (SIL Open Font License, bundled in assets/fonts/maya).
+    DMSans_400Regular: require("../assets/fonts/maya/DMSans_400Regular.ttf"),
+    DMSans_500Medium: require("../assets/fonts/maya/DMSans_500Medium.ttf"),
+    DMSans_600SemiBold: require("../assets/fonts/maya/DMSans_600SemiBold.ttf"),
+    DMSans_700Bold: require("../assets/fonts/maya/DMSans_700Bold.ttf"),
+    DMSans_800ExtraBold: require("../assets/fonts/maya/DMSans_800ExtraBold.ttf"),
+    Anton_400Regular: require("../assets/fonts/maya/Anton_400Regular.ttf"),
   });
   const { theme, isDark } = useTheme();
   const navTheme = {

@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, View, ViewStyle, StyleProp } from "react-native"
 
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, Shadows, Spacing } from "@/constants/theme";
+import { useThemeScope } from "@/contexts/ThemeScope";
+import { MayaRadius } from "@/constants/mayaTheme";
 
 export interface CardProps {
   children: React.ReactNode;
@@ -16,11 +18,14 @@ export interface CardProps {
 /** Surface for grouped content: hairline border, soft shadow, 18pt radius. */
 export function Card({ children, onPress, style, padded = true, elevated = false, testID }: CardProps) {
   const { theme } = useTheme();
+  const maya = useThemeScope() === "maya";
   const base = [
     styles.card,
     { backgroundColor: theme.card, borderColor: theme.cardBorder },
     padded && styles.padded,
-    elevated ? Shadows.medium : Shadows.small,
+    // Maya cards are flat: a 1px hairline and 12px corners, a shadow only when lifted.
+    maya ? { borderWidth: 1, borderRadius: MayaRadius.lg } : null,
+    maya ? (elevated ? Shadows.small : null) : elevated ? Shadows.medium : Shadows.small,
   ];
 
   if (!onPress) {

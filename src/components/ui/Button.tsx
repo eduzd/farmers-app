@@ -8,6 +8,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, FontFamily, Spacing } from "@/constants/theme";
 
 import { AppIcon } from "@/components/icons/AppIcon";
+import { useThemeScope } from "@/contexts/ThemeScope";
+import { MayaFontFamily, MayaRadius } from "@/constants/mayaTheme";
 export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -46,15 +48,25 @@ export function Button({
   accessibilityLabel,
 }: ButtonProps) {
   const { theme } = useTheme();
+  const maya = useThemeScope() === "maya";
   const isDisabled = disabled || loading;
 
-  const palette: Record<ButtonVariant, { bg: string; fg: string; border?: string }> = {
-    primary: { bg: theme.primary, fg: "#FFFFFF" },
-    secondary: { bg: theme.primarySoft, fg: theme.primary },
-    outline: { bg: "transparent", fg: theme.text, border: theme.inputBorder },
-    ghost: { bg: "transparent", fg: theme.primary },
-    danger: { bg: theme.error, fg: "#FFFFFF" },
-  };
+  const palette: Record<ButtonVariant, { bg: string; fg: string; border?: string }> = maya
+    ? {
+        // Maya buttons: solid navy primary, white with a dark 1px outline as secondary.
+        primary: { bg: theme.primary, fg: theme.buttonText, border: theme.primary },
+        secondary: { bg: theme.backgroundDefault, fg: theme.text, border: theme.text },
+        outline: { bg: theme.backgroundDefault, fg: theme.text, border: theme.border },
+        ghost: { bg: "transparent", fg: theme.link },
+        danger: { bg: theme.error, fg: "#FFFFFF", border: theme.error },
+      }
+    : {
+        primary: { bg: theme.primary, fg: "#FFFFFF" },
+        secondary: { bg: theme.primarySoft, fg: theme.primary },
+        outline: { bg: "transparent", fg: theme.text, border: theme.inputBorder },
+        ghost: { bg: "transparent", fg: theme.primary },
+        danger: { bg: theme.error, fg: "#FFFFFF" },
+      };
   const c = palette[variant];
   const label = title ?? (typeof children === "string" ? children : undefined);
 
@@ -76,7 +88,8 @@ export function Button({
           paddingHorizontal: size === "sm" ? Spacing.md : Spacing.xl,
           backgroundColor: c.bg,
           borderColor: c.border ?? "transparent",
-          borderWidth: c.border ? 1.5 : 0,
+          borderWidth: c.border ? (maya ? 1 : 1.5) : 0,
+          ...(maya ? { borderRadius: size === "sm" ? MayaRadius.sm : MayaRadius.md } : null),
           opacity: isDisabled ? 0.5 : 1,
           alignSelf: fullWidth ? "stretch" : undefined,
         },
@@ -90,7 +103,7 @@ export function Button({
         <View style={styles.row}>
           {icon ? <AppIcon name={icon} size={FONT[size] + 3} color={c.fg} /> : null}
           {label ? (
-            <ThemedText style={{ color: c.fg, fontSize: FONT[size], fontFamily: FontFamily.semibold, lineHeight: FONT[size] + 6 }}>
+            <ThemedText style={{ color: c.fg, fontSize: FONT[size], fontFamily: maya ? MayaFontFamily.medium : FontFamily.semibold, lineHeight: FONT[size] + 6 }}>
               {label}
             </ThemedText>
           ) : (

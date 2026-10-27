@@ -3,6 +3,8 @@ import { Text, StyleSheet, type TextProps, type TextStyle } from "react-native";
 
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, BanglaFontFamily, FontFamily } from "@/constants/theme";
+import { useThemeScope } from "@/contexts/ThemeScope";
+import { MAYA_FONT_MAP, MayaBanglaFontFamily, MayaFontFamily } from "@/constants/mayaTheme";
 
 export type TextVariant =
   | "display"
@@ -58,6 +60,7 @@ export function ThemedText({
   ...rest
 }: ThemedTextProps) {
   const { theme, isDark } = useTheme();
+  const scope = useThemeScope();
 
   let color = theme.text;
   if (type === "link") color = theme.link;
@@ -72,14 +75,35 @@ export function ThemedText({
     family = WEIGHT_TO_FAMILY[String(flat.fontWeight)] ?? family;
   }
   let lineHeight = flat.lineHeight;
+  let letterSpacing = flat.letterSpacing;
+  if (scope === "maya") {
+    // Maya type: big headings in the heavy condensed display face, everything else DM Sans.
+    const baseFamily = (Typography[type] ?? Typography.body).fontFamily;
+    const isHeading = (type === "display" || type === "h1" || type === "h2") && flat.fontFamily === baseFamily;
+    if (isHeading) {
+      family = MayaFontFamily.display;
+      letterSpacing = 0.2;
+    } else if (family) {
+      family = MAYA_FONT_MAP[family] ?? family;
+    }
+  }
   if (family && containsBangla(children)) {
-    family = BanglaFontFamily[family] ?? family;
+    family = MayaBanglaFontFamily[family] ?? BanglaFontFamily[family] ?? family;
     // Bengali glyphs need a little more vertical room than Latin.
     if (lineHeight) lineHeight = Math.round(lineHeight * 1.1);
   }
 
   return (
-    <Text style={[{ color }, flat, family ? { fontFamily: family } : null, lineHeight ? { lineHeight } : null]} {...rest}>
+    <Text
+      style={[
+        { color },
+        flat,
+        family ? { fontFamily: family } : null,
+        lineHeight ? { lineHeight } : null,
+        letterSpacing !== flat.letterSpacing ? { letterSpacing } : null,
+      ]}
+      {...rest}
+    >
       {children}
     </Text>
   );
