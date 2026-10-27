@@ -374,12 +374,6 @@ export function AratCalculatorScreen() {
   };
 
   // Set up header buttons
-  /** The saved icon at the top: opens the saved calculations list, fresh from the phone. */
-  const openSavedList = () => {
-    loadRecords();
-    setDrawerVisible(true);
-  };
-
   useLayoutEffect(() => {
     const savedCount = savedRecords.length;
     navigation.setOptions({
