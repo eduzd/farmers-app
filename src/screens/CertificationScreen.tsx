@@ -300,7 +300,7 @@ export default function CertificationScreen() {
             <ThemedText
               style={[
                 styles.tabText,
-                { color: selectedTab === tab ? theme.white : theme.text },
+                { color: selectedTab === tab ? theme.buttonText : theme.text },
               ]}
             >
               {tab === "all" ? "সব" : tab === "completed" ? "অর্জিত" : "চলমান"}

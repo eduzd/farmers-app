@@ -4,7 +4,7 @@ import { Text, StyleSheet, type TextProps, type TextStyle } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
 import { Typography, BanglaFontFamily, FontFamily } from "@/constants/theme";
 import { useThemeScope } from "@/contexts/ThemeScope";
-import { MAYA_FONT_MAP, MayaBanglaFontFamily, MayaFontFamily } from "@/constants/mayaTheme";
+import { MAYA_FONT_MAP, MayaBanglaFontFamily, MayaFontFamily, liftForDark } from "@/constants/mayaTheme";
 
 export type TextVariant =
   | "display"
@@ -93,6 +93,9 @@ export function ThemedText({
     if (lineHeight) lineHeight = Math.round(lineHeight * 1.1);
   }
 
+  // Dark mode: deep red / violet / amber text made for white cards gets its light tone.
+  const lifted = liftForDark(flat.color, isDark);
+
   return (
     <Text
       style={[
@@ -101,6 +104,7 @@ export function ThemedText({
         family ? { fontFamily: family } : null,
         lineHeight ? { lineHeight } : null,
         letterSpacing !== flat.letterSpacing ? { letterSpacing } : null,
+        lifted ? { color: lifted } : null,
       ]}
       {...rest}
     >

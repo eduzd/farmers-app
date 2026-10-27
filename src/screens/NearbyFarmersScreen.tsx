@@ -132,7 +132,7 @@ export default function NearbyFarmersScreen() {
             style={[styles.callButton, { backgroundColor: theme.primary }]}
             onPress={() => handleCall(item.phone)}
           >
-            <Feather name="phone" size={16} color={theme.white} />
+            <Feather name="phone" size={16} color={theme.buttonText} />
             <ThemedText style={styles.callButtonText}>কল করুন</ThemedText>
           </Pressable>
 
@@ -219,7 +219,7 @@ export default function NearbyFarmersScreen() {
           style={[styles.callButton, { backgroundColor: theme.primary }]}
           onPress={() => handleCall(item.phone)}
         >
-          <Feather name="phone" size={16} color={theme.white} />
+          <Feather name="phone" size={16} color={theme.buttonText} />
           <ThemedText style={styles.callButtonText}>কল করুন</ThemedText>
         </Pressable>
       </View>
@@ -259,12 +259,12 @@ export default function NearbyFarmersScreen() {
           <Feather
             name="users"
             size={18}
-            color={activeTab === "farmers" ? theme.white : theme.textSecondary}
+            color={activeTab === "farmers" ? theme.buttonText : theme.textSecondary}
           />
           <ThemedText
             style={[
               styles.tabText,
-              { color: activeTab === "farmers" ? theme.white : theme.textSecondary },
+              { color: activeTab === "farmers" ? theme.buttonText : theme.textSecondary },
             ]}
           >
             কৃষক
@@ -284,12 +284,12 @@ export default function NearbyFarmersScreen() {
           <Feather
             name="shopping-bag"
             size={18}
-            color={activeTab === "shops" ? theme.white : theme.textSecondary}
+            color={activeTab === "shops" ? theme.buttonText : theme.textSecondary}
           />
           <ThemedText
             style={[
               styles.tabText,
-              { color: activeTab === "shops" ? theme.white : theme.textSecondary },
+              { color: activeTab === "shops" ? theme.buttonText : theme.textSecondary },
             ]}
           >
             দোকান

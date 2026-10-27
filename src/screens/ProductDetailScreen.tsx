@@ -1,5 +1,5 @@
 import { useMarketCategories, categoryLabel } from "@/lib/marketCategories";
-import { MayaRadius } from "@/constants/mayaTheme";
+import { MayaRadius, darkTone } from "@/constants/mayaTheme";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { View, StyleSheet, ScrollView, Pressable, Dimensions, Animated, FlatList, Platform, Share, Linking, Alert } from "react-native";
 import { TextInput } from "@/components/MayaText";
@@ -319,7 +319,7 @@ export default function ProductDetailScreen() {
     { icon: "sun", label: "অর্গানিক", color: "#00BB77" },
     { icon: "shield", label: "গুণমান নিশ্চিত", color: "#37B1FF" },
     { icon: "truck", label: "দ্রুত ডেলিভারি", color: "#B25E09" },
-  ];
+  ].map((f) => ({ ...f, color: darkTone(f.color, isDark) }));
 
   const specs = [
     { label: "স্টক", value: stock === null ? tr("In stock") : outOfStock ? tr("Out of stock") : amountText(rule, stock, bn), icon: "package" },

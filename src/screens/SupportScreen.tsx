@@ -50,7 +50,7 @@ export default function SupportScreen() {
       >
         <View style={styles.successContent}>
           <View style={[styles.successIcon, { backgroundColor: theme.primary }]}>
-            <Feather name="check" size={32} color={theme.white} />
+            <Feather name="check" size={32} color={theme.buttonText} />
           </View>
           <ThemedText type="h3" style={styles.successTitle}>
             {tr("Message Sent")}
@@ -168,9 +168,9 @@ export default function SupportScreen() {
           testID="button-submit"
         >
           {isLoading ? (
-            <ActivityIndicator color={theme.white} />
+            <ActivityIndicator color={theme.buttonText} />
           ) : (
-            <ThemedText style={[styles.submitButtonText, { color: theme.white }]}>
+            <ThemedText style={[styles.submitButtonText, { color: theme.buttonText }]}>
               {tr("Send Message")}
             </ThemedText>
           )}

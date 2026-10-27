@@ -5,7 +5,8 @@ import Svg, { Circle, Ellipse, Line, Path, Polygon, Polyline, Rect } from "react
 import { ChatIcon } from "./ChatIcon";
 import { FEATHER_PATHS } from "./featherPaths";
 import { useThemeScope } from "@/contexts/ThemeScope";
-import { MAYA_ICON_STROKE } from "@/constants/mayaTheme";
+import { MAYA_ICON_STROKE, liftForDark } from "@/constants/mayaTheme";
+import { useTheme } from "@/hooks/useTheme";
 
 const SVG_TAGS: Record<string, React.ComponentType<any>> = {
   path: Path,
@@ -77,8 +78,11 @@ type Props = React.ComponentProps<typeof Feather> & { fill?: string };
  * ChatIcon (the Chats tab icon), every other name renders Feather as before.
  */
 export function AppIcon(props: Props) {
-  const { name, size = 20, color, style, testID, fill } = props as any;
+  const { name, size = 20, style, testID, fill } = props as any;
   const scope = useThemeScope();
+  const { isDark } = useTheme();
+  // Dark mode: deep red / violet / amber icons made for white cards get their light tone.
+  const color = liftForDark((props as any).color, isDark) ?? (props as any).color;
   if (isChatIconName(name)) {
     return <ChatIcon size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} />;
   }
@@ -86,7 +90,7 @@ export function AppIcon(props: Props) {
   if (scope === "maya" && typeof name === "string" && FEATHER_PATHS[name]) {
     return <ThinIcon name={name} size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} fill={fill} />;
   }
-  return <Feather {...props} />;
+  return <Feather {...props} color={color} />;
 }
 
 export default AppIcon;

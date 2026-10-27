@@ -87,7 +87,7 @@ function AnimatedTrackingStep({
               <AppIcon
                 name={step.icon as any}
                 size={16}
-                color={isCompleted ? theme.white : theme.textSecondary}
+                color={isCompleted ? theme.buttonText : theme.textSecondary}
               />
             </View>
           </StepPop>
@@ -463,8 +463,8 @@ export default function OrderDetailScreen() {
               style={[styles.cancelButton, { borderColor: theme.primary, backgroundColor: theme.primary, marginBottom: Spacing.sm }]}
               onPress={() => changeStatus(st)}
             >
-              <AppIcon name="check" size={18} color={theme.white} />
-              <ThemedText style={[styles.cancelButtonText, { color: theme.white }]}>{sellerLabel[st]}</ThemedText>
+              <AppIcon name="check" size={18} color={theme.buttonText} />
+              <ThemedText style={[styles.cancelButtonText, { color: theme.buttonText }]}>{sellerLabel[st]}</ThemedText>
             </Pressable>
           ))
         : null}

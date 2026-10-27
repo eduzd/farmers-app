@@ -102,7 +102,7 @@ const formatTimeAgo = (date: Date) => {
 export default function NotificationsScreen() {
   const tr = useTr();
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const navigation = useNavigation<any>();
   const [localNotifications, setLocalNotifications] = useState<Notification[]>([]);
   const loggedIn = isLoggedIn();
@@ -308,10 +308,10 @@ export default function NotificationsScreen() {
       {permissionStatus !== "granted" ? (
         <Animated.View entering={FadeInUp.delay(50)} style={styles.enableBanner}>
           <LinearGradient
-            colors={["#2E96EF", "#2E96EF"]}
+            colors={isDark ? ["#14304F", "#132A40"] : ["#2E96EF", "#2E96EF"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
-            style={styles.enableGradient}
+            style={[styles.enableGradient, isDark && { borderWidth: 1, borderColor: "#24476B" }]}
           >
             <View style={styles.enableContent}>
               <View style={styles.enableIconContainer}>
@@ -324,9 +324,9 @@ export default function NotificationsScreen() {
                 </ThemedText>
               </View>
             </View>
-            <Pressable style={styles.enableButton} onPress={handleEnableNotifications}>
-              <ThemedText style={styles.enableButtonText}>{tr("সক্রিয় করুন")}</ThemedText>
-              <Feather name="chevron-right" size={16} color="#2E96EF" />
+            <Pressable style={[styles.enableButton, isDark && { backgroundColor: theme.primary }]} onPress={handleEnableNotifications}>
+              <ThemedText style={[styles.enableButtonText, isDark && { color: "#FFFFFF" }]}>{tr("সক্রিয় করুন")}</ThemedText>
+              <Feather name="chevron-right" size={16} color={isDark ? "#FFFFFF" : "#2E96EF"} />
             </Pressable>
           </LinearGradient>
         </Animated.View>

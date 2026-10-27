@@ -83,7 +83,7 @@ const MAX_INPUT_HEIGHT = 120;
 export default function ChatScreen() {
   const tr = useTr();
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const route = useRoute<ChatRouteProp>();
   const navigation = useNavigation();
   const flatListRef = useRef<FlatList>(null);
@@ -851,14 +851,14 @@ export default function ChatScreen() {
                     localUri={item.localUri}
                     durationMs={item.durationMs ?? (item.duration ? item.duration * 1000 : null)}
                     isMe={item.isMe}
-                    tint={item.isMe ? theme.white : theme.primary}
+                    tint={item.isMe ? theme.buttonText : theme.primary}
                     trackColor={item.isMe ? "rgba(255,255,255,0.35)" : theme.primary + "30"}
-                    textColor={item.isMe ? theme.white : theme.textSecondary}
+                    textColor={item.isMe ? theme.buttonText : theme.textSecondary}
                     onLongPress={() => handleLongPress(item)}
                   />
                 </View>
                 {item.reactions && item.reactions.length > 0 ? (
-                  <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
+                  <View style={[styles.reactionsContainer, isDark && { backgroundColor: theme.backgroundTertiary }, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                     {item.reactions.map((r, i) => (
                       <ThemedText key={i} allowFontScaling={false} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                     ))}
@@ -903,7 +903,7 @@ export default function ChatScreen() {
                   onLongPress={() => handleLongPress(item)}
                 />
                 {item.reactions && item.reactions.length > 0 ? (
-                  <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
+                  <View style={[styles.reactionsContainer, isDark && { backgroundColor: theme.backgroundTertiary }, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                     {item.reactions.map((r, i) => (
                       <ThemedText key={i} allowFontScaling={false} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                     ))}
@@ -957,12 +957,12 @@ export default function ChatScreen() {
                     : [styles.theirBubble, { backgroundColor: theme.surface }],
                 ]}
               >
-                <ThemedText style={[styles.messageText, { color: item.isMe ? theme.white : theme.text }]}>
+                <ThemedText style={[styles.messageText, { color: item.isMe ? theme.buttonText : theme.text }]}>
                   {item.text}
                 </ThemedText>
               </View>
               {item.reactions && item.reactions.length > 0 ? (
-                <View style={[styles.reactionsContainer, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
+                <View style={[styles.reactionsContainer, isDark && { backgroundColor: theme.backgroundTertiary }, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
                   {item.reactions.map((r, i) => (
                     <ThemedText key={i} allowFontScaling={false} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                   ))}
@@ -1132,7 +1132,7 @@ export default function ChatScreen() {
               accessibilityRole="button"
               accessibilityLabel="Send voice message"
             >
-              <MaterialCommunityIcons name="send" size={20} color={theme.white} />
+              <MaterialCommunityIcons name="send" size={20} color={theme.buttonText} />
             </Pressable>
           </View>
         ) : (
@@ -1170,7 +1170,7 @@ export default function ChatScreen() {
                 accessibilityLabel="Send message"
                 testID="dm-send"
               >
-                <MaterialCommunityIcons name="send" size={20} color={theme.white} />
+                <MaterialCommunityIcons name="send" size={20} color={theme.buttonText} />
               </Pressable>
             ) : (
               <Pressable
@@ -1179,7 +1179,7 @@ export default function ChatScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Record voice message"
               >
-                <MaterialCommunityIcons name="microphone" size={22} color={theme.white} />
+                <MaterialCommunityIcons name="microphone" size={22} color={theme.buttonText} />
               </Pressable>
             )}
           </>

@@ -187,7 +187,7 @@ export default function VideoCoursesScreen() {
               <ThemedText
                 style={[
                   styles.categoryText,
-                  { color: selectedCategory === item ? theme.white : theme.text },
+                  { color: selectedCategory === item ? theme.buttonText : theme.text },
                 ]}
               >
                 {item}

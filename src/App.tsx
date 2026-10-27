@@ -137,7 +137,7 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
-          <GestureHandlerRootView style={[styles.root, isWebFrame && { backgroundColor: isDark ? "#141B26" : "#E3E9E4" }]}>
+          <GestureHandlerRootView style={[styles.root, isWebFrame && { backgroundColor: isDark ? "#05090E" : "#E3E9E4" }]}>
             <View style={[styles.frame, { backgroundColor: theme.backgroundRoot }]}>
             <KeyboardProvider>
               <SyncProvider>

@@ -210,11 +210,11 @@ export default function ExpertsScreen() {
           onPress={() => handleBookConsultation(item.id)}
           disabled={!item.available}
         >
-          <Feather name="calendar" size={18} color={item.available ? theme.white : theme.textSecondary} />
+          <Feather name="calendar" size={18} color={item.available ? theme.buttonText : theme.textSecondary} />
           <ThemedText
             style={[
               styles.actionButtonText,
-              { color: item.available ? theme.white : theme.textSecondary },
+              { color: item.available ? theme.buttonText : theme.textSecondary },
             ]}
           >
             {t("experts.book")}
@@ -248,8 +248,8 @@ export default function ExpertsScreen() {
             accessibilityRole="button"
             style={[styles.addBtn, { backgroundColor: theme.primary }]}
           >
-            <Feather name="plus" size={16} color={theme.white} />
-            <ThemedText style={{ color: theme.white, fontWeight: "600" }}>{t("experts.add")}</ThemedText>
+            <Feather name="plus" size={16} color={theme.buttonText} />
+            <ThemedText style={{ color: theme.buttonText, fontWeight: "600" }}>{t("experts.add")}</ThemedText>
           </Pressable>
         ) : null}
         {loadNote ? <ThemedText style={{ color: theme.textSecondary, fontSize: 12, marginTop: 6 }}>{loadNote}</ThemedText> : null}

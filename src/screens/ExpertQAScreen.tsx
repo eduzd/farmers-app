@@ -362,7 +362,7 @@ export default function ExpertQAScreen() {
             <ThemedText
               style={[
                 styles.categoryChipText,
-                { color: selectedCategory === cat ? theme.white : theme.text },
+                { color: selectedCategory === cat ? theme.buttonText : theme.text },
               ]}
             >
               {cat}
@@ -476,7 +476,7 @@ export default function ExpertQAScreen() {
                     <ThemedText
                       style={[
                         styles.categorySelectText,
-                        { color: questionCategory === cat ? theme.white : theme.text },
+                        { color: questionCategory === cat ? theme.buttonText : theme.text },
                       ]}
                     >
                       {cat}
@@ -494,7 +494,7 @@ export default function ExpertQAScreen() {
                 onPress={handleAskQuestion}
                 disabled={!newQuestion.trim()}
               >
-                <ThemedText style={[styles.submitButtonText, { color: theme.white }]}>
+                <ThemedText style={[styles.submitButtonText, { color: theme.buttonText }]}>
                   প্রশ্ন পাঠান
                 </ThemedText>
               </Pressable>

@@ -195,7 +195,7 @@ export default function LikesListScreen() {
         >
           <ThemedText style={[
             styles.followButtonText,
-            { color: item.isFollowing ? theme.primary : theme.white }
+            { color: item.isFollowing ? theme.primary : theme.buttonText }
           ]}>
             {item.isFollowing ? (bn ? "ফলো করা হয়েছে" : "Following") : bn ? "ফলো" : "Follow"}
           </ThemedText>

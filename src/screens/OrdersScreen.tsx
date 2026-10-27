@@ -80,7 +80,7 @@ export default function OrdersScreen() {
             onPress={() => setTab(k)}
             style={[styles.tabChip, { backgroundColor: active ? theme.primary : theme.backgroundDefault, borderColor: active ? theme.primary : theme.border }]}
           >
-            <ThemedText style={[styles.tabChipText, { color: active ? theme.white : theme.text }]}>
+            <ThemedText style={[styles.tabChipText, { color: active ? theme.buttonText : theme.text }]}>
               {k === "buying" ? tr("My orders") : tr("Selling")}
               {k === "selling" && pendingSales > 0 ? ` (${pendingSales})` : ""}
             </ThemedText>
@@ -205,7 +205,7 @@ export default function OrdersScreen() {
         style={[styles.shopButton, { backgroundColor: theme.primary }]}
         onPress={() => navigation.navigate("MainTabs", { screen: "Market" })}
       >
-        <ThemedText style={[styles.shopButtonText, { color: theme.white }]}>
+        <ThemedText style={[styles.shopButtonText, { color: theme.buttonText }]}>
           {tr("Browse Marketplace")}
         </ThemedText>
       </Pressable>

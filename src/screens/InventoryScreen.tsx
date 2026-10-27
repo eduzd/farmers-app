@@ -205,7 +205,7 @@ export default function InventoryScreen() {
               <ThemedText
                 style={[
                   styles.chipText,
-                  { color: selectedCategory === item ? theme.white : theme.text },
+                  { color: selectedCategory === item ? theme.buttonText : theme.text },
                 ]}
               >
                 {item}
@@ -302,7 +302,7 @@ export default function InventoryScreen() {
                     style={[styles.modalButton, { backgroundColor: theme.primary }]}
                     onPress={handleSaveAdjustment}
                   >
-                    <ThemedText style={[styles.modalButtonText, { color: theme.white }]}>সংরক্ষণ</ThemedText>
+                    <ThemedText style={[styles.modalButtonText, { color: theme.buttonText }]}>সংরক্ষণ</ThemedText>
                   </Pressable>
                 </View>
               </>

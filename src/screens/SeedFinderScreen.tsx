@@ -120,7 +120,7 @@ export default function SeedFinderScreen() {
               style={[styles.filterChip, { backgroundColor: selectedCrop === item ? theme.primary : theme.card, borderColor: selectedCrop === item ? theme.primary : theme.cardBorder }]}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCrop(item); }}
             >
-              <ThemedText style={[styles.chipText, { color: selectedCrop === item ? theme.white : theme.text }]}>{item}</ThemedText>
+              <ThemedText style={[styles.chipText, { color: selectedCrop === item ? theme.buttonText : theme.text }]}>{item}</ThemedText>
             </Pressable>
           )}
         />

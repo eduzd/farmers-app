@@ -201,7 +201,7 @@ export default function GovernmentSchemesScreen() {
             style={[styles.applyButton, { backgroundColor: theme.primary }]}
             onPress={() => handleApply(item)}
           >
-            <Feather name="file-text" size={16} color={theme.white} />
+            <Feather name="file-text" size={16} color={theme.buttonText} />
             <ThemedText style={styles.applyButtonText}>আবেদন করুন</ThemedText>
           </Pressable>
           <Pressable style={[styles.shareButton, { borderColor: theme.primary }]}>
@@ -238,7 +238,7 @@ export default function GovernmentSchemesScreen() {
               <ThemedText
                 style={[
                   styles.chipText,
-                  { color: selectedCategory === item ? theme.white : theme.text },
+                  { color: selectedCategory === item ? theme.buttonText : theme.text },
                 ]}
               >
                 {item}

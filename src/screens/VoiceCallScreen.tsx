@@ -423,9 +423,9 @@ export default function VoiceCallScreen() {
 
   if (Platform.OS === "web") {
     return (
-      <View style={[styles.container, { backgroundColor: isDark ? "#141B26" : "#f0f7ff" }]}>
+      <View style={[styles.container, { backgroundColor: isDark ? "#0B1119" : "#f0f7ff" }]}>
         <LinearGradient
-          colors={isDark ? ["#141B26", "#1a365d", "#141B26"] : ["#E3F4FF", "#CFEBFF", "#E3F4FF"]}
+          colors={isDark ? ["#0B1119", "#14304F", "#0B1119"] : ["#E3F4FF", "#CFEBFF", "#E3F4FF"]}
           style={StyleSheet.absoluteFill}
         />
         <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
@@ -449,10 +449,10 @@ export default function VoiceCallScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? "#141B26" : "#f0f7ff" }]}>
+    <View style={[styles.container, { backgroundColor: isDark ? "#0B1119" : "#f0f7ff" }]}>
       <LinearGradient
         colors={isDark 
-          ? ["#141B26", "#202936", "#141B26"] 
+          ? ["#0B1119", "#141C27", "#0B1119"] 
           : ["#E3F4FF", "#CFEBFF", "#E3F4FF"]
         }
         style={StyleSheet.absoluteFill}

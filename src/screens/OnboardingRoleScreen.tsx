@@ -97,7 +97,7 @@ export default function OnboardingRoleScreen() {
                   <MaterialCommunityIcons
                     name={PROFILE_BADGES[role.id].icon}
                     size={24}
-                    color={selectedRole === role.id ? theme.white : PROFILE_BADGES[role.id].color}
+                    color={selectedRole === role.id ? theme.buttonText : PROFILE_BADGES[role.id].color}
                   />
                 </View>
                 <View style={styles.roleContent}>
@@ -110,7 +110,7 @@ export default function OnboardingRoleScreen() {
                 </View>
                 {selectedRole === role.id ? (
                   <View style={[styles.checkIcon, { backgroundColor: theme.primary }]}>
-                    <Feather name="check" size={16} color={theme.white} />
+                    <Feather name="check" size={16} color={theme.buttonText} />
                   </View>
                 ) : null}
               </Pressable>
@@ -128,10 +128,10 @@ export default function OnboardingRoleScreen() {
               onPress={handleContinue}
               disabled={!selectedRole}
             >
-              <ThemedText style={[styles.continueButtonText, { color: theme.white }]}>
+              <ThemedText style={[styles.continueButtonText, { color: theme.buttonText }]}>
                 {t("common.continue")}
               </ThemedText>
-              <Feather name="arrow-right" size={20} color={theme.white} />
+              <Feather name="arrow-right" size={20} color={theme.buttonText} />
             </Pressable>
           </View>
         </View>

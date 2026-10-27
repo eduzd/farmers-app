@@ -809,7 +809,7 @@ export default function PostDetailScreen() {
             accessibilityLabel={isBn ? "মন্তব্য পাঠান" : "Send comment"}
             testID="comment-send"
           >
-            <Feather name="send" size={18} color={newComment.trim() ? theme.white : theme.textSecondary} />
+            <Feather name="send" size={18} color={newComment.trim() ? theme.buttonText : theme.textSecondary} />
           </Pressable>
         </View>
       </Animated.View>

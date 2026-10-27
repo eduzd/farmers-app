@@ -205,7 +205,7 @@ export default function OnboardingProfileScreen() {
                   </View>
                 )}
                 <View style={[styles.cameraButton, { backgroundColor: theme.primary }]}>
-                  <Feather name="camera" size={14} color={theme.white} />
+                  <Feather name="camera" size={14} color={theme.buttonText} />
                 </View>
               </View>
               <ThemedText style={[styles.avatarHint, { color: theme.primary }]}>
@@ -303,12 +303,12 @@ export default function OnboardingProfileScreen() {
                     <MaterialCommunityIcons
                       name={PROFILE_BADGES[category.id].icon}
                       size={16}
-                      color={selectedCategory === category.id ? theme.white : PROFILE_BADGES[category.id].color}
+                      color={selectedCategory === category.id ? theme.buttonText : PROFILE_BADGES[category.id].color}
                     />
                     <ThemedText
                       style={[
                         styles.categoryLabel,
-                        { color: selectedCategory === category.id ? theme.white : theme.text },
+                        { color: selectedCategory === category.id ? theme.buttonText : theme.text },
                       ]}
                     >
                       {category.label}
@@ -349,13 +349,13 @@ export default function OnboardingProfileScreen() {
               disabled={isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator color={theme.white} />
+                <ActivityIndicator color={theme.buttonText} />
               ) : (
                 <>
-                  <ThemedText style={[styles.completeButtonText, { color: theme.white }]}>
+                  <ThemedText style={[styles.completeButtonText, { color: theme.buttonText }]}>
                     {tr("Complete Profile")}
                   </ThemedText>
-                  <Feather name="check" size={20} color={theme.white} />
+                  <Feather name="check" size={20} color={theme.buttonText} />
                 </>
               )}
             </Pressable>

@@ -426,7 +426,7 @@ export default function PollsScreen() {
                 style={[styles.createButton, { backgroundColor: theme.primary }]}
                 onPress={handleCreatePoll}
               >
-                <ThemedText style={[styles.createButtonText, { color: theme.white }]}>
+                <ThemedText style={[styles.createButtonText, { color: theme.buttonText }]}>
                   পোল তৈরি করুন
                 </ThemedText>
               </Pressable>

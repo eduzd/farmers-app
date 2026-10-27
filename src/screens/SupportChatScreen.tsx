@@ -465,9 +465,9 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
             localUri={item.localUri}
             durationMs={item.durationMs ?? null}
             isMe={isMe}
-            tint={isMe ? theme.white : theme.primary}
+            tint={isMe ? theme.buttonText : theme.primary}
             trackColor={isMe ? "rgba(255,255,255,0.35)" : theme.primary + "30"}
-            textColor={isMe ? theme.white : theme.textSecondary}
+            textColor={isMe ? theme.buttonText : theme.textSecondary}
           />
         </View>
       );
@@ -484,7 +484,7 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
     } else {
       body = (
         <View style={[styles.messageBubble, isMe ? [styles.myBubble, { backgroundColor: theme.primary }] : [styles.theirBubble, { backgroundColor: theme.surface }]]}>
-          <ThemedText style={[styles.messageText, { color: isMe ? theme.white : theme.text }]}>{item.text}</ThemedText>
+          <ThemedText style={[styles.messageText, { color: isMe ? theme.buttonText : theme.text }]}>{item.text}</ThemedText>
         </View>
       );
     }
@@ -637,7 +637,7 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
                 </ThemedText>
               </ThemedText>
               <Pressable style={[styles.iconButton, styles.sendButton, { backgroundColor: theme.primary }]} onPress={stopRecording} accessibilityRole="button" accessibilityLabel={L("Send voice message", "ভয়েস মেসেজ পাঠান")}>
-                <MaterialCommunityIcons name="send" size={20} color={theme.white} />
+                <MaterialCommunityIcons name="send" size={20} color={theme.buttonText} />
               </Pressable>
             </View>
           ) : (
@@ -666,11 +666,11 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
               </View>
               {inputText.trim() ? (
                 <Pressable style={[styles.iconButton, styles.sendButton, { backgroundColor: theme.primary }]} onPress={() => handleSend()} accessibilityRole="button" accessibilityLabel={L("Send message", "মেসেজ পাঠান")} testID="support-send">
-                  <MaterialCommunityIcons name="send" size={20} color={theme.white} />
+                  <MaterialCommunityIcons name="send" size={20} color={theme.buttonText} />
                 </Pressable>
               ) : (
                 <Pressable style={[styles.iconButton, styles.micButton, { backgroundColor: theme.primary }]} onPress={startRecording} accessibilityRole="button" accessibilityLabel={L("Record voice message", "ভয়েস মেসেজ রেকর্ড করুন")} testID="support-mic">
-                  <MaterialCommunityIcons name="microphone" size={22} color={theme.white} />
+                  <MaterialCommunityIcons name="microphone" size={22} color={theme.buttonText} />
                 </Pressable>
               )}
             </>

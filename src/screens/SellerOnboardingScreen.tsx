@@ -342,7 +342,7 @@ export default function SellerOnboardingScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <LinearGradient
-        colors={isDark ? ["#1F2123", "#1F2123"] : ["#00BB7715", "#FAFAF9"]}
+        colors={isDark ? ["#0B1119", "#0B1119"] : ["#00BB7715", "#FAFAF9"]}
         style={[styles.header, { paddingTop: insets.top + Spacing.md }]}
       >
         <Pressable style={styles.backButton} onPress={handleBack}>

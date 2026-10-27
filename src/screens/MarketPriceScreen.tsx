@@ -256,7 +256,7 @@ export default function MarketPriceScreen() {
               <ThemedText
                 style={[
                   styles.categoryChipText,
-                  { color: selectedCategory === cat ? theme.white : theme.text },
+                  { color: selectedCategory === cat ? theme.buttonText : theme.text },
                 ]}
               >
                 {cat}

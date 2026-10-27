@@ -123,7 +123,7 @@ export default function CartScreen() {
         style={[styles.shopButton, { backgroundColor: theme.primary }, Shadows.small]}
         onPress={() => navigation.goBack()}
       >
-        <ThemedText style={[styles.shopButtonText, { color: theme.white }]}>
+        <ThemedText style={[styles.shopButtonText, { color: theme.buttonText }]}>
           {tr("Browse Products")}
         </ThemedText>
       </Pressable>

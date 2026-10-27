@@ -253,7 +253,7 @@ export default function AuctionScreen() {
               style={[styles.bidButton, { backgroundColor: theme.primary }]}
               onPress={() => openBidModal(item)}
             >
-              <Feather name="dollar-sign" size={18} color={theme.white} />
+              <Feather name="dollar-sign" size={18} color={theme.buttonText} />
               <ThemedText style={styles.bidButtonText}>{tr("বিড করুন")}</ThemedText>
             </Pressable>
           </View>

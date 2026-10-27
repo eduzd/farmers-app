@@ -131,7 +131,7 @@ export default function LaborHiringScreen() {
               style={[styles.filterChip, { backgroundColor: selectedSkill === item ? theme.primary : theme.card, borderColor: selectedSkill === item ? theme.primary : theme.cardBorder }]}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedSkill(item); }}
             >
-              <ThemedText style={[styles.chipText, { color: selectedSkill === item ? theme.white : theme.text }]}>{item}</ThemedText>
+              <ThemedText style={[styles.chipText, { color: selectedSkill === item ? theme.buttonText : theme.text }]}>{item}</ThemedText>
             </Pressable>
           )}
         />

@@ -157,7 +157,7 @@ export default function ProductCompareScreen() {
               style={[styles.addToCartBtn, { backgroundColor: theme.primary }]}
               onPress={() => handleAddToCart(product)}
             >
-              <Feather name="shopping-cart" size={16} color={theme.white} />
+              <Feather name="shopping-cart" size={16} color={theme.buttonText} />
               <ThemedText style={styles.addToCartText}>কার্টে যোগ</ThemedText>
             </Pressable>
           </View>

@@ -12,7 +12,8 @@ import { apiGet, apiPost, apiPut, apiDelete, uploadImage, mediaUrl } from "@/lib
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 import { getAppVariant, openVariantOnWeb } from "@/lib/appVariant";
-import { S, STATUS_COLORS, NEXT_STATUS, THEME_SWATCHES } from "./sellerTheme";
+import { S, STATUS_COLORS, NEXT_STATUS, THEME_SWATCHES, SELLER_LIGHT, SELLER_DARK, setSellerDark, isSellerDark, type SellerPalette } from "./sellerTheme";
+import { useTheme } from "@/hooks/useTheme";
 
 import { AppIcon } from "@/components/icons/AppIcon";
 type Store = {
@@ -52,6 +53,9 @@ const taka = (n: number) => `৳${Math.round(Number(n) || 0).toLocaleString("en-
 
 export default function SellerAppScreen() {
   const navigation = useNavigation<any>();
+  // Follow the app's light/dark setting; every piece of the hub reads S / st after this.
+  const { isDark } = useTheme();
+  setSellerDark(isDark);
   // Opened from the Farmers app (Profile > Seller Hub, admin overview): offer a way back.
   const canBack = getAppVariant() !== "seller" && navigation?.canGoBack?.();
   const goBack = () => navigation.goBack();
@@ -128,7 +132,7 @@ export default function SellerAppScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
     >
       {suspended ? (
-        <View style={[st.banner, { backgroundColor: S.dangerSoft, borderColor: "#FECACA" }]}>
+        <View style={[st.banner, { backgroundColor: S.dangerSoft, borderColor: S.dangerBorder }]}>
           <Feather name="alert-octagon" size={18} color={S.danger} />
           <Text style={[st.bannerText, { color: S.danger }]}>
             {L("Your store is suspended by the admin. Buyers can't see it and you can't make changes.", "অ্যাডমিন আপনার দোকান স্থগিত করেছেন।")}
@@ -687,7 +691,8 @@ function Account({ L, userName, email, store, onLogout }: { L: any; userName: st
   );
 }
 
-const st = StyleSheet.create({
+function makeSt(S: SellerPalette) {
+  return StyleSheet.create({
   fill: { flex: 1 },
   center: { alignItems: "center", justifyContent: "center", backgroundColor: S.bg },
   content: { padding: 16, paddingBottom: 40, maxWidth: 1200, width: "100%", alignSelf: "center" },
@@ -746,7 +751,7 @@ const st = StyleSheet.create({
   search: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: S.border, borderRadius: 8, paddingHorizontal: 12, backgroundColor: S.surface, marginBottom: 12 },
   searchInput: { flex: 1, paddingVertical: 10, fontSize: 14, color: S.text },
   tr: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 12, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: S.border },
-  thead: { backgroundColor: "#F8FAFC", paddingVertical: 10 },
+  thead: { backgroundColor: S.thead, paddingVertical: 10 },
   th: { fontSize: 12, fontWeight: "700", color: S.muted, textTransform: "uppercase", letterSpacing: 0.4 },
   td: { fontSize: 14, color: S.text },
   thumbBox: { width: 44, height: 44, borderRadius: 8, backgroundColor: S.bg, borderWidth: 1, borderColor: S.border, alignItems: "center", justifyContent: "center", overflow: "hidden" },
@@ -765,4 +770,11 @@ const st = StyleSheet.create({
   previewBanner: { height: 96, overflow: "hidden" },
   previewLogo: { width: 56, height: 56, borderRadius: 12, borderWidth: 2, backgroundColor: "#fff", marginTop: -40, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   previewBtn: { alignSelf: "flex-start", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, marginTop: 12 },
+});
+}
+const ST_LIGHT = makeSt(SELLER_LIGHT);
+const ST_DARK = makeSt(SELLER_DARK);
+/** Reads the light or dark styles, whichever setSellerDark() picked for this render. */
+const st: typeof ST_LIGHT = new Proxy({} as typeof ST_LIGHT, {
+  get: (_t, k: string) => (isSellerDark() ? ST_DARK : ST_LIGHT)[k as keyof typeof ST_LIGHT],
 });

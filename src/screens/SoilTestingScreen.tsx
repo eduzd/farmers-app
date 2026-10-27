@@ -90,7 +90,7 @@ export default function SoilTestingScreen() {
           onPress={() => setSelectedTab("info")}
         >
           <ThemedText
-            style={[styles.tabText, { color: selectedTab === "info" ? theme.white : theme.text }]}
+            style={[styles.tabText, { color: selectedTab === "info" ? theme.buttonText : theme.text }]}
           >
             তথ্য
           </ThemedText>
@@ -103,7 +103,7 @@ export default function SoilTestingScreen() {
           onPress={() => setSelectedTab("centers")}
         >
           <ThemedText
-            style={[styles.tabText, { color: selectedTab === "centers" ? theme.white : theme.text }]}
+            style={[styles.tabText, { color: selectedTab === "centers" ? theme.buttonText : theme.text }]}
           >
             টেস্ট সেন্টার
           </ThemedText>

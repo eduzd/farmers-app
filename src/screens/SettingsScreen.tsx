@@ -633,7 +633,7 @@ export default function SettingsScreen() {
                       style={[styles.avatarActionButton, { backgroundColor: theme.primary }]}
                       onPress={handlePickImage}
                     >
-                      <Feather name="camera" size={16} color={theme.white} />
+                      <Feather name="camera" size={16} color={theme.buttonText} />
                       <ThemedText style={styles.avatarActionText}>{language === "bn" ? "ছবি আপলোড" : "Upload Photo"}</ThemedText>
                     </Pressable>
                     <Pressable 
@@ -666,7 +666,7 @@ export default function SettingsScreen() {
                             <NotionFace avatar={avatar} size={52} animated={isSelected} />
                             {isSelected ? (
                               <View style={[styles.avatarCheckmark, { backgroundColor: theme.primary }]}>
-                                <Feather name="check" size={10} color={theme.white} />
+                                <Feather name="check" size={10} color={theme.buttonText} />
                               </View>
                             ) : null}
                           </Pressable>
@@ -751,12 +751,12 @@ export default function SettingsScreen() {
                       <MaterialCommunityIcons
                         name={PROFILE_BADGES[cat.id].icon}
                         size={16}
-                        color={editCategory === cat.id ? theme.white : PROFILE_BADGES[cat.id].color}
+                        color={editCategory === cat.id ? theme.buttonText : PROFILE_BADGES[cat.id].color}
                       />
                       <ThemedText
                         style={[
                           styles.editCategoryLabel,
-                          { color: editCategory === cat.id ? theme.white : theme.text },
+                          { color: editCategory === cat.id ? theme.buttonText : theme.text },
                         ]}
                       >
                         {cat.label}
@@ -799,9 +799,9 @@ export default function SettingsScreen() {
                 testID="save-profile"
               >
                 {savingProfile ? (
-                  <ActivityIndicator color={theme.white} />
+                  <ActivityIndicator color={theme.buttonText} />
                 ) : (
-                  <ThemedText style={[styles.saveButtonText, { color: theme.white }]}>
+                  <ThemedText style={[styles.saveButtonText, { color: theme.buttonText }]}>
                     {t("settings.saveProfile")}
                   </ThemedText>
                 )}

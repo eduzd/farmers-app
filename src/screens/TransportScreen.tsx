@@ -179,7 +179,7 @@ export default function TransportScreen() {
               <ThemedText
                 style={[
                   styles.chipText,
-                  { color: selectedType === item ? theme.white : theme.text },
+                  { color: selectedType === item ? theme.buttonText : theme.text },
                 ]}
               >
                 {item}

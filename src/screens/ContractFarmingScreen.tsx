@@ -129,7 +129,7 @@ export default function ContractFarmingScreen() {
             {AVAILABLE_CONTRACTS.map((contract, index) => (
               <Animated.View key={contract.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <LinearGradient
-                  colors={isDark ? ["#202936", "#202936"] : ["#ffffff", "#f8fafc"]}
+                  colors={isDark ? [theme.backgroundDefault, theme.backgroundDefault] : ["#ffffff", "#f8fafc"]}
                   style={[styles.availableCard, { borderColor: theme.cardBorder }]}
                 >
                   <View style={styles.availableHeader}>

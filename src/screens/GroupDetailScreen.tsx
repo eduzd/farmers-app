@@ -181,12 +181,12 @@ export default function GroupDetailScreen() {
             <AppIcon
               name={isJoined ? "check" : "user-plus"}
               size={18}
-              color={isJoined ? theme.primary : theme.white}
+              color={isJoined ? theme.primary : theme.buttonText}
             />
             <ThemedText
               style={[
                 styles.joinButtonText,
-                { color: isJoined ? theme.primary : theme.white },
+                { color: isJoined ? theme.primary : theme.buttonText },
               ]}
             >
               {isJoined ? "যুক্ত আছেন" : "যোগ দিন"}
@@ -316,7 +316,7 @@ export default function GroupDetailScreen() {
             setShowCreatePost(true);
           }}
         >
-          <Feather name="edit-2" size={22} color={theme.white} />
+          <Feather name="edit-2" size={22} color={theme.buttonText} />
         </Pressable>
       ) : null}
 
@@ -384,7 +384,7 @@ export default function GroupDetailScreen() {
                 onPress={handleCreatePost}
                 disabled={!newPostContent.trim()}
               >
-                <ThemedText style={[styles.postButtonText, { color: theme.white }]}>
+                <ThemedText style={[styles.postButtonText, { color: theme.buttonText }]}>
                   পোস্ট করুন
                 </ThemedText>
               </Pressable>

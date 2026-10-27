@@ -147,7 +147,7 @@ export default function FarmDiaryScreen() {
               style={[styles.filterChip, { backgroundColor: selectedCategory === item ? theme.primary : theme.card, borderColor: selectedCategory === item ? theme.primary : theme.cardBorder }]}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setSelectedCategory(item); }}
             >
-              <ThemedText style={[styles.chipText, { color: selectedCategory === item ? theme.white : theme.text }]}>{tr(item)}</ThemedText>
+              <ThemedText style={[styles.chipText, { color: selectedCategory === item ? theme.buttonText : theme.text }]}>{tr(item)}</ThemedText>
             </Pressable>
           )}
         />
@@ -205,7 +205,7 @@ export default function FarmDiaryScreen() {
                   onPress={() => setNewCategory(c)}
                   style={[styles.filterChip, { marginRight: 0, backgroundColor: newCategory === c ? theme.primary : theme.card, borderColor: newCategory === c ? theme.primary : theme.cardBorder }]}
                 >
-                  <ThemedText style={[styles.chipText, { color: newCategory === c ? theme.white : theme.text }]}>{tr(c)}</ThemedText>
+                  <ThemedText style={[styles.chipText, { color: newCategory === c ? theme.buttonText : theme.text }]}>{tr(c)}</ThemedText>
                 </Pressable>
               ))}
             </View>
@@ -217,7 +217,7 @@ export default function FarmDiaryScreen() {
                   onPress={() => setRemindIn(d)}
                   style={[styles.filterChip, { marginRight: 0, backgroundColor: remindIn === d ? theme.primary : theme.card, borderColor: remindIn === d ? theme.primary : theme.cardBorder }]}
                 >
-                  <ThemedText style={[styles.chipText, { color: remindIn === d ? theme.white : theme.text }]}>
+                  <ThemedText style={[styles.chipText, { color: remindIn === d ? theme.buttonText : theme.text }]}>
                     {d === 0 ? tr("No reminder") : d === 1 ? tr("Tomorrow") : d === 3 ? tr("In 3 days") : tr("In a week")}
                   </ThemedText>
                 </Pressable>

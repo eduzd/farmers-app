@@ -275,7 +275,7 @@ export default function EventsCalendarScreen() {
               <ThemedText
                 style={[
                   styles.chipText,
-                  { color: selectedType === item ? theme.white : theme.text },
+                  { color: selectedType === item ? theme.buttonText : theme.text },
                 ]}
               >
                 {typeLabel(item)}

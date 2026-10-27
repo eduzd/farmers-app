@@ -31,7 +31,7 @@ export default function QRScannerScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <Animated.View entering={FadeInUp.duration(400)} style={styles.scannerSection}>
         <LinearGradient
-          colors={isDark ? ["#202936", "#0f0f1a"] : ["#f0f0f0", "#D6EAF8"]}
+          colors={isDark ? ["#141C27", "#0B1119"] : ["#f0f0f0", "#D6EAF8"]}
           style={styles.scannerFrame}
         >
           <View style={[styles.scannerBox, { borderColor: theme.primary }]}>

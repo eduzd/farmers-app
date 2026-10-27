@@ -109,7 +109,7 @@ export default function ToolsScreen() {
 
   return (
     <LinearGradient
-      colors={isDark ? ["#202936", "#202936"] : ["#F3FAFF", "#e9ecef"]}
+      colors={isDark ? [theme.backgroundRoot, theme.backgroundRoot] : ["#F3FAFF", "#e9ecef"]}
       style={styles.container}
     >
       <ScrollView
@@ -156,7 +156,7 @@ export default function ToolsScreen() {
           <>
             <View style={styles.categorySeparator}>
               <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-              <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
+              <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? theme.backgroundRoot : "#F3FAFF" }]}>
                 {isBn ? `অনুসন্ধান ফলাফল (${filteredTools.length})` : `Search Results (${filteredTools.length})`}
               </ThemedText>
               <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
@@ -180,7 +180,7 @@ export default function ToolsScreen() {
             <View key={category.id}>
               <View style={styles.categorySeparator}>
                 <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-                <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
+                <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? theme.backgroundRoot : "#F3FAFF" }]}>
                   {getCategoryTitle(category)}
                 </ThemedText>
                 <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />

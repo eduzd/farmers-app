@@ -164,7 +164,7 @@ export default function EquipmentRentalScreen() {
               <ThemedText
                 style={[
                   styles.chipText,
-                  { color: selectedCategory === item ? theme.white : theme.text },
+                  { color: selectedCategory === item ? theme.buttonText : theme.text },
                 ]}
               >
                 {item}

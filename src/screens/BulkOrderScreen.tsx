@@ -183,7 +183,7 @@ export default function BulkOrderScreen() {
               style={[styles.orderButton, { backgroundColor: theme.primary }]}
               onPress={() => openOrderModal(item)}
             >
-              <AppIcon name="package" size={16} color={theme.white} />
+              <AppIcon name="package" size={16} color={theme.buttonText} />
               <ThemedText style={styles.orderButtonText}>{tr("অর্ডার করুন")}</ThemedText>
             </Pressable>
           </View>
@@ -309,7 +309,7 @@ export default function BulkOrderScreen() {
                           styles.quickQtyText,
                           {
                             color:
-                              quantity === d.quantity.toString() ? theme.white : theme.text,
+                              quantity === d.quantity.toString() ? theme.buttonText : theme.text,
                           },
                         ]}
                       >

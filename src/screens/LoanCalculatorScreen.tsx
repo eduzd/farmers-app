@@ -124,7 +124,7 @@ export default function LoanCalculatorScreen() {
               <ThemedText
                 style={[
                   styles.loanTypeName,
-                  { color: selectedLoanType.id === loan.id ? theme.white : theme.text },
+                  { color: selectedLoanType.id === loan.id ? theme.buttonText : theme.text },
                 ]}
               >
                 {loan.name}
@@ -132,7 +132,7 @@ export default function LoanCalculatorScreen() {
               <ThemedText
                 style={[
                   styles.loanTypeRate,
-                  { color: selectedLoanType.id === loan.id ? theme.white : theme.primary },
+                  { color: selectedLoanType.id === loan.id ? theme.buttonText : theme.primary },
                 ]}
               >
                 {loan.rate}% সুদ

@@ -195,12 +195,12 @@ export default function GroupsScreen() {
             <AppIcon
               name={item.isJoined ? "check" : "plus"}
               size={14}
-              color={item.isJoined ? theme.primary : theme.white}
+              color={item.isJoined ? theme.primary : theme.buttonText}
             />
             <ThemedText
               style={[
                 styles.joinButtonText,
-                { color: item.isJoined ? theme.primary : theme.white },
+                { color: item.isJoined ? theme.primary : theme.buttonText },
               ]}
             >
               {item.isJoined ? "যুক্ত" : "যোগ দিন"}
@@ -256,7 +256,7 @@ export default function GroupsScreen() {
             <ThemedText
               style={[
                 styles.categoryChipText,
-                { color: selectedCategory === cat ? theme.white : theme.text },
+                { color: selectedCategory === cat ? theme.buttonText : theme.text },
               ]}
             >
               {cat}
@@ -340,7 +340,7 @@ export default function GroupsScreen() {
           setShowCreateGroup(true);
         }}
       >
-        <Feather name="plus" size={24} color={theme.white} />
+        <Feather name="plus" size={24} color={theme.buttonText} />
       </Pressable>
 
       <Modal
@@ -441,7 +441,7 @@ export default function GroupsScreen() {
                         styles.categorySelectText,
                         {
                           color:
-                            selectedGroupCategory === cat ? theme.white : theme.text,
+                            selectedGroupCategory === cat ? theme.buttonText : theme.text,
                         },
                       ]}
                     >
@@ -455,7 +455,7 @@ export default function GroupsScreen() {
                 style={[styles.createButton, { backgroundColor: theme.primary }]}
                 onPress={handleCreateGroup}
               >
-                <ThemedText style={[styles.createButtonText, { color: theme.white }]}>
+                <ThemedText style={[styles.createButtonText, { color: theme.buttonText }]}>
                   গ্রুপ তৈরি করুন
                 </ThemedText>
               </Pressable>

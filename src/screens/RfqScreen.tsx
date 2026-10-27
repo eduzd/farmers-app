@@ -201,7 +201,7 @@ export default function RfqScreen() {
           ]}
           onPress={() => handleSubmitBid(item.id)}
         >
-          <ThemedText style={[styles.bidButtonText, { color: theme.white }]}>
+          <ThemedText style={[styles.bidButtonText, { color: theme.buttonText }]}>
             {item.isMine ? (item.status === "open" ? tr("Close request") : tr("Reopen")) : item.myBid ? tr("Update bid") : tr("Submit Bid")}
           </ThemedText>
         </Pressable>
@@ -253,7 +253,7 @@ export default function RfqScreen() {
             setShowCreateModal(true);
           }}
         >
-          <Feather name="plus" size={20} color={theme.white} />
+          <Feather name="plus" size={20} color={theme.buttonText} />
         </Pressable>
       </View>
 
@@ -366,7 +366,7 @@ export default function RfqScreen() {
                 style={[styles.submitButton, { backgroundColor: theme.primary }]}
                 onPress={handleCreateRfq}
               >
-                <ThemedText style={[styles.submitButtonText, { color: theme.white }]}>
+                <ThemedText style={[styles.submitButtonText, { color: theme.buttonText }]}>
                   {t("rfq.createRequest")}
                 </ThemedText>
               </Pressable>

@@ -242,7 +242,7 @@ export default function WalletScreen() {
                   <ThemedText
                     style={[
                       styles.quickAmountText,
-                      { color: amount === qa.toString() ? theme.white : theme.text },
+                      { color: amount === qa.toString() ? theme.buttonText : theme.text },
                     ]}
                   >
                     ৳{qa}
@@ -305,7 +305,7 @@ export default function WalletScreen() {
               onPress={isWithdraw ? handleWithdraw : handleAddMoney}
               disabled={!amount || !selectedMethod}
             >
-              <ThemedText style={[styles.submitButtonText, { color: theme.white }]}>
+              <ThemedText style={[styles.submitButtonText, { color: theme.buttonText }]}>
                 {isWithdraw ? "উত্তোলন করুন" : "টাকা যোগ করুন"}
               </ThemedText>
             </Pressable>

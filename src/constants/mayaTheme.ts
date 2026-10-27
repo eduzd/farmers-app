@@ -83,45 +83,47 @@ export const MayaColors: { light: ThemeColors; dark: ThemeColors } = {
     info: MayaPalette.sky,
     shadow: "rgba(46, 150, 239, 0.12)",
   },
-  // maya.net has no dark mode; this is Maya navy with the same sky blue and pink accents.
+  // maya.net has no dark mode; this is a deep Maya navy night with the same sky blue and pink accents.
+  // Darker, low-glare surfaces in clear steps (page < card < raised), softened white text so it is
+  // easy on the eyes, and every text/icon tone at 4.5:1 or more on the surfaces it sits on.
   dark: {
     primary: MayaPalette.skyStrong,
     primaryTint: MayaPalette.sky,
     primaryDark: "#1F86DB",
-    primarySoft: "#16324D",
+    primarySoft: "#132A40",
     accent: "#FF6EC4",
-    accentSoft: "#4A1A3B",
-    text: "#EEF6FF",
-    textSecondary: "#A9C2DC",
-    textTertiary: "#7891AC",
+    accentSoft: "#3D1631",
+    text: "#E6EEF7",
+    textSecondary: "#A6B8CC",
+    textTertiary: "#8095AD",
     buttonText: "#FFFFFF",
-    tabIconDefault: "#7891AC",
+    tabIconDefault: "#8095AD",
     tabIconSelected: MayaPalette.sky,
     link: "#6CC6FF",
-    backgroundRoot: "#141B26",
-    backgroundDefault: "#202936",
-    backgroundSecondary: "#253247",
-    backgroundTertiary: "#2C3B54",
-    white: "#202936",
-    overlay: "rgba(5, 10, 18, 0.72)",
-    inputBorder: "#33445E",
-    inputBackground: "#202936",
+    backgroundRoot: "#0B1119",
+    backgroundDefault: "#141C27",
+    backgroundSecondary: "#1A2432",
+    backgroundTertiary: "#222E3F",
+    white: "#141C27",
+    overlay: "rgba(2, 6, 12, 0.75)",
+    inputBorder: "#2B3B52",
+    inputBackground: "#101823",
     gradientStart: "#1E8FD9",
     gradientEnd: MayaPalette.violet,
-    card: "#202936",
-    cardBorder: "#2F3F57",
-    cardText: "#EEF6FF",
-    surface: "#253247",
-    surfaceSecondary: "#202936",
-    divider: "#2A384D",
-    border: "#2F3F57",
-    iconDefault: "#EEF6FF",
-    iconSecondary: "#8FB4DA",
+    card: "#141C27",
+    cardBorder: "#233146",
+    cardText: "#E6EEF7",
+    surface: "#1A2432",
+    surfaceSecondary: "#141C27",
+    divider: "#1E2A3A",
+    border: "#233146",
+    iconDefault: "#E6EEF7",
+    iconSecondary: "#93B3D4",
     success: "#22D193",
-    error: "#F05252",
+    error: "#F26464",
     warning: "#F2A23A",
     info: "#6CC6FF",
-    shadow: "rgba(0, 0, 0, 0.5)",
+    shadow: "rgba(0, 0, 0, 0.6)",
   },
 };
 
@@ -175,3 +177,39 @@ export const MayaRadius = { sm: 8, md: 12, lg: 12, xl: 16, pill: 999 };
 
 /** Maya icon treatment: thin outline strokes. */
 export const MAYA_ICON_STROKE = 1.5;
+
+/**
+ * Maya's strong hues (navy, violet, amber, red, slate) are made for white cards. Used as text or an
+ * icon on a dark card they sink into it, so dark mode swaps each for a lighter tone of the same hue.
+ * Unknown colours come back unchanged.
+ */
+const DARK_TONES: Record<string, string> = {
+  "#202936": "#C9D6E6",
+  "#4A5568": "#AAB7C9",
+  "#3D38D0": "#A29EFF",
+  "#2D2A9E": "#A29EFF",
+  "#B25E09": "#F2A23A",
+  "#DA2F2F": "#FF7B7B",
+  "#2E96EF": "#6CC6FF",
+  "#1F86DB": "#6CC6FF",
+  "#4F46E5": "#A29EFF",
+  "#00BB77": "#22D193",
+};
+export function darkTone(color: string, isDark: boolean): string {
+  if (!isDark || !color) return color;
+  return DARK_TONES[color.toUpperCase()] ?? DARK_TONES[color] ?? color;
+}
+
+/**
+ * The automatic version of darkTone, used by every ThemedText and Feather icon: in dark mode a text
+ * or icon painted in Maya's deep red, violet, amber, slate or dark green (made for white cards) is
+ * lifted to its light tone so it stays readable on the dark cards. Navy and blue are left alone,
+ * because those sit on purpose on white buttons and chips.
+ */
+const AUTO_LIFT = new Set(["#DA2F2F", "#3D38D0", "#B25E09", "#4A5568", "#00875A"]);
+const AUTO_LIFT_TO: Record<string, string> = { ...DARK_TONES, "#00875A": "#22D193" };
+export function liftForDark(color: unknown, isDark: boolean): string | undefined {
+  if (!isDark || typeof color !== "string") return undefined;
+  const c = color.toUpperCase();
+  return AUTO_LIFT.has(c) ? AUTO_LIFT_TO[c] : undefined;
+}

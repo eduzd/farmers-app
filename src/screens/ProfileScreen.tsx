@@ -29,6 +29,7 @@ import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
 import { badgeKeyFor, PROFILE_BADGES } from "@/constants/profileBadges";
+import { darkTone } from "@/constants/mayaTheme";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -92,7 +93,7 @@ const VENDOR_DASHBOARD_ITEM = {
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const { user, logout, isSuperAdmin, isWelfareMember, isSummitMember, applications } = useAuthStore();
   const { t, language } = useI18n();
@@ -353,17 +354,18 @@ export default function ProfileScreen() {
           {(() => {
             // Same icon, colour and shape as the badge on the avatar, so each category looks different.
             const b = PROFILE_BADGES[badgeKeyFor(user) || "farmer"];
+            const tone = darkTone(b.color, isDark);
             return (
               <View
                 testID="profile-category-badge"
                 style={[
                   styles.sectorBadge,
-                  { backgroundColor: b.color + "1F", borderColor: b.color + "55", borderWidth: 1 },
+                  { backgroundColor: tone + (isDark ? "26" : "1F"), borderColor: tone + "55", borderWidth: 1 },
                   b.shape === "square" ? { borderRadius: 8 } : null,
                 ]}
               >
-                <MaterialCommunityIcons name={b.icon} size={15} color={b.color} />
-                <ThemedText style={[styles.sectorBadgeText, { color: b.color }]}>
+                <MaterialCommunityIcons name={b.icon} size={15} color={tone} />
+                <ThemedText style={[styles.sectorBadgeText, { color: tone }]}>
                   {language === "bn" ? b.labelBn : b.label}
                 </ThemedText>
               </View>

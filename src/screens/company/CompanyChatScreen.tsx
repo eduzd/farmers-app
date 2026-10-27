@@ -194,7 +194,7 @@ export default function CompanyChatScreen() {
         style={[styles.fab, { backgroundColor: theme.primary }]}
         onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
       >
-        <Feather name="edit-2" size={22} color={theme.white} />
+        <Feather name="edit-2" size={22} color={theme.buttonText} />
       </Pressable>
     </View>
   );

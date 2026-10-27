@@ -263,8 +263,8 @@ export default function WishlistScreen() {
                 onPress={() => handleAddToCart(item)}
                 disabled={!item.inStock}
               >
-                <AppIcon name="shopping-cart" size={16} color={theme.white} />
-                <ThemedText style={[styles.addToCartText, { color: theme.white }]}>
+                <AppIcon name="shopping-cart" size={16} color={theme.buttonText} />
+                <ThemedText style={[styles.addToCartText, { color: theme.buttonText }]}>
                   {tr("কার্টে যোগ করুন")}
                 </ThemedText>
               </Pressable>
@@ -310,7 +310,7 @@ export default function WishlistScreen() {
               style={[styles.browseButton, { backgroundColor: theme.primary }]}
               onPress={() => navigation.navigate("Main")}
             >
-              <ThemedText style={[styles.browseButtonText, { color: theme.white }]}>
+              <ThemedText style={[styles.browseButtonText, { color: theme.buttonText }]}>
                 {tr("মার্কেট দেখুন")}
               </ThemedText>
             </Pressable>

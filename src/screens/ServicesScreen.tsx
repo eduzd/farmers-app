@@ -451,7 +451,7 @@ export default function ServicesScreen() {
 
   return (
     <LinearGradient
-      colors={isDark ? ["#202936", "#202936"] : ["#F3FAFF", "#e9ecef"]}
+      colors={isDark ? [theme.backgroundRoot, theme.backgroundRoot] : ["#F3FAFF", "#e9ecef"]}
       style={styles.container}
     >
       <ScrollView
@@ -475,7 +475,7 @@ export default function ServicesScreen() {
 
         <View style={styles.categorySeparator}>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
+          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? theme.backgroundRoot : "#F3FAFF" }]}>
             কমিউনিটি
           </ThemedText>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
@@ -487,7 +487,7 @@ export default function ServicesScreen() {
 
         <View style={styles.categorySeparator}>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
+          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? theme.backgroundRoot : "#F3FAFF" }]}>
             শিক্ষা ও জ্ঞান
           </ThemedText>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
@@ -499,7 +499,7 @@ export default function ServicesScreen() {
 
         <View style={styles.categorySeparator}>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
+          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? theme.backgroundRoot : "#F3FAFF" }]}>
             অন্যান্য সেবা
           </ThemedText>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
