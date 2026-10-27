@@ -8,6 +8,7 @@ import { HeaderIconCircle } from '@/components/HeaderIconCircle';
 import { Feather } from '@/components/icons/Feather';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import * as Print from 'expo-print';
+import { saveHtmlAsPdf, escHtml } from '@/lib/htmlPdf';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
@@ -376,7 +377,7 @@ export function BepariCalculatorScreen() {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerRight}>
-          <HeaderIconCircle size={40} onPress={handleDownloadPDF}>
+          <HeaderIconCircle size={40} onPress={handleDownloadPDF} accessibilityLabel={tr("পিডিএফ ডাউনলোড")}>
             <Feather name="download" size={20} color={results ? colors.text : colors.textTertiary} />
           </HeaderIconCircle>
           <HeaderIconCircle size={40} onPress={openSavedList} accessibilityLabel={tr("সংরক্ষিত হিসাব")}>
@@ -466,41 +467,37 @@ export function BepariCalculatorScreen() {
         </style>
       </head>
       <body>
-        <h1>{tr("ব্যাপারী হিসাব")}</h1>
+        <h1>${tr("ব্যাপারী হিসাব")}</h1>
         <p class="date">${date}</p>
-        ${calculationName ? `<p class="title">${calculationName}</p>` : ''}
+        ${calculationName ? `<p class="title">${escHtml(calculationName)}</p>` : ''}
         
         <table>
-          <tr><th>{tr("ক্রম")}</th><th>{tr("ওজন (কেজি)")}</th><th>{tr("পিস")}</th></tr>
+          <tr><th>${tr("ক্রম")}</th><th>${tr("ওজন (কেজি)")}</th><th>${tr("পিস")}</th></tr>
           ${validRows.map((r, i) => `<tr><td>${i + 1}</td><td>${r.weight}</td><td>${r.pieces}</td></tr>`).join('')}
         </table>
 
         <div class="result-box">
-          <div class="result-row"><span class="result-label">{tr("মোট ওজন:")}</span><span class="result-value">${formatNum(results.totalWeight)} কেজি</span></div>
-          <div class="result-row"><span class="result-label">{tr("মোট পিস:")}</span><span class="result-value">${results.totalPieces}</span></div>
-          <div class="result-row"><span class="result-label">{tr("গড় ওজন:")}</span><span class="result-value">${formatNum(results.avgWeight * 1000, 0)} গ্রাম</span></div>
-          <div class="result-row"><span class="result-label">{tr("দর (প্রতি কেজি):")}</span><span class="result-value">${fmtTaka(results.pricePerKg)}</span></div>
-          <div class="result-row"><span class="result-label">{tr("পাকা ওজন:")}</span><span class="result-value">${formatNum(results.pakaWeight)} কেজি</span></div>
-          <div class="result-row"><span class="result-label">{tr("কাটতি:")}</span><span class="result-value">${formatNum(results.totalDeduction)} কেজি</span></div>
+          <div class="result-row"><span class="result-label">${tr("মোট ওজন:")}</span><span class="result-value">${formatNum(results.totalWeight)} কেজি</span></div>
+          <div class="result-row"><span class="result-label">${tr("মোট পিস:")}</span><span class="result-value">${results.totalPieces}</span></div>
+          <div class="result-row"><span class="result-label">${tr("গড় ওজন:")}</span><span class="result-value">${formatNum(results.avgWeight * 1000, 0)} গ্রাম</span></div>
+          <div class="result-row"><span class="result-label">${tr("দর (প্রতি কেজি):")}</span><span class="result-value">${fmtTaka(results.pricePerKg)}</span></div>
+          <div class="result-row"><span class="result-label">${tr("পাকা ওজন:")}</span><span class="result-value">${formatNum(results.pakaWeight)} কেজি</span></div>
+          <div class="result-row"><span class="result-label">${tr("কাটতি:")}</span><span class="result-value">${formatNum(results.totalDeduction)} কেজি</span></div>
         </div>
 
         <p class="total">মোট টাকা: ${fmtTaka(results.netAmount)}</p>
         <p style="text-align: center; color: #666;">প্রতি পিস: ${fmtTaka(results.perPiece)}</p>
 
-        <p class="footer">{tr("Farmers App - ব্যাপারী ক্যালকুলেটর")}</p>
+        <p class="footer">${tr("Farmers App - ব্যাপারী ক্যালকুলেটর")}</p>
       </body>
       </html>
     `;
 
     try {
-      const { uri } = await Print.printToFileAsync({ html });
-      if (Platform.OS === 'web') {
-        Alert.alert('সফল', 'পিডিএফ তৈরি হয়েছে');
-      } else {
-        await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-      }
-    } catch (error) {
-      Alert.alert('ত্রুটি', 'পিডিএফ তৈরি করতে সমস্যা হয়েছে');
+      await saveHtmlAsPdf(html, `Farmers-Bepari-${(calculationName || '').trim() || new Date().toISOString().slice(0, 10)}`);
+    } catch (error: any) {
+      Alert.alert(tr('ত্রুটি'), `${tr('পিডিএফ তৈরি করতে সমস্যা হয়েছে')}${error?.message ? `
+${error.message}` : ''}`);
     }
   };
 

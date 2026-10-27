@@ -8,6 +8,7 @@ import { HeaderIconCircle } from '@/components/HeaderIconCircle';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { Feather } from '@/components/icons/Feather';
 import * as Print from 'expo-print';
+import { saveHtmlAsPdf, escHtml } from '@/lib/htmlPdf';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
@@ -466,7 +467,7 @@ export function AratCalculatorScreen() {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerRight}>
-          <HeaderIconCircle size={40} onPress={handleDownloadPDF}>
+          <HeaderIconCircle size={40} onPress={handleDownloadPDF} accessibilityLabel={tr("পিডিএফ ডাউনলোড")}>
             <Feather name="download" size={20} color={results ? colors.text : colors.textTertiary} />
           </HeaderIconCircle>
           <HeaderIconCircle size={40} onPress={openSavedList} accessibilityLabel={tr("সংরক্ষিত হিসাব")}>
@@ -556,41 +557,37 @@ export function AratCalculatorScreen() {
         </style>
       </head>
       <body>
-        <h1>{tr("আরত হিসাব")}</h1>
+        <h1>${tr("আরত হিসাব")}</h1>
         <p class="date">${date}</p>
-        ${calculationName ? `<p class="title">${calculationName}</p>` : ''}
+        ${calculationName ? `<p class="title">${escHtml(calculationName)}</p>` : ''}
         
         <table>
-          <tr><th>{tr("ক্রম")}</th><th>{tr("মাছের নাম")}</th><th>{tr("দর (টাকা/কেজি)")}</th><th>{tr("ওজন (কেজি)")}</th><th>{tr("মোট")}</th></tr>
+          <tr><th>${tr("ক্রম")}</th><th>${tr("মাছের নাম")}</th><th>${tr("দর (টাকা/কেজি)")}</th><th>${tr("ওজন (কেজি)")}</th><th>${tr("মোট")}</th></tr>
           ${validRows.map((r, i) => {
             const total = parseFloat(r.rate) * parseFloat(r.weight);
-            return `<tr><td>${i + 1}</td><td>${r.fishName || '-'}</td><td>${r.rate}</td><td>${r.weight}</td><td>${fmtTaka(total)}</td></tr>`;
+            return `<tr><td>${i + 1}</td><td>${escHtml(r.fishName || '-')}</td><td>${r.rate}</td><td>${r.weight}</td><td>${fmtTaka(total)}</td></tr>`;
           }).join('')}
         </table>
 
         <div class="result-box">
-          <div class="result-row"><span class="result-label">{tr("মোট ওজন:")}</span><span class="result-value">${formatNum(results.totalWeight)} কেজি</span></div>
-          <div class="result-row"><span class="result-label">{tr("মোট টাকা:")}</span><span class="result-value">${fmtTaka(results.rawAmount)}</span></div>
+          <div class="result-row"><span class="result-label">${tr("মোট ওজন:")}</span><span class="result-value">${formatNum(results.totalWeight)} কেজি</span></div>
+          <div class="result-row"><span class="result-label">${tr("মোট টাকা:")}</span><span class="result-value">${fmtTaka(results.rawAmount)}</span></div>
           <div class="result-row"><span class="result-label">কমিশন (${settings.commission_per_100}%):</span><span class="result-value">${fmtTaka(results.commission)}</span></div>
-          <div class="result-row"><span class="result-label">{tr("গড় দর:")}</span><span class="result-value">${fmtTaka(results.avgRate)}/কেজি</span></div>
+          <div class="result-row"><span class="result-label">${tr("গড় দর:")}</span><span class="result-value">${fmtTaka(results.avgRate)}/কেজি</span></div>
         </div>
 
         <p class="total">নিট টাকা: ${fmtTaka(results.netAmount)}</p>
 
-        <p class="footer">{tr("Farmers App - আরত ক্যালকুলেটর")}</p>
+        <p class="footer">${tr("Farmers App - আরত ক্যালকুলেটর")}</p>
       </body>
       </html>
     `;
 
     try {
-      const { uri } = await Print.printToFileAsync({ html });
-      if (Platform.OS === 'web') {
-        Alert.alert('সফল', 'পিডিএফ তৈরি হয়েছে');
-      } else {
-        await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-      }
-    } catch (error) {
-      Alert.alert('ত্রুটি', 'পিডিএফ তৈরি করতে সমস্যা হয়েছে');
+      await saveHtmlAsPdf(html, `Farmers-Arat-${(calculationName || '').trim() || new Date().toISOString().slice(0, 10)}`);
+    } catch (error: any) {
+      Alert.alert(tr('ত্রুটি'), `${tr('পিডিএফ তৈরি করতে সমস্যা হয়েছে')}${error?.message ? `
+${error.message}` : ''}`);
     }
   };
 

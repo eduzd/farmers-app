@@ -1,6 +1,9 @@
 /** English -> Bangla phrases for tr() (src/lib/tr.ts). Bangla text is translated back with the reverse map. */
 export const BN_OF_EN: Record<string, string> = {
   "Saved": "সংরক্ষিত হয়েছে",
+  "Download PDF": "পিডিএফ ডাউনলোড",
+  "There was a problem creating the PDF": "পিডিএফ তৈরি করতে সমস্যা হয়েছে",
+  "There was a problem creating the PDF.": "PDF তৈরি করতে সমস্যা হয়েছে",
   "Delete calculation": "হিসাব মুছুন",
   "Delete this calculation?": "হিসাব মুছবেন?",
   "Couldn't delete it. Please try again.": "মুছে ফেলা যায়নি। আবার চেষ্টা করুন।",
@@ -43,6 +46,12 @@ export const BN_OF_EN: Record<string, string> = {
   "100% money back if the product has a problem": "পণ্যে সমস্যা থাকলে ১০০% টাকা ফেরত",
   "Buy": "কিনুন",
   "Profile": "প্রোফাইল",
+  "This account isn't available": "এই অ্যাকাউন্টটি পাওয়া যাচ্ছে না",
+  "Couldn't load posts. Please try again.": "পোস্ট লোড করা যায়নি। আবার চেষ্টা করুন।",
+  "Couldn't open this post": "পোস্টটি খোলা যায়নি",
+  "Please sign in to like posts.": "পোস্টে লাইক দিতে সাইন ইন করুন।",
+  "Loading…": "লোড হচ্ছে…",
+  "Please try again.": "আবার চেষ্টা করুন।",
   "Voice Call": "ভয়েস কল",
   "Voice calling is being set up. Please try again in a moment.": "ভয়েস কল চালু হচ্ছে। একটু পরে আবার চেষ্টা করুন।",
   "Not sent": "পাঠানো যায়নি",

@@ -16,6 +16,7 @@ import { ensureRelations } from "./communityRoutes";
  *  GET /api/trending?days=7             hashtags, communities and posts people are
  *                                       actually posting and reacting to
  *  GET /api/users/:id/posts            one person's posts, newest first
+ *  GET /api/users/:id/profile          one person's public card (name, photo, role; no email, no phone)
  *  GET /api/reviews-summary?ids=a,b     average rating and count per product (only
  *                                       products that have reviews are returned)
  */
@@ -216,6 +217,22 @@ export function registerLiveDataRoutes(app: Express) {
       }));
 
       res.json({ days, hashtags, topics, posts });
+    }),
+  );
+
+  // The profile page reads this, so it always shows the person's real photo and name,
+  // whatever screen it was opened from. Public fields only: never email or phone.
+  app.get(
+    "/api/users/:id/profile",
+    wrap("profile", async (req, res) => {
+      const uid = viewerId(req);
+      const id = String(req.params.id || "").slice(0, 100);
+      if (!id) return res.status(404).json({ error: "This account doesn't exist" });
+      const u = rows(
+        await db.execute(sql`SELECT ${personCols(uid)}, coalesce(u.banned, false) AS banned FROM users u WHERE u.id::text = ${id} LIMIT 1`),
+      )[0];
+      if (!u || u.banned) return res.status(404).json({ error: "This account isn't available" });
+      res.json({ ...personOut(u), username: u.username || null });
     }),
   );
 

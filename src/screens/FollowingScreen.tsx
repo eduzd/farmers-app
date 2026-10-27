@@ -18,6 +18,7 @@ import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { PublicUser } from "@/lib/storage";
 import { apiGet, apiPost, isLoggedIn, currentUserId } from "@/lib/api";
+import { openUserProfile } from "@/lib/openProfile";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type FollowingRouteProp = RouteProp<RootStackParamList, "Following">;
@@ -56,7 +57,8 @@ export default function FollowingScreen() {
           id: u.id,
           name: u.name || u.username,
           username: u.username,
-          initials: String(u.name || u.username || "U").slice(0, 2).toUpperCase(),
+          initials: String(u.name || u.username || "U").split(/\s+/).filter(Boolean).slice(0, 2).map((w: string) => w.charAt(0).toUpperCase()).join("") || "U",
+          avatar: u.avatar || undefined,
           role: u.role === "buyer" || u.role === "company" || u.role === "expert" ? u.role : "farmer",
           verified: !!u.verified,
           followersCount: 0,
@@ -71,7 +73,7 @@ export default function FollowingScreen() {
 
   const handleUserPress = (user: PublicUser) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    navigation.navigate("UserProfile", { user });
+    openUserProfile(navigation, user);
   };
 
   const handleUnfollow = (userId: string) => {

@@ -93,6 +93,8 @@ export default function ChatScreen() {
   const userInitials = route.params.userInitials;
   const conversationId = route.params.conversationId;
   const isWelfareMember = route.params.isWelfareMember;
+  // Their real photo: what the chat list knew, then the newest from their account once it loads.
+  const [peerAvatar, setPeerAvatar] = useState<string | undefined>(route.params.userAvatar || undefined);
   const authUser = useAuthStore((st) => st.user);
   const getToken = useAuthStore((st) => st.getToken);
   const signedIn = !!authUser && !!getToken();
@@ -247,6 +249,7 @@ export default function ChatScreen() {
     if (contactRef.current?.id === id) return contactRef.current.contact;
     const contact = await fetchContact(id);
     contactRef.current = { id, contact };
+    if (contact?.avatar) setPeerAvatar(contact.avatar);
     return contact;
   }, []);
   // Look the person up once the chat is live, so tapping their photo opens the profile at once.
@@ -297,7 +300,7 @@ export default function ChatScreen() {
         name,
         username: contact?.username || undefined,
         initials,
-        avatar: contact?.avatar || undefined,
+        avatar: contact?.avatar || peerAvatar || undefined,
         role: "farmer",
         verified: !!contact?.verified,
         isWelfareMember,
@@ -323,6 +326,7 @@ export default function ChatScreen() {
     >
       <UserAvatar
         initials={userInitials}
+        avatar={peerAvatar}
         size="small"
         isWelfareMember={isWelfareMember}
         userId={liveOtherId}
@@ -985,9 +989,13 @@ export default function ChatScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <View style={[styles.emptyAvatar, { backgroundColor: theme.primary }]}>
-        <ThemedText style={styles.emptyAvatarText}>{userInitials}</ThemedText>
-      </View>
+      {peerAvatar ? (
+        <UserAvatar initials={userInitials} avatar={peerAvatar} size={80} style={{ marginBottom: Spacing.md }} />
+      ) : (
+        <View style={[styles.emptyAvatar, { backgroundColor: theme.primary }]}>
+          <ThemedText style={styles.emptyAvatarText}>{userInitials}</ThemedText>
+        </View>
+      )}
       <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>{userName}</ThemedText>
       <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
         {mode === "checking" ? tr("Loading messages…") : mode === "live" ? tr("Start a conversation") : banner}
@@ -1027,7 +1035,7 @@ export default function ChatScreen() {
         </Pressable>
         <Pressable style={styles.headerTitleContainer} onPress={() => handleViewProfile()} accessibilityRole="button" accessibilityLabel={`${tr("View Profile")}: ${userName}`} testID="chat-header-profile">
           <View style={styles.headerAvatarContainer}>
-            <UserAvatar initials={userInitials} size={36} userId={liveOtherId} />
+            <UserAvatar initials={userInitials} avatar={peerAvatar} size={36} userId={liveOtherId} />
           </View>
           <View style={styles.headerInfo}>
             <ThemedText style={[styles.headerName, { color: theme.text }]}>{userName}</ThemedText>

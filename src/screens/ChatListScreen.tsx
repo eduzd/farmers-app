@@ -190,6 +190,7 @@ export default function ChatListScreen() {
       conversationId: conversation.id,
       userName: conversation.user.name,
       userInitials: conversation.user.initials,
+      userAvatar: conversation.user.avatar,
       isWelfareMember: conversation.user.isWelfareMember,
     });
   };

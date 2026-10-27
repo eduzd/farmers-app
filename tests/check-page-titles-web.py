@@ -70,7 +70,11 @@ async def main():
                 await pg.locator('[role="tab"]').nth(tab).click()
                 await pg.wait_for_timeout(2000)
                 if label:
-                    await pg.get_by_text(label, exact=True).first.click()
+                    if name == "settings":
+                        # Since the profile redesign, Settings is in the profile's three-dot menu.
+                        await pg.locator('[data-testid="profile-more-button"]').first.click()
+                        await pg.wait_for_timeout(1200)
+                    await pg.get_by_text(label, exact=True).last.click()
                     await pg.wait_for_timeout(2500)
                 await pg.screenshot(path=f"{h.shots}/{lang}-{name}.png", clip={"x": 0, "y": 0, "width": 390, "height": 120})
                 items = await pg.evaluate(SCAN)

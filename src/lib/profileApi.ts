@@ -50,7 +50,26 @@ export async function saveAbout(p: { bio?: string; location?: string }) {
   return call("PUT", "/api/me/about", { bio: p.bio || "", location: p.location || "" });
 }
 
-export async function fetchAbout(): Promise<{ bio: string; location: string } | null> {
+/** Report a person from their profile page (goes to the admin moderation queue). */
+export async function reportUser(userId: string, reason: string, details?: string) {
+  return call("POST", `/api/users/${encodeURIComponent(userId)}/report`, { reason, details: details || "" });
+}
+
+/** "Joined October 2026" / "যোগ দিয়েছেন অক্টোবর ২০২৬" from the account's creation date, or "" if unknown. */
+export function formatJoined(iso: string | null | undefined, bn: boolean): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const BN = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
+  if (bn) {
+    const y = String(d.getFullYear()).replace(/[0-9]/g, (c) => "০১২৩৪৫৬৭৮৯"[Number(c)]);
+    return `যোগ দিয়েছেন ${BN[d.getMonth()]} ${y}`;
+  }
+  return `Joined ${EN[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+export async function fetchAbout(): Promise<{ bio: string; location: string; joinedAt?: string | null } | null> {
   try {
     return await call("GET", "/api/me/about");
   } catch {
