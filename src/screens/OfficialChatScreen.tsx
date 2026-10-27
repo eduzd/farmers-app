@@ -137,7 +137,7 @@ export default function OfficialChatScreen() {
             <ThemedText style={{ color: theme.textSecondary, textAlign: "center", marginTop: 24 }}>{L("No messages yet", "এখনও কোনো মেসেজ নেই")}</ThemedText>
           }
           renderItem={({ item }) => (
-            <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-end" }} testID={`official-msg-${item.id}`}>
+            <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }} testID={`official-msg-${item.id}`}>
               {account ? <OfficialAvatar account={account} size={28} /> : null}
               <View style={[styles.bubble, { backgroundColor: theme.backgroundSecondary }]}>
                 {item.title ? <ThemedText style={{ fontFamily: FontFamily.bold, fontSize: 15, marginBottom: 3 }}>{item.title}</ThemedText> : null}
@@ -165,6 +165,6 @@ const styles = StyleSheet.create({
   back: { padding: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
   intro: { alignItems: "center", paddingVertical: 12, marginBottom: 4 },
-  bubble: { flexShrink: 1, maxWidth: "86%", borderRadius: 18, borderBottomLeftRadius: 6, paddingHorizontal: 14, paddingVertical: 10 },
+  bubble: { flexShrink: 1, maxWidth: "86%", borderRadius: 18, borderTopLeftRadius: 6, paddingHorizontal: 14, paddingVertical: 10 },
   footer: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingTop: 12, paddingHorizontal: 16, borderTopWidth: StyleSheet.hairlineWidth },
 });

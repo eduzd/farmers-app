@@ -464,7 +464,9 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
     const isMe = mine(item);
     const showTime = index === messages.length - 1 || messages[index + 1].fromAdmin !== item.fromAdmin;
     const isLastInGroup = index === 0 || messages[index - 1].fromAdmin !== item.fromAdmin;
-    const showAvatar = !isMe && isLastInGroup;
+    // newest-first list: index + 1 is older; the photo sits beside the first message of a run
+    const isFirstInGroup = index === messages.length - 1 || messages[index + 1].fromAdmin !== item.fromAdmin;
+    const showAvatar = !isMe && isFirstInGroup;
     let body: React.ReactNode;
     if (item.kind === "voice" && (item.mediaId || item.localUri)) {
       body = (
