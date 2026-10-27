@@ -16,7 +16,7 @@ import { Spacing, FontFamily } from "@/constants/theme";
  * a "Joined · place" line, then two equal buttons side by side.
  *
  * Everything is centred. Colours are the app's Maya theme: the main button is solid navy
- * (white with navy text in dark mode), the second one is outlined.
+ * (the app's blue with white text in dark mode, so it does not glare), the second one is outlined.
  */
 export interface HeroButton {
   label: string;
@@ -65,13 +65,14 @@ interface Props {
 const AVATAR = 104;
 
 export function ProfileHero(p: Props) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
+  const solidBg = isDark ? theme.primary : theme.text;
   const presence = usePresence(p.userId);
   const L = (en: string, b: string) => (p.bn ? b : en);
 
   const renderButton = (b: HeroButton | undefined) => {
     if (!b) return null;
-    const fg = b.solid ? theme.backgroundRoot : theme.text;
+    const fg = b.solid ? (isDark ? theme.buttonText : theme.backgroundRoot) : theme.text;
     return (
       <Pressable
         testID={b.testID}
@@ -85,8 +86,8 @@ export function ProfileHero(p: Props) {
         style={({ pressed }) => [
           styles.button,
           b.solid
-            ? { backgroundColor: theme.text, borderColor: theme.text }
-            : { backgroundColor: theme.card, borderColor: theme.text },
+            ? { backgroundColor: solidBg, borderColor: solidBg }
+            : { backgroundColor: theme.card, borderColor: isDark ? theme.textSecondary : theme.text },
           pressed && { opacity: 0.8 },
         ]}
       >

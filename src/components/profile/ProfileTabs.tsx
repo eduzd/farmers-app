@@ -19,13 +19,15 @@ export interface ProfileTab<K extends string> {
  * its icon, the others are plain words. Navy pill in light mode, white pill in dark mode.
  */
 export function ProfileTabs<K extends string>({ tabs, value, onChange }: { tabs: ProfileTab<K>[]; value: K; onChange: (k: K) => void }) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
+  // Dark mode: the selected tab is the app's blue with white text, not a bright white pill.
+  const onBg = isDark ? theme.primary : theme.text;
   return (
     <View style={[styles.bar, { borderBottomColor: theme.divider }]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {tabs.map((t) => {
           const on = t.key === value;
-          const fg = on ? theme.backgroundRoot : theme.textSecondary;
+          const fg = on ? (isDark ? theme.buttonText : theme.backgroundRoot) : theme.textSecondary;
           return (
             <Pressable
               key={t.key}
@@ -39,7 +41,7 @@ export function ProfileTabs<K extends string>({ tabs, value, onChange }: { tabs:
               }}
               style={({ pressed }) => [
                 styles.pill,
-                on ? { backgroundColor: theme.text } : null,
+                on ? { backgroundColor: onBg } : null,
                 pressed && !on ? { backgroundColor: theme.backgroundSecondary } : null,
               ]}
             >

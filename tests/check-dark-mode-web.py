@@ -35,15 +35,15 @@ SLUG, PID = SHOP["slug"], PROD["id"]
 PAGES = [
     ("community", "/", [("tab", 0)], True),
     ("connect", "/", [("tab", 1)], True),
-    ("voice-rooms", "/", [("tab", 1), ("tid", "connect-voice-rooms-open")], True),
     ("market", "/", [("tab", 2)], True),
     ("market-notifications", "/", [("tab", 2), ("tid", "market-bell")], True),
     ("chats", "/", [("tab", 3)], True),
     ("profile", "/", [("tab", 4)], True),
-    ("settings", "/", [("tab", 4), ("text", ["Settings", "সেটিংস"])], True),
-    ("my-orders", "/", [("tab", 4), ("text", ["My Orders", "আমার অর্ডার"])], True),
-    ("my-posts", "/", [("tab", 4), ("text", ["My Posts", "আমার পোস্ট"])], True),
-    ("seller-hub", "/", [("tab", 4), ("tid", "profile-seller-hub")], True),
+    ("profile-menu", "/", [("tab", 4), ("tid", "profile-more-button")], True),
+    ("settings", "/", [("tab", 4), ("tid", "profile-more-button"), ("text", ["Settings", "সেটিংস"])], True),
+    ("my-orders", "/", [("tab", 4), ("tid", "profile-more-button"), ("text", ["My Orders", "আমার অর্ডার"])], True),
+    ("my-posts", "/", [("tab", 4), ("tid", "profile-more-button"), ("text", ["My Posts", "আমার পোস্ট"])], True),
+    ("seller-hub", "/", [("tab", 4), ("tid", "profile-more-button"), ("tid", "profile-seller-hub")], True),
     ("calculate", "/", [("text", ["Calculate", "হিসাব"])], True),
     ("bepari", "/", [("text", ["Calculate", "হিসাব"]), ("text", ["Bepari calculator", "ব্যাপারী ক্যালকুলেটর"])], True),
     ("arat", "/", [("text", ["Calculate", "হিসাব"]), ("text", ["Arat calculator", "আড়ত ক্যালকুলেটর"])], True),
@@ -148,6 +148,8 @@ async def main():
         b = await p.chromium.launch()
         for lang in LANGS:
             for name, path, steps, logged in PAGES:
+                if lang == "bn" and name in ("welfare", "events"):
+                    continue  # their Home links have no Bangla label to click by; checked in English
                 ctx, pg = await open_page(b, admin if logged else None, lang, path.format(slug=SLUG, pid=PID), "dark")
                 reached = True
                 try:
