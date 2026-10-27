@@ -876,19 +876,19 @@ Note: For accurate diagnosis, please consult with local agricultural professiona
 
   // Simple result pages bKash redirects to after checkout.
   const paymentPage = (title: string, body: string, color: string) => `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>
-<style>body{font-family:system-ui,sans-serif;background:#F5F7F4;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
-.c{background:#fff;border-radius:16px;padding:32px 24px;max-width:420px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#5A6A61;line-height:1.5;word-break:break-word}a{display:inline-block;margin-top:16px;background:#1E7F4F;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none}</style></head>
+<style>body{font-family:"DM Sans",system-ui,sans-serif;background:#F3FAFF;margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+.c{background:#fff;border-radius:12px;padding:32px 24px;max-width:420px;width:100%;text-align:center;border:1px solid #D6EAF8}
+h1{color:${color};font-size:22px;margin:0 0 12px}p{color:#4A5568;line-height:1.5;word-break:break-word}a{display:inline-block;margin-top:16px;background:#202936;color:#fff;padding:12px 24px;border-radius:12px;text-decoration:none;font-weight:700}</style></head>
 <body><div class="c"><h1>${title}</h1><p>${body}</p><a href="/">Back to Farmers</a></div></body></html>`;
   const esc = (v: unknown) => String(v ?? "").replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c] as string));
   app.get("/payment-success", (req, res) => {
-    res.type("html").send(paymentPage("Payment successful", `Amount: ৳${esc(req.query.amount)}<br>Transaction ID: ${esc(req.query.trxId)}<br>You can close this page and return to the app.`, "#16A34A"));
+    res.type("html").send(paymentPage("Payment successful", `Amount: ৳${esc(req.query.amount)}<br>Transaction ID: ${esc(req.query.trxId)}<br>You can close this page and return to the app.`, "#00875A"));
   });
   app.get("/payment-failed", (req, res) => {
-    res.type("html").send(paymentPage("Payment failed", `Reason: ${esc(req.query.reason || "unknown")}. No money was taken. Please try again.`, "#DC2626"));
+    res.type("html").send(paymentPage("Payment failed", `Reason: ${esc(req.query.reason || "unknown")}. No money was taken. Please try again.`, "#DA2F2F"));
   });
   app.get("/payment-cancelled", (_req, res) => {
-    res.type("html").send(paymentPage("Payment cancelled", "You cancelled the payment. No money was taken.", "#EA8A0C"));
+    res.type("html").send(paymentPage("Payment cancelled", "You cancelled the payment. No money was taken.", "#B25E09"));
   });
 
   // bKash Create Payment

@@ -3,7 +3,7 @@ import {
   KeyboardAwareScrollView,
   KeyboardAwareScrollViewProps,
 } from "react-native-keyboard-controller";
-import React, { useRef } from "react";
+import React, { forwardRef } from "react";
 
 type Props = KeyboardAwareScrollViewProps & ScrollViewProps & {
   bottomOffset?: number;
@@ -12,19 +12,21 @@ type Props = KeyboardAwareScrollViewProps & ScrollViewProps & {
 /**
  * KeyboardAwareScrollView that works across all devices.
  * Falls back to ScrollView on web with manual keyboard handling.
+ * A ref passed in reaches the scroll view, so screens can call scrollTo().
  */
-export function KeyboardAwareScrollViewCompat({
-  children,
-  keyboardShouldPersistTaps = "handled",
-  bottomOffset = 150,
-  ...props
-}: Props) {
-  const scrollViewRef = useRef<ScrollView>(null);
-
+export const KeyboardAwareScrollViewCompat = forwardRef<any, Props>(function KeyboardAwareScrollViewCompat(
+  {
+    children,
+    keyboardShouldPersistTaps = "handled",
+    bottomOffset = 150,
+    ...props
+  },
+  ref,
+) {
   if (Platform.OS === "web") {
     return (
       <ScrollView
-        ref={scrollViewRef}
+        ref={ref}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
         {...props}
       >
@@ -35,6 +37,7 @@ export function KeyboardAwareScrollViewCompat({
 
   return (
     <KeyboardAwareScrollView
+      ref={ref}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
       bottomOffset={bottomOffset}
       enabled={true}
@@ -43,4 +46,4 @@ export function KeyboardAwareScrollViewCompat({
       {children}
     </KeyboardAwareScrollView>
   );
-}
+});

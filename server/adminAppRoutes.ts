@@ -30,21 +30,27 @@ import {
  *                 POST /support/threads/:id/reply, PUT /support/threads/:id {status}
  */
 
+// Default colours follow the app's Maya palette (maya.net): green, amber, violet, sky, red, slate.
 const SEED: [string, string, string, string, string][] = [
-  ["vegetables", "Vegetables", "সবজি", "feather", "#16A34A"],
-  ["fruits", "Fruits", "ফল", "sun", "#EA580C"],
-  ["grains", "Grains", "শস্য", "layers", "#CA8A04"],
-  ["livestock", "Livestock", "গবাদি পশু", "github", "#92400E"],
-  ["seeds", "Seeds", "বীজ", "sun", "#65A30D"],
-  ["fertilizer", "Fertilizer", "সার", "droplet", "#0891B2"],
-  ["equipment", "Equipment", "যন্ত্রপাতি", "tool", "#475569"],
-  ["feed", "Feed", "খাদ্য", "package", "#B45309"],
-  ["medicine", "Medicine", "ওষুধ", "heart", "#DC2626"],
-  ["organic", "Organic", "অর্গানিক", "zap", "#15803D"],
-  ["dairy", "Dairy", "দুগ্ধ", "coffee", "#2563EB"],
-  ["fish", "Fish", "মাছ", "anchor", "#0E7490"],
-  ["other", "Other", "অন্যান্য", "grid", "#64748B"],
+  ["vegetables", "Vegetables", "সবজি", "feather", "#00BB77"],
+  ["fruits", "Fruits", "ফল", "sun", "#B25E09"],
+  ["grains", "Grains", "শস্য", "layers", "#B25E09"],
+  ["livestock", "Livestock", "গবাদি পশু", "github", "#3D38D0"],
+  ["seeds", "Seeds", "বীজ", "sun", "#00BB77"],
+  ["fertilizer", "Fertilizer", "সার", "droplet", "#1F86DB"],
+  ["equipment", "Equipment", "যন্ত্রপাতি", "tool", "#4A5568"],
+  ["feed", "Feed", "খাদ্য", "package", "#B25E09"],
+  ["medicine", "Medicine", "ওষুধ", "heart", "#DA2F2F"],
+  ["organic", "Organic", "অর্গানিক", "zap", "#00BB77"],
+  ["dairy", "Dairy", "দুগ্ধ", "coffee", "#2E96EF"],
+  ["fish", "Fish", "মাছ", "anchor", "#39B1FE"],
+  ["other", "Other", "অন্যান্য", "grid", "#4A5568"],
 ];
+/** The colours the categories were first created with, before the Maya palette. */
+const PRE_MAYA_SEED: Record<string, string> = {
+  vegetables: "#16A34A", fruits: "#EA580C", grains: "#CA8A04", livestock: "#92400E", seeds: "#65A30D", fertilizer: "#0891B2",
+  equipment: "#475569", feed: "#B45309", medicine: "#DC2626", organic: "#15803D", dairy: "#2563EB", fish: "#0E7490", other: "#64748B",
+};
 
 let ready: Promise<void> | null = null;
 export function ensureAdminApp() {
@@ -54,7 +60,7 @@ export function ensureAdminApp() {
       const q = (s: any) => db.execute(s);
       await q(sql`CREATE TABLE IF NOT EXISTS shop_categories (
         id varchar PRIMARY KEY, slug varchar NOT NULL UNIQUE, name_en varchar NOT NULL, name_bn varchar NOT NULL DEFAULT '',
-        icon varchar NOT NULL DEFAULT 'grid', color varchar NOT NULL DEFAULT '#16A34A', sort_order integer NOT NULL DEFAULT 0,
+        icon varchar NOT NULL DEFAULT 'grid', color varchar NOT NULL DEFAULT '#2E96EF', sort_order integer NOT NULL DEFAULT 0,
         active boolean NOT NULL DEFAULT true, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now())`);
       await q(sql`CREATE TABLE IF NOT EXISTS app_settings (key varchar PRIMARY KEY, value text)`).catch(() => {});
       const seeded = rows(await q(sql`SELECT value FROM app_settings WHERE key = 'shop_categories_seeded' LIMIT 1`))[0];
@@ -65,6 +71,16 @@ export function ensureAdminApp() {
             VALUES (${"cat-" + slug}, ${slug}, ${en}, ${bn}, ${icon}, ${color}, ${i++}) ON CONFLICT (slug) DO NOTHING`);
         }
         await q(sql`INSERT INTO app_settings (key, value) VALUES ('shop_categories_seeded', 'true') ON CONFLICT (key) DO NOTHING`);
+      }
+      // One-time move to the Maya colours: only categories still on their original default colour change;
+      // a colour an admin picked by hand is left alone.
+      const maya = rows(await q(sql`SELECT value FROM app_settings WHERE key = 'shop_categories_maya' LIMIT 1`))[0];
+      if (!maya) {
+        for (const [slug, , , , color] of SEED) {
+          const before = PRE_MAYA_SEED[slug];
+          if (before) await q(sql`UPDATE shop_categories SET color = ${color}, updated_at = now() WHERE slug = ${slug} AND upper(color) = ${before}`);
+        }
+        await q(sql`INSERT INTO app_settings (key, value) VALUES ('shop_categories_maya', 'true') ON CONFLICT (key) DO NOTHING`);
       }
       await q(sql`CREATE TABLE IF NOT EXISTS support_threads (
         id varchar PRIMARY KEY, user_id varchar NOT NULL UNIQUE, status varchar NOT NULL DEFAULT 'open',
@@ -100,7 +116,7 @@ const w = (fn: (req: Request, res: Response) => Promise<any>) => wrap(async (req
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const SLUG = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const catOut = (r: any) => ({
-  id: r.id, slug: r.slug, nameEn: r.name_en, nameBn: r.name_bn || r.name_en, icon: r.icon || "grid", color: r.color || "#16A34A",
+  id: r.id, slug: r.slug, nameEn: r.name_en, nameBn: r.name_bn || r.name_en, icon: r.icon || "grid", color: r.color || "#2E96EF",
   sortOrder: Number(r.sort_order || 0), active: !!r.active, productCount: r.product_count !== undefined ? Number(r.product_count) : undefined,
 });
 async function categoryBySlug(slug: string) {
@@ -212,7 +228,7 @@ export function registerAdminAppRoutes(app: Express) {
     const max = Number(rows(await db.execute(sql`SELECT coalesce(max(sort_order), -1)::int AS m FROM shop_categories`))[0]?.m ?? -1);
     const id = `cat-${crypto.randomUUID()}`;
     await db.execute(sql`INSERT INTO shop_categories (id, slug, name_en, name_bn, icon, color, sort_order, active)
-      VALUES (${id}, ${slug}, ${nameEn}, ${str(b.nameBn, 60) || nameEn}, ${str(b.icon, 40) || "grid"}, ${HEX.test(String(b.color)) ? String(b.color) : "#16A34A"},
+      VALUES (${id}, ${slug}, ${nameEn}, ${str(b.nameBn, 60) || nameEn}, ${str(b.icon, 40) || "grid"}, ${HEX.test(String(b.color)) ? String(b.color) : "#2E96EF"},
         ${max + 1}, ${b.active === undefined ? true : !!b.active})`);
     await audit(req, "CREATE_CATEGORY", "category", id, { slug, nameEn });
     res.status(201).json(catOut(rows(await db.execute(sql`SELECT * FROM shop_categories WHERE id = ${id}`))[0]));

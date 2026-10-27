@@ -474,7 +474,7 @@ function SellTile({ on, icon, title, sub, onPress, testID }: { on: boolean; icon
   const { theme } = useTheme();
   return (
     <Pressable testID={testID} accessibilityRole="radio" accessibilityState={{ selected: on }} onPress={onPress}
-      style={({ pressed }) => ({ flexBasis: "47%", flexGrow: 1, padding: 12, borderRadius: 14, borderWidth: 2, borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primary + "10" : "transparent", transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+      style={({ pressed }) => ({ flexBasis: "47%", flexGrow: 1, padding: 12, borderRadius: 12, borderWidth: 2, borderColor: on ? theme.primary : theme.cardBorder, backgroundColor: on ? theme.primary + "10" : "transparent", transform: [{ scale: pressed ? 0.97 : 1 }] })}>
       <View style={[st.row, { gap: 8 }]}>
         <Feather name={icon} size={18} color={on ? theme.primary : theme.textSecondary} />
         <Text style={{ color: on ? theme.primary : theme.text, fontWeight: "800", flex: 1 }}>{title}</Text>

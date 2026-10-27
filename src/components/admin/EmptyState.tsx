@@ -4,6 +4,7 @@ import { Feather } from "@/components/icons/Feather";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { MayaRadius } from "@/constants/mayaTheme";
 
 import { AppIcon } from "@/components/icons/AppIcon";
 interface EmptyStateProps {
@@ -81,6 +82,6 @@ const styles = StyleSheet.create({
   actionButton: {
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
   },
 });

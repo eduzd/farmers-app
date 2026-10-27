@@ -296,7 +296,7 @@ export function AdminMarketplacePanel({ onOpen, onOpenSellerHub }: { onOpen: (ta
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
         {tiles.map((t) => (
           <Pressable key={t.tab} testID={`mp-tile-${t.tab}`} onPress={() => onOpen(t.tab)}
-            style={({ pressed }) => [{ flexGrow: 1, flexBasis: 150, minWidth: 140, padding: 14, borderRadius: 14, borderWidth: 1, borderColor: theme.cardBorder, backgroundColor: theme.card, opacity: pressed ? 0.8 : 1 }]}>
+            style={({ pressed }) => [{ flexGrow: 1, flexBasis: 150, minWidth: 140, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: theme.cardBorder, backgroundColor: theme.card, opacity: pressed ? 0.8 : 1 }]}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
               <View style={{ width: 28, height: 28, borderRadius: 8, alignItems: "center", justifyContent: "center", backgroundColor: t.color + "18" }}>
                 <AppIcon name={t.icon} size={15} color={t.color} />

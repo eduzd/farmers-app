@@ -79,10 +79,10 @@ async function sendVerificationEmail(email: string, code: string): Promise<boole
         subject: "Your Verification Code",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #16a34a;">Email Verification</h2>
+            <h2 style="color: #202936;">Email Verification</h2>
             <p>Your verification code is:</p>
-            <div style="background-color: #f0fdf4; border: 2px solid #16a34a; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
-              <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #16a34a;">${code}</span>
+            <div style="background-color: #F3FAFF; border: 1px solid #2E96EF; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
+              <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #202936;">${code}</span>
             </div>
             <p style="color: #666;">This code will expire in 10 minutes.</p>
             <p style="color: #999; font-size: 12px;">If you didn't request this code, please ignore this email.</p>
