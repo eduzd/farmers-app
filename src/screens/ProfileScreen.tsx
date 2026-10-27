@@ -62,30 +62,6 @@ import {
 } from "@/lib/profileStats";
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const MENU_ITEMS = [
-  { id: "my-posts", labelKey: "profile.myPosts", icon: "edit-3" as const, screen: "MyPosts" as const },
-  { id: "saved-posts", labelKey: "profile.savedPosts", icon: "bookmark" as const, expandable: true },
-  { id: "orders", labelKey: "profile.myOrders", icon: "shopping-bag" as const, screen: "Orders" as const },
-  { id: "applications", labelKey: "profile.applications", icon: "file-text" as const, screen: "ApplicationsList" as const },
-  { id: "rfq", labelKey: "rfq.title", icon: "clipboard" as const, screen: "Rfq" as const },
-  { id: "listings", labelKey: "profile.myListings", icon: "package" as const },
-  { id: "settings", labelKey: "profile.settings", icon: "settings" as const, screen: "Settings" as const },
-];
-
-interface SavedPost {
-  id: string;
-  author: { name: string; avatar: string; initials: string };
-  content: string;
-  image?: string;
-}
-
-
-const FEATURE_MENU_ITEMS = [
-  { id: "wallet", labelKey: "profile.wallet", icon: "credit-card" as const, screen: "Wallet" as const },
-  { id: "wishlist", labelKey: "profile.wishlist", icon: "heart" as const, screen: "Wishlist" as const },
-  { id: "badges", labelKey: "profile.achievements", icon: "award" as const, screen: "Badges" as const },
-  { id: "tracking", labelKey: "profile.deliveryTracking", icon: "truck" as const, screen: "DeliveryTracking" as const },
-];
 
 const VENDOR_DASHBOARD_ITEM = { 
   id: "vendor-dashboard", 
@@ -106,53 +82,12 @@ export default function ProfileScreen() {
   
   const [adminTapCount, setAdminTapCount] = useState(0);
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const communitySwitcherRef = useRef<CommunitySwitcherRef>(null);
-  const [savedPostsExpanded, setSavedPostsExpanded] = useState(false);
-  // Posts this person saved from the feed or a post's page, loaded from the server.
-  const [savedPosts, setSavedPosts] = useState<FeedPost[]>([]);
-  const savedPostsAnimation = useSharedValue(0);
   // Real followers / following / rating from the server (never placeholder numbers).
   const [follows, setFollows] = useState<Loaded<FollowCounts>>(LOADING);
   const [rating, setRating] = useState<Loaded<RatingSummary>>(LOADING);
   const [statsReload, setStatsReload] = useState(0);
-  // The three-dot menu: every profile option (seller tools, orders, settings, sign out...) lives here now.
-  const [menuOpen, setMenuOpen] = useState(false);
   const [about, setAbout] = useState<{ bio: string; location: string; joinedAt?: string | null }>({ bio: "", location: "" });
   const [focusCount, setFocusCount] = useState(0);
-  const menuNav = (...args: any[]) => {
-    setMenuOpen(false);
-    (navigation.navigate as any)(...args);
-  };
-
-  const toggleSavedPosts = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSavedPostsExpanded(!savedPostsExpanded);
-    savedPostsAnimation.value = withSpring(savedPostsExpanded ? 0 : 1, { damping: 15 });
-  };
-
-  const chevronAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${interpolate(savedPostsAnimation.value, [0, 1], [0, 180], Extrapolation.CLAMP)}deg` }],
-  }));
-
-  const handleViewPost = (post: FeedPost) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    menuNav("PostDetail", { postId: post.id, post });
-  };
-
-  const handleRemoveSavedPost = async (postId: string) => {
-    const token = useAuthStore.getState().getToken();
-    if (!token) return;
-    const before = savedPosts;
-    setSavedPosts((prev) => prev.filter((p) => p.id !== postId));
-    try {
-      await setServerPostSaved(token, postId, false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (e) {
-      setSavedPosts(before);
-      Alert.alert(language === "bn" ? "সরানো যায়নি" : "Couldn't remove", e instanceof Error ? e.message : "");
-    }
-  };
-
   const handleAvatarTap = () => {
     if (!isSuperAdmin) return;
     
@@ -217,7 +152,6 @@ export default function ProfileScreen() {
       });
       return () => {
         alive = false;
-        setMenuOpen(false);
       };
     }, [user?.id])
   );
@@ -229,26 +163,6 @@ export default function ProfileScreen() {
     setStatsReload((n) => n + 1);
   };
   const ratingBox = ratingView(rating, language);
-
-  // Refresh saved posts every time the profile comes into view (e.g. after saving one in the feed).
-  useFocusEffect(
-    React.useCallback(() => {
-      const token = useAuthStore.getState().getToken();
-      if (!token || !user?.id) {
-        setSavedPosts([]);
-        return;
-      }
-      let alive = true;
-      fetchSavedPosts(token, language === "bn")
-        .then((list) => {
-          if (alive) setSavedPosts(list);
-        })
-        .catch(() => {});
-      return () => {
-        alive = false;
-      };
-    }, [user?.id, language])
-  );
 
   // Like the reference design: only a three-dot button in the title bar. It opens every profile option.
   const isBnHeader = language === "bn";
@@ -265,8 +179,8 @@ export default function ProfileScreen() {
     navigation.setOptions({
       headerRight: () =>
         user ? (
-          // The redesign's three-dot menu (Share, Edit profile, Settings and the rest), drawn as the
-          // shared title-bar icon button so it matches the Market bell and cart.
+          // The three-dot button opens the full Profile options page (every option, grouped), drawn as
+          // the shared title-bar icon button so it matches the Market bell and cart.
           <View testID="profile-more-button" style={{ marginRight: Spacing.lg }}>
             <IconButton
               icon="more-vertical"
@@ -274,7 +188,7 @@ export default function ProfileScreen() {
               accessibilityLabel={isBnHeader ? "আরও অপশন" : "More options"}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-                setMenuOpen(true);
+                navigation.navigate("ProfileOptions" as any);
               }}
             />
           </View>
@@ -282,22 +196,6 @@ export default function ProfileScreen() {
     } as any);
   }, [navigation, user?.id, isBnHeader, theme]);
 
-  const handleMenuPress = (item: typeof MENU_ITEMS[0]) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (item.screen) {
-      menuNav(item.screen as any);
-    }
-  };
-
-  const handleLogout = async () => {
-    setMenuOpen(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await logout();
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "Landing" }],
-    });
-  };
 
   const getSectorLabelKey = (sector: string) => {
     const sectorMap: Record<string, string> = {
@@ -410,7 +308,7 @@ export default function ProfileScreen() {
               bn={bn}
               primary={
                 user
-                  ? { label: bn ? "প্রোফাইল এডিট" : "Edit profile", icon: "edit-2", solid: true, testID: "profile-edit-button", onPress: () => navigation.navigate("Settings", { openEditProfile: true }) }
+                  ? { label: bn ? "প্রোফাইল এডিট" : "Edit profile", icon: "edit-2", solid: true, testID: "profile-edit-button", onPress: () => navigation.navigate("EditProfile" as any) }
                   : undefined
               }
               secondary={user ? { label: bn ? "শেয়ার" : "Share profile", icon: "share-2", testID: "profile-share-button", onPress: shareProfile } : undefined}
@@ -445,275 +343,6 @@ export default function ProfileScreen() {
         );
       })()}
 
-      <ProfileSheet visible={menuOpen} onClose={() => setMenuOpen(false)} title={language === "bn" ? "প্রোফাইল অপশন" : "Profile options"} testID="profile-options-sheet">
-      <View style={styles.sheetBody}>
-      {/* Quick Settings Section */}
-      <View style={[styles.menuSection, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        {/* Seller/Vendor Dashboard */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.menuItem,
-            pressed && styles.menuPressed,
-            styles.menuFirstItem,
-          ]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            if (user?.verified) {
-              menuNav("CompanyDashboard");
-            } else {
-              menuNav("SellerOnboarding" as any);
-            }
-          }}
-        >
-          <View style={styles.menuLeft}>
-            <AppIcon name={user?.verified ? "grid" : "shopping-bag"} size={20} color={theme.iconDefault || theme.text} />
-            <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
-              {user?.verified ? t("profile.vendorDashboard") : t("profile.becomeSeller")}
-            </ThemedText>
-          </View>
-          <Feather name="chevron-right" size={20} color={theme.iconSecondary || theme.textSecondary} />
-        </Pressable>
-
-        <View style={[styles.divider, { backgroundColor: theme.inputBorder || theme.cardBorder }]} />
-
-        {/* Seller Hub: products, orders with buyer contact, store page */}
-        <Pressable
-          testID="profile-seller-hub"
-          style={({ pressed }) => [styles.menuItem, pressed && styles.menuPressed]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            menuNav("SellerApp" as any);
-          }}
-        >
-          <View style={styles.menuLeft}>
-            <Feather name="briefcase" size={20} color={theme.iconDefault || theme.text} />
-            <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
-              {language === "bn" ? "সেলার হাব" : "Seller Hub"}
-            </ThemedText>
-          </View>
-          <Feather name="chevron-right" size={20} color={theme.iconSecondary || theme.textSecondary} />
-        </Pressable>
-
-        {isSuperAdmin ? (
-          <>
-            <View style={[styles.divider, { backgroundColor: theme.inputBorder || theme.cardBorder }]} />
-            <Pressable
-              testID="profile-admin-dashboard"
-              style={({ pressed }) => [styles.menuItem, pressed && styles.menuPressed]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                menuNav("AdminApp");
-              }}
-            >
-              <View style={styles.menuLeft}>
-                <Feather name="shield" size={20} color={theme.iconDefault || theme.text} />
-                <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
-                  {language === "bn" ? "অ্যাডমিন ড্যাশবোর্ড" : "Admin dashboard"}
-                </ThemedText>
-              </View>
-              <Feather name="chevron-right" size={20} color={theme.iconSecondary || theme.textSecondary} />
-            </Pressable>
-          </>
-        ) : null}
-
-        <View style={[styles.divider, { backgroundColor: theme.inputBorder || theme.cardBorder }]} />
-
-        {/* Delivery Address */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.menuItem,
-            pressed && styles.menuPressed,
-          ]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            menuNav("AddressManagement" as any);
-          }}
-        >
-          <View style={styles.menuLeft}>
-            <Feather name="map-pin" size={20} color={theme.iconDefault || theme.text} />
-            <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
-              {t("profile.deliveryAddress")}
-            </ThemedText>
-          </View>
-          <Feather name="chevron-right" size={20} color={theme.iconSecondary || theme.textSecondary} />
-        </Pressable>
-
-        <View style={[styles.divider, { backgroundColor: theme.inputBorder || theme.cardBorder }]} />
-
-        {/* Community Switcher as menu item */}
-        <Pressable 
-          style={({ pressed }) => [
-            styles.menuItem, 
-            styles.menuLastItem,
-            pressed && styles.menuPressed,
-          ]}
-          onPress={() => communitySwitcherRef.current?.openModal()}
-        >
-          <View style={styles.menuLeft}>
-            <Feather name="users" size={20} color={theme.iconDefault || theme.text} />
-            <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
-              {t("community.title")}
-            </ThemedText>
-          </View>
-          <View style={styles.communitySwitcherInline}>
-            <CommunitySwitcher ref={communitySwitcherRef} compact />
-          </View>
-        </Pressable>
-      </View>
-
-      <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary, marginTop: Spacing.md }]}>
-        {t("profile.accountSection")}
-      </ThemedText>
-      <View style={[styles.menuSection, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        {MENU_ITEMS.map((item, index) => (
-          <React.Fragment key={item.id}>
-            {item.id === "saved-posts" ? (
-              <>
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.menuItem,
-                    pressed && styles.menuPressed,
-                  ]}
-                  onPress={toggleSavedPosts}
-                >
-                  <View style={styles.menuLeft}>
-                    <AppIcon name={item.icon} size={20} color={theme.iconDefault || theme.text} />
-                    <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
-                      {t(item.labelKey)}
-                    </ThemedText>
-                  </View>
-                  <View style={styles.savedPostsMenuRight}>
-                    <View style={[styles.savedPostsCountBadge, { backgroundColor: theme.primary }]}>
-                      <ThemedText style={styles.savedPostsCountText}>
-                        {savedPosts.length}
-                      </ThemedText>
-                    </View>
-                    <Animated.View style={chevronAnimatedStyle}>
-                      <Feather name="chevron-down" size={20} color={theme.iconSecondary || theme.textSecondary} />
-                    </Animated.View>
-                  </View>
-                </Pressable>
-                {savedPostsExpanded ? (
-                  <View style={styles.savedPostsList}>
-                    {savedPosts.length === 0 ? <EmptyState icon="inbox" title="এখনও কিছু নেই" message="নতুন তথ্য যোগ হলে এখানে দেখা যাবে।" /> : null}
-                    {savedPosts.map((post) => (
-                      <View 
-                        key={post.id} 
-                        style={[styles.savedPostItem, { backgroundColor: theme.backgroundRoot }]}
-                      >
-                        {post.image ? (
-                          <Image source={{ uri: post.image }} style={styles.savedPostImage} contentFit="cover" />
-                        ) : null}
-                        <View style={[styles.savedPostContent, !post.image && { flex: 1 }]}>
-                          <View style={styles.savedPostAuthorRow}>
-                            <View style={[styles.savedPostAuthorAvatar, { backgroundColor: "#D8FFF2" }]}>
-                              <ThemedText style={styles.savedPostAuthorInitials}>
-                                {post.author.initials}
-                              </ThemedText>
-                            </View>
-                            <ThemedText style={[styles.savedPostAuthorName, { color: theme.text }]}>
-                              {post.author.name}
-                            </ThemedText>
-                          </View>
-                          <ThemedText style={[styles.savedPostText, { color: theme.text }]} numberOfLines={2}>
-                            {post.content}
-                          </ThemedText>
-                        </View>
-                        <View style={styles.savedPostActions}>
-                          <Pressable 
-                            style={[styles.savedPostActionBtn, { backgroundColor: "#E0E7FF" }]}
-                            onPress={() => handleViewPost(post)}
-                          >
-                            <Feather name="eye" size={18} color="#3D38D0" />
-                          </Pressable>
-                          <Pressable 
-                            style={[styles.savedPostActionBtn, { backgroundColor: "#FFE4E6" }]}
-                            onPress={() => handleRemoveSavedPost(post.id)}
-                          >
-                            <Feather name="bookmark" size={18} color="#F43F5E" />
-                          </Pressable>
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                ) : null}
-              </>
-            ) : (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.menuItem,
-                  pressed && styles.menuPressed,
-                  index === 0 && styles.menuFirstItem,
-                  index === MENU_ITEMS.length - 1 && styles.menuLastItem,
-                ]}
-                onPress={() => handleMenuPress(item)}
-              >
-                <View style={styles.menuLeft}>
-                  <AppIcon name={item.icon} size={20} color={theme.iconDefault || theme.text} />
-                  <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
-                    {t(item.labelKey)}
-                  </ThemedText>
-                </View>
-                <Feather name="chevron-right" size={20} color={theme.iconSecondary || theme.textSecondary} />
-              </Pressable>
-            )}
-            {index < MENU_ITEMS.length - 1 ? (
-              <View style={[styles.divider, { backgroundColor: theme.inputBorder || theme.cardBorder }]} />
-            ) : null}
-          </React.Fragment>
-        ))}
-      </View>
-
-      <ThemedText style={[styles.sectionTitle, { color: theme.textSecondary, marginTop: Spacing.lg }]}>
-        {t("profile.featuresSection")}
-      </ThemedText>
-      <View style={[styles.menuSection, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        {FEATURE_MENU_ITEMS.map((item, index) => (
-          <React.Fragment key={item.id}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.menuItem,
-                pressed && styles.menuPressed,
-                index === 0 && styles.menuFirstItem,
-                index === FEATURE_MENU_ITEMS.length - 1 && styles.menuLastItem,
-              ]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                menuNav(item.screen as any);
-              }}
-            >
-              <View style={styles.menuLeft}>
-                <AppIcon name={item.icon} size={20} color={theme.iconDefault || theme.text} />
-                <ThemedText style={[styles.menuLabel, { color: theme.text }]}>
-                  {t(item.labelKey)}
-                </ThemedText>
-              </View>
-              <Feather name="chevron-right" size={20} color={theme.iconSecondary || theme.textSecondary} />
-            </Pressable>
-            {index < FEATURE_MENU_ITEMS.length - 1 ? (
-              <View style={[styles.divider, { backgroundColor: theme.inputBorder || theme.cardBorder }]} />
-            ) : null}
-          </React.Fragment>
-        ))}
-      </View>
-
-      <Pressable
-        style={({ pressed }) => [
-          styles.logoutButton,
-          { backgroundColor: theme.card, borderColor: theme.cardBorder },
-          pressed && styles.buttonPressed,
-        ]}
-        onPress={handleLogout}
-      >
-        <Feather name="log-out" size={18} color="#DA2F2F" />
-        <ThemedText style={styles.logoutText}>{t("auth.signOut")}</ThemedText>
-      </Pressable>
-
-      <ThemedText type="small" style={[styles.versionText, { color: theme.textSecondary }]}>
-        {t("profile.version")} 1.0.0
-      </ThemedText>
-      </View>
-      </ProfileSheet>
     </ScrollView>
   );
 }

@@ -18,6 +18,8 @@ import PostDetailScreen from "@/screens/PostDetailScreen";
 import ChatScreen from "@/screens/ChatScreen";
 import RfqScreen from "@/screens/RfqScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
+import ProfileOptionsScreen from "@/screens/ProfileOptionsScreen";
+import EditProfileScreen from "@/screens/EditProfileScreen";
 import ApplicationDetailScreen from "@/screens/ApplicationDetailScreen";
 import ApplicationsListScreen from "@/screens/ApplicationsListScreen";
 import ProductDetailScreenBase from "@/screens/ProductDetailScreen";
@@ -221,6 +223,8 @@ export type RootStackParamList = {
   Chat: { conversationId: string; userName: string; userInitials: string; userAvatar?: string; isWelfareMember?: boolean; draft?: string };
   Rfq: undefined;
   Settings: { openEditProfile?: boolean } | undefined;
+  ProfileOptions: undefined;
+  EditProfile: undefined;
   ProductDetail: { product: Product };
   Cart: undefined;
   Checkout: undefined;
@@ -495,6 +499,22 @@ export default function RootStackNavigator() {
             component={RfqScreen}
             options={{
               headerTitle: tr("RFQ"),
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="ProfileOptions"
+            component={ProfileOptionsScreen}
+            options={{
+              headerTitle: tr("Profile options"),
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="EditProfile"
+            component={EditProfileScreen}
+            options={{
+              headerTitle: tr("Edit profile"),
               headerBackTitle: "Back",
             }}
           />

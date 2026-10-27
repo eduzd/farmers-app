@@ -146,13 +146,16 @@ async def main():
                         check(f"{tag} own: three-dot in title bar", await visible(pg, "profile-more-button"))
                         await tid(pg, "profile-more-button").first.click()
                         await pg.wait_for_timeout(900)
-                        sheet_ok = await visible(pg, "profile-options-sheet")
+                        page_ok = await visible(pg, "profile-options-page")
                         has_opts = await pg.get_by_text("Settings" if lang == "en" else "সেটিংস").count() > 0
-                        check(f"{tag} own: three-dot opens options sheet", sheet_ok and has_opts)
-                        if sheet_ok:
-                            await tid(pg, "profile-options-sheet-close").first.click()
-                            await pg.wait_for_timeout(700)
-                        check(f"{tag} own: sheet closes", not await visible(pg, "profile-options-sheet"))
+                        check(f"{tag} own: three-dot opens the full Profile options page", page_ok and has_opts and not await visible(pg, "profile-options-sheet"))
+                        if page_ok:
+                            backs = pg.locator('[aria-label="Go back"]')
+                            for i in range(await backs.count() - 1, -1, -1):
+                                if await backs.nth(i).is_visible():
+                                    await backs.nth(i).click(); break
+                            await pg.wait_for_timeout(1200)
+                        check(f"{tag} own: back returns to the profile", not await visible(pg, "profile-options-page") and await visible(pg, "profile-edit-button"))
                         await tid(pg, "profile-tab-about").first.click()
                         await pg.wait_for_timeout(500)
                         check(f"{tag} own: about tab", await visible(pg, "profile-about"))

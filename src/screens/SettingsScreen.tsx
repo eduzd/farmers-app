@@ -1,26 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, Modal, Alert, ActivityIndicator, Platform } from "react-native";
-import { TextInput } from "@/components/MayaText";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { View, StyleSheet, ScrollView, Pressable, Modal } from "react-native";
 import { CustomSwitch } from "@/components/CustomSwitch";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Feather } from "@/components/icons/Feather";
-import { PROFILE_BADGES } from "@/constants/profileBadges";
-import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { UserAvatar } from "@/components/UserAvatar";
-import { AvatarOption, AVATAR_OPTIONS, NotionFace } from "@/components/AvatarPicker";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useAuthStore } from "@/lib/authStore";
-import { fetchAbout, isLocalPhoto, removeAvatar, saveAbout, saveProfileDetails, uploadAvatar } from "@/lib/profileApi";
 import { useI18n, Language } from "@/lib/i18n";
 import { useThemeStore, ThemePreference } from "@/lib/themeStore";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
@@ -75,21 +67,10 @@ export default function SettingsScreen() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
-  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   // Saved on this phone and sent to the server (Android pushes use a no-vibration
   // channel when vibration is off). See src/lib/notificationService.ts.
   const [notifPrefs, setNotifPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS);
 
-  const [editName, setEditName] = useState(user?.name || "");
-  const [editUsername, setEditUsername] = useState(user?.username || "");
-  const [editPhone, setEditPhone] = useState(user?.phone || "");
-  const [editLocation, setEditLocation] = useState(user?.location || "");
-  const [editBio, setEditBio] = useState(user?.bio || "");
-  const [editCategory, setEditCategory] = useState(user?.farmingCategory || "");
-  const [editAvatar, setEditAvatar] = useState(user?.avatar);
-  const [editAvatarId, setEditAvatarId] = useState(user?.avatarId);
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-  const [savingProfile, setSavingProfile] = useState(false);
   const token = useAuthStore((s) => s.token);
   const route = useRoute<any>();
 
@@ -108,31 +89,17 @@ export default function SettingsScreen() {
     void setNotificationPrefs(patch, token).then(({ prefs }) => setNotifPrefs(prefs));
   };
 
+  // Edit profile is a full page of its own.
   const openEditProfile = () => {
-    setEditName(user?.name || "");
-    setEditUsername(user?.username || "");
-    setEditPhone(user?.phone || "");
-    setEditLocation(user?.location || "");
-    setEditBio(user?.bio || "");
-    setEditCategory(user?.farmingCategory || "");
-    setEditAvatar(user?.avatar);
-    setEditAvatarId(user?.avatarId);
-    setShowEditProfileModal(true);
-    // Bio and location saved on the server (e.g. from another phone) win.
-    if (token) {
-      void fetchAbout().then((a) => {
-        if (!a) return;
-        if (a.bio) setEditBio(a.bio);
-        if (a.location) setEditLocation(a.location);
-      });
-    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    navigation.navigate("EditProfile" as any);
   };
 
-  // Profile page "Edit profile" opens this form straight away.
+  // Old links to Settings with openEditProfile go straight to the Edit profile page.
   useEffect(() => {
     if (route.params?.openEditProfile) {
-      openEditProfile();
       navigation.setParams?.({ openEditProfile: undefined } as any);
+      navigation.navigate("EditProfile" as any);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [route.params?.openEditProfile]);
@@ -155,117 +122,6 @@ export default function SettingsScreen() {
     await setThemePreference(pref);
     await updateProfile({ themePreference: pref });
     setShowThemeModal(false);
-  };
-
-  const pickFrom = async (source: "camera" | "library") => {
-    if (Platform.OS !== "web") {
-      const perm = source === "camera"
-        ? await ImagePicker.requestCameraPermissionsAsync()
-        : await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (perm.status !== "granted") {
-        Alert.alert(t("settings.permissionRequired"), t("settings.photoLibraryAccess"));
-        return;
-      }
-    }
-    const opts: ImagePicker.ImagePickerOptions = {
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    };
-    const result = source === "camera"
-      ? await ImagePicker.launchCameraAsync(opts)
-      : await ImagePicker.launchImageLibraryAsync(opts);
-    if (!result.canceled && result.assets[0]) {
-      setEditAvatar(result.assets[0].uri);
-      setEditAvatarId(undefined);
-    }
-  };
-
-  const handlePickImage = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const bn = language === "bn";
-    if (Platform.OS === "web") {
-      await pickFrom("library");
-      return;
-    }
-    const buttons: any[] = [
-      { text: bn ? "ছবি তুলুন" : "Take photo", onPress: () => void pickFrom("camera") },
-      { text: bn ? "গ্যালারি থেকে" : "Choose from gallery", onPress: () => void pickFrom("library") },
-    ];
-    if (editAvatar) {
-      buttons.push({ text: bn ? "ছবি সরান" : "Remove photo", style: "destructive", onPress: () => setEditAvatar(undefined) });
-    }
-    buttons.push({ text: bn ? "বাতিল" : "Cancel", style: "cancel" });
-    Alert.alert(bn ? "প্রোফাইল ছবি" : "Profile picture", undefined, buttons);
-  };
-
-  const handleSelectAvatar = (avatar: AvatarOption) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setEditAvatarId(avatar.id);
-    setEditAvatar(undefined);
-    setShowAvatarPicker(false);
-  };
-
-  const handleSaveProfile = async () => {
-    if (!editName.trim()) {
-      Alert.alert(t("settings.required"), t("settings.pleaseEnterName"));
-      return;
-    }
-
-    if (savingProfile) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-    // Signed in: save to the server first, so the photo and details show for everyone.
-    let avatarToSave = editAvatar;
-    if (token) {
-      setSavingProfile(true);
-      try {
-        if (editAvatar && isLocalPhoto(editAvatar)) {
-          avatarToSave = await uploadAvatar(editAvatar);
-        } else if (!editAvatar && user?.avatar && !isLocalPhoto(user.avatar)) {
-          await removeAvatar();
-        }
-        await saveProfileDetails({
-          name: editName.trim(),
-          phone: editPhone.trim() || undefined,
-          farmingCategory: editCategory || undefined,
-        });
-        await saveAbout({ bio: editBio.trim(), location: editLocation.trim() });
-      } catch (e: any) {
-        setSavingProfile(false);
-        Alert.alert(language === "bn" ? "সেভ হয়নি" : "Couldn't save", e?.message || "Try again.");
-        return;
-      }
-      setSavingProfile(false);
-    }
-
-    const selectedAvatarData = editAvatarId ? AVATAR_OPTIONS.find(a => a.id === editAvatarId) : null;
-
-    const initials = selectedAvatarData 
-      ? selectedAvatarData.initials 
-      : editName
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase()
-          .substring(0, 2);
-
-    await updateProfile({
-      name: editName.trim(),
-      username: editUsername.trim() || undefined,
-      initials,
-      phone: editPhone.trim() || undefined,
-      location: editLocation.trim() || undefined,
-      bio: editBio.trim() || undefined,
-      avatar: avatarToSave,
-      avatarId: editAvatarId,
-      avatarColor: selectedAvatarData?.backgroundColor,
-      farmingCategory: editCategory || undefined,
-    });
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setShowEditProfileModal(false);
   };
 
   const handleLogout = async () => {
@@ -302,6 +158,7 @@ export default function SettingsScreen() {
           <Pressable
             style={styles.settingItem}
             onPress={openEditProfile}
+            testID="settings-edit-profile"
           >
             <View style={styles.settingLeft}>
               <Feather name="user" size={20} color={theme.iconDefault || theme.text} />
@@ -600,218 +457,6 @@ export default function SettingsScreen() {
         </Pressable>
       </Modal>
 
-      <Modal
-        visible={showEditProfileModal}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowEditProfileModal(false)}
-      >
-        <KeyboardAvoidingView style={styles.editModalKeyboard} behavior="padding" keyboardVerticalOffset={0}>
-          <View style={[styles.editModalOverlay, { backgroundColor: "rgba(0,0,0,0.5)" }]}>
-            <View style={[styles.editModalContent, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-            <View style={styles.editModalHeader}>
-              <ThemedText type="h4" style={[styles.modalTitle, { color: theme.text }]}>
-                {t("settings.editProfile")}
-              </ThemedText>
-              <Pressable onPress={() => setShowEditProfileModal(false)}>
-                <Feather name="x" size={24} color={theme.text} />
-              </Pressable>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} style={styles.editModalScroll}>
-              <View style={styles.editAvatarSection}>
-                <View style={styles.currentAvatarRow}>
-                  <UserAvatar
-                    initials={editAvatarId ? AVATAR_OPTIONS.find(a => a.id === editAvatarId)?.initials || user?.initials || "U" : user?.initials || "U"}
-                    avatar={editAvatar}
-                    avatarId={editAvatarId}
-                    avatarColor={editAvatarId ? AVATAR_OPTIONS.find(a => a.id === editAvatarId)?.backgroundColor : user?.avatarColor}
-                    size="large"
-                  />
-                  <View style={styles.avatarActions}>
-                    <Pressable 
-                      style={[styles.avatarActionButton, { backgroundColor: theme.primary }]}
-                      onPress={handlePickImage}
-                    >
-                      <Feather name="camera" size={16} color={theme.buttonText} />
-                      <ThemedText style={styles.avatarActionText}>{language === "bn" ? "ছবি আপলোড" : "Upload Photo"}</ThemedText>
-                    </Pressable>
-                    <Pressable 
-                      style={[styles.avatarActionButton, { backgroundColor: theme.backgroundDefault, borderWidth: 1, borderColor: theme.inputBorder }]}
-                      onPress={() => setShowAvatarPicker(!showAvatarPicker)}
-                    >
-                      <Feather name="grid" size={16} color={theme.text} />
-                      <ThemedText style={[styles.avatarActionText, { color: theme.text }]}>{language === "bn" ? "অ্যাভাটার বাছাই" : "Choose Avatar"}</ThemedText>
-                    </Pressable>
-                  </View>
-                </View>
-
-                {showAvatarPicker ? (
-                  <View style={styles.avatarPickerSection}>
-                    <ThemedText type="small" style={[styles.editLabel, { color: theme.text, marginBottom: Spacing.sm }]}>
-                      {language === "bn" ? "একটি অ্যাভাটার বাছাই করুন" : "Choose an Avatar"}
-                    </ThemedText>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.avatarScrollRow}>
-                      {AVATAR_OPTIONS.map((avatar) => {
-                        const isSelected = editAvatarId === avatar.id;
-                        return (
-                          <Pressable
-                            key={avatar.id}
-                            style={[
-                              styles.avatarPickerItem,
-                              isSelected && { borderColor: theme.primary, borderWidth: 3 },
-                            ]}
-                            onPress={() => handleSelectAvatar(avatar)}
-                          >
-                            <NotionFace avatar={avatar} size={52} animated={isSelected} />
-                            {isSelected ? (
-                              <View style={[styles.avatarCheckmark, { backgroundColor: theme.primary }]}>
-                                <Feather name="check" size={10} color={theme.buttonText} />
-                              </View>
-                            ) : null}
-                          </Pressable>
-                        );
-                      })}
-                    </ScrollView>
-                  </View>
-                ) : null}
-              </View>
-
-              <View style={styles.editInputContainer}>
-                <ThemedText type="small" style={[styles.editLabel, { color: theme.text }]}>
-                  {t("settings.fullName")} *
-                </ThemedText>
-                <TextInput
-                  style={[styles.editInput, { backgroundColor: theme.backgroundRoot, color: theme.text, borderColor: theme.inputBorder }]}
-                  value={editName}
-                  onChangeText={setEditName}
-                  placeholder={t("settings.enterName")}
-                  placeholderTextColor={theme.textSecondary}
-                />
-              </View>
-
-              <View style={styles.editInputContainer}>
-                <ThemedText type="small" style={[styles.editLabel, { color: theme.text }]}>
-                  {t("settings.username")}
-                </ThemedText>
-                <TextInput
-                  style={[styles.editInput, { backgroundColor: theme.backgroundRoot, color: theme.text, borderColor: theme.inputBorder }]}
-                  value={editUsername}
-                  onChangeText={(text) => setEditUsername(text.replace(/\s/g, "").toLowerCase())}
-                  placeholder={t("settings.enterUsername")}
-                  placeholderTextColor={theme.textSecondary}
-                  autoCapitalize="none"
-                />
-              </View>
-
-              <View style={styles.editInputContainer}>
-                <ThemedText type="small" style={[styles.editLabel, { color: theme.text }]}>
-                  {t("settings.phone")}
-                </ThemedText>
-                <TextInput
-                  style={[styles.editInput, { backgroundColor: theme.backgroundRoot, color: theme.text, borderColor: theme.inputBorder }]}
-                  value={editPhone}
-                  onChangeText={setEditPhone}
-                  placeholder={t("settings.enterPhone")}
-                  placeholderTextColor={theme.textSecondary}
-                  keyboardType="phone-pad"
-                />
-              </View>
-
-              <View style={styles.editInputContainer}>
-                <ThemedText type="small" style={[styles.editLabel, { color: theme.text }]}>
-                  {t("settings.location")}
-                </ThemedText>
-                <TextInput
-                  style={[styles.editInput, { backgroundColor: theme.backgroundRoot, color: theme.text, borderColor: theme.inputBorder }]}
-                  value={editLocation}
-                  onChangeText={setEditLocation}
-                  placeholder={t("settings.enterLocation")}
-                  placeholderTextColor={theme.textSecondary}
-                />
-              </View>
-
-              <View style={styles.editInputContainer}>
-                <ThemedText type="small" style={[styles.editLabel, { color: theme.text }]}>
-                  {t("settings.farmingCategory")}
-                </ThemedText>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {FARMING_CATEGORIES.map((cat) => (
-                    <Pressable
-                      key={cat.id}
-                      style={[
-                        styles.editCategoryChip,
-                        {
-                          backgroundColor: editCategory === cat.id ? theme.primary : theme.backgroundDefault,
-                          borderColor: editCategory === cat.id ? theme.primary : theme.inputBorder,
-                        },
-                      ]}
-                      onPress={() => setEditCategory(editCategory === cat.id ? "" : cat.id)}
-                    >
-                      <MaterialCommunityIcons
-                        name={PROFILE_BADGES[cat.id].icon}
-                        size={16}
-                        color={editCategory === cat.id ? theme.buttonText : PROFILE_BADGES[cat.id].color}
-                      />
-                      <ThemedText
-                        style={[
-                          styles.editCategoryLabel,
-                          { color: editCategory === cat.id ? theme.buttonText : theme.text },
-                        ]}
-                      >
-                        {cat.label}
-                      </ThemedText>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-
-              <View style={styles.editInputContainer}>
-                <ThemedText type="small" style={[styles.editLabel, { color: theme.text }]}>
-                  {t("settings.bio")}
-                </ThemedText>
-                <TextInput
-                  style={[styles.editInput, styles.editTextArea, { backgroundColor: theme.backgroundRoot, color: theme.text, borderColor: theme.inputBorder }]}
-                  value={editBio}
-                  onChangeText={setEditBio}
-                  placeholder={t("settings.tellAboutYourself")}
-                  placeholderTextColor={theme.textSecondary}
-                  multiline
-                  numberOfLines={4}
-                  textAlignVertical="top"
-                />
-              </View>
-            </ScrollView>
-
-            <View style={styles.editModalFooter}>
-              <Pressable
-                style={[styles.cancelButton, { borderColor: theme.inputBorder }]}
-                onPress={() => setShowEditProfileModal(false)}
-              >
-                <ThemedText style={[styles.cancelButtonText, { color: theme.text }]}>
-                  {t("common.cancel")}
-                </ThemedText>
-              </Pressable>
-              <Pressable
-                style={[styles.saveButton, { backgroundColor: theme.primary, opacity: savingProfile ? 0.7 : 1 }]}
-                onPress={handleSaveProfile}
-                disabled={savingProfile}
-                testID="save-profile"
-              >
-                {savingProfile ? (
-                  <ActivityIndicator color={theme.buttonText} />
-                ) : (
-                  <ThemedText style={[styles.saveButtonText, { color: theme.buttonText }]}>
-                    {t("settings.saveProfile")}
-                  </ThemedText>
-                )}
-              </Pressable>
-            </View>
-            <ModalBottomInset avoidKeyboard={false} />
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-      </Modal>
     </ScrollView>
   );
 }
