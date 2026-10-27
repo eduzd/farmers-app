@@ -834,8 +834,11 @@ export default function ChatScreen() {
   const renderMessage = ({ item, index }: { item: Message; index: number }) => {
     const showTime = index === messages.length - 1 || messages[index + 1].isMe !== item.isMe;
     const isLastInGroup = index === 0 || messages[index - 1].isMe !== item.isMe;
+    // The list is newest-first, so index + 1 is the older message. Their photo sits beside the
+    // FIRST message of a run (where it starts), so it stays put while more messages arrive.
+    const isFirstInGroup = index === messages.length - 1 || messages[index + 1].isMe !== item.isMe;
 
-    const showAvatar = !item.isMe && isLastInGroup;
+    const showAvatar = !item.isMe && isFirstInGroup;
 
     if (item.type === "voice") {
       return (
@@ -1424,6 +1427,8 @@ const styles = StyleSheet.create({
   },
   theirMessageRow: {
     justifyContent: "flex-start",
+    // their photo lines up with the top of the message, not the bottom
+    alignItems: "flex-start",
   },
   avatarSpace: {
     width: 28,
@@ -1471,7 +1476,7 @@ const styles = StyleSheet.create({
   },
   theirBubble: {
     borderRadius: BorderRadius.xl,
-    borderBottomLeftRadius: BorderRadius.xs,
+    borderTopLeftRadius: BorderRadius.xs,
   },
   messageText: {
     fontSize: 15,
