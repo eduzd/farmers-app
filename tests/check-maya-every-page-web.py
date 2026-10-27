@@ -28,7 +28,7 @@ PAGES = [
     ("my-posts", "/", [("tab", 4), ("text", ["My Posts", "আমার পোস্ট"])], True),
     ("seller-hub", "/", [("tab", 4), ("tid", "profile-seller-hub")], True),
     ("calculate", "/", [("text", ["Calculate", "হিসাব"])], True),
-    ("bepari", "/", [("text", ["Calculate", "হিসাব"]), ("text", ["Bepari calculator", "বেপারী ক্যালকুলেটর"])], True),
+    ("bepari", "/", [("text", ["Calculate", "হিসাব"]), ("text", ["Bepari calculator", "ব্যাপারী ক্যালকুলেটর"])], True),
     ("arat", "/", [("text", ["Calculate", "হিসাব"]), ("text", ["Arat calculator", "আড়ত ক্যালকুলেটর"])], True),
     ("signed-out-start", "/", [], False),
     ("admin-home", "/admin", [], True),
