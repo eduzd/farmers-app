@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { Pressable, StyleSheet, AppState } from "react-native";
-import { Text } from "@/components/MayaText";
 import { Feather } from "@/components/icons/Feather";
 import { useNavigation } from "@react-navigation/native";
 import { create } from "zustand";
@@ -9,7 +8,10 @@ import { useI18n } from "@/lib/i18n";
 import { apiGet } from "@/lib/api";
 import { useAuthStore } from "@/lib/authStore";
 import { CountBadge } from "@/components/CountBadge";
-import { ChatIcon } from "@/components/icons/ChatIcon";
+import { HeadsetIcon } from "@/components/icons/HeadsetIcon";
+
+/** maya.net floating help button: mint square, 14px corners, thin white border, soft shadow. */
+export const MAYA_HELP_MINT = "#D8FFF2";
 
 /**
  * Support (Help chat) status shared by every Help button: how many admin replies the user
@@ -57,13 +59,21 @@ export function useSupportUnread(): [number, (n: number) => void] {
   return [unread, (n: number) => useSupportStatus.getState().set({ unread: n })];
 }
 
-/** Floating Help button (bottom right): opens the Support chat. Shows how many admin replies are unread. */
+/**
+ * Floating Help button (bottom right): opens the Support chat. Shows how many admin replies are unread.
+ * Looks like maya.net's "Need help?" button: a mint (#D8FFF2) rounded square (14px corners, 1px white
+ * border, 0 8px 16px rgba(0,0,0,.06) shadow) with a black-outline headset. Icon only, like Maya.
+ * Maya's phone size: 50x50, 24px icon, 24px from the right. The app is at most 640px wide on the web
+ * (lib/webFrame), so it never reaches Maya's 90px desktop size.
+ * `bottom` is where the button would sit right above the tab bar; Maya's 24px gap replaces the old 16px.
+ */
 export function HelpFab({ bottom = 16, testID = "help-fab" }: { bottom?: number; testID?: string }) {
-  const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const { language } = useI18n();
   const [unread] = useSupportUnread();
-  const label = language === "bn" ? "সাহায্য" : "Help";
+  const box = 50;
+  const icon = 24;
+  const inset = 24;
   return (
     <Pressable
       testID={testID}
@@ -75,20 +85,23 @@ export function HelpFab({ bottom = 16, testID = "help-fab" }: { bottom?: number;
       }
       onPress={() => navigation.navigate("SupportChat")}
       style={({ pressed }) => ({
-        position: "absolute", right: 16, bottom, height: 52, paddingHorizontal: 18, borderRadius: 26,
-        flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: theme.primary, opacity: pressed ? 0.85 : 1,
-        shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 6,
+        position: "absolute", right: inset, bottom: bottom - 16 + inset, width: box, height: box, borderRadius: 14,
+        alignItems: "center", justifyContent: "center", backgroundColor: MAYA_HELP_MINT,
+        borderWidth: 1, borderColor: "#FFFFFF", opacity: pressed ? 0.85 : 1,
+        shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 3,
+        transform: [{ scale: pressed ? 0.96 : 1 }],
       })}
     >
-      <ChatIcon size={20} color="#fff" />
-      <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>{label}</Text>
-      <CountBadge count={unread} style={{ top: -6, right: -4 }} testID={`${testID}-unread`} />
+      <HeadsetIcon size={icon} testID={`${testID}-icon`} />
+      <CountBadge count={unread} style={{ top: -6, right: -6 }} testID={`${testID}-unread`} />
     </Pressable>
   );
 }
 
 /** Header Help button (question mark): goes straight to the Support chat, with the unread reply count on it. */
-export default function HelpButton({ color, size = 40 }: { color?: string; size?: number }) {
+export default function HelpButton({ color, size = 40, header = false }: { color?: string; size?: number; header?: boolean }) {
+  // header: the title-bar look, identical to the Market bell and cart (44px circle, 1px border, 20px icon).
+  if (header) size = 44;
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const { language } = useI18n();
@@ -106,11 +119,11 @@ export default function HelpButton({ color, size = 40 }: { color?: string; size?
       hitSlop={6}
       style={({ pressed }) => ({
         width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center",
-        backgroundColor: theme.backgroundDefault, borderColor: theme.cardBorder, borderWidth: StyleSheet.hairlineWidth,
+        backgroundColor: header ? theme.card : theme.backgroundDefault, borderColor: theme.cardBorder, borderWidth: header ? 1 : StyleSheet.hairlineWidth,
         opacity: pressed ? 0.7 : 1,
       })}
     >
-      <Feather name="help-circle" size={size * 0.48} color={color || theme.iconDefault || theme.text} />
+      <Feather name="help-circle" size={header ? 20 : size * 0.48} color={color || (header ? theme.text : theme.iconDefault) || theme.text} />
       <CountBadge count={unread} style={{ top: -4, right: -6 }} testID="help-unread" />
     </Pressable>
   );

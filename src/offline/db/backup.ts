@@ -20,7 +20,7 @@ export async function exportBackup(): Promise<string> {
   }
   
   const settings = await database.getAllAsync('SELECT * FROM settings');
-  const calc_records = await database.getAllAsync('SELECT * FROM calc_records');
+  const calc_records = await database.getAllAsync('SELECT * FROM calc_records WHERE archived IS NULL OR archived != 2');
   const calc_record_versions = await database.getAllAsync('SELECT * FROM calc_record_versions');
   const ledger_transactions = await database.getAllAsync('SELECT * FROM ledger_transactions');
   const ledger_payments = await database.getAllAsync('SELECT * FROM ledger_payments');

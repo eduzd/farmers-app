@@ -5,7 +5,7 @@ import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
-import { HeaderButton } from "@react-navigation/elements";
+import { HeaderIconCircle } from "@/components/HeaderIconCircle";
 import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import * as Speech from "expo-speech";
@@ -77,15 +77,12 @@ export default function AIAssistantScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <HeaderButton
-          onPress={() => navigation.navigate("VoiceCall")}
-          pressColor={theme.primary + "20"}
-        >
-          <View style={styles.callIconContainer}>
-            <Feather name="phone" size={20} color={theme.primary} />
-            <ThemedText style={[styles.callIconText, { color: theme.primary }]}>কল</ThemedText>
-          </View>
-        </HeaderButton>
+        // Same title-bar icon button as the Market bell and cart.
+        <View style={{ marginRight: Spacing.lg }}>
+          <HeaderIconCircle onPress={() => navigation.navigate("VoiceCall")} accessibilityLabel="কল / Call" testID="ai-call-button">
+            <Feather name="phone" size={20} color={theme.text} />
+          </HeaderIconCircle>
+        </View>
       ),
     });
   }, [navigation, theme]);

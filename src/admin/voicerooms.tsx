@@ -72,8 +72,8 @@ export function VoiceRoomSettings() {
       <Card>
         <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginBottom: 10 }}>
           {L(
-            "Everyone can listen and join. This decides who sees \"Start a room\" in the Connect tab. Admins can always start rooms, and the people you pick below can start them under any rule.",
-            "সবাই শুনতে ও যোগ দিতে পারেন। এখানে ঠিক হয় কারা Connect ট্যাবে \"নতুন রুম শুরু করুন\" দেখবেন। অ্যাডমিনরা সবসময় পারেন, আর নিচে বাছাই করা মানুষরা যেকোনো নিয়মে পারেন।",
+            "Everyone can listen and join. This decides who sees the voice room button (the mic next to the filter) in the Connect tab. Admins can always start rooms, and the people you pick below can start them under any rule.",
+            "সবাই শুনতে ও যোগ দিতে পারেন। এখানে ঠিক হয় কারা Connect ট্যাবে ফিল্টারের পাশে ভয়েস রুম বাটন (মাইক) দেখবেন। অ্যাডমিনরা সবসময় পারেন, আর নিচে বাছাই করা মানুষরা যেকোনো নিয়মে পারেন।",
           )}
         </Text>
         <RadioGroup<Who>

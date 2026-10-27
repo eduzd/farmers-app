@@ -80,7 +80,8 @@ export async function getPendingRecordsCount(): Promise<number> {
   const session = currentSession();
   if (!session) return 0;
   const result = await database.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM calc_records WHERE sync_status = 'pending' AND (owner_user_id IS NULL OR owner_user_id = ?)",
+    // Deleted ones waiting for their server copy to go count too, so a sync is started for them.
+    "SELECT COUNT(*) as count FROM calc_records WHERE (sync_status = 'pending' OR archived = 2) AND (owner_user_id IS NULL OR owner_user_id = ?)",
     [session.userId]
   );
   return result?.count ?? 0;
@@ -91,9 +92,33 @@ export async function getUnsyncedRecords(userId: string): Promise<LocalCalcRecor
   const database = await getDatabase();
   if (!database) return [];
   return database.getAllAsync<LocalCalcRecord>(
-    "SELECT * FROM calc_records WHERE sync_status = 'pending' AND (owner_user_id IS NULL OR owner_user_id = ?) ORDER BY created_at ASC",
+    "SELECT * FROM calc_records WHERE sync_status = 'pending' AND (archived IS NULL OR archived != 2) AND (owner_user_id IS NULL OR owner_user_id = ?) ORDER BY created_at ASC",
     [userId]
   );
+}
+
+/**
+ * Calculations the user deleted on this device (archived = 2): delete the server copy, then the
+ * row here. Matching by the local id also catches an upload whose reply was lost. If the server
+ * can't be reached the row stays hidden here and this runs again on the next sync.
+ */
+async function purgeDeletedRecords(session: { userId: string; token: string }): Promise<void> {
+  const database = await getDatabase();
+  if (!database) return;
+  const gone = await database.getAllAsync<{ id: string; server_id?: string | null }>(
+    'SELECT id, server_id FROM calc_records WHERE archived = 2 AND (owner_user_id IS NULL OR owner_user_id = ?)',
+    [session.userId]
+  );
+  for (const row of gone) {
+    const url = new URL(`/api/calc-records/local/${encodeURIComponent(row.id)}`, getApiUrl());
+    if (row.server_id) url.searchParams.set('serverId', String(row.server_id));
+    const response = await fetch(url.toString(), {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
+    if (!response.ok) break; // signed out, server asleep or failing: try again next sync
+    await database.runAsync('DELETE FROM calc_records WHERE id = ? AND archived = 2', [row.id]);
+  }
 }
 
 export async function markRecordAsSynced(
@@ -156,6 +181,11 @@ export async function syncRecordsToServer(_userId?: string): Promise<{ success: 
   let errorCount = 0;
 
   try {
+    try {
+      await purgeDeletedRecords(session);
+    } catch {
+      // Connection dropped: the deleted ones stay hidden and go next time.
+    }
     const unsyncedRecords = await getUnsyncedRecords(session.userId);
     if (unsyncedRecords.length === 0) {
       notifySyncListeners('success');

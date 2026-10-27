@@ -10,17 +10,20 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { isLoggedIn } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import { fetchVoicePermission, fetchVoiceRooms } from "@/lib/voiceRoomApi";
+import { fetchVoiceRooms } from "@/lib/voiceRoomApi";
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-/** Connect tab: the voice rooms card. Everyone can open the rooms; only people the admin allows see "Start a room". */
+/**
+ * Connect tab: the voice rooms card. Everyone can open the rooms from it.
+ * Starting a room is no longer on this card: it's the mic icon next to the filter in the Connect title bar
+ * (only shown to people the admin allows), which opens the same New room page.
+ */
 export function VoiceRoomConnectCard() {
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
   const { language } = useI18n();
   const bn = language === "bn";
-  const [canCreate, setCanCreate] = useState(false);
   const [live, setLive] = useState<number | null>(null);
   const [upcoming, setUpcoming] = useState(0);
 
@@ -29,9 +32,6 @@ export function VoiceRoomConnectCard() {
       let alive = true;
       (async () => {
         if (!isLoggedIn()) return;
-        fetchVoicePermission()
-          .then((p) => alive && setCanCreate(!!p.canCreate))
-          .catch(() => alive && setCanCreate(false));
         fetchVoiceRooms()
           .then((r) => {
             if (!alive) return;
@@ -86,17 +86,6 @@ export function VoiceRoomConnectCard() {
         </View>
         <Feather name="chevron-right" size={18} color={theme.textSecondary} />
       </Pressable>
-      {canCreate ? (
-        <Pressable
-          onPress={() => navigation.navigate("VoiceRoomCreate")}
-          style={[styles.create, { backgroundColor: theme.primary }]}
-          accessibilityRole="button"
-          testID="connect-voice-room-create"
-        >
-          <Feather name="plus" size={16} color="#fff" />
-          <ThemedText style={styles.createText}>{bn ? "নতুন রুম শুরু করুন" : "Start a room"}</ThemedText>
-        </Pressable>
-      ) : null}
     </View>
   );
 }
@@ -109,13 +98,4 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
   dot: { width: 8, height: 8, borderRadius: 4 },
   sub: { fontSize: 13, flexShrink: 1 },
-  create: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderRadius: BorderRadius.full,
-    paddingVertical: 10,
-  },
-  createText: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });
