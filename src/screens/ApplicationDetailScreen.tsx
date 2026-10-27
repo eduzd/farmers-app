@@ -15,6 +15,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useI18n } from "@/lib/i18n";
+import { mayaPageTitleFont } from "@/constants/mayaTheme";
 import { MembershipApplication } from "@/lib/authStore";
 
 import { AppIcon } from "@/components/icons/AppIcon";
@@ -92,7 +93,7 @@ export default function ApplicationDetailScreen() {
         >
           <Feather name="arrow-left" size={24} color={theme.text} />
         </Pressable>
-        <ThemedText type="h3" style={styles.headerTitle}>
+        <ThemedText type="h3" style={[styles.headerTitle, mayaPageTitleFont(language, "stack"), { color: theme.text }]}>
           {language === "bn" ? "আবেদনের বিবরণ" : "Application Details"}
         </ThemedText>
         <View style={styles.placeholder} />
@@ -339,6 +340,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: "center",
+    lineHeight: 30,
+    fontWeight: "400",
   },
   placeholder: {
     width: 40,

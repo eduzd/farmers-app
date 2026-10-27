@@ -11,6 +11,7 @@ import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
+import { mayaPageTitleFont } from "@/constants/mayaTheme";
 import { apiGet } from "@/lib/api";
 import { sellRule, perUnitText } from "@shared/selling";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -108,7 +109,7 @@ export default function ShopPageScreen() {
       <Pressable testID="shop-back" hitSlop={10} onPress={() => (navigation.canGoBack() ? navigation.goBack() : null)} style={styles.backBtn}>
         <AppIcon name="arrow-left" size={22} color={theme.text} />
       </Pressable>
-      <ThemedText type="h4" style={{ color: theme.text, flex: 1 }} numberOfLines={1}>{title}</ThemedText>
+      <ThemedText type="h4" style={{ ...mayaPageTitleFont(bn ? "bn" : "en", "stack"), lineHeight: 30, fontWeight: "400", color: theme.text, flex: 1 }} numberOfLines={1}>{title}</ThemedText>
       {!preview && slug && shop ? (
         <Pressable testID="shop-share" hitSlop={10} onPress={shareShop} style={styles.backBtn} accessibilityLabel={bn ? "দোকানের লিংক শেয়ার করুন" : "Share shop link"}>
           <AppIcon name="share-2" size={20} color={theme.text} />

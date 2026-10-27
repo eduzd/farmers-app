@@ -9,7 +9,7 @@ import { FontFamily } from "@/constants/theme";
 import CommunityScreen from "@/screens/CommunityScreen";
 import MarketScreenBase from "@/screens/MarketScreen";
 import { withMayaScope } from "@/contexts/ThemeScope";
-import { MayaColors, MayaFontFamily } from "@/constants/mayaTheme";
+import { MayaColors, mayaPageTitleFont } from "@/constants/mayaTheme";
 
 // The Market tab uses the Maya-style marketplace theme; the tab bar and other tabs do not.
 const MarketScreen = withMayaScope(MarketScreenBase);
@@ -55,7 +55,8 @@ export default function MainTabNavigator() {
     headerTransparent: false,
     headerShadowVisible: false,
     headerTintColor: theme.text,
-    headerTitleStyle: { fontFamily: FontFamily.bold, fontSize: 20, color: theme.text },
+    // Every tab title uses the Market title style (Anton / Hind Siliguri Bold).
+    headerTitleStyle: { ...mayaPageTitleFont(language, "tab"), color: theme.text },
     headerStyle: {
       backgroundColor: theme.backgroundRoot,
     },
@@ -134,10 +135,7 @@ export default function MainTabNavigator() {
           headerStyle: { backgroundColor: MayaColors[isDark ? "dark" : "light"].backgroundRoot },
           headerTintColor: MayaColors[isDark ? "dark" : "light"].text,
           headerTitleStyle: {
-            // Anton has no Bengali glyphs, so the Bangla title uses Hind Siliguri Bold.
-            fontFamily: language === "bn" ? "HindSiliguri_700Bold" : MayaFontFamily.display,
-            fontSize: language === "bn" ? 22 : 24,
-            letterSpacing: 0.2,
+            ...mayaPageTitleFont(language, "tab"),
             color: MayaColors[isDark ? "dark" : "light"].text,
           },
           tabBarIcon: renderIcon("shopping-bag"),
