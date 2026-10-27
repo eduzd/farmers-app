@@ -4,7 +4,8 @@
 
 - A plain farmer (not allowed to start rooms) sees the filter icon and no voice room icon.
 - Someone allowed (admin, then a farmer the admin picks) sees a mic icon just left of the filter, same row, same size.
-- The old "Start a room" button under the Voice rooms card is gone (card stays and still opens Voice rooms).
+- The old "Start a room" button under the Voice rooms card is gone (card stays and still opens Voice rooms),
+  and the Voice rooms page has no "New room" button either.
 - Tapping the icon opens the New room page.
 - From there the room starts like before (Let's start! -> the room).
 - The filter icon still opens the filter sheet. English + Bangla, phone widths and a computer width.
@@ -189,6 +190,10 @@ const { PGlite } = require('@electric-sql/pglite');
             await hpg.get_by_test_id("connect-voice-rooms-open").first.click()
             await hpg.wait_for_timeout(1500)
             check(key, await route(hpg) == "VoiceRooms", "tapping the card still opens Voice rooms")
+            await hpg.wait_for_timeout(1000)
+            check(key, await hpg.get_by_test_id("voice-room-new").count() == 0, "no New room button inside the Voice rooms page (admin)")
+            check(key, await width(hpg) <= w, "Voice rooms page fits the screen")
+            await hpg.screenshot(path=f"{SHOTS}/{key}-2c-admin-voice-rooms-page.png")
             await hpg.evaluate("()=>window.__nav.goBack()")
             await hpg.wait_for_timeout(1500)
             ref_route, ref_title = "VoiceRoomCreate", ("\u09a8\u09a4\u09c1\u09a8 \u09b0\u09c1\u09ae" if lang == "bn" else "New room")

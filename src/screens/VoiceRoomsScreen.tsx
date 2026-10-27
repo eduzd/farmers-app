@@ -18,7 +18,6 @@ import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
 import {
   VOICE_CATEGORIES,
-  fetchVoicePermission,
   fetchVoiceRooms,
   formatRoomTime,
   startScheduledVoiceRoom,
@@ -43,7 +42,7 @@ export default function VoiceRoomsScreen() {
     queryFn: () => fetchVoiceRooms(category),
     refetchInterval: 15000,
   });
-  const perm = useQuery({ queryKey: ["voice-rooms-permission"], queryFn: fetchVoicePermission, staleTime: 60000 });
+  // Starting a room lives only on the mic icon next to the filter in Connect, not on this page.
 
   useFocusEffect(
     useCallback(() => {
@@ -187,7 +186,7 @@ export default function VoiceRoomsScreen() {
   return (
     <ThemedView style={styles.container}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom + 110 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
         refreshControl={<RefreshControl refreshing={rooms.isRefetching} onRefresh={() => void rooms.refetch()} tintColor={theme.primary} />}
       >
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
@@ -231,17 +230,6 @@ export default function VoiceRoomsScreen() {
         ) : null}
       </ScrollView>
 
-      {perm.data?.canCreate ? (
-        <Pressable
-          onPress={() => navigation.navigate("VoiceRoomCreate")}
-          style={({ pressed }) => [styles.fab, { backgroundColor: theme.primary, bottom: insets.bottom + 24 }, pressed && { transform: [{ scale: 0.97 }] }]}
-          accessibilityLabel={bn ? "নতুন রুম" : "New room"}
-          testID="voice-room-new"
-        >
-          <Feather name="plus" size={20} color="#fff" />
-          <ThemedText style={styles.fabText}>{bn ? "নতুন রুম" : "New room"}</ThemedText>
-        </Pressable>
-      ) : null}
     </ThemedView>
   );
 }
@@ -276,6 +264,4 @@ const styles = StyleSheet.create({
   smallBtnText: { color: "#fff", fontSize: 12, fontWeight: "700" },
   empty: { borderRadius: BorderRadius.lg, borderWidth: 1, padding: Spacing.xl, alignItems: "center", gap: Spacing.sm },
   emptyText: { fontSize: 14, textAlign: "center" },
-  fab: { position: "absolute", right: 20, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 20, height: 50, borderRadius: 25, elevation: 6, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
-  fabText: { color: "#fff", fontWeight: "700", fontSize: 15 },
 });
