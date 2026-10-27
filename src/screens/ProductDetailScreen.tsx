@@ -438,7 +438,7 @@ export default function ProductDetailScreen() {
                   <ThemedText style={[styles.currency, { color: theme.primary }]}>
                     {product.currency}
                   </ThemedText>
-                  <ThemedText style={[styles.price, { color: theme.primary }]}>
+                  <ThemedText style={[styles.price, { color: theme.accent }]}>
                     {product.price}
                   </ThemedText>
                   <ThemedText testID="product-per-unit" style={[styles.unit, { color: theme.textSecondary }]}>
@@ -708,7 +708,7 @@ export default function ProductDetailScreen() {
                 >
                   <Image source={{ uri: p.image }} style={styles.relatedImage} contentFit="cover" />
                   <ThemedText style={[styles.relatedName, { color: theme.text }]} numberOfLines={1}>{p.name}</ThemedText>
-                  <ThemedText style={[styles.relatedPrice, { color: theme.primary }]} numberOfLines={1}>
+                  <ThemedText style={[styles.relatedPrice, { color: theme.accent }]} numberOfLines={1}>
                     {p.currency || "৳"}{p.price}{p.unit ? `/${p.unit}` : ""}
                   </ThemedText>
                 </Pressable>

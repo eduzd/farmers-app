@@ -334,7 +334,7 @@ export default function MarketScreen() {
           >
             <AppIcon name="shopping-cart" size={20} color={theme.text} />
             {cartCount > 0 ? (
-              <View style={[styles.cartBadge, { backgroundColor: theme.primary }]}>
+              <View style={[styles.cartBadge, { backgroundColor: theme.accent }]}>
                 <ThemedText style={styles.cartBadgeText}>{cartCount > 9 ? "9+" : cartCount}</ThemedText>
               </View>
             ) : null}
@@ -404,7 +404,7 @@ export default function MarketScreen() {
           {item.name}
         </ThemedText>
         <View style={styles.priceRow}>
-          <ThemedText type="h4" style={[styles.productPrice, { color: theme.primary }]}>
+          <ThemedText type="h4" style={[styles.productPrice, { color: theme.accent }]}>
             {item.currency}{item.price}
           </ThemedText>
           <ThemedText style={[styles.unitText, { color: theme.textSecondary }]}>
@@ -421,7 +421,7 @@ export default function MarketScreen() {
           }}
         >
           <LinearGradient
-            colors={[theme.primary, theme.primary + "CC"]}
+            colors={[theme.gradientStart, theme.gradientEnd]}
             style={styles.sellerAvatar}
           >
             <ThemedText style={styles.sellerInitials}>
@@ -462,7 +462,8 @@ export default function MarketScreen() {
           styles.searchSection,
           {
             paddingTop: Spacing.md,
-            backgroundColor: theme.backgroundRoot,
+            // Maya's pale blue band behind search and categories.
+            backgroundColor: theme.backgroundSecondary,
           },
         ]}
       >
@@ -572,7 +573,7 @@ export default function MarketScreen() {
               <AppIcon 
                 name={item.icon as any} 
                 size={14} 
-                color={selectedCategory === item.id ? "#FFFFFF" : theme.text} 
+                color={selectedCategory === item.id ? "#FFFFFF" : theme.primary} 
               />
               <ThemedText
                 style={[
@@ -630,7 +631,7 @@ export default function MarketScreen() {
                     >
                       <Image source={{ uri: p.image }} style={styles.recentImage} contentFit="cover" />
                       <ThemedText style={[styles.recentName, { color: theme.text }]} numberOfLines={1}>{p.name}</ThemedText>
-                      <ThemedText style={[styles.recentPrice, { color: theme.primary }]} numberOfLines={1}>
+                      <ThemedText style={[styles.recentPrice, { color: theme.accent }]} numberOfLines={1}>
                         {p.currency || "৳"}{p.price}{p.unit ? `/${p.unit}` : ""}
                       </ThemedText>
                     </Pressable>

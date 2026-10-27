@@ -71,7 +71,7 @@ export default function CartScreen() {
           {totalContentText(cartRule(item), item.quantity, bn) ? ` · ${totalContentText(cartRule(item), item.quantity, bn)}` : ""}
         </ThemedText>
         <View style={styles.itemFooter}>
-          <ThemedText style={[styles.itemPrice, { color: theme.primary }]}>
+          <ThemedText style={[styles.itemPrice, { color: theme.accent }]}>
             {item.currency}{item.price} {perUnitText(cartRule(item), bn)}
           </ThemedText>
           <View style={[styles.quantityControl, { backgroundColor: theme.primarySoft }]}>
