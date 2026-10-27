@@ -2,19 +2,8 @@
 // emoji reactions, the room's text chat, and mic / hand / leave controls.
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { askConfirm } from "@/components/ConfirmSheet";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Modal,
-  ActivityIndicator,
-  Alert,
-  Platform,
-  KeyboardAvoidingView,
-  useWindowDimensions,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Modal, ActivityIndicator, Alert, Platform, KeyboardAvoidingView, useWindowDimensions } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Feather } from "@/components/icons/Feather";

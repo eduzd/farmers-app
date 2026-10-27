@@ -1,16 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useState } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-  ScrollView,
-  Modal,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, ScrollView, Modal, ActivityIndicator, RefreshControl, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";

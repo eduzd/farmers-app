@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { MayaRadius } from "@/constants/mayaTheme";
-import { View, StyleSheet, TextInput, Pressable, Modal, ActivityIndicator, Alert, ScrollView, Image } from "react-native";
+import { View, StyleSheet, Pressable, Modal, ActivityIndicator, Alert, ScrollView, Image } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, TextInput, Linking } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Linking } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";

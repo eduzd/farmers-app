@@ -1,20 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-  RefreshControl,
-  Modal,
-  ScrollView,
-  Platform,
-  Share,
-  Alert,
-  useWindowDimensions,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, RefreshControl, Modal, ScrollView, Platform, Share, Alert, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated from "react-native-reanimated";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";

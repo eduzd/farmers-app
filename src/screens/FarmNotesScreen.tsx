@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-  Modal,
-  Alert,
-  Dimensions,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, Modal, Alert, Dimensions, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";

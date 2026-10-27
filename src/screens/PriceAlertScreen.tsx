@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CatalogFormModal } from "@/components/CatalogFormModal";
-import { View, StyleSheet, ScrollView, Pressable, TextInput } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { CustomSwitch } from "@/components/CustomSwitch";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@/components/icons/Feather";

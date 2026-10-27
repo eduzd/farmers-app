@@ -1,7 +1,8 @@
 // Web keeps this calculator as it was; the phone app uses BepariCalculatorScreen.tsx (save / edit / saved list).
 // Both share the 3-second pause after typing (hooks/useRowAutoAdvance).
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
-import { View, StyleSheet, Pressable, Modal, TextInput, Text, ScrollView, FlatList, Alert, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, StyleSheet, Pressable, Modal, ScrollView, FlatList, Alert, Platform, KeyboardAvoidingView } from 'react-native';
+import { TextInput, Text } from '@/components/MayaText';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderButton, useHeaderHeight } from '@react-navigation/elements';

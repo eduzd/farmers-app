@@ -1,14 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  Pressable,
-  Platform,
-  Alert,
-  Share,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, Platform, Alert, Share } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { useSharedValue, withTiming } from "react-native-reanimated";

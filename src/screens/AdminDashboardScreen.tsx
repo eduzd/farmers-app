@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-  RefreshControl,
-  FlatList,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, ActivityIndicator, RefreshControl, FlatList } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Switch } from "@/admin/ui";
 import { Feather } from "@/components/icons/Feather";

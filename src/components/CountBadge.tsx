@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import { View, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import { Text } from "@/components/MayaText";
 import { useTheme } from "@/hooks/useTheme";
 import { badgeText } from "@/lib/liveStatus";
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
-import { View, StyleSheet, Pressable, Modal, TextInput, Text, ScrollView, FlatList, Alert, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, StyleSheet, Pressable, Modal, ScrollView, FlatList, Alert, Platform, KeyboardAvoidingView } from 'react-native';
+import { TextInput, Text } from '@/components/MayaText';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderButton, useHeaderHeight } from '@react-navigation/elements';

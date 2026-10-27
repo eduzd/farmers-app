@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Modal, Pressable, TextInput, Alert, ActivityIndicator, useWindowDimensions } from "react-native";
+import { View, StyleSheet, Modal, Pressable, Alert, ActivityIndicator, useWindowDimensions } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import { useReanimatedKeyboardAnimation } from "react-native-keyboard-controller";
 import { Feather } from "@/components/icons/Feather";

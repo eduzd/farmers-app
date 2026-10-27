@@ -1,15 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Modal,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Modal, Alert, ActivityIndicator, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { CustomSwitch } from "@/components/CustomSwitch";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

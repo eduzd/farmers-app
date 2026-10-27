@@ -1,13 +1,7 @@
 import React, { useState } from "react";
 import { reloadAppAsync } from "expo";
-import {
-  StyleSheet,
-  View,
-  Pressable,
-  ScrollView,
-  Text,
-  Modal,
-} from "react-native";
+import { StyleSheet, View, Pressable, ScrollView, Modal } from "react-native";
+import { Text } from "@/components/MayaText";
 import { Feather } from "@/components/icons/Feather";
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";

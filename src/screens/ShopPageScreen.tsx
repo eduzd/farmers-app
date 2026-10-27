@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AppIcon } from "@/components/icons/AppIcon";
-import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, RefreshControl, TextInput, Share, Platform } from "react-native";
+import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, RefreshControl, Share, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";

@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Share,
-  Alert,
-  TextInput,
-  FlatList,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Share, Alert, FlatList } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";

@@ -1,22 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  Pressable,
-  Alert,
-  Platform,
-  Modal,
-  NativeSyntheticEvent,
-  TextInputContentSizeChangeEventData,
-  ActionSheetIOS,
-  ActivityIndicator,
-  AppState,
-  Linking,
-  Animated as RNAnimated,
-  Text,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, Alert, Platform, Modal, NativeSyntheticEvent, TextInputContentSizeChangeEventData, ActionSheetIOS, ActivityIndicator, AppState, Linking, Animated as RNAnimated } from "react-native";
+import { TextInput, Text } from "@/components/MayaText";
 import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import Animated from "react-native-reanimated";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";

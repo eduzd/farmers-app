@@ -1,13 +1,6 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Modal,
-  Dimensions,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Modal, Dimensions } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Feather } from "@/components/icons/Feather";

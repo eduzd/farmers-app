@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-  Animated,
-  Dimensions,
-} from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Animated, Dimensions } from 'react-native';
+import { TextInput } from '@/components/MayaText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@/components/icons/Feather';

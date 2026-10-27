@@ -1,5 +1,6 @@
 import React from "react";
-import { View, TextInput, StyleSheet, Pressable } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";

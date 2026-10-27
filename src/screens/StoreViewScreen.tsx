@@ -1,18 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { MayaRadius } from "@/constants/mayaTheme";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  FlatList,
-  ActivityIndicator,
-  Dimensions,
-  Animated,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, FlatList, ActivityIndicator, Dimensions, Animated, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";

@@ -1,13 +1,6 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-  Modal,
-  ScrollView,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, Modal, ScrollView } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";

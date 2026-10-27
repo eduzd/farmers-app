@@ -1,20 +1,8 @@
 import { useMarketCategories, categoryLabel } from "@/lib/marketCategories";
 import { MayaRadius } from "@/constants/mayaTheme";
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Dimensions,
-  Animated,
-  FlatList,
-  Platform,
-  Share,
-  Linking,
-  Alert,
-  TextInput,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, Animated, FlatList, Platform, Share, Linking, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated from "react-native-reanimated";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";

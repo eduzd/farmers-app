@@ -1,5 +1,6 @@
 import React from "react";
-import { Pressable, StyleSheet, View, ViewStyle, StyleProp, TextInput, TextInputProps } from "react-native";
+import { Pressable, StyleSheet, View, ViewStyle, StyleProp, TextInputProps } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 

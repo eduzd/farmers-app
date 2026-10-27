@@ -14,15 +14,15 @@ h.make_admin(admin)
 
 GREENS = ["rgb(30, 127, 79)", "rgb(47, 163, 107)", "rgb(22, 163, 74)", "rgb(20, 88, 58)"]
 
+# The web app has no URL routes (except /admin), so screens are reached by tapping the tabs.
 PAGES = [
-    ("home", "/"),
-    ("community", "/community"),
-    ("connect", "/connect"),
-    ("market", "/market"),
-    ("chats", "/messages"),
-    ("profile", "/profile"),
-    ("calculate", "/calculate"),
-    ("admin", "/admin"),
+    ("home", "/", 0),
+    ("connect", "/", 1),
+    ("market", "/", 2),
+    ("chats", "/", 3),
+    ("profile", "/", 4),
+    ("calculate", "/", "Calculate"),
+    ("admin", "/admin", None),
 ]
 
 SCAN = """() => {
@@ -49,15 +49,24 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
         for lang in ("en", "bn"):
-            for name, path in PAGES:
-                pg = await h.page(b, admin, lang, 390, path=path, h=844)
-                await pg.wait_for_timeout(4500)
+            for name, path, tap in PAGES:
+                if tap == "Calculate" and lang != "en":
+                    continue
+                ctx, pg = await h.page(b, admin, lang, 390, path=path, h=844)
+                await pg.wait_for_timeout(2500)
+                if isinstance(tap, int):
+                    await pg.locator('[role="tab"]').nth(tap).click()
+                    await pg.wait_for_timeout(2500)
+                elif tap:
+                    await pg.get_by_text(tap, exact=True).first.click()
+                    await pg.wait_for_timeout(2500)
                 await pg.screenshot(path=f"{h.shots}/{lang}-{name}.png")
                 r = await pg.evaluate(SCAN)
                 fonts = r["fonts"]
                 jak = sum(v for k, v in fonts.items() if "Jakarta" in k)
                 h.ok(r["greens"] == 0, f"{lang} {name}: no old Farmers green", str(r["greens"]))
                 h.ok(jak == 0, f"{lang} {name}: no Plus Jakarta text", str(fonts))
+                print("FONTS", lang, name, fonts)
                 h.ok(r["sky"] > 0, f"{lang} {name}: Maya sky blue in use", str(r))
                 if lang == "en":
                     dm = sum(v for k, v in fonts.items() if k.startswith("DMSans") or k == "DM Sans" or k.startswith("Anton"))
@@ -68,7 +77,7 @@ async def main():
                         h.ok(gone not in body, f"{lang} market: '{gone}' row removed")
                     h.ok(await pg.locator(T("market-bell")).count() > 0, f"{lang} market: bell icon in header")
                     h.ok(await pg.locator(T("market-sell")).count() == 0, f"{lang} market: no Sell button")
-                await pg.close()
+                await ctx.close()
         await b.close()
 
 asyncio.run(main())

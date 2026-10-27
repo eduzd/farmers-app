@@ -2,15 +2,8 @@ import React, { useState, useCallback } from "react";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { apiGet, isLoggedIn, timeAgo } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Modal,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Modal, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";

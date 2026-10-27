@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Modal,
-  Dimensions,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, Pressable, Modal, Dimensions, Platform } from "react-native";
+import { Text } from "@/components/MayaText";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { orderLineText } from "@shared/selling";
-import { View, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Pressable, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { useThemeStore, type ThemePreference } from "@/lib/themeStore";

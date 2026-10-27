@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Modal, View, TextInput, Pressable, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
+import { Modal, View, Pressable, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { Feather } from "@/components/icons/Feather";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";

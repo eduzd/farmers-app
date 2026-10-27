@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { askConfirm, type ConfirmTone } from "@/components/ConfirmSheet";
-import { View, Text as RNText, StyleSheet, Pressable, TextInput, ActivityIndicator, ScrollView, RefreshControl, Platform, type TextProps, type TextStyle } from "react-native";
+import { View, Text as RNText, StyleSheet, Pressable, ActivityIndicator, ScrollView, RefreshControl, Platform, type TextProps, type TextStyle } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { LinearGradient } from "expo-linear-gradient";
 import { FontFamily, BanglaFontFamily } from "@/constants/theme";
 import { CustomSwitch } from "@/components/CustomSwitch";

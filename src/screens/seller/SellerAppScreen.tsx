@@ -2,22 +2,8 @@ import { useMarketCategories, categoryLabel } from "@/lib/marketCategories";
 import { orderLineText } from "@shared/selling";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  ActivityIndicator,
-  Modal,
-  Image,
-  Switch,
-  useWindowDimensions,
-  Platform,
-  RefreshControl,
-  Linking,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Modal, Image, Switch, useWindowDimensions, Platform, RefreshControl, Linking } from "react-native";
+import { Text, TextInput } from "@/components/MayaText";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@/components/icons/Feather";

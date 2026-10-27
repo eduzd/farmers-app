@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { Text } from '@/components/MayaText';
 import { Feather } from '@/components/icons/Feather';
 import { useSyncContext } from '@/offline/providers/SyncProvider';
 import { useTheme } from '@/hooks/useTheme';

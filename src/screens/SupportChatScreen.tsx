@@ -1,18 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
-import {
-  View,
-  Pressable,
-  TextInput,
-  FlatList,
-  ScrollView,
-  Platform,
-  Alert,
-  ActivityIndicator,
-  Modal,
-  ActionSheetIOS,
-  NativeSyntheticEvent,
-  TextInputContentSizeChangeEventData,
-} from "react-native";
+import { View, Pressable, FlatList, ScrollView, Platform, Alert, ActivityIndicator, Modal, ActionSheetIOS, NativeSyntheticEvent, TextInputContentSizeChangeEventData } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import Animated from "react-native-reanimated";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Feather } from "@/components/icons/Feather";

@@ -1,7 +1,8 @@
 // Market prices board (বাজার দর): real prices admins post each day per district, with the change from the
 // day before, a 30-day chart per product, and a shortcut to set a price alert. No sample numbers.
 import React, { useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, RefreshControl, ActivityIndicator, TextInput, Platform } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, RefreshControl, ActivityIndicator, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@/components/icons/Feather";

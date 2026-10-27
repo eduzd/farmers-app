@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator, Modal, RefreshControl } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Modal, RefreshControl } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { Text, Switch } from "@/admin/ui";
 import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";

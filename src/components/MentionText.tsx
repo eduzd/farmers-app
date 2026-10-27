@@ -1,5 +1,6 @@
 import React from "react";
-import { Text, TextStyle, StyleProp } from "react-native";
+import { TextStyle, StyleProp } from "react-native";
+import { Text } from "@/components/MayaText";
 import { ThemedText } from "@/components/ThemedText";
 
 export interface MentionPerson {

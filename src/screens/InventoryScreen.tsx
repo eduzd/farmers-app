@@ -1,15 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  Modal,
-  TextInput,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, RefreshControl, Modal, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";

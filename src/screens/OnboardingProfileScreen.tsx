@@ -1,14 +1,6 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-  ScrollView,
-  Alert,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator, ScrollView, Alert, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
