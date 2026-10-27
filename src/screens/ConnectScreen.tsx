@@ -23,6 +23,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { ChatIcon } from "@/components/icons/ChatIcon";
 import { useIsOnline, useOnlineSet } from "@/lib/liveStatus";
 import { IconButton } from "@/components/ui";
+import { openUserProfile } from "@/lib/openProfile";
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 interface Field {
@@ -158,19 +159,14 @@ export default function ConnectScreen() {
   };
 
   const openProfile = (p: Professional) => {
-    navigation.navigate("UserProfile", {
-      user: {
-        id: p.id,
-        name: p.name,
-        initials: initialsOf(p.name),
-        avatar: p.avatar || undefined,
-        role: "expert",
-        verified: p.verified,
-        followersCount: 0,
-        followingCount: 0,
-        location: "",
-        bio: p.about || "",
-      } as any,
+    openUserProfile(navigation, {
+      id: p.id,
+      name: p.name,
+      initials: initialsOf(p.name),
+      avatar: p.avatar,
+      role: "expert",
+      verified: p.verified,
+      bio: p.about || "",
     });
   };
 

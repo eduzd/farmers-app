@@ -16,6 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
+import { openUserProfile } from "@/lib/openProfile";
 import HelpButton from "@/components/HelpButton";
 import { CarouselDots } from "@/components/AdCarousel";
 import { useCarouselAds, adsToCards } from "@/lib/carouselAds";
@@ -218,19 +219,16 @@ export default function CommunityScreen() {
     navigation.navigate("PostDetail", { postId: post.id, post });
   };
 
+  // Photo or name: opens that person's own profile, with their photo (yours opens your Profile tab).
   const handleAuthorPress = (author: Post["author"]) => {
-    navigation.navigate("UserProfile", {
-      user: {
-        id: author.id ?? `user-${author.name.replace(/\s+/g, "-").toLowerCase()}`,
-        name: author.name,
-        initials: author.initials,
-        role: "farmer",
-        verified: false,
-        followersCount: 0,
-        followingCount: 0,
-        location: "বাংলাদেশ",
-        bio: "",
-      },
+    openUserProfile(navigation, {
+      id: author.id,
+      name: author.name,
+      initials: author.initials,
+      avatar: author.avatar,
+      avatarId: author.avatarId,
+      avatarColor: author.avatarColor,
+      isWelfareMember: author.isWelfareMember,
     });
   };
 

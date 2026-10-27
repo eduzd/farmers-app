@@ -21,7 +21,11 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { PublicUser } from "@/lib/storage";
 
 import { tr, useTr } from "@/lib/tr";
-import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
+import { apiGet, apiPost, isLoggedIn, currentUserId } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
+import { useAuthStore } from "@/lib/authStore";
+import { likeServerPost, fetchServerPost } from "@/lib/feedApi";
+import { fetchUserPosts } from "@/lib/liveDataApi";
 import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
 import { LOADING, FAILED, countText, parseFollowCounts, pick, type FollowCounts, type Loaded } from "@/lib/profileStats";
@@ -34,8 +38,6 @@ interface UserPost {
   createdAt: string;
   isLiked: boolean;
 }
-
-const SAMPLE_POSTS: UserPost[] = [];
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type UserProfileRouteProp = RouteProp<RootStackParamList, "UserProfile">;
@@ -62,14 +64,75 @@ export default function UserProfileScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<UserProfileRouteProp>();
-  const { user } = route.params;
+  const passed = route.params.user;
+  const { language } = useI18n();
+  const bn = language === "bn";
+  const token = useAuthStore((st: any) => st.token);
+
+  // The person as the server has them now: their real photo, name and role, whatever screen
+  // opened this page. Until it loads, what that screen already knew (photo included) shows.
+  const [user, setUser] = useState<PublicUser>(passed);
+  const [missing, setMissing] = useState(false);
+  const isMe = !!passed.id && passed.id === currentUserId();
+  useEffect(() => {
+    setUser(passed);
+    setMissing(false);
+    let alive = true;
+    apiGet<any>(`/api/users/${encodeURIComponent(passed.id)}/profile`)
+      .then((p) => {
+        if (!alive || !p?.id) return;
+        const roleRaw = String(p.profileRole || p.role || "");
+        setUser((u) => ({
+          ...u,
+          name: p.name || u.name,
+          username: p.username || u.username,
+          initials: p.initials || u.initials,
+          // An uploaded photo wins. With none on the server, there is no photo: show the face/initials.
+          avatar: p.avatar || undefined,
+          verified: !!p.verified,
+          role: (["farmer", "buyer", "company", "expert"].includes(roleRaw) ? roleRaw : u.role) as PublicUser["role"],
+          farmingCategory: p.farmingCategory || u.farmingCategory,
+        }));
+      })
+      .catch((e: any) => {
+        if (alive && /isn't available|doesn't exist|404/i.test(String(e?.message || ""))) setMissing(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [passed.id]);
 
   const [isFollowing, setIsFollowing] = useState(user.isFollowing || false);
   // Followers / following as the server has them: "…" while loading, "—" if the load fails (never a fake 0).
   const [counts, setCounts] = useState<Loaded<FollowCounts>>(LOADING);
   const [countsReload, setCountsReload] = useState(0);
-  const [posts, setPosts] = useState<UserPost[]>(SAMPLE_POSTS);
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set(SAMPLE_POSTS.filter(p => p.isLiked).map(p => p.id)));
+  // Their real posts from the server: "…" while loading, "—" if the load fails.
+  const [posts, setPosts] = useState<UserPost[]>([]);
+  const [postsState, setPostsState] = useState<"loading" | "ok" | "error">("loading");
+  useEffect(() => {
+    let alive = true;
+    setPostsState("loading");
+    fetchUserPosts(passed.id, bn)
+      .then((list) => {
+        if (!alive) return;
+        setPosts(
+          list.map((p) => ({
+            id: p.id,
+            content: p.content,
+            image: p.image,
+            likes: p.likes,
+            comments: p.comments,
+            createdAt: p.createdAt,
+            isLiked: p.isLiked,
+          })),
+        );
+        setPostsState("ok");
+      })
+      .catch(() => alive && setPostsState("error"));
+    return () => {
+      alive = false;
+    };
+  }, [passed.id, bn]);
 
   // Real numbers from the server: followers, following, whether I follow them, and their about.
   const [about, setAbout] = useState<{ bio: string; location: string }>({ bio: user.bio || "", location: user.location || "" });
@@ -138,6 +201,7 @@ export default function UserProfileScreen() {
       conversationId: user.id,
       userName: user.name,
       userInitials: user.initials,
+      userAvatar: user.avatar,
       isWelfareMember: user.isWelfareMember,
     });
   };
@@ -159,17 +223,29 @@ export default function UserProfileScreen() {
     return SECTOR_LABELS[user.role] || user.role;
   };
 
-  const handleLikePost = (postId: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const newLiked = new Set(likedPosts);
-    if (newLiked.has(postId)) {
-      newLiked.delete(postId);
-      setPosts(posts.map(p => p.id === postId ? { ...p, likes: p.likes - 1 } : p));
-    } else {
-      newLiked.add(postId);
-      setPosts(posts.map(p => p.id === postId ? { ...p, likes: p.likes + 1 } : p));
+  // A real like on the server; the count changes only when the server says so.
+  const handleLikePost = async (post: UserPost) => {
+    if (!token) {
+      Alert.alert(tr("Sign in"), tr("Please sign in to like posts."));
+      return;
     }
-    setLikedPosts(newLiked);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    try {
+      const r = await likeServerPost(token, post.id, !post.isLiked);
+      setPosts((prev) => prev.map((x) => (x.id === post.id ? { ...x, isLiked: r.liked, likes: r.likes } : x)));
+    } catch {
+      // Not changed on the server, so not changed here.
+    }
+  };
+
+  const openPost = async (post: UserPost, toComments = false) => {
+    Haptics.selectionAsync().catch(() => {});
+    try {
+      const full = await fetchServerPost(post.id, bn, token);
+      navigation.navigate("PostDetail", { postId: full.id, post: full, ...(toComments ? { scrollToComments: true } : {}) } as any);
+    } catch {
+      Alert.alert(tr("Couldn't open this post"), tr("Please try again."));
+    }
   };
 
   const renderHeader = () => (
@@ -186,7 +262,7 @@ export default function UserProfileScreen() {
         />
 
         <View style={styles.nameContainer}>
-          <ThemedText type="h3" style={styles.profileName}>
+          <ThemedText type="h3" style={styles.profileName} testID="user-profile-name">
             {user.name}
           </ThemedText>
           {user.verified ? (
@@ -238,7 +314,7 @@ export default function UserProfileScreen() {
           ]}
           onPress={handleFollowers}
         >
-          <ThemedText type="h4">{posts.length}</ThemedText>
+          <ThemedText type="h4" testID="user-stat-posts">{postsState === "loading" ? "…" : postsState === "error" ? "—" : posts.length}</ThemedText>
           <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
             {tr("পোস্ট")}
           </ThemedText>
@@ -250,6 +326,7 @@ export default function UserProfileScreen() {
             pressed && styles.statPressed,
           ]}
           onPress={handleFollowers}
+          testID="user-open-followers"
         >
           <ThemedText type="h4" testID="user-stat-followers">{countText(pick(counts, "followers"))}</ThemedText>
           <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
@@ -284,6 +361,16 @@ export default function UserProfileScreen() {
         </Pressable>
       ) : null}
 
+      {missing ? (
+        <View testID="user-profile-missing" style={[styles.statsRetry, { marginBottom: Spacing.lg }]}>
+          <Feather name="slash" size={13} color={theme.textSecondary} />
+          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+            {tr("This account isn't available")}
+          </ThemedText>
+        </View>
+      ) : null}
+
+      {missing || isMe ? null : (
       <View style={styles.actionButtons}>
         <Pressable
           style={({ pressed }) => [
@@ -294,6 +381,7 @@ export default function UserProfileScreen() {
             pressed && styles.buttonPressed,
           ]}
           onPress={handleFollow}
+          testID="user-follow"
         >
           <AppIcon 
             name={isFollowing ? "user-check" : "user-plus"} 
@@ -322,6 +410,7 @@ export default function UserProfileScreen() {
           </ThemedText>
         </Pressable>
       </View>
+      )}
 
       <View style={[styles.postsHeader, { borderTopColor: theme.divider }]}>
         <ThemedText style={[styles.postsTitle, { color: theme.text }]}>
@@ -332,11 +421,20 @@ export default function UserProfileScreen() {
   );
 
   const renderPost = ({ item }: { item: UserPost }) => (
-    <View style={[styles.postCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
+    <Pressable
+      testID={`user-post-${item.id}`}
+      onPress={() => openPost(item)}
+      style={[styles.postCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+    >
       <View style={styles.postHeader}>
-        <View style={[styles.postAvatar, { backgroundColor: theme.primary }]}>
-          <ThemedText style={styles.postAvatarText}>{user.initials}</ThemedText>
-        </View>
+        <UserAvatar
+          initials={user.initials}
+          avatar={user.avatar}
+          avatarId={user.avatarId}
+          avatarColor={user.avatarColor}
+          size="small"
+          isWelfareMember={user.isWelfareMember}
+        />
         <View style={styles.postHeaderInfo}>
           <ThemedText style={[styles.postAuthor, { color: theme.text }]}>{user.name}</ThemedText>
           <ThemedText style={[styles.postTime, { color: theme.textSecondary }]}>{item.createdAt}</ThemedText>
@@ -359,24 +457,24 @@ export default function UserProfileScreen() {
         <View style={styles.leftActions}>
           <Pressable 
             style={styles.postAction}
-            onPress={() => handleLikePost(item.id)}
+            onPress={() => handleLikePost(item)}
           >
             <View style={[
               styles.actionIconCircle,
-              likedPosts.has(item.id) && { backgroundColor: "#DA2F2F20" }
+              item.isLiked && { backgroundColor: "#DA2F2F20" }
             ]}>
               <Feather 
                 name="heart"
                 size={18} 
-                color={likedPosts.has(item.id) ? "#DA2F2F" : theme.textSecondary} 
+                color={item.isLiked ? "#DA2F2F" : theme.textSecondary} 
               />
             </View>
-            <ThemedText style={[styles.postActionText, { color: likedPosts.has(item.id) ? "#DA2F2F" : theme.textSecondary }]}>
+            <ThemedText style={[styles.postActionText, { color: item.isLiked ? "#DA2F2F" : theme.textSecondary }]}>
               {item.likes}
             </ThemedText>
           </Pressable>
 
-          <Pressable style={styles.postAction}>
+          <Pressable style={styles.postAction} onPress={() => openPost(item, true)}>
             <View style={styles.actionIconCircle}>
               <ChatIcon size={18} color={theme.textSecondary} />
             </View>
@@ -385,17 +483,8 @@ export default function UserProfileScreen() {
             </ThemedText>
           </Pressable>
         </View>
-
-        <View style={styles.rightActions}>
-          <Pressable style={styles.actionIconCircle}>
-            <Feather name="bookmark" size={18} color={theme.textSecondary} />
-          </Pressable>
-          <Pressable style={styles.actionIconCircle}>
-            <Feather name="upload" size={18} color={theme.textSecondary} />
-          </Pressable>
-        </View>
       </View>
-    </View>
+    </Pressable>
   );
 
   return (
@@ -416,9 +505,9 @@ export default function UserProfileScreen() {
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={
         <View style={styles.emptyContainer}>
-          <Feather name="file-text" size={48} color={theme.textSecondary} />
+          <Feather name={postsState === "error" ? "wifi-off" : "file-text"} size={48} color={theme.textSecondary} />
           <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
-            {tr("এখনো কোনো পোস্ট নেই")}
+            {postsState === "loading" ? tr("Loading…") : postsState === "error" ? tr("Couldn't load posts. Please try again.") : tr("এখনো কোনো পোস্ট নেই")}
           </ThemedText>
         </View>
       }

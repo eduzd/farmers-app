@@ -218,7 +218,7 @@ export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList>;
   PostDetail: { postId: string; post: Post; highlightCommentId?: string; scrollToComments?: boolean; commentMissing?: boolean };
   NotificationOpen: { payload: any; markedRead?: boolean };
-  Chat: { conversationId: string; userName: string; userInitials: string; isWelfareMember?: boolean; draft?: string };
+  Chat: { conversationId: string; userName: string; userInitials: string; userAvatar?: string; isWelfareMember?: boolean; draft?: string };
   Rfq: undefined;
   Settings: { openEditProfile?: boolean } | undefined;
   ProductDetail: { product: Product };
