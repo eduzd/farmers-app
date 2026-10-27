@@ -26,7 +26,7 @@ SLUG, PID = SHOP["slug"], PROD["id"]
 PAGES = [
     ("community", "/", [("tab", 0)], True),
     ("connect", "/", [("tab", 1)], True),
-    ("voice-rooms", "/", [("tab", 1), ("tid", "connect-voice-rooms-open")], True),
+    ("voice-rooms", "/", [("tab", 0), ("text", ["Services", "সেবা"]), ("text", ["\u09ad\u09af\u09bc\u09c7\u09b8 \u09b0\u09c1\u09ae"] * 2)], True),
     ("voice-room-new", "/", [("tab", 1), ("tid", "connect-voice-room-create-icon")], True),
     ("market", "/", [("tab", 2)], True),
     ("market-notifications", "/", [("tab", 2), ("tid", "market-bell")], True),
