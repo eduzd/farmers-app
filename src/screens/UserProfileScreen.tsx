@@ -1,22 +1,14 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  Alert,
-} from "react-native";
+import React, { useState, useEffect, useLayoutEffect } from "react";
+import { View, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@/components/icons/Feather";
-import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { UserAvatar } from "@/components/UserAvatar";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { PublicUser } from "@/lib/storage";
 
@@ -24,20 +16,13 @@ import { tr, useTr } from "@/lib/tr";
 import { apiGet, apiPost, isLoggedIn, currentUserId } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
 import { useAuthStore } from "@/lib/authStore";
-import { likeServerPost, fetchServerPost } from "@/lib/feedApi";
-import { fetchUserPosts } from "@/lib/liveDataApi";
-import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
 import { LOADING, FAILED, countText, parseFollowCounts, pick, type FollowCounts, type Loaded } from "@/lib/profileStats";
-interface UserPost {
-  id: string;
-  content: string;
-  image?: string;
-  likes: number;
-  comments: number;
-  createdAt: string;
-  isLiked: boolean;
-}
+import { compactCount } from "@/lib/liveDataApi";
+import { formatJoined } from "@/lib/profileApi";
+import { ProfileHero } from "@/components/profile/ProfileHero";
+import { ProfileFeed, type AboutRow } from "@/components/profile/ProfileFeed";
+import { VisitorProfileMenu } from "@/components/profile/VisitorProfileMenu";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type UserProfileRouteProp = RouteProp<RootStackParamList, "UserProfile">;
@@ -106,36 +91,8 @@ export default function UserProfileScreen() {
   // Followers / following as the server has them: "…" while loading, "—" if the load fails (never a fake 0).
   const [counts, setCounts] = useState<Loaded<FollowCounts>>(LOADING);
   const [countsReload, setCountsReload] = useState(0);
-  // Their real posts from the server: "…" while loading, "—" if the load fails.
-  const [posts, setPosts] = useState<UserPost[]>([]);
-  const [postsState, setPostsState] = useState<"loading" | "ok" | "error">("loading");
-  useEffect(() => {
-    let alive = true;
-    setPostsState("loading");
-    fetchUserPosts(passed.id, bn)
-      .then((list) => {
-        if (!alive) return;
-        setPosts(
-          list.map((p) => ({
-            id: p.id,
-            content: p.content,
-            image: p.image,
-            likes: p.likes,
-            comments: p.comments,
-            createdAt: p.createdAt,
-            isLiked: p.isLiked,
-          })),
-        );
-        setPostsState("ok");
-      })
-      .catch(() => alive && setPostsState("error"));
-    return () => {
-      alive = false;
-    };
-  }, [passed.id, bn]);
-
   // Real numbers from the server: followers, following, whether I follow them, and their about.
-  const [about, setAbout] = useState<{ bio: string; location: string }>({ bio: user.bio || "", location: user.location || "" });
+  const [about, setAbout] = useState<{ bio: string; location: string; joinedAt?: string | null }>({ bio: user.bio || "", location: user.location || "" });
   useEffect(() => {
     let alive = true;
     apiGet<any>(`/api/follows/${encodeURIComponent(user.id)}`)
@@ -157,7 +114,7 @@ export default function UserProfileScreen() {
   useEffect(() => {
     let alive = true;
     apiGet<any>(`/api/users/${encodeURIComponent(user.id)}/about`)
-      .then((a) => alive && a && setAbout({ bio: a.bio || "", location: a.location || "" }))
+      .then((a) => alive && a && setAbout({ bio: a.bio || "", location: a.location || "", joinedAt: a.joinedAt ?? null }))
       .catch(() => {});
     return () => {
       alive = false;
@@ -223,540 +180,140 @@ export default function UserProfileScreen() {
     return SECTOR_LABELS[user.role] || user.role;
   };
 
-  // A real like on the server; the count changes only when the server says so.
-  const handleLikePost = async (post: UserPost) => {
-    if (!token) {
-      Alert.alert(tr("Sign in"), tr("Please sign in to like posts."));
-      return;
-    }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    try {
-      const r = await likeServerPost(token, post.id, !post.isLiked);
-      setPosts((prev) => prev.map((x) => (x.id === post.id ? { ...x, isLiked: r.liked, likes: r.likes } : x)));
-    } catch {
-      // Not changed on the server, so not changed here.
-    }
-  };
-
-  const openPost = async (post: UserPost, toComments = false) => {
-    Haptics.selectionAsync().catch(() => {});
-    try {
-      const full = await fetchServerPost(post.id, bn, token);
-      navigation.navigate("PostDetail", { postId: full.id, post: full, ...(toComments ? { scrollToComments: true } : {}) } as any);
-    } catch {
-      Alert.alert(tr("Couldn't open this post"), tr("Please try again."));
-    }
-  };
-
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      <View style={styles.profileHeader}>
-        <UserAvatar 
-          initials={user.initials}
-          avatar={user.avatar}
-          avatarId={user.avatarId}
-          avatarColor={user.avatarColor}
-          size="large" 
-          isWelfareMember={user.isWelfareMember}
-          userId={user.id}
-        />
-
-        <View style={styles.nameContainer}>
-          <ThemedText type="h3" style={styles.profileName} testID="user-profile-name">
-            {user.name}
-          </ThemedText>
-          {user.verified ? (
-            <View style={[styles.verifiedIcon, { backgroundColor: "#1DA1F2" }]}>
-              <Feather name="check" size={12} color="#FFFFFF" />
-            </View>
-          ) : null}
-        </View>
-
-        {user.username ? (
-          <ThemedText type="body" style={[styles.username, { color: theme.textSecondary }]}>
-            @{user.username}
-          </ThemedText>
-        ) : null}
-
-        <View style={[styles.sectorBadge, { backgroundColor: theme.primary + "20" }]}>
-          <AppIcon 
-            name={user.farmingCategory === "fish" ? "droplet" : user.role === "expert" ? "award" : "user"} 
-            size={14} 
-            color={theme.primary} 
-          />
-          <ThemedText style={[styles.sectorText, { color: theme.primary }]}>
-            {getSectorLabel()}
-          </ThemedText>
-        </View>
-
-        {about.location ? (
-          <View style={styles.locationRow}>
-            <Feather name="map-pin" size={14} color={theme.textSecondary} />
-            <ThemedText style={[styles.locationText, { color: theme.textSecondary }]}>
-              {about.location}
-            </ThemedText>
-          </View>
-        ) : null}
-
-        {about.bio ? (
-          <ThemedText style={[styles.bio, { color: theme.text }]}>
-            {about.bio}
-          </ThemedText>
-        ) : null}
-      </View>
-
-      <View style={styles.statsRow}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.statItem,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.statPressed,
-          ]}
-          onPress={handleFollowers}
-        >
-          <ThemedText type="h4" testID="user-stat-posts">{postsState === "loading" ? "…" : postsState === "error" ? "—" : posts.length}</ThemedText>
-          <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
-            {tr("পোস্ট")}
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.statItem,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.statPressed,
-          ]}
-          onPress={handleFollowers}
-          testID="user-open-followers"
-        >
-          <ThemedText type="h4" testID="user-stat-followers">{countText(pick(counts, "followers"))}</ThemedText>
-          <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
-            {tr("ফলোয়ার্স")}
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.statItem,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.statPressed,
-          ]}
-          onPress={handleFollowing}
-        >
-          <ThemedText type="h4" testID="user-stat-following">{countText(pick(counts, "following"))}</ThemedText>
-          <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
-            {tr("ফলোয়িং")}
-          </ThemedText>
-        </Pressable>
-      </View>
-      {counts.state === "error" ? (
-        <Pressable
-          testID="user-stats-retry"
-          accessibilityRole="button"
-          onPress={retryCounts}
-          style={({ pressed }) => [styles.statsRetry, pressed && { opacity: 0.6 }]}
-        >
-          <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {tr("Couldn't load these numbers · Tap to retry")}
-          </ThemedText>
-        </Pressable>
-      ) : null}
-
-      {missing ? (
-        <View testID="user-profile-missing" style={[styles.statsRetry, { marginBottom: Spacing.lg }]}>
-          <Feather name="slash" size={13} color={theme.textSecondary} />
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {tr("This account isn't available")}
-          </ThemedText>
-        </View>
-      ) : null}
-
-      {missing || isMe ? null : (
-      <View style={styles.actionButtons}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.followButton,
-            isFollowing 
-              ? { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }
-              : { backgroundColor: theme.primary },
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleFollow}
-          testID="user-follow"
-        >
-          <AppIcon 
-            name={isFollowing ? "user-check" : "user-plus"} 
-            size={18} 
-            color={isFollowing ? theme.text : "#FFFFFF"} 
-          />
-          <ThemedText style={[
-            styles.followButtonText,
-            { color: isFollowing ? theme.text : "#FFFFFF" },
-          ]}>
-            {isFollowing ? tr("Following") : tr("Follow")}
-          </ThemedText>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.messageButton,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleMessage}
-        >
-          <ChatIcon size={18} color={theme.text} />
-          <ThemedText style={[styles.messageButtonText, { color: theme.text }]}>
-            {tr("মেসেজ")}
-          </ThemedText>
-        </Pressable>
-      </View>
-      )}
-
-      <View style={[styles.postsHeader, { borderTopColor: theme.divider }]}>
-        <ThemedText style={[styles.postsTitle, { color: theme.text }]}>
-          {tr("পোস্টসমূহ")}
-        </ThemedText>
-      </View>
-    </View>
-  );
-
-  const renderPost = ({ item }: { item: UserPost }) => (
-    <Pressable
-      testID={`user-post-${item.id}`}
-      onPress={() => openPost(item)}
-      style={[styles.postCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
-    >
-      <View style={styles.postHeader}>
-        <UserAvatar
-          initials={user.initials}
-          avatar={user.avatar}
-          avatarId={user.avatarId}
-          avatarColor={user.avatarColor}
-          size="small"
-          isWelfareMember={user.isWelfareMember}
-        />
-        <View style={styles.postHeaderInfo}>
-          <ThemedText style={[styles.postAuthor, { color: theme.text }]}>{user.name}</ThemedText>
-          <ThemedText style={[styles.postTime, { color: theme.textSecondary }]}>{item.createdAt}</ThemedText>
-        </View>
-      </View>
-
-      <ThemedText style={[styles.postContent, { color: theme.text }]}>
-        {item.content}
-      </ThemedText>
-
-      {item.image ? (
-        <Image
-          source={{ uri: item.image }}
-          style={styles.postImage}
-          contentFit="cover"
-        />
-      ) : null}
-
-      <View style={[styles.postActions, { borderTopColor: theme.divider }]}>
-        <View style={styles.leftActions}>
-          <Pressable 
-            style={styles.postAction}
-            onPress={() => handleLikePost(item)}
+  // Like the reference design: the title bar has only the three-dot button, which opens
+  // share, mute, block and report. (Your own profile opened this way gets no menu.)
+  const [menuOpen, setMenuOpen] = useState(false);
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () =>
+        isMe || missing ? null : (
+          <Pressable
+            testID="user-profile-more"
+            accessibilityRole="button"
+            accessibilityLabel={bn ? "আরও অপশন" : "More options"}
+            hitSlop={6}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+              setMenuOpen(true);
+            }}
+            style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", marginRight: Spacing.sm, backgroundColor: pressed ? theme.backgroundSecondary : "transparent" })}
           >
-            <View style={[
-              styles.actionIconCircle,
-              item.isLiked && { backgroundColor: "#DA2F2F20" }
-            ]}>
-              <Feather 
-                name="heart"
-                size={18} 
-                color={item.isLiked ? "#DA2F2F" : theme.textSecondary} 
-              />
-            </View>
-            <ThemedText style={[styles.postActionText, { color: item.isLiked ? "#DA2F2F" : theme.textSecondary }]}>
-              {item.likes}
-            </ThemedText>
+            <AppIcon name="more-vertical" size={22} color={theme.text} />
           </Pressable>
+        ),
+    } as any);
+  }, [navigation, isMe, missing, bn, theme]);
 
-          <Pressable style={styles.postAction} onPress={() => openPost(item, true)}>
-            <View style={styles.actionIconCircle}>
-              <ChatIcon size={18} color={theme.textSecondary} />
-            </View>
-            <ThemedText style={[styles.postActionText, { color: theme.textSecondary }]}>
-              {item.comments}
-            </ThemedText>
-          </Pressable>
-        </View>
-      </View>
-    </Pressable>
-  );
+  const fmt = (n: Loaded<number>) => (n.state === "ok" ? compactCount(n.value) : countText(n));
+  const joined = formatJoined(about.joinedAt, bn);
+  const sector = tr(getSectorLabel());
+  const aboutRows: AboutRow[] = [
+    { icon: user.role === "expert" ? "award" : user.farmingCategory === "fish" ? "droplet" : "user", label: bn ? "ক্যাটাগরি" : "Category", value: sector, testID: "user-about-category" },
+    ...(about.location ? [{ icon: "map-pin", label: bn ? "এলাকা" : "Location", value: about.location }] : []),
+    ...(joined ? [{ icon: "calendar", label: bn ? "সদস্য" : "Member since", value: joined.replace(/^Joined |^যোগ দিয়েছেন /, "") }] : []),
+  ];
 
   return (
-    <FlatList
+    <ScrollView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      data={posts}
-      keyExtractor={(item) => item.id}
-      renderItem={renderPost}
-      ListHeaderComponent={renderHeader}
-      contentContainerStyle={[
-        styles.contentContainer,
-        {
-          paddingTop: Spacing.xl,
-          paddingBottom: insets.bottom + Spacing.xl,
-        },
-      ]}
+      contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
       scrollIndicatorInsets={{ bottom: insets.bottom }}
       showsVerticalScrollIndicator={false}
-      ListEmptyComponent={
-        <View style={styles.emptyContainer}>
-          <Feather name={postsState === "error" ? "wifi-off" : "file-text"} size={48} color={theme.textSecondary} />
-          <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
-            {postsState === "loading" ? tr("Loading…") : postsState === "error" ? tr("Couldn't load posts. Please try again.") : tr("এখনো কোনো পোস্ট নেই")}
-          </ThemedText>
-        </View>
-      }
-    />
+      testID="user-profile-screen"
+    >
+      <ProfileHero
+        userId={user.id}
+        name={user.name}
+        initials={user.initials}
+        avatar={user.avatar}
+        avatarId={user.avatarId}
+        avatarColor={user.avatarColor}
+        isWelfareMember={user.isWelfareMember}
+        verified={!!user.verified}
+        subtitle={user.username ? `@${user.username}` : undefined}
+        chips={
+          <View style={[styles.sectorBadge, { backgroundColor: theme.backgroundSecondary, borderColor: theme.cardBorder }]} testID="user-profile-sector">
+            <AppIcon name={user.farmingCategory === "fish" ? "droplet" : user.role === "expert" ? "award" : "user"} size={14} color={theme.link} />
+            <ThemedText style={[styles.sectorText, { color: theme.link }]}>{sector}</ThemedText>
+          </View>
+        }
+        bio={about.bio}
+        location={about.location}
+        joined={joined}
+        followers={fmt(pick(counts, "followers"))}
+        following={fmt(pick(counts, "following"))}
+        onFollowers={handleFollowers}
+        onFollowing={handleFollowing}
+        bn={bn}
+        statIdPrefix="user"
+        primary={
+          missing
+            ? undefined
+            : isMe
+              ? { label: bn ? "প্রোফাইল এডিট" : "Edit profile", icon: "edit-2", solid: true, onPress: () => navigation.navigate("Settings", { openEditProfile: true }) }
+              : isFollowing
+                ? { label: bn ? "ফলোয়িং" : "Following", icon: "user-check", solid: false, onPress: handleFollow, testID: "user-follow" }
+                : { label: bn ? "ফলো করুন" : "Follow", icon: "user-plus", solid: true, onPress: handleFollow, testID: "user-follow" }
+        }
+        secondary={missing || isMe ? undefined : { label: bn ? "মেসেজ" : "Message", icon: "chat", onPress: handleMessage, testID: "user-message" }}
+        footer={
+          <>
+            {counts.state === "error" ? (
+              <Pressable
+                testID="user-stats-retry"
+                accessibilityRole="button"
+                onPress={retryCounts}
+                style={({ pressed }) => [styles.statsRetry, pressed && { opacity: 0.6 }]}
+              >
+                <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {tr("Couldn't load these numbers · Tap to retry")}
+                </ThemedText>
+              </Pressable>
+            ) : null}
+            {missing ? (
+              <View testID="user-profile-missing" style={styles.statsRetry}>
+                <Feather name="slash" size={13} color={theme.textSecondary} />
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {tr("This account isn't available")}
+                </ThemedText>
+              </View>
+            ) : null}
+          </>
+        }
+      />
+
+      {missing ? null : (
+        <ProfileFeed
+          userId={user.id}
+          author={{ id: user.id, name: user.name, initials: user.initials, avatar: user.avatar, avatarId: user.avatarId, avatarColor: user.avatarColor, verified: !!user.verified }}
+          bn={bn}
+          aboutRows={aboutRows}
+          emptyPosts={{
+            title: bn ? "এখনো কোনো পোস্ট নেই" : "No posts yet",
+            message: bn ? `${user.name} এখনো কিছু পোস্ট করেননি।` : `${user.name} hasn't posted anything yet.`,
+          }}
+        />
+      )}
+
+      {isMe || missing ? null : (
+        <VisitorProfileMenu
+          visible={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          user={{ id: user.id, name: user.name, username: user.username }}
+          bn={bn}
+          onBlocked={() => {
+            if (navigation.canGoBack()) navigation.goBack();
+          }}
+        />
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: Spacing.lg,
-  },
-  profileHeader: {
-    alignItems: "center",
-    marginBottom: Spacing.xl,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.lg,
-    ...Shadows.medium,
-  },
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 32,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  nameContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    marginBottom: Spacing.xs,
-  },
-  profileName: {
-    textAlign: "center",
-  },
-  verifiedIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  username: {
-    marginBottom: Spacing.md,
-  },
-  sectorBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    gap: Spacing.xs,
-    marginBottom: Spacing.md,
-  },
-  sectorText: {
-    fontSize: 14,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    marginBottom: Spacing.md,
-  },
-  locationText: {
-    fontSize: 14,
-  },
-  bio: {
-    textAlign: "center",
-    fontSize: 15,
-    lineHeight: 22,
-    paddingHorizontal: Spacing.lg,
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  statsRetry: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.xs,
-    marginTop: -Spacing.md,
-    marginBottom: Spacing.lg,
-    paddingVertical: Spacing.xs,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    ...Shadows.small,
-  },
-  statPressed: {
-    opacity: 0.8,
-  },
-  statLabel: {
-    marginTop: Spacing.xs,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  followButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.xl,
-    gap: Spacing.sm,
-    ...Shadows.small,
-  },
-  followButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  messageButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    gap: Spacing.sm,
-    ...Shadows.small,
-  },
-  messageButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  buttonPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
-  },
-  headerContainer: {
-    marginBottom: Spacing.md,
-  },
-  postsHeader: {
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.md,
-    borderTopWidth: 1,
-    marginTop: Spacing.xl,
-  },
-  postsTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  postCard: {
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    ...Shadows.small,
-  },
-  postHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-  postAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.sm,
-  },
-  postAvatarText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  postHeaderInfo: {
-    flex: 1,
-  },
-  postAuthor: {
-    fontSize: 15,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  postTime: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  postContent: {
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: Spacing.md,
-  },
-  postImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.md,
-  },
-  postActions: {
-    flexDirection: "row",
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  leftActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  rightActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  actionIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "transparent",
-  },
-  postAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  postActionText: {
-    fontSize: 13,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    paddingVertical: Spacing["2xl"],
-    gap: Spacing.md,
-  },
-  emptyText: {
-    fontSize: 15,
-  },
+  container: { flex: 1 },
+  sectorBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, borderWidth: 1 },
+  sectorText: { fontSize: 13, lineHeight: 18, fontWeight: "600" },
+  statsRetry: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: Spacing.md, paddingVertical: Spacing.xs },
 });

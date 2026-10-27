@@ -5,7 +5,8 @@
 //  GET    /api/avatars/:userId                         the photo (public, like any profile picture)
 //  GET    /api/me/about                                your bio and location (signed in)
 //  PUT    /api/me/about     { bio, location }          (signed in)
-//  GET    /api/users/:userId/about                     someone's bio and location (public)
+//  GET    /api/users/:userId/about                     someone's bio, location and join date (public)
+//  POST   /api/users/:userId/report { reason, details } report a person (signed in)
 //
 // The photo is stored in the database, so it survives Render restarts. users.avatar is set
 // to /api/avatars/<id>?v=<time>, which every place that already shows users.avatar picks up.
@@ -14,6 +15,7 @@ import jwt from "jsonwebtoken";
 import { sql } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { config } from "./config";
+import { ensurePostReports } from "./communityRoutes";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const rowsOf = (r: any): any[] => (Array.isArray(r) ? r : r?.rows || []);
@@ -125,7 +127,13 @@ export function registerProfileRoutes(app: Express) {
   const aboutOf = async (uid: string) => {
     await ensureTables();
     const r = rowsOf(await db.execute(sql`SELECT bio, location FROM user_about WHERE user_id = ${uid} LIMIT 1`))[0];
-    return { bio: r?.bio || "", location: r?.location || "" };
+    // "Member since" on the profile page. Only the date the account was made, nothing private.
+    let joinedAt: string | null = null;
+    try {
+      const u = rowsOf(await db.execute(sql`SELECT created_at FROM users WHERE id::text = ${uid} LIMIT 1`))[0];
+      if (u?.created_at) joinedAt = new Date(u.created_at).toISOString();
+    } catch {}
+    return { bio: r?.bio || "", location: r?.location || "", joinedAt };
   };
 
   app.get("/api/me/about", auth, async (req: Request, res: Response) => {
@@ -141,6 +149,33 @@ export function registerProfileRoutes(app: Express) {
       res.json(await aboutOf(String(req.params.userId)));
     } catch (e: any) {
       res.status(500).json({ error: "Could not load the profile" });
+    }
+  });
+
+  // Report a person from their profile page. Goes into the same moderation queue as post
+  // reports (it counts in "Open reports" on the admin dashboard), marked as a profile report.
+  const PROFILE_REPORT_REASONS = new Set(["spam", "scam", "harassment", "hate", "violence", "nudity", "misinfo", "impersonation", "other"]);
+  app.post("/api/users/:userId/report", auth, async (req: Request, res: Response) => {
+    try {
+      const reporter = (req as any).profileUserId as string;
+      const target = clean(req.params.userId, 80);
+      if (!target) return res.status(400).json({ error: "Unknown person" });
+      if (target === reporter) return res.status(400).json({ error: "You can't report yourself" });
+      const reason = clean(req.body?.reason, 40);
+      if (!PROFILE_REPORT_REASONS.has(reason)) return res.status(400).json({ error: "Pick a reason" });
+      const details = clean(req.body?.details, 500);
+      const u = rowsOf(await db.execute(sql`SELECT name FROM users WHERE id::text = ${target} LIMIT 1`))[0];
+      if (!u) return res.status(404).json({ error: "This person no longer exists" });
+      await ensurePostReports();
+      const key = `profile:${target}`;
+      const excerpt = `[Profile] ${String(u.name || "").slice(0, 100)}`;
+      await db.execute(sql`INSERT INTO post_reports (post_id, reporter_id, post_author_id, post_excerpt, reason, details)
+        VALUES (${key}, ${reporter}, ${target}, ${excerpt}, ${reason}, ${details || null})
+        ON CONFLICT (post_id, reporter_id) DO UPDATE SET reason = EXCLUDED.reason, details = EXCLUDED.details, status = 'open', created_at = now()`);
+      res.json({ ok: true });
+    } catch (e: any) {
+      console.error("Profile report error:", e?.message || e);
+      res.status(500).json({ error: "Could not send the report" });
     }
   });
 

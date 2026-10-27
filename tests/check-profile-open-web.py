@@ -6,10 +6,10 @@ Test accounts only on a throwaway database: Ann Begum (viewer), Cat Rahman (uplo
 Dan Mia (no photo, follows Cat, comments on Cat's post).
 API: GET /api/users/:id/profile gives the public card with the photo, never email/phone; unknown id -> 404.
 For en/bn at 360 and en at 1280 wide:
-- Home feed: tap Cat's name on her post -> Cat's profile, her photo shown large, her real 2 posts listed.
-- Cat's profile -> Followers -> tap Dan -> Dan's profile, no photo (initials), "0" posts.
+- Home feed: tap Cat's name on her post -> Cat's profile, her photo shown large, her real posts listed.
+- Cat's profile -> Followers -> tap Dan -> Dan's profile, no photo (initials), "no posts yet".
 - Cat's post page: tap Dan's name on his comment -> Dan's profile.
-- Tap Ann's own name on her post -> her own Profile tab (no Follow button).
+- Tap Ann's own name on her post -> her own Profile tab (no Follow button), her post on its Posts tab.
 - Chat with Cat: the header shows Cat's photo; tapping it opens Cat's profile with her photo.
 - Connect: tap Cat's card -> Cat's profile with her photo.
 Also: no page errors, nothing running off the screen.
@@ -46,7 +46,7 @@ async def visible_text(pg, tid):
 
 async def wait_profile(pg, name, ms=15000):
     for _ in range(ms // 300):
-        if await visible_text(pg, "user-profile-name") == name:
+        if await visible_text(pg, "user-profile-screen") is not None and await visible_text(pg, "profile-hero-name") == name:
             await pg.wait_for_timeout(1500)  # the server card and posts
             return True
         await pg.wait_for_timeout(300)
@@ -119,14 +119,13 @@ async def main():
                 h.ok(await click_visible_text(pg, "Cat Rahman"), f"{k}: Cat's name on her post is on the feed")
                 h.ok(await wait_profile(pg, "Cat Rahman"), f"{k}: feed -> Cat's profile opens")
                 h.ok(await pg.evaluate(IMG_JS, [cat["id"], 56]) >= 1, f"{k}: Cat's photo shows large on her profile")
-                h.ok(await visible_text(pg, "user-stat-posts") == "2", f"{k}: her real post count (2)", await visible_text(pg, "user-stat-posts"))
                 h.ok(await pg.get_by_text("Cat first post about pond aeration").last.is_visible(), f"{k}: her real posts are listed")
                 h.ok(await visible_text(pg, "user-follow") is not None, f"{k}: Follow button on someone else's profile")
                 h.ok(await h.no_overflow(pg), f"{k}: profile fits the screen")
                 await pg.screenshot(path=f"{h.shots}/{k}-1-cat-profile.png", full_page=True)
 
                 # 2. Followers -> Dan
-                loc = pg.locator(T("user-open-followers"))
+                loc = pg.locator(T("profile-hero-followers"))
                 for i in range(await loc.count() - 1, -1, -1):
                     if await loc.nth(i).is_visible():
                         await loc.nth(i).click(); break
@@ -135,7 +134,7 @@ async def main():
                 h.ok(await wait_profile(pg, "Dan Mia"), f"{k}: followers -> Dan's profile opens")
                 h.ok(await pg.evaluate(IMG_JS, [dan["id"], 1]) == 0 and await pg.get_by_text("DM", exact=True).last.is_visible(),
                      f"{k}: Dan has no photo, so his initials show")
-                h.ok(await visible_text(pg, "user-stat-posts") == "0", f"{k}: Dan's post count (0)", await visible_text(pg, "user-stat-posts"))
+                h.ok(await visible_text(pg, "user-posts-empty") is not None, f"{k}: Dan has no posts, and it says so")
                 await pg.screenshot(path=f"{h.shots}/{k}-2-dan-profile.png")
 
                 # 3. Post page -> commenter Dan
@@ -155,6 +154,7 @@ async def main():
                 await pg.wait_for_timeout(2500)
                 own = await visible_text(pg, "profile-stat-followers")
                 h.ok(own is not None and await visible_text(pg, "user-follow") is None, f"{k}: own name -> own Profile tab, no Follow button")
+                h.ok(await pg.get_by_text("Ann post about rice seedlings").last.is_visible(), f"{k}: own Posts tab shows her own post")
                 await pg.screenshot(path=f"{h.shots}/{k}-3-own.png")
 
                 # 5. Chat header photo -> Cat's profile

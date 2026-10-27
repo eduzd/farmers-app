@@ -282,7 +282,9 @@ export const saveThemePreference = async (theme: "light" | "dark" | "system"): P
 
 export const getThemePreference = async (): Promise<"light" | "dark" | "system"> => {
   const data = await AsyncStorage.getItem(STORAGE_KEYS.THEME_PREFERENCE);
-  return (data as "light" | "dark" | "system") || "system";
+  // Only a known value: anything else (e.g. a quoted "dark") used to blank the whole app.
+  const v = String(data || "").replace(/"/g, "").trim();
+  return v === "light" || v === "dark" || v === "system" ? v : "system";
 };
 
 // User storage
