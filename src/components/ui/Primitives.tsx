@@ -12,6 +12,9 @@ import { AppIcon } from "@/components/icons/AppIcon";
 type IconName = keyof typeof Feather.glyphMap;
 
 /** Round icon-only button (header actions, toolbars). */
+/** Title-bar icon buttons everywhere match the Market bell and cart: 44px circle, 1px border, 20px icon. */
+export const HEADER_ICON_BUTTON = { size: 44, icon: 20, gap: 8 } as const;
+
 export function IconButton({
   icon,
   onPress,
@@ -25,13 +28,17 @@ export function IconButton({
   onPress?: () => void;
   badge?: number;
   size?: number;
-  tone?: "surface" | "primary" | "plain";
+  /** "header" / "headerActive": the title-bar icon button, identical to the Market bell and cart. */
+  tone?: "surface" | "primary" | "plain" | "header" | "headerActive";
   accessibilityLabel: string;
   style?: StyleProp<ViewStyle>;
 }) {
   const { theme } = useTheme();
-  const bg = tone === "primary" ? theme.primary : tone === "plain" ? "transparent" : theme.backgroundDefault;
-  const fg = tone === "primary" ? "#FFFFFF" : theme.iconDefault;
+  const isHeader = tone === "header" || tone === "headerActive";
+  if (isHeader && size === 40) size = HEADER_ICON_BUTTON.size;
+  const bg = tone === "primary" ? theme.primary : tone === "plain" ? "transparent" : tone === "header" ? theme.card
+    : tone === "headerActive" ? theme.primarySoft : theme.backgroundDefault;
+  const fg = tone === "primary" ? "#FFFFFF" : tone === "header" ? theme.text : tone === "headerActive" ? theme.link : theme.iconDefault;
   return (
     <Pressable
       accessibilityRole="button"
@@ -48,7 +55,7 @@ export function IconButton({
           borderRadius: size / 2,
           backgroundColor: bg,
           borderColor: theme.cardBorder,
-          borderWidth: tone === "surface" ? StyleSheet.hairlineWidth : 0,
+          borderWidth: isHeader ? 1 : tone === "surface" ? StyleSheet.hairlineWidth : 0,
           alignItems: "center",
           justifyContent: "center",
           opacity: pressed ? 0.7 : 1,
@@ -56,7 +63,7 @@ export function IconButton({
         style,
       ]}
     >
-      <AppIcon name={icon} size={size * 0.48} color={fg} />
+      <AppIcon name={icon} size={isHeader ? HEADER_ICON_BUTTON.icon : size * 0.48} color={fg} />
       {badge ? (
         <View style={[styles.badgeDot, { backgroundColor: theme.error, borderColor: theme.backgroundRoot }]}>
           <ThemedText style={styles.badgeDotText}>{badge > 9 ? "9+" : badge}</ThemedText>

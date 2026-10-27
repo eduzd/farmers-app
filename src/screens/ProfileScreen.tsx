@@ -242,14 +242,14 @@ export default function ProfileScreen() {
                     : `Find ${user.name}${user.username ? ` (@${user.username})` : ""} on Farmers`,
                 )
               }
-              style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? theme.backgroundSecondary : "transparent" })}
+              style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: theme.card, borderWidth: 1, borderColor: theme.cardBorder, opacity: pressed ? 0.7 : 1 })}
             >
-              <Feather name="upload" size={18} color={theme.textSecondary} />
+              <Feather name="upload" size={20} color={theme.text} />
             </Pressable>
             <View testID="profile-edit-button">
               <IconButton
                 icon="edit-2"
-                size={38}
+                tone="header"
                 accessibilityLabel={isBnHeader ? "প্রোফাইল এডিট করুন" : "Edit profile"}
                 onPress={() => navigation.navigate("Settings", { openEditProfile: true })}
               />

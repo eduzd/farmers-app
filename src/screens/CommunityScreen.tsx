@@ -483,18 +483,19 @@ export default function CommunityScreen() {
                 type="h4"
                 numberOfLines={1}
                 testID="home-title"
-                style={{ ...mayaPageTitleFont(isBn ? "bn" : "en", "tab"), lineHeight: 30, fontWeight: "400" }}
+                style={{ ...mayaPageTitleFont(isBn ? "bn" : "en", "tab"), lineHeight: 24, fontWeight: "400" }}
               >
                 {isBn ? "কৃষক বন্ধু" : "Farmers"}
               </ThemedText>
             </View>
-            <IconButton icon="search" accessibilityLabel={isBn ? "খুঁজুন" : "Search"} onPress={() => navigation.navigate("UserSearch")} />
+            <IconButton icon="search" tone="header" accessibilityLabel={isBn ? "খুঁজুন" : "Search"} onPress={() => navigation.navigate("UserSearch")} />
             <View style={{ marginLeft: Spacing.sm }}>
-              <HelpButton />
+              <HelpButton header />
             </View>
             <View style={{ marginLeft: Spacing.sm }}>
               <IconButton
                 icon="bell"
+                tone="header"
                 accessibilityLabel={
                   unreadNotifications > 0
                     ? isBn ? `নোটিফিকেশন, ${unreadNotifications}টি নতুন` : `Notifications, ${unreadNotifications} unread`

@@ -119,7 +119,7 @@ export default function GuestOrderScreen() {
       <Pressable testID="guest-order-back" hitSlop={10} onPress={close} style={styles.iconBtn}>
         <AppIcon name="arrow-left" size={22} color={theme.text} />
       </Pressable>
-      <ThemedText type="h4" style={{ ...mayaPageTitleFont(bn ? "bn" : "en", "stack"), lineHeight: 30, fontWeight: "400", color: theme.text, flex: 1 }} numberOfLines={1}>{title}</ThemedText>
+      <ThemedText type="h4" style={{ ...mayaPageTitleFont(bn ? "bn" : "en", "stack"), lineHeight: 24, fontWeight: "400", color: theme.text, flex: 1 }} numberOfLines={1}>{title}</ThemedText>
       {order && key ? (
         <Pressable testID="guest-order-share" hitSlop={10} onPress={shareLink} style={styles.iconBtn} accessibilityLabel={L("Save order link", "অর্ডার লিংক সেভ করুন")}>
           <AppIcon name="link" size={20} color={theme.text} />

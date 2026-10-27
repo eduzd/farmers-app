@@ -114,8 +114,7 @@ export default function ConnectScreen() {
             <View testID="connect-voice-room-create-icon">
               <IconButton
                 icon="mic"
-                size={38}
-                tone="surface"
+                tone="header"
                 accessibilityLabel={bn ? "নতুন ভয়েস রুম শুরু করুন" : "Start a voice room"}
                 onPress={() => navigation.navigate("VoiceRoomCreate")}
               />
@@ -124,8 +123,7 @@ export default function ConnectScreen() {
           <View testID="connect-filter-button">
             <IconButton
               icon="sliders"
-              size={38}
-              tone={activeFilters ? "primary" : "surface"}
+              tone={activeFilters ? "headerActive" : "header"}
               accessibilityLabel={bn ? "ফিল্টার" : "Filter"}
               onPress={() => setFilterOpen(true)}
             />
