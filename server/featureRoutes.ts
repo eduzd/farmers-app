@@ -365,6 +365,20 @@ export function registerFeatureRoutes(app: Express) {
     await notify(owner, "review", "New review", `${me?.name || "Someone"} rated ${req.body?.targetName || "your listing"} ${rating} star(s)`, { targetId, market: reviewIsMarket });
     res.status(201).json({ success: true });
   }));
+  // Every review buyers left on this person's own listings, newest first (for the Reviews tab on a profile).
+  app.get("/api/sellers/:userId/reviews", wrap("reviews", async (req, res) => {
+    const r = rows(await db.execute(sql`SELECT r.id, r.user_id, r.rating, r.comment, r.created_at, r.target_id,
+        u.name, u.username, u.avatar, c.data->>'name' AS item_name
+      FROM item_reviews r LEFT JOIN users u ON u.id = r.user_id LEFT JOIN catalog_items c ON c.id = r.target_id
+      WHERE r.target_owner_id = ${req.params.userId} ORDER BY r.created_at DESC LIMIT 200`));
+    const list = r.map((x) => ({
+      id: x.id, userId: x.user_id, userName: x.name || x.username || "User", userAvatar: x.avatar || null,
+      rating: Number(x.rating), comment: x.comment || "", createdAt: iso(x.created_at),
+      itemId: x.target_id, itemName: x.item_name || null,
+    }));
+    const avg = list.length ? list.reduce((s, x) => s + x.rating, 0) / list.length : 0;
+    res.json({ reviews: list, count: list.length, average: Math.round(avg * 10) / 10 });
+  }));
   app.get("/api/sellers/:userId/rating", wrap("reviews", async (req, res) => {
     const r = rows(await db.execute(sql`SELECT coalesce(avg(rating),0) AS a, count(*)::int AS n FROM item_reviews WHERE target_owner_id = ${req.params.userId}`));
     res.json({ average: Math.round(Number(r[0]?.a || 0) * 10) / 10, count: Number(r[0]?.n || 0) });

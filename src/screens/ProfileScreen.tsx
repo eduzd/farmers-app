@@ -334,6 +334,9 @@ export default function ProfileScreen() {
               bn={bn}
               aboutRows={aboutRows}
               reloadKey={focusCount}
+              followers={followersN.state === "ok" ? followersN.value : undefined}
+              joinedAt={about.joinedAt}
+              isMe
               emptyPosts={{
                 title: bn ? "আপনি এখনো কিছু পোস্ট করেননি" : "You haven't posted yet",
                 message: bn ? "কমিউনিটিতে পোস্ট করলে এখানে দেখা যাবে।" : "Posts you share in Community show up here.",
