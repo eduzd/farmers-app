@@ -153,14 +153,14 @@ async def main():
         await pg.screenshot(path=f"{SHOTS}/5-detail.png", full_page=True)
         await pg.get_by_text("এডিট করুন", exact=True).first.click()
         await pg.wait_for_timeout(2000)
-        vals = await pg.evaluate("() => [...document.querySelectorAll('input[placeholder=\\"০\\"]')].map(i => i.value)")
+        vals = await pg.evaluate("() => [...document.querySelectorAll('input[placeholder=\"০\"]')].map(i => i.value)")
         ok("Edit from detail opens it in the calculator", vals[:4] == ["120", "125", "100", "20"], vals)
         ok("still Update mode after Edit", await pg.get_by_text("আপডেট করুন", exact=True).count() > 0)
 
         # + new calculation clears, keeps one record; saving the new one makes record 2
         await pg.locator('[aria-label="নতুন হিসাব"]').first.click()
         await pg.wait_for_timeout(1200)
-        vals = await pg.evaluate("() => [...document.querySelectorAll('input[placeholder=\\"০\\"]')].map(i => i.value)")
+        vals = await pg.evaluate("() => [...document.querySelectorAll('input[placeholder=\"০\"]')].map(i => i.value)")
         ok("+ clears the table", all(v == "" for v in vals), vals)
         ok("+ did not duplicate", await count_saved(pg) == 1)
         await boxes.nth(0).click(); await pg.keyboard.type("90")
