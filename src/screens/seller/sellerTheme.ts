@@ -38,7 +38,7 @@ const DARK: SellerPalette = {
   text: "#E6EEF7",
   muted: "#A6B8CC",
   faint: "#8095AD",
-  primary: "#2E96EF",
+  primary: "#2186DF",
   primarySoft: "#132A40",
   success: "#22D193",
   successSoft: "#0E3026",
