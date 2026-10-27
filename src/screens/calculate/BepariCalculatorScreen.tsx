@@ -310,6 +310,12 @@ export function BepariCalculatorScreen() {
     deleteDraft('bepari').catch(() => {});
   };
 
+  /** The saved icon at the top: opens the list of saved calculations (fresh from the phone). */
+  const openSavedList = () => {
+    loadRecords();
+    setDrawerVisible(true);
+  };
+
   // Set up header buttons
   useLayoutEffect(() => {
     const savedCount = savedRecords.length;
@@ -319,7 +325,7 @@ export function BepariCalculatorScreen() {
           <HeaderButton onPress={handleDownloadPDF}>
             <Feather name="download" size={20} color={results ? colors.primary : colors.textTertiary} />
           </HeaderButton>
-          <HeaderButton onPress={() => setDrawerVisible(true)}>
+          <HeaderButton onPress={openSavedList} accessibilityLabel={tr("সংরক্ষিত হিসাব")}>
             <View style={styles.badgeContainer}>
               <Feather name="bookmark" size={20} color={colors.textSecondary} />
               {savedCount > 0 ? (
@@ -1092,8 +1098,11 @@ const styles = StyleSheet.create({
     fontSize: Typography.sizes.lg,
     fontWeight: '700',
   },
+  // No flex: 1 here: inside a sheet that only has a maxHeight it squeezed the list to zero
+  // height, so tapping the saved icon opened an empty sheet. The list now grows with its rows.
   drawerList: {
-    flex: 1,
+    flexGrow: 0,
+    flexShrink: 1,
   },
   emptyDrawer: {
     alignItems: 'center',
