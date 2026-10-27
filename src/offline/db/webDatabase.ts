@@ -76,13 +76,23 @@ export class WebSQLiteDatabase {
 
   private persistSoon() {
     if (this.saveTimer) clearTimeout(this.saveTimer);
-    this.saveTimer = setTimeout(() => {
-      try {
-        localStorage.setItem(STORAGE_KEY, toBase64(this.db.export()));
-      } catch (e) {
-        console.warn("[webdb] could not persist database", e);
-      }
-    }, 150);
+    this.saveTimer = setTimeout(() => this.persistNow(), 150);
+  }
+
+  /**
+   * Writes the database to the browser storage right away. Every saved row goes through here, so a
+   * calculation saved just before the page is reloaded or closed is never lost.
+   */
+  persistNow() {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEY, toBase64(this.db.export()));
+    } catch (e) {
+      console.warn("[webdb] could not persist database", e);
+    }
   }
 
   async execAsync(sql: string): Promise<void> {
@@ -94,7 +104,7 @@ export class WebSQLiteDatabase {
   async runAsync(sql: string, ...params: unknown[]) {
     this.db.run(sql, normalize(params));
     const changes = this.db.getRowsModified();
-    this.persistSoon();
+    this.persistNow();
     return { changes, lastInsertRowId: 0 };
   }
 
@@ -128,7 +138,12 @@ export function openWebDatabase(): Promise<WebSQLiteDatabase | null> {
       const SQL = await init({ locateFile: (f) => `${BASE}${f}` });
       const saved = localStorage.getItem(STORAGE_KEY);
       const db = new SQL.Database(saved ? fromBase64(saved) : undefined);
-      return new WebSQLiteDatabase(db);
+      const wrapped = new WebSQLiteDatabase(db);
+      // Anything still waiting is written when the tab is hidden or closed.
+      const flush = () => wrapped.persistNow();
+      window.addEventListener("pagehide", flush);
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
+      return wrapped;
     } catch (e) {
       console.warn("[webdb] SQLite for web unavailable, calculator data will not persist", e);
       return null;

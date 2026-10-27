@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { View, StyleSheet, Animated, ViewStyle } from "react-native";
 import { useTheme } from "@/hooks/useTheme";
 import { BorderRadius, Spacing } from "@/constants/theme";
+import { MayaRadius } from "@/constants/mayaTheme";
 
 interface LoadingSkeletonProps {
   width?: number | `${number}%`;
@@ -64,7 +65,7 @@ export function StatCardSkeleton() {
         { backgroundColor: theme.card, borderColor: theme.cardBorder },
       ]}
     >
-      <LoadingSkeleton width={40} height={40} borderRadius={BorderRadius.md} />
+      <LoadingSkeleton width={40} height={40} borderRadius={MayaRadius.md} />
       <LoadingSkeleton
         width={80}
         height={28}
@@ -98,7 +99,7 @@ export function UserRowSkeleton() {
           style={{ marginTop: Spacing.xs }}
         />
       </View>
-      <LoadingSkeleton width={60} height={28} borderRadius={BorderRadius.md} />
+      <LoadingSkeleton width={60} height={28} borderRadius={MayaRadius.md} />
     </View>
   );
 }
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: "45%",
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     marginBottom: Spacing.sm,
   },
@@ -151,7 +152,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     marginBottom: Spacing.sm,
   },

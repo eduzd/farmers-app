@@ -4,6 +4,7 @@ import { Feather } from "@/components/icons/Feather";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { MayaRadius } from "@/constants/mayaTheme";
 
 import { AppIcon } from "@/components/icons/AppIcon";
 interface StatCardProps {
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
     minWidth: "45%",
   },
   container: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
@@ -108,7 +109,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },

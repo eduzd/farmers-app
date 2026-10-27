@@ -1,6 +1,10 @@
 /** English -> Bangla phrases for tr() (src/lib/tr.ts). Bangla text is translated back with the reverse map. */
 export const BN_OF_EN: Record<string, string> = {
   "Saved": "সংরক্ষিত হয়েছে",
+  "Saved calculation opened. Change it or add rows, then tap Update to save it to the same entry.": "সংরক্ষিত হিসাব খোলা হয়েছে। বদলান বা নতুন সারি যোগ করুন, তারপর \"আপডেট করুন\" চাপুন — একই হিসাবে সেভ হবে।",
+  "Kept in this browser, opens without internet too.": "এই ব্রাউজারে রাখা হয়, ইন্টারনেট ছাড়াও খোলা যায়।",
+  "items": "আইটেম",
+  "Saved. Tap the bookmark icon at the top to see it.": "হিসাব সংরক্ষিত হয়েছে। দেখতে উপরের বুকমার্ক আইকনে চাপুন।",
   "New calculation": "নতুন হিসাব",
   "Update": "আপডেট করুন",
   "Edit": "এডিট করুন",

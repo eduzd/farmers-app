@@ -12,6 +12,15 @@ h = H("maya-every")
 h.start()
 admin = h.signup("boss", "Admin Rahim")
 h.make_admin(admin)
+h.login(admin)
+seller = h.signup("seller", "Karim Seller")
+# A shop and a product, so the product page, the shop page, cart and checkout have something to show.
+_st, SHOP = h.api("POST", "/api/admin/manage/stores", {"name": "Padma Fish Feed", "owner": seller["email"]}, admin["token"])
+assert _st == 201, (_st, SHOP)
+_st, PROD = h.api("POST", "/api/admin/manage/products", {"storeId": SHOP["id"], "category": "vegetables", "name": "Fresh tomatoes", "price": 80,
+                  "quantity": 40, "unit": "kg"}, admin["token"])
+assert _st == 201, (_st, PROD)
+SLUG, PID = SHOP["slug"], PROD["id"]
 
 # (name, path, steps, logged_in). Steps: ("tab", i) | ("tid", testID) | ("text", [en, bn]) | ("back",)
 PAGES = [
@@ -39,7 +48,31 @@ PAGES = [
     ("admin-notifications", "/admin", [("tid", "header-bell")], True),
     ("admin-official-accounts", "/admin", [("tid", "admin-tab-more"), ("text", ["Official accounts", "অফিসিয়াল অ্যাকাউন্ট"])], True),
     ("admin-voice-rooms", "/admin", [("tid", "admin-tab-more"), ("text", ["Voice rooms", "ভয়েস রুম"])], True),
-    ("admin-carousel-ads", "/admin", [("tid", "admin-tab-more"), ("text", ["Carousel ads", "ক্যারোসেল বিজ্ঞাপন"])], True),
+    ("admin-carousel-ads", "/admin", [("tid", "shortcut-ads")], True),
+    # Marketplace pages that need a product
+    ("shop-page", "/shop/{slug}", [], True),
+    ("product-page", "/product/{pid}", [], True),
+    ("cart", "/product/{pid}", [("tid", "product-add-to-cart"), ("tid", "product-cart-badge")], True),
+    ("checkout", "/product/{pid}", [("tid", "product-add-to-cart"), ("tid", "product-cart-badge"), ("text", ["Checkout", "চেকআউট"])], True),
+    ("guest-shops", "/", [("tid", "button-shop-no-account")], False),
+    ("guest-product", "/product/{pid}", [], False),
+    # Every other admin page
+    ("admin-shop-shops", "/admin", [("tid", "admin-tab-shop"), ("tid", "shop-section-shops")], True),
+    ("admin-shop-categories", "/admin", [("tid", "admin-tab-shop"), ("tid", "shop-section-categories")], True),
+    ("admin-add-product", "/admin", [("tid", "shortcut-add-product")], True),
+    ("admin-official-message", "/admin", [("tid", "shortcut-official")], True),
+    ("admin-restricted", "/admin", [("tid", "shortcut-restricted")], True),
+    ("admin-open-shop", "/admin", [("tid", "shortcut-open-shop")], True),
+    ("admin-notify", "/admin", [("tid", "shortcut-notify")], True),
+    ("admin-search", "/admin", [("tid", "shortcut-search")], True),
+    ("admin-delivery", "/admin", [("tid", "admin-tab-more"), ("tid", "more-delivery")], True),
+    ("admin-payments", "/admin", [("tid", "admin-tab-more"), ("tid", "more-payments")], True),
+    ("admin-market-prices", "/admin", [("tid", "admin-tab-more"), ("tid", "more-prices")], True),
+    ("admin-posts-reports", "/admin", [("tid", "admin-tab-more"), ("tid", "more-posts")], True),
+    ("admin-content", "/admin", [("tid", "admin-tab-more"), ("tid", "more-content")], True),
+    ("admin-analytics", "/admin", [("tid", "admin-tab-more"), ("tid", "more-analytics")], True),
+    ("admin-app-settings", "/admin", [("tid", "admin-tab-more"), ("tid", "more-settings")], True),
+    ("admin-activity-log", "/admin", [("tid", "admin-tab-more"), ("tid", "more-logs")], True),
 ]
 
 SCAN = """() => {
@@ -96,7 +129,7 @@ async def main():
         b = await p.chromium.launch()
         for lang in ("en", "bn"):
             for name, path, steps, logged in PAGES:
-                ctx, pg = await h.page(b, admin if logged else None, lang, 390, path=path, h=844)
+                ctx, pg = await h.page(b, admin if logged else None, lang, 390, path=path.format(slug=SLUG, pid=PID), h=844)
                 await pg.wait_for_timeout(2500)
                 reached = True
                 try:

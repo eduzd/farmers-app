@@ -158,7 +158,7 @@ export function NotificationsScreen() {
               { backgroundColor: n.read ? theme.card : theme.primary + (isDark ? "26" : "12"), flexDirection: "row", alignItems: "flex-start", gap: 12, opacity: pressed ? 0.8 : 1 },
             ]}
           >
-            <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: c + "1F", alignItems: "center", justifyContent: "center" }}>
+            <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: c + "1F", alignItems: "center", justifyContent: "center" }}>
               {chat ? <ChatIcon size={20} color={c} /> : <AppIcon name={(ICON[n.type] || "bell") as any} size={19} color={c} />}
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
