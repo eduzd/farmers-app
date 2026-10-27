@@ -1,6 +1,13 @@
 /** English -> Bangla phrases for tr() (src/lib/tr.ts). Bangla text is translated back with the reverse map. */
 export const BN_OF_EN: Record<string, string> = {
   "Saved": "সংরক্ষিত হয়েছে",
+  "Download PDF": "পিডিএফ ডাউনলোড",
+  "There was a problem creating the PDF": "পিডিএফ তৈরি করতে সমস্যা হয়েছে",
+  "There was a problem creating the PDF.": "PDF তৈরি করতে সমস্যা হয়েছে",
+  "Delete calculation": "হিসাব মুছুন",
+  "Delete this calculation?": "হিসাব মুছবেন?",
+  "Couldn't delete it. Please try again.": "মুছে ফেলা যায়নি। আবার চেষ্টা করুন।",
+  "This saved calculation will be deleted for good and can't be brought back.": "এই সংরক্ষিত হিসাবটি স্থায়ীভাবে মুছে যাবে, আর ফেরত আনা যাবে না।",
   "Saved calculation opened. Change it or add rows, then tap Update to save it to the same entry.": "সংরক্ষিত হিসাব খোলা হয়েছে। বদলান বা নতুন সারি যোগ করুন, তারপর \"আপডেট করুন\" চাপুন — একই হিসাবে সেভ হবে।",
   "Kept in this browser, opens without internet too.": "এই ব্রাউজারে রাখা হয়, ইন্টারনেট ছাড়াও খোলা যায়।",
   "items": "আইটেম",

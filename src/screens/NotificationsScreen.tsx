@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -31,6 +31,7 @@ import { fetchServerPost } from "@/lib/feedApi";
 import { useAuthStore } from "@/lib/authStore";
 import { useI18n } from "@/lib/i18n";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { inScope, isMarketNotification, parseScope } from "@/lib/notificationScope";
 interface Notification {
   id: string;
   type: "like" | "comment" | "new_post" | "follow" | "mention" | "order" | "system" | "voice_room" | "badge" | "message" | "review" | "answer" | "rfq" | "price" | "reminder";
@@ -43,6 +44,7 @@ interface Notification {
   isRead: boolean;
   createdAt: Date;
   actionData?: any;
+  isMarket?: boolean;
 }
 
 const MOCK_NOTIFICATIONS: Notification[] = [];
@@ -104,6 +106,14 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const { theme, isDark } = useTheme();
   const navigation = useNavigation<any>();
+  const { language } = useI18n();
+  const isBn = language === "bn";
+  // The Marketplace bell opens this with scope "market" (orders, shop, price alerts, quotes,
+  // product reviews); the Home bell with scope "home" (everything else); other links show all.
+  const scope = parseScope((useRoute() as any)?.params?.scope);
+  React.useLayoutEffect(() => {
+    if (scope === "market") navigation.setOptions({ headerTitle: isBn ? "মার্কেট নোটিফিকেশন" : "Market notifications" });
+  }, [navigation, scope, isBn]);
   const [localNotifications, setLocalNotifications] = useState<Notification[]>([]);
   const loggedIn = isLoggedIn();
   const loadServer = useCallback(async () => {
@@ -112,7 +122,9 @@ export default function NotificationsScreen() {
       return;
     }
     try {
-      const r = await apiGet<{ notifications: any[] }>("/api/me/notifications");
+      const r = await apiGet<{ notifications: any[] }>(
+        scope === "all" ? "/api/me/notifications" : `/api/me/notifications?scope=${scope}`
+      );
       setLocalNotifications(
         r.notifications.map((n) => ({
           id: n.id,
@@ -122,12 +134,15 @@ export default function NotificationsScreen() {
           isRead: !!n.read,
           createdAt: new Date(n.createdAt),
           actionData: n.data || {},
+          isMarket: isMarketNotification(n.type, n.data, typeof n.market === "boolean" ? n.market : undefined),
         }))
+          // An older server ignores ?scope: keep only this bell's notifications here too.
+          .filter((n) => inScope(scope, !!n.isMarket))
       );
     } catch {
       // offline: keep what we have
     }
-  }, []);
+  }, [scope]);
   useFocusEffect(
     useCallback(() => {
       loadServer();
@@ -144,11 +159,12 @@ export default function NotificationsScreen() {
     sendTestNotification,
     notifications: pushNotifications,
     markAsRead: markPushAsRead,
-    markAllAsRead: markAllPushAsRead,
   } = useNotifications();
 
   const allNotifications: Notification[] = [
-    ...pushNotifications.map((pn) => ({
+    ...pushNotifications
+      .filter((pn) => inScope(scope, isMarketNotification(pn.type, pn.data)))
+      .map((pn) => ({
       id: pn.id,
       type: pn.type as Notification["type"],
       title: pn.title,
@@ -215,7 +231,11 @@ export default function NotificationsScreen() {
       );
       if (!notification.isRead) {
         const u = useUnreadCounts.getState();
-        u.set({ notifications: Math.max(0, u.notifications - 1) });
+        u.set(
+          notification.isMarket
+            ? { notifications: Math.max(0, u.notifications - 1), notificationsMarket: Math.max(0, u.notificationsMarket - 1) }
+            : { notifications: Math.max(0, u.notifications - 1), notificationsHome: Math.max(0, u.notificationsHome - 1) }
+        );
       }
       if (isLoggedIn()) apiPost("/api/me/notifications/read", { ids: [notification.id] }).then(() => refreshUnreadCounts()).catch(() => {});
       // Open it where it came from: the comment on the post, the order, the chat, the profile...
@@ -229,10 +249,17 @@ export default function NotificationsScreen() {
 
   const handleMarkAllRead = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    markAllPushAsRead();
+    // Only this bell's notifications: "mark all read" under the Marketplace bell leaves the
+    // Home bell's unread ones alone, and the other way round.
+    pushNotifications
+      .filter((pn) => !pn.isRead && inScope(scope, isMarketNotification(pn.type, pn.data)))
+      .forEach((pn) => markPushAsRead(pn.id));
     setLocalNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    useUnreadCounts.getState().set({ notifications: 0 }); // the bell clears at once
-    if (isLoggedIn()) apiPost("/api/me/notifications/read", { all: true }).then(() => refreshUnreadCounts()).catch(() => {});
+    const u = useUnreadCounts.getState();
+    if (scope === "market") u.set({ notificationsMarket: 0, notifications: u.notificationsHome });
+    else if (scope === "home") u.set({ notificationsHome: 0, notifications: u.notificationsMarket });
+    else u.set({ notifications: 0, notificationsMarket: 0, notificationsHome: 0 }); // the bell clears at once
+    if (isLoggedIn()) apiPost("/api/me/notifications/read", { all: true, scope }).then(() => refreshUnreadCounts()).catch(() => {});
   };
 
   const renderNotification = ({ item, index }: { item: Notification; index: number }) => (
@@ -287,7 +314,9 @@ export default function NotificationsScreen() {
     <ThemedView style={styles.container}>
       <Animated.View entering={FadeIn} style={styles.header}>
         <View>
-          <ThemedText style={[styles.title, { color: theme.text }]}>{tr("নোটিফিকেশন")}</ThemedText>
+          <ThemedText style={[styles.title, { color: theme.text }]}>
+            {scope === "market" ? (isBn ? "মার্কেট নোটিফিকেশন" : "Market notifications") : tr("নোটিফিকেশন")}
+          </ThemedText>
           {unreadCount > 0 ? (
             <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
               {unreadCount}টি অপঠিত বার্তা
@@ -370,7 +399,11 @@ export default function NotificationsScreen() {
           <View style={styles.emptyState}>
             <Feather name="bell-off" size={48} color={theme.textSecondary} />
             <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
-              {loggedIn ? tr("কোন নোটিফিকেশন নেই") : tr("Log in to see your order, message and price alert notifications")}
+              {!loggedIn
+                ? tr("Log in to see your order, message and price alert notifications")
+                : scope === "market"
+                  ? isBn ? "এখনো কোনো মার্কেট নোটিফিকেশন নেই। অর্ডার, দোকান আর দামের খবর এখানে আসবে।" : "No marketplace notifications yet. Orders, your shop and price alerts show up here."
+                  : tr("কোন নোটিফিকেশন নেই")}
             </ThemedText>
           </View>
         }

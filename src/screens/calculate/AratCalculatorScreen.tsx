@@ -3,14 +3,17 @@ import { View, StyleSheet, Pressable, Modal, ScrollView, Platform, Alert, Keyboa
 import { Text, TextInput } from '@/components/MayaText';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { HeaderButton, useHeaderHeight } from '@react-navigation/elements';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { HeaderIconCircle } from '@/components/HeaderIconCircle';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { Feather } from '@/components/icons/Feather';
 import * as Print from 'expo-print';
+import { saveHtmlAsPdf, escHtml } from '@/lib/htmlPdf';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
-import { saveCalcRecord, getCalcRecords, getCalcRecord, CalcRecord } from '@/offline/db/records';
+import { saveCalcRecord, getCalcRecords, getCalcRecord, deleteCalcRecord, CalcRecord } from '@/offline/db/records';
+import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { saveDraft, getDraft, deleteDraft } from '@/offline/db/drafts';
 import { getSetting, setSetting } from '@/offline/db/database';
 
@@ -254,6 +257,10 @@ export function AratCalculatorScreen() {
   const [savedRecords, setSavedRecords] = useState<CalcRecord[]>([]);
   const [calculationName, setCalculationName] = useState('');
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
+  // Delete from the saved list: the record waiting for the user's OK, and whether it is being deleted.
+  const [pendingDelete, setPendingDelete] = useState<CalcRecord | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteFailed, setDeleteFailed] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
   // A short note at the top: 'saved' after the + button (and where to find it), 'opened' after a
   // saved calculation is opened for editing.
@@ -418,6 +425,36 @@ export function AratCalculatorScreen() {
     deleteDraft('arat').catch(() => {});
   };
 
+  /**
+   * Deletes the saved calculation the user confirmed: gone from this device at once, and from
+   * the server too (on the next sync when offline). If it was open on screen, the screen starts
+   * a new empty calculation so Update can't bring it back.
+   */
+  const confirmDeleteRecord = async () => {
+    const rec = pendingDelete;
+    if (!rec || deleting) return;
+    setDeleting(true);
+    setDeleteFailed(false);
+    try {
+      await deleteCalcRecord(rec.id);
+      if (editingRecordId === rec.id) {
+        autoAdvance.cancel();
+        setRows([{ fishName: '', rate: '', weight: '' }]);
+        setCalculationName('');
+        setEditingRecordId(null);
+        setSavedNotice(null);
+        deleteDraft('arat').catch(() => {});
+      }
+      setSavedRecords((list) => list.filter((r) => r.id !== rec.id));
+      setPendingDelete(null);
+      loadRecords();
+    } catch {
+      setDeleteFailed(true);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   /** The saved icon at the top: opens the list of saved calculations (fresh from the phone). */
   const openSavedList = () => {
     loadRecords();
@@ -430,25 +467,25 @@ export function AratCalculatorScreen() {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerRight}>
-          <HeaderButton onPress={handleDownloadPDF}>
-            <Feather name="download" size={20} color={results ? colors.primary : colors.textTertiary} />
-          </HeaderButton>
-          <HeaderButton onPress={openSavedList} accessibilityLabel={tr("সংরক্ষিত হিসাব")}>
+          <HeaderIconCircle size={40} onPress={handleDownloadPDF} accessibilityLabel={tr("পিডিএফ ডাউনলোড")}>
+            <Feather name="download" size={20} color={results ? colors.text : colors.textTertiary} />
+          </HeaderIconCircle>
+          <HeaderIconCircle size={40} onPress={openSavedList} accessibilityLabel={tr("সংরক্ষিত হিসাব")}>
             <View style={styles.badgeContainer}>
-              <Feather name="bookmark" size={20} color={colors.textSecondary} />
+              <Feather name="bookmark" size={20} color={colors.text} />
               {savedCount > 0 ? (
                 <View style={[styles.badge, { backgroundColor: colors.primary }]}>
                   <Text style={styles.badgeText}>{savedCount > 9 ? '9+' : savedCount}</Text>
                 </View>
               ) : null}
             </View>
-          </HeaderButton>
-          <HeaderButton onPress={handleNewCalculation} accessibilityLabel={tr("নতুন হিসাব")}>
-            <Feather name="plus" size={22} color={colors.primary} />
-          </HeaderButton>
-          <HeaderButton onPress={() => setSettingsVisible(true)}>
-            <Feather name="settings" size={20} color={colors.textSecondary} />
-          </HeaderButton>
+          </HeaderIconCircle>
+          <HeaderIconCircle size={40} onPress={handleNewCalculation} accessibilityLabel={tr("নতুন হিসাব")}>
+            <Feather name="plus" size={20} color={colors.text} />
+          </HeaderIconCircle>
+          <HeaderIconCircle size={40} onPress={() => setSettingsVisible(true)}>
+            <Feather name="settings" size={20} color={colors.text} />
+          </HeaderIconCircle>
         </View>
       ),
     });
@@ -520,68 +557,43 @@ export function AratCalculatorScreen() {
         </style>
       </head>
       <body>
-        <h1>{tr("আরত হিসাব")}</h1>
+        <h1>${tr("আরত হিসাব")}</h1>
         <p class="date">${date}</p>
-        ${calculationName ? `<p class="title">${calculationName}</p>` : ''}
+        ${calculationName ? `<p class="title">${escHtml(calculationName)}</p>` : ''}
         
         <table>
-          <tr><th>{tr("ক্রম")}</th><th>{tr("মাছের নাম")}</th><th>{tr("দর (টাকা/কেজি)")}</th><th>{tr("ওজন (কেজি)")}</th><th>{tr("মোট")}</th></tr>
+          <tr><th>${tr("ক্রম")}</th><th>${tr("মাছের নাম")}</th><th>${tr("দর (টাকা/কেজি)")}</th><th>${tr("ওজন (কেজি)")}</th><th>${tr("মোট")}</th></tr>
           ${validRows.map((r, i) => {
             const total = parseFloat(r.rate) * parseFloat(r.weight);
-            return `<tr><td>${i + 1}</td><td>${r.fishName || '-'}</td><td>${r.rate}</td><td>${r.weight}</td><td>${fmtTaka(total)}</td></tr>`;
+            return `<tr><td>${i + 1}</td><td>${escHtml(r.fishName || '-')}</td><td>${r.rate}</td><td>${r.weight}</td><td>${fmtTaka(total)}</td></tr>`;
           }).join('')}
         </table>
 
         <div class="result-box">
-          <div class="result-row"><span class="result-label">{tr("মোট ওজন:")}</span><span class="result-value">${formatNum(results.totalWeight)} কেজি</span></div>
-          <div class="result-row"><span class="result-label">{tr("মোট টাকা:")}</span><span class="result-value">${fmtTaka(results.rawAmount)}</span></div>
+          <div class="result-row"><span class="result-label">${tr("মোট ওজন:")}</span><span class="result-value">${formatNum(results.totalWeight)} কেজি</span></div>
+          <div class="result-row"><span class="result-label">${tr("মোট টাকা:")}</span><span class="result-value">${fmtTaka(results.rawAmount)}</span></div>
           <div class="result-row"><span class="result-label">কমিশন (${settings.commission_per_100}%):</span><span class="result-value">${fmtTaka(results.commission)}</span></div>
-          <div class="result-row"><span class="result-label">{tr("গড় দর:")}</span><span class="result-value">${fmtTaka(results.avgRate)}/কেজি</span></div>
+          <div class="result-row"><span class="result-label">${tr("গড় দর:")}</span><span class="result-value">${fmtTaka(results.avgRate)}/কেজি</span></div>
         </div>
 
         <p class="total">নিট টাকা: ${fmtTaka(results.netAmount)}</p>
 
-        <p class="footer">{tr("Farmers App - আরত ক্যালকুলেটর")}</p>
+        <p class="footer">${tr("Farmers App - আরত ক্যালকুলেটর")}</p>
       </body>
       </html>
     `;
 
     try {
-      const { uri } = await Print.printToFileAsync({ html });
-      if (Platform.OS === 'web') {
-        Alert.alert('সফল', 'পিডিএফ তৈরি হয়েছে');
-      } else {
-        await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-      }
-    } catch (error) {
-      Alert.alert('ত্রুটি', 'পিডিএফ তৈরি করতে সমস্যা হয়েছে');
+      await saveHtmlAsPdf(html, `Farmers-Arat-${(calculationName || '').trim() || new Date().toISOString().slice(0, 10)}`);
+    } catch (error: any) {
+      Alert.alert(tr('ত্রুটি'), `${tr('পিডিএফ তৈরি করতে সমস্যা হয়েছে')}${error?.message ? `
+${error.message}` : ''}`);
     }
   };
 
   const formatDate = (timestamp: number) => {
     const d = new Date(timestamp);
     return `${d.getDate()}/${d.getMonth() + 1}`;
-  };
-
-  const renderSavedRecord = ({ item }: { item: CalcRecord }) => {
-    const r = toResult(parseJson(item.outputs_json));
-    const active = editingRecordId === item.id;
-    return (
-      <Pressable
-        style={[styles.recordCard, { backgroundColor: active ? colors.primary + '20' : colors.card, borderColor: active ? colors.primary : colors.border }]}
-        onPress={() => loadRecord(item)}
-      >
-        <View style={styles.recordHeader}>
-          <Text style={[styles.recordDate, { color: colors.textSecondary }]} numberOfLines={1}>{item.title ? `${item.title} • ` : ''}{formatDate(item.created_at)}</Text>
-          <Text style={[styles.recordAmount, { color: colors.primary }]}>{fmtTaka(r.netAmount)}</Text>
-        </View>
-        <View style={styles.recordStats}>
-          <Text style={[styles.recordStat, { color: colors.text }]}>{formatNum(r.totalWeight)} কেজি</Text>
-          <Text style={[styles.recordStat, { color: colors.textSecondary }]}>{r.rowCount} আইটেম</Text>
-          <Text style={[styles.recordStat, { color: colors.textSecondary }]}>{fmtTaka(r.avgRate)}/কেজি</Text>
-        </View>
-      </Pressable>
-    );
   };
 
   return (
@@ -735,19 +747,6 @@ export function AratCalculatorScreen() {
           })}
         </View>
 
-        {/* Saved Records List */}
-        {savedRecords.length > 0 ? (
-          <View style={styles.savedSection}>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-              {tr("সংরক্ষিত হিসাব")} ({savedRecords.length})
-            </Text>
-            {savedRecords.map((record) => (
-              <View key={record.id}>
-                {renderSavedRecord({ item: record })}
-              </View>
-            ))}
-          </View>
-        ) : null}
       </KeyboardAwareScrollViewCompat>
 
       <Modal visible={settingsVisible} animationType="slide" transparent onRequestClose={() => setSettingsVisible(false)}>
@@ -782,14 +781,17 @@ export function AratCalculatorScreen() {
                 const r = toResult(parseJson(record.outputs_json));
                 const inputs = parseJson(record.inputs_json);
                 return (
-                  <Pressable
+                  <View
                     key={record.id}
+                    style={[styles.drawerItem, styles.drawerItemRow, {
+                      backgroundColor: editingRecordId === record.id ? colors.primary + '20' : colors.background,
+                      borderColor: editingRecordId === record.id ? colors.primary : colors.border
+                    }]}
+                  >
+                  <Pressable
                     testID="calc-saved-item"
                     accessibilityRole="button"
-                    style={[styles.drawerItem, { 
-                      backgroundColor: editingRecordId === record.id ? colors.primary + '20' : colors.background,
-                      borderColor: editingRecordId === record.id ? colors.primary : colors.border 
-                    }]}
+                    style={styles.drawerItemMain}
                     onPress={() => loadRecord(record)}
                   >
                     <View style={styles.drawerItemHeader}>
@@ -804,10 +806,40 @@ export function AratCalculatorScreen() {
                       </Text>
                     </View>
                   </Pressable>
+                  <Pressable
+                    testID="calc-saved-delete"
+                    accessibilityRole="button"
+                    accessibilityLabel={tr('হিসাব মুছুন')}
+                    hitSlop={8}
+                    onPress={() => { setDeleteFailed(false); setPendingDelete(record); }}
+                    style={({ pressed }) => [styles.drawerDeleteBtn, { backgroundColor: colors.error + (pressed ? '26' : '14') }]}
+                  >
+                    <Feather name="trash-2" size={18} color={colors.error} />
+                  </Pressable>
+                  </View>
                 );
               })}
             </ScrollView>
           </View>
+
+        {/* "Delete this calculation?" — the app's slide-up confirmation, red for delete. It sits
+            inside the saved list's panel so it shows on top of it on every platform. */}
+        <ConfirmSheet
+          visible={!!pendingDelete}
+          testID="calc-delete-sheet"
+          tone="danger"
+          icon="trash-2"
+          title={tr('হিসাব মুছবেন?')}
+          message={pendingDelete
+            ? `${parseJson(pendingDelete.inputs_json).name || pendingDelete.title || tr('হিসাব')} • ${fmtTaka(toResult(parseJson(pendingDelete.outputs_json)).netAmount)}\n\n${deleteFailed ? tr('মুছে ফেলা যায়নি। আবার চেষ্টা করুন।') : tr('এই সংরক্ষিত হিসাবটি স্থায়ীভাবে মুছে যাবে, আর ফেরত আনা যাবে না।')}`
+            : undefined}
+          loading={deleting}
+          onRequestClose={() => setPendingDelete(null)}
+          buttons={[
+            { text: tr('বাতিল'), style: 'cancel', onPress: () => setPendingDelete(null) },
+            { text: tr('মুছুন'), style: 'destructive', onPress: () => { confirmDeleteRecord(); } },
+          ]}
+        />
       </Modal>
     </View>
   );
@@ -1081,7 +1113,8 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    marginRight: 8,
   },
   badgeContainer: {
     position: 'relative',
@@ -1142,6 +1175,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing.md,
     marginBottom: Spacing.sm,
+  },
+  drawerItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  drawerItemMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+  drawerDeleteBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   drawerItemHeader: {
     flexDirection: 'row',

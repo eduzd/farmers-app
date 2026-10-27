@@ -74,7 +74,7 @@ export default function CommunityScreen() {
   const getToken = useAuthStore((s) => s.getToken);
   const { language } = useI18n();
   const isBn = language === "bn";
-  const unreadNotifications = useUnreadCounts((s) => s.notifications);
+  const unreadNotifications = useUnreadCounts((s) => s.notificationsHome); // everything except marketplace notifications
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 640);
   // Featured cards: the original full-width card shape (one card fills the row), still
@@ -483,24 +483,25 @@ export default function CommunityScreen() {
                 type="h4"
                 numberOfLines={1}
                 testID="home-title"
-                style={{ ...mayaPageTitleFont(isBn ? "bn" : "en", "tab"), lineHeight: 30, fontWeight: "400" }}
+                style={{ ...mayaPageTitleFont(isBn ? "bn" : "en", "tab"), lineHeight: 24, fontWeight: "400" }}
               >
                 {isBn ? "কৃষক বন্ধু" : "Farmers"}
               </ThemedText>
             </View>
-            <IconButton icon="search" accessibilityLabel={isBn ? "খুঁজুন" : "Search"} onPress={() => navigation.navigate("UserSearch")} />
+            <IconButton icon="search" tone="header" accessibilityLabel={isBn ? "খুঁজুন" : "Search"} onPress={() => navigation.navigate("UserSearch")} />
             <View style={{ marginLeft: Spacing.sm }}>
-              <HelpButton />
+              <HelpButton header />
             </View>
             <View style={{ marginLeft: Spacing.sm }}>
               <IconButton
                 icon="bell"
+                tone="header"
                 accessibilityLabel={
                   unreadNotifications > 0
                     ? isBn ? `নোটিফিকেশন, ${unreadNotifications}টি নতুন` : `Notifications, ${unreadNotifications} unread`
                     : isBn ? "নোটিফিকেশন" : "Notifications"
                 }
-                onPress={() => navigation.navigate("Notifications")}
+                onPress={() => navigation.navigate("Notifications", { scope: "home" })}
               />
               <CountBadge count={unreadNotifications} style={{ top: -4, right: -6 }} testID="bell-badge" />
             </View>

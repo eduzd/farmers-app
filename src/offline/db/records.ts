@@ -1,6 +1,14 @@
 import { getDatabase } from './database';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from '@/lib/authStore';
+import { syncRecordsToServer } from './syncService';
+
+/**
+ * archived = 2 marks a calculation the user deleted on this device whose server copy is not
+ * removed yet. It is hidden everywhere, never uploaded, and stops the server copy being
+ * downloaded again; the next sync deletes the server copy and then the row itself.
+ */
+export const ARCHIVED_DELETED = 2;
 
 export type RecordType = 'BEPARI' | 'ARAT' | 'FEED' | 'FERTILIZER' | 'PROFIT' | 'FEED_TOOL' | 'LOAN' | 'INSURANCE';
 
@@ -59,12 +67,17 @@ export async function saveCalcRecord(
   if (!database) throw new Error('Calculator storage is not available on this device');
   
   const now = Date.now();
-  const id = options.id || uuidv4();
   
-  const existing = await database.getFirstAsync<CalcRecord>(
+  let id = options.id || uuidv4();
+  let existing = await database.getFirstAsync<CalcRecord>(
     'SELECT * FROM calc_records WHERE id = ?',
     [id]
   );
+  // The calculation was deleted meanwhile: saving makes a new one instead of editing the deleted one.
+  if (existing && Number(existing.archived) === ARCHIVED_DELETED) {
+    id = uuidv4();
+    existing = null;
+  }
 
   if (existing) {
     const versionCount = await database.getFirstAsync<{ count: number }>(
@@ -191,9 +204,39 @@ export async function getCalcRecord(id: string): Promise<CalcRecord | null> {
   const database = await getDatabase();
   if (!database) return null;
   return database.getFirstAsync<CalcRecord>(
-    'SELECT * FROM calc_records WHERE id = ?',
-    [id]
+    'SELECT * FROM calc_records WHERE id = ? AND (archived IS NULL OR archived != ?)',
+    [id, ARCHIVED_DELETED]
   );
+}
+
+/**
+ * Deletes a saved calculation for good: it disappears from every list at once, and its copy on
+ * the server is deleted too so it never comes back. Offline, the server copy is deleted on the
+ * next sync. A calculation that never reached the server is simply removed from this device.
+ */
+export async function deleteCalcRecord(id: string): Promise<void> {
+  const database = await getDatabase();
+  if (!database) throw new Error('Calculator storage is not available on this device');
+  const rec = await database.getFirstAsync<CalcRecord>('SELECT * FROM calc_records WHERE id = ?', [id]);
+  if (!rec) return;
+
+  await database.runAsync('DELETE FROM calc_record_versions WHERE record_id = ?', [id]);
+
+  const signedIn = !!currentUserId();
+  const everSynced = !!rec.server_id || !!rec.last_synced_at;
+  if (!signedIn && !everSynced && !(rec as any).owner_user_id) {
+    // Saved while signed out and never uploaded: nothing on the server to delete.
+    await database.runAsync('DELETE FROM calc_records WHERE id = ?', [id]);
+    return;
+  }
+
+  // Keep only what the server delete needs; the numbers themselves are wiped now.
+  await database.runAsync(
+    "UPDATE calc_records SET archived = ?, updated_at = ?, title = NULL, inputs_json = '{}', outputs_json = '{}', notes = NULL, tags_json = NULL WHERE id = ?",
+    [ARCHIVED_DELETED, Date.now(), id]
+  );
+  // Delete the server copy now when online (a sync deletes first, then uploads).
+  syncRecordsToServer().catch(() => {});
 }
 
 export async function getRecordVersions(recordId: string): Promise<CalcRecordVersion[]> {

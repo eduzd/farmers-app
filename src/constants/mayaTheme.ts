@@ -140,18 +140,18 @@ export const MayaFontFamily = {
 /**
  * The one page-title style for the whole app, copied from the Market title:
  * Anton (Maya's display face) in English; Anton has no Bengali glyphs, so Bangla uses Hind Siliguri Bold.
- * "tab" = the five main tabs (24 / 22), "stack" = pages opened on top with a back arrow (22 / 20).
+ * "tab" = the five main tabs (18 / 17), "stack" = pages opened on top with a back arrow (17 / 16).
  */
 export function mayaPageTitleFont(language: string, kind: "tab" | "stack" = "tab") {
   const bn = language === "bn";
   if (kind === "stack") {
     return bn
-      ? { fontFamily: "HindSiliguri_700Bold", fontSize: 20 }
-      : { fontFamily: MayaFontFamily.display, fontSize: 22 };
+      ? { fontFamily: "HindSiliguri_700Bold", fontSize: 16 }
+      : { fontFamily: MayaFontFamily.display, fontSize: 17, letterSpacing: 0.2 };
   }
   return bn
-    ? { fontFamily: "HindSiliguri_700Bold", fontSize: 22, letterSpacing: 0.2 }
-    : { fontFamily: MayaFontFamily.display, fontSize: 24, letterSpacing: 0.2 };
+    ? { fontFamily: "HindSiliguri_700Bold", fontSize: 17, letterSpacing: 0.2 }
+    : { fontFamily: MayaFontFamily.display, fontSize: 18, letterSpacing: 0.2 };
 }
 
 /** Plus Jakarta Sans (app default) -> DM Sans (Maya) for the same weight. */
