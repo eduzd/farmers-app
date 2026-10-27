@@ -14,7 +14,8 @@ import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { LinearGradient } from "expo-linear-gradient";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useCartStore, CartItem, cartRule, nextQty, canStepUp } from "@/lib/cartStore";
 import { amountText, perUnitText, totalContentText } from "@shared/selling";
@@ -53,7 +54,7 @@ export default function CartScreen() {
   };
 
   const renderCartItem = ({ item }: { item: CartItem }) => (
-    <View style={[styles.cartItem, { backgroundColor: theme.white }]}>
+    <View style={[styles.cartItem, { backgroundColor: theme.white }, Shadows.small]}>
       <Image
         source={{ uri: item.image }}
         style={styles.itemImage}
@@ -64,21 +65,21 @@ export default function CartScreen() {
         <ThemedText style={[styles.itemName, { color: theme.text }]} numberOfLines={2}>
           {item.name}
         </ThemedText>
-        <ThemedText style={[styles.itemSeller, { color: theme.textSecondary }]}>
-          {item.seller}
+        <ThemedText style={[styles.itemSeller, { color: theme.textSecondary }]} numberOfLines={1}>
+          {item.seller ? <Feather name="shopping-bag" size={11} color={theme.textSecondary} /> : null}{item.seller ? " " : ""}{item.seller}
           {totalContentText(cartRule(item), item.quantity, bn) ? ` · ${totalContentText(cartRule(item), item.quantity, bn)}` : ""}
         </ThemedText>
         <View style={styles.itemFooter}>
           <ThemedText style={[styles.itemPrice, { color: theme.primary }]}>
             {item.currency}{item.price} {perUnitText(cartRule(item), bn)}
           </ThemedText>
-          <View style={[styles.quantityControl, { backgroundColor: theme.backgroundDefault }]}>
+          <View style={[styles.quantityControl, { backgroundColor: theme.primarySoft }]}>
             <Pressable
               style={styles.quantityButton}
               testID={`cart-minus-${item.productId}`}
               onPress={() => handleUpdateQuantity(item.id, nextQty(item, -1))}
             >
-              <Feather name="minus" size={16} color={theme.text} />
+              <Feather name="minus" size={16} color={theme.primary} />
             </Pressable>
             <ThemedText style={[styles.quantityValue, { color: theme.text }]}>
               {amountText(cartRule(item), item.quantity, bn)}
@@ -89,24 +90,27 @@ export default function CartScreen() {
               disabled={!canStepUp(item)}
               onPress={() => handleUpdateQuantity(item.id, nextQty(item, 1))}
             >
-              <Feather name="plus" size={16} color={canStepUp(item) ? theme.text : theme.textSecondary} />
+              <Feather name="plus" size={16} color={canStepUp(item) ? theme.primary : theme.textSecondary} />
             </Pressable>
           </View>
         </View>
       </View>
       <Pressable
-        style={styles.removeButton}
+        style={[styles.removeButton, { backgroundColor: theme.backgroundSecondary }]}
+        hitSlop={6}
         onPress={() => handleRemoveItem(item.id)}
       >
-        <Feather name="trash-2" size={18} color="#DC2626" />
+        <Feather name="trash-2" size={15} color="#DC2626" />
       </Pressable>
     </View>
   );
 
   const renderEmptyCart = () => (
     <View style={styles.emptyContainer}>
-      <View style={[styles.emptyIcon, { backgroundColor: theme.backgroundDefault }]}>
-        <Feather name="shopping-cart" size={48} color={theme.textSecondary} />
+      <View style={[styles.emptyRing, { backgroundColor: theme.primarySoft }]}>
+        <LinearGradient colors={[theme.primary, theme.primaryTint]} style={styles.emptyIcon}>
+          <Feather name="shopping-cart" size={40} color="#FFFFFF" />
+        </LinearGradient>
       </View>
       <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>
         {tr("Your cart is empty")}
@@ -115,7 +119,7 @@ export default function CartScreen() {
         {tr("Add products from the marketplace to get started")}
       </ThemedText>
       <Pressable
-        style={[styles.shopButton, { backgroundColor: theme.primary }]}
+        style={[styles.shopButton, { backgroundColor: theme.primary }, Shadows.medium]}
         onPress={() => navigation.goBack()}
       >
         <ThemedText style={[styles.shopButtonText, { color: theme.white }]}>
@@ -138,6 +142,16 @@ export default function CartScreen() {
               { paddingTop: Spacing.md },
             ]}
             showsVerticalScrollIndicator={false}
+            ListHeaderComponent={
+              <View style={styles.listHeader}>
+                <ThemedText type="h3" style={{ color: theme.text }}>{bn ? "আপনার কার্ট" : "Your cart"}</ThemedText>
+                <View style={[styles.countPill, { backgroundColor: theme.primarySoft }]}>
+                  <ThemedText style={{ color: theme.primary, fontWeight: "800", fontSize: 12 }}>
+                    {bn ? `${items.length.toLocaleString("bn-BD")}টি পণ্য` : `${items.length} ${items.length === 1 ? "item" : "items"}`}
+                  </ThemedText>
+                </View>
+              </View>
+            }
             ItemSeparatorComponent={() => <View style={styles.separator} />}
           />
 
@@ -147,8 +161,8 @@ export default function CartScreen() {
               {
                 backgroundColor: theme.white,
                 paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.sm : Spacing.lg,
-                borderTopColor: theme.inputBorder,
               },
+              Shadows.large,
             ]}
           >
             <View style={styles.summarySection}>
@@ -179,14 +193,15 @@ export default function CartScreen() {
               </View>
             </View>
 
-            <Pressable
-              style={[styles.checkoutButton, { backgroundColor: theme.primary }]}
-              onPress={handleCheckout}
-            >
-              <ThemedText style={[styles.checkoutText, { color: theme.white }]}>
-                {tr("Proceed to Checkout")}
-              </ThemedText>
-              <Feather name="arrow-right" size={20} color={theme.white} />
+            <Pressable testID="button-cart-checkout" onPress={handleCheckout} style={({ pressed }) => [styles.checkoutWrap, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}>
+              <LinearGradient colors={[theme.primary, theme.primaryTint]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.checkoutButton}>
+                <ThemedText style={[styles.checkoutText, { color: "#FFFFFF" }]}>
+                  {tr("Proceed to Checkout")}
+                </ThemedText>
+                <View style={styles.checkoutArrow}>
+                  <Feather name="arrow-right" size={18} color="#FFFFFF" />
+                </View>
+              </LinearGradient>
             </Pressable>
           </View>
         </>
@@ -210,12 +225,43 @@ const styles = StyleSheet.create({
   cartItem: {
     flexDirection: "row",
     padding: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.xl,
   },
   itemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: BorderRadius.sm,
+    width: 92,
+    height: 92,
+    borderRadius: BorderRadius.lg,
+  },
+  listHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.md,
+  },
+  countPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.full,
+  },
+  checkoutWrap: {
+    borderRadius: BorderRadius.full,
+    overflow: "hidden",
+  },
+  checkoutArrow: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(255,255,255,0.22)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyRing: {
+    width: 132,
+    height: 132,
+    borderRadius: 66,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.xl,
   },
   itemInfo: {
     flex: 1,
@@ -244,7 +290,8 @@ const styles = StyleSheet.create({
   quantityControl: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 2,
   },
   quantityButton: {
     width: 30,
@@ -259,8 +306,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   removeButton: {
-    padding: Spacing.sm,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
     alignSelf: "flex-start",
+    marginLeft: Spacing.xs,
   },
   separator: {
     height: Spacing.md,
@@ -271,7 +323,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: Spacing.lg,
-    borderTopWidth: 1,
+    borderTopLeftRadius: BorderRadius["2xl"],
+    borderTopRightRadius: BorderRadius["2xl"],
   },
   summarySection: {
     marginBottom: Spacing.lg,
@@ -297,8 +350,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    height: 52,
-    borderRadius: BorderRadius.md,
+    height: 54,
+    borderRadius: BorderRadius.full,
     gap: Spacing.sm,
   },
   checkoutText: {
@@ -315,12 +368,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing["2xl"],
   },
   emptyIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.xl,
   },
   emptyTitle: {
     marginBottom: Spacing.sm,
@@ -332,7 +384,7 @@ const styles = StyleSheet.create({
   shopButton: {
     paddingHorizontal: Spacing["2xl"],
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.full,
   },
   shopButtonText: {
     fontSize: 16,
