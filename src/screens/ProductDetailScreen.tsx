@@ -44,7 +44,7 @@ import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
 import { BuyerPreviewBar, readPreview, usePreviewNote } from "@/components/BuyerPreview";
 const money2 = (n: number) => (Math.round(n * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
-import { sellRule, clampQty as clampToRule, upperLimit, perUnitText, amountText, totalContentText, unitWord, num } from "@shared/selling";
+import { sellRule, clampQty as clampToRule, upperLimit, perUnitText, amountText, totalContentText, unitWord, num, round3 } from "@shared/selling";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const IMAGE_HEIGHT = SCREEN_HEIGHT * 0.42;
 
@@ -62,9 +62,10 @@ export default function ProductDetailScreen() {
   // In preview the bar on top already sits under the status bar.
   const insets = preview ? { ...realInsets, top: 0 } : realInsets;
   const previewNote = usePreviewNote(110);
-  // Footer (quantity box + buttons): above the navigation bar, and it rides on
-  // top of the keyboard while the quantity is being typed.
-  const footerKeyboard = useKeyboardAwareBottomPadding(12, { follow: true, min: 20 });
+  // Footer (Add to Cart + Buy Now): above the navigation bar.
+  // The bar holds only the two buttons (no text box), so it stays put under an open keyboard
+  // instead of riding up over the quantity box in the page.
+  const footerKeyboard = useKeyboardAwareBottomPadding(12, { min: 20 });
   const { theme, isDark } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   // Listings from the Sell form may leave out seller, rating, location, currency or image.
@@ -88,8 +89,13 @@ export default function ProductDetailScreen() {
   const minOrder = rule.min;
   const maxQty = upperLimit(rule);
   const outOfStock = stock !== null && (stock <= 0 || stock < minOrder);
-  const [quantity, setQuantity] = useState(minOrder);
-  const [qtyDraft, setQtyDraft] = useState<string | null>(null);
+  // Amount: pick a size from the dropdown (the quick amounts set in the admin dashboard, e.g. 1 kg,
+  // 5 kg, or 1 packet), then how many of it with minus / plus. Amount = size x how many.
+  const [size, setSize] = useState(minOrder);
+  const [count, setCount] = useState(1);
+  const [countDraft, setCountDraft] = useState<string | null>(null);
+  const [amountOpen, setAmountOpen] = useState(false);
+  const quantity = round3(size * count);
   // Seller-defined options (size, weight, grade...). Each choice may add to the unit price.
   const optionGroups: { name: string; choices: { label: string; extra: number }[] }[] = Array.isArray((product as any).options)
     ? (product as any).options.filter((g: any) => g?.name && Array.isArray(g?.choices) && g.choices.length)
@@ -113,6 +119,40 @@ export default function ProductDetailScreen() {
     rule.max !== null ? (bn ? `সর্বোচ্চ ${amountText(rule, rule.max, true)}` : `Maximum ${amountText(rule, rule.max)}`) : "",
     stock !== null ? (bn ? `স্টকে ${amountText(rule, stock, true)}` : `${amountText(rule, stock)} in stock`) : "",
   ].filter(Boolean).join(" · ");
+  const sizes = quickAmounts.length ? quickAmounts : [minOrder];
+  // Start on the first size in the list (the smallest), and keep the size valid if stock or limits change.
+  useEffect(() => {
+    if (!sizes.some((a) => Math.abs(a - size) < 1e-9)) { setSize(sizes[0]); setCount(1); }
+  }, [sizes.join(",")]);
+  const maxCount = Math.max(1, Math.floor(maxQty / size + 1e-9));
+  const clampCount = (n: number) => Math.min(maxCount, Math.max(1, Math.floor(Number.isFinite(n) ? n : 1)));
+  // "1 kg", or for packs "1 packet (1 kg)"
+  const sizeText = (a: number) => {
+    const inAll = rule.sellAs === "pack" && rule.packSize ? totalContentText(rule, a, bn).replace(/^মোট |\s*in all$/g, "") : "";
+    return `${amountText(rule, a, bn)}${inAll ? ` (${inAll})` : ""}`;
+  };
+  const pickSize = (a: number) => {
+    Haptics.selectionAsync();
+    setSize(a);
+    setCount((c) => Math.min(Math.max(1, Math.floor(maxQty / a + 1e-9)), c));
+    setAmountOpen(false);
+  };
+  const changeCount = (d: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setCountDraft(null);
+    setCount((c) => clampCount(c + d));
+  };
+  // Applies a typed count and returns the amount to buy. Buy / Add to cart call it too,
+  // so a number still being typed is not lost.
+  const commitCount = () => {
+    let c = count;
+    if (countDraft !== null) {
+      c = countDraft.trim() ? clampCount(Number(countDraft)) : count;
+      setCount(c);
+      setCountDraft(null);
+    }
+    return round3(size * c);
+  };
   const [related, setRelated] = useState<any[]>([]);
   useEffect(() => {
     if (!preview) useRecentlyViewedStore.getState().add(product);
@@ -168,6 +208,7 @@ export default function ProductDetailScreen() {
     if (preview) return previewNote.show(tr("Add to cart"));
     if (missingOption) return Alert.alert(tr("Choose an option"), `${tr("Please choose")}: ${missingOption.name}`);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    const qty = commitCount();
     addItem({
       productId: product.id,
       name: product.name,
@@ -175,7 +216,7 @@ export default function ProductDetailScreen() {
       ...(optionGroups.length ? { options: picked } : {}),
       currency: product.currency,
       unit: rule.unit,
-      quantity,
+      quantity: qty,
       image: product.image,
       seller: product.seller,
       sale: { sellAs: rule.sellAs, step: rule.step, min: rule.min, max: rule.max, stock: rule.stock, packSize: rule.packSize, packUnit: rule.packUnit },
@@ -187,6 +228,7 @@ export default function ProductDetailScreen() {
     if (preview) return previewNote.show(language === "bn" ? "কিনুন" : "Buy");
     if (missingOption) return Alert.alert(tr("Choose an option"), `${tr("Please choose")}: ${missingOption.name}`);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const qty = commitCount();
     addItem({
       productId: product.id,
       name: product.name,
@@ -194,22 +236,12 @@ export default function ProductDetailScreen() {
       ...(optionGroups.length ? { options: picked } : {}),
       currency: product.currency,
       unit: rule.unit,
-      quantity,
+      quantity: qty,
       image: product.image,
       seller: product.seller,
       sale: { sellAs: rule.sellAs, step: rule.step, min: rule.min, max: rule.max, stock: rule.stock, packSize: rule.packSize, packUnit: rule.packUnit },
     });
     navigation.navigate("Cart");
-  };
-
-  const increaseQuantity = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setQuantity((q) => (q + rule.step > maxQty + 1e-9 ? q : clampQty(q + rule.step)));
-  };
-
-  const decreaseQuantity = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (quantity > minOrder) setQuantity((q) => clampQty(q - rule.step));
   };
 
   const handleToggleFavorite = () => {
@@ -465,19 +497,74 @@ export default function ProductDetailScreen() {
               <ThemedText style={[styles.amountTitle, { color: theme.text }]}>
                 {bn ? `কতটুকু চান? (${unitWord(rule.unit, 2, true)})` : `How much do you want? (${unitWord(rule.unit, 2)})`}
               </ThemedText>
-              {quickAmounts.length ? (
-                <View style={styles.amountChips}>
-                  {quickAmounts.map((a) => {
-                    const on = Math.abs(a - quantity) < 1e-9;
+              <View style={styles.pickRow}>
+                <View style={styles.pickSize}>
+                  <Pressable
+                    testID="product-amount-select"
+                    onPress={() => { Haptics.selectionAsync(); setAmountOpen((o) => !o); }}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: amountOpen }}
+                    accessibilityLabel={bn ? "পরিমাণ বেছে নিন" : "Choose amount"}
+                    style={[styles.dropField, { borderColor: amountOpen ? theme.primary : theme.inputBorder, backgroundColor: theme.white }]}
+                  >
+                    <ThemedText testID="product-amount-size" style={[styles.dropFieldText, { color: theme.text }]} numberOfLines={1}>
+                      {sizeText(size)}
+                    </ThemedText>
+                    <AppIcon name={amountOpen ? "chevron-up" : "chevron-down"} size={20} color={theme.text} />
+                  </Pressable>
+                </View>
+                <View testID="product-count" style={[styles.countBox, { borderColor: theme.inputBorder, backgroundColor: theme.white }]}>
+                  <Pressable
+                    testID="product-qty-minus"
+                    style={styles.countBtn}
+                    onPress={() => changeCount(-1)}
+                    disabled={count <= 1}
+                    accessibilityRole="button"
+                    accessibilityLabel={bn ? "একটি কম" : "One less"}
+                  >
+                    <AppIcon name="minus" size={18} color={count <= 1 ? theme.textSecondary : theme.text} />
+                  </Pressable>
+                  <TextInput
+                    testID="product-qty-input"
+                    value={countDraft ?? String(count)}
+                    onChangeText={(v) => setCountDraft(v.replace(/[^0-9]/g, "").slice(0, 4))}
+                    onBlur={() => { commitCount(); }}
+                    onSubmitEditing={() => { commitCount(); }}
+                    keyboardType="number-pad"
+                    style={[styles.countText, { color: theme.text }]}
+                    accessibilityLabel={bn ? "কতগুলো" : "How many"}
+                  />
+                  <Pressable
+                    testID="product-qty-plus"
+                    style={styles.countBtn}
+                    onPress={() => changeCount(1)}
+                    disabled={count >= maxCount}
+                    accessibilityRole="button"
+                    accessibilityLabel={bn ? "একটি বেশি" : "One more"}
+                  >
+                    <AppIcon name="plus" size={18} color={count >= maxCount ? theme.textSecondary : theme.text} />
+                  </Pressable>
+                </View>
+              </View>
+              {amountOpen ? (
+                <View testID="product-amount-menu" style={[styles.dropMenu, { borderColor: theme.inputBorder, backgroundColor: theme.white }]}>
+                  {sizes.map((a, i) => {
+                    const on = Math.abs(a - size) < 1e-9;
                     return (
                       <Pressable
                         key={a}
                         testID={`qty-chip-${a}`}
-                        onPress={() => { Haptics.selectionAsync(); setQtyDraft(null); setQuantity(clampQty(a)); }}
-                        style={[styles.amountChip, { borderColor: on ? theme.primary : theme.inputBorder, backgroundColor: on ? `${theme.primary}14` : "transparent" }]}
+                        onPress={() => pickSize(a)}
+                        accessibilityRole="menuitem"
+                        style={[
+                          styles.dropItem,
+                          { borderBottomColor: theme.inputBorder, borderBottomWidth: i === sizes.length - 1 ? 0 : StyleSheet.hairlineWidth },
+                          on ? { backgroundColor: theme.primarySoft } : null,
+                        ]}
                       >
-                        <ThemedText style={[styles.amountChipText, { color: on ? theme.primary : theme.text }]}>{amountText(rule, a, bn)}</ThemedText>
-                        <ThemedText style={[styles.amountChipPrice, { color: theme.textSecondary }]}>{product.currency}{Math.round(unitPrice * a).toLocaleString("en-IN")}</ThemedText>
+                        <ThemedText style={[styles.dropItemText, { color: theme.text, fontWeight: on ? "700" : "500" }]} numberOfLines={1}>{sizeText(a)}</ThemedText>
+                        <ThemedText style={[styles.dropItemPrice, { color: theme.textSecondary }]}>{product.currency}{money2(unitPrice * a)}</ThemedText>
+                        {on ? <AppIcon name="check" size={16} color={theme.text} /> : <View style={{ width: 16 }} />}
                       </Pressable>
                     );
                   })}
@@ -487,7 +574,7 @@ export default function ProductDetailScreen() {
                 {amountRules}
               </ThemedText>
               <ThemedText testID="product-amount-summary" style={[styles.amountSummary, { color: theme.text }]}>
-                {`${amountText(rule, quantity, bn)}${totalContentText(rule, quantity, bn) ? ` · ${totalContentText(rule, quantity, bn)}` : ""} = ${product.currency}${money2(unitPrice * quantity)}`}
+                {`${count > 1 ? `${sizeText(size)} × ${num(count, bn)} = ` : ""}${amountText(rule, quantity, bn)}${totalContentText(rule, quantity, bn) ? ` · ${totalContentText(rule, quantity, bn)}` : ""} = ${product.currency}${money2(unitPrice * quantity)}`}
               </ThemedText>
             </View>
           ) : null}
@@ -740,59 +827,47 @@ export default function ProductDetailScreen() {
         ]}
       >
         <View style={styles.footerContent}>
-          <View style={styles.footerLeft}>
-            <View style={[styles.quantitySelector, { borderColor: theme.inputBorder }]}>
-              <Pressable 
-                style={styles.qtyBtn} 
-                onPress={decreaseQuantity}
-                disabled={quantity <= minOrder}
-              >
-                <AppIcon name="minus" size={16} color={quantity <= minOrder ? theme.textSecondary : theme.text} />
-              </Pressable>
-              <TextInput
-                testID="product-qty-input"
-                value={qtyDraft ?? String(quantity)}
-                onChangeText={(v) => setQtyDraft(rule.step < 1 ? v.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1").slice(0, 8) : v.replace(/[^0-9]/g, "").slice(0, 4))}
-                onBlur={() => { if (qtyDraft !== null) setQuantity(clampQty(Number(qtyDraft))); setQtyDraft(null); }}
-                onSubmitEditing={() => { if (qtyDraft !== null) setQuantity(clampQty(Number(qtyDraft))); setQtyDraft(null); }}
-                keyboardType={rule.step < 1 ? "decimal-pad" : "number-pad"}
-                style={[styles.qtyText, { color: theme.text, paddingVertical: 4 }]}
-                accessibilityLabel={tr("Quantity")}
-              />
-              <Pressable testID="product-qty-plus" style={styles.qtyBtn} onPress={increaseQuantity} disabled={quantity + rule.step > maxQty + 1e-9}>
-                <AppIcon name="plus" size={16} color={quantity + rule.step > maxQty + 1e-9 ? theme.textSecondary : theme.text} />
-              </Pressable>
-            </View>
+          <Pressable
+            style={[
+              styles.footerBtn,
+              styles.cartBtn,
+              outOfStock
+                ? { backgroundColor: theme.backgroundSecondary, borderColor: theme.inputBorder }
+                : { backgroundColor: theme.primarySoft, borderColor: theme.primaryTint },
+            ]}
+            testID="product-add-to-cart"
+            onPress={handleAddToCart}
+            disabled={outOfStock}
+            accessibilityRole="button"
+            accessibilityLabel={bn ? "কার্টে যোগ করুন" : "Add to Cart"}
+          >
+            <AppIcon name="shopping-cart" size={20} color={outOfStock ? theme.textSecondary : theme.text} />
             <ThemedText
-              style={[styles.footerTotalPrice, { color: theme.text }]}
+              style={[styles.footerBtnText, { color: outOfStock ? theme.textSecondary : theme.text }]}
               numberOfLines={1}
               adjustsFontSizeToFit
-              minimumFontScale={0.7}
+              minimumFontScale={0.8}
             >
-              {product.currency}{money2(unitPrice * quantity)}
+              {bn ? "কার্টে যোগ করুন" : "Add to Cart"}
             </ThemedText>
-          </View>
+          </Pressable>
 
-          <View style={styles.footerRight}>
-            <Pressable
-              style={[styles.cartBtn, { borderColor: outOfStock ? theme.textSecondary : theme.primary }]}
-              testID="product-add-to-cart"
-              onPress={handleAddToCart}
-              disabled={outOfStock}
-              accessibilityLabel={tr("Add to cart")}
+          <Pressable
+            style={[styles.footerBtn, styles.cartBtn, { backgroundColor: outOfStock ? theme.textSecondary : theme.primary, borderColor: outOfStock ? theme.textSecondary : theme.primary }]}
+            testID="product-buy-now"
+            onPress={handleBuyNow}
+            disabled={outOfStock}
+            accessibilityRole="button"
+          >
+            <ThemedText
+              style={[styles.footerBtnText, { color: "#FFFFFF" }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
             >
-              <AppIcon name="shopping-cart" size={20} color={outOfStock ? theme.textSecondary : theme.primary} />
-            </Pressable>
-
-            <Pressable
-              style={[styles.buyBtn, { backgroundColor: outOfStock ? theme.textSecondary : theme.primary }]}
-              testID="product-buy-now"
-              onPress={handleBuyNow}
-              disabled={outOfStock}
-            >
-              <ThemedText style={styles.buyBtnText} numberOfLines={1}>{outOfStock ? tr("Out of stock") : tr("কিনুন")}</ThemedText>
-            </Pressable>
-          </View>
+              {outOfStock ? tr("Out of stock") : bn ? "এখনই কিনুন" : "Buy Now"}
+            </ThemedText>
+          </Pressable>
         </View>
       </Reanimated.View>
 
@@ -1026,10 +1101,6 @@ const styles = StyleSheet.create({
   },
   amountBox: { marginHorizontal: 16, marginTop: 12, padding: 14, borderRadius: 14, borderWidth: 1, gap: 8 },
   amountTitle: { fontSize: 15, fontWeight: "700" },
-  amountChips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  amountChip: { borderWidth: 1.5, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12, alignItems: "center", minWidth: 72 },
-  amountChipText: { fontSize: 14, fontWeight: "700" },
-  amountChipPrice: { fontSize: 12, marginTop: 2 },
   amountRules: { fontSize: 12.5 },
   amountSummary: { fontSize: 14, fontWeight: "600" },
   sellerCard: {
@@ -1210,78 +1281,75 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
   },
-  // The bottom bar must fit any phone width: the quantity box and total take the space
-  // that is left, and the cart and checkout buttons never shrink or slide off the edge.
+  // Two equal buttons, Add to Cart on the left and Buy Now on the right, on any phone width.
   footerContent: {
     width: "100%",
     maxWidth: 640,
     alignSelf: "center",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: 10,
   },
-  footerLeft: {
+  footerBtn: {
     flex: 1,
     minWidth: 0,
+    height: 50,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  // Both buttons carry the same 1px border so they come out exactly the same width.
+  cartBtn: {
+    borderWidth: 1,
+  },
+  footerBtnText: {
+    flexShrink: 1,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  pickRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  pickSize: { flex: 1, minWidth: 0 },
+  dropField: {
+    height: 48,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  dropFieldText: { flex: 1, minWidth: 0, fontSize: 15, fontWeight: "600" },
+  dropMenu: { borderWidth: 1, borderRadius: 12, overflow: "hidden" },
+  dropItem: {
+    minHeight: 46,
+    paddingHorizontal: 14,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  quantitySelector: {
+  dropItemText: { flex: 1, minWidth: 0, fontSize: 15 },
+  dropItemPrice: { fontSize: 13 },
+  countBox: {
     flexShrink: 0,
+    height: 48,
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 8,
+    borderWidth: 1.5,
+    borderRadius: 12,
     overflow: "hidden",
   },
-  qtyBtn: {
-    width: 34,
-    height: 38,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  qtyText: {
-    // A fixed width: on the web a text box is ~20 characters wide by default, which pushed
-    // the checkout button past the screen edge. Four digits fit.
+  countBtn: { width: 40, height: 46, alignItems: "center", justifyContent: "center" },
+  countText: {
+    // A fixed width: on the web a text box is ~20 characters wide by default. Four digits fit.
     width: 44,
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "700",
     textAlign: "center",
-  },
-  footerTotalPrice: {
-    flexShrink: 1,
-    minWidth: 0,
-    fontSize: 19,
-    fontWeight: "700",
-  },
-  footerRight: {
-    flexShrink: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  cartBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buyBtn: {
-    height: 48,
-    minWidth: 84,
-    paddingHorizontal: 18,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buyBtnText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
+    paddingVertical: 4,
   },
   cartBadge: {
     position: "absolute",
