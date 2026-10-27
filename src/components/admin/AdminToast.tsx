@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { View, StyleSheet, Animated, Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -21,10 +21,10 @@ const toastConfig: Record<
   ToastType,
   { icon: keyof typeof Feather.glyphMap; color: string; bgColor: string }
 > = {
-  success: { icon: "check-circle", color: "#16A34A", bgColor: "#16A34A15" },
-  error: { icon: "x-circle", color: "#DC2626", bgColor: "#DC262615" },
-  warning: { icon: "alert-triangle", color: "#EA8A0C", bgColor: "#EA8A0C15" },
-  info: { icon: "info", color: "#2563EB", bgColor: "#2563EB15" },
+  success: { icon: "check-circle", color: "#00BB77", bgColor: "#00BB7715" },
+  error: { icon: "x-circle", color: "#DA2F2F", bgColor: "#DA2F2F15" },
+  warning: { icon: "alert-triangle", color: "#B25E09", bgColor: "#B25E0915" },
+  info: { icon: "info", color: "#2E96EF", bgColor: "#2E96EF15" },
 };
 
 export function AdminToast({

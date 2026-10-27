@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Pressable, Platform } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { apiGet, apiPut } from "@/lib/api";
 import {
@@ -108,7 +108,7 @@ export function OrderProgress({ order, onChanged }: { order: any; onChanged: () 
   const stepIdx = cancelled ? reached : (ORDER_FLOW as readonly string[]).indexOf(status);
   // Animations follow the real status only: new steps fill in order, done steps never go back.
   const delayFor = useStepStagger(reached);
-  const doneColor = cancelled ? "#94A3B8" : theme.primary;
+  const doneColor = cancelled ? "#7A8CA3" : theme.primary;
   return (
     <Card testID="order-progress">
       <View style={[st.row, { justifyContent: "space-between", marginBottom: 12 }]}>
@@ -139,7 +139,7 @@ export function OrderProgress({ order, onChanged }: { order: any; onChanged: () 
         const t = stepText(s, L, pickup);
         const at = done ? when(s) : null;
         const skipped = done && i > 0 && !at && i < reached;
-        const color = done ? (cancelled ? "#94A3B8" : theme.primary) : isNext ? theme.primary : theme.cardBorder;
+        const color = done ? (cancelled ? "#7A8CA3" : theme.primary) : isNext ? theme.primary : theme.cardBorder;
         const last = i === ORDER_FLOW.length - 1;
         return (
           <View key={s} testID={`step-${s}`} accessibilityLabel={`${t.title}: ${done ? L("done", "সম্পন্ন") : L("not yet", "এখনও নয়")}`} style={{ flexDirection: "row", gap: 12 }}>
@@ -172,7 +172,7 @@ export function OrderProgress({ order, onChanged }: { order: any; onChanged: () 
               <View style={[st.row, { gap: 8 }]}>
                 <Text style={{ color: done || isNext ? theme.text : theme.textTertiary, fontWeight: isNow ? "800" : "700", fontSize: 14.5 }}>{t.title}</Text>
                 {isNow ? <FadeSlideIn runKey={status} delay={delayFor(i) + 200}><Pill label={L("Now", "এখন")} color={STATUS_COLOR[status] || theme.primary} /></FadeSlideIn> : null}
-                {isNext ? <Pill label={L("Next", "পরের ধাপ")} color="#64748B" /> : null}
+                {isNext ? <Pill label={L("Next", "পরের ধাপ")} color="#7A8CA3" /> : null}
               </View>
               <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 2 }}>
                 {skipped ? L("Skipped by the seller", "বিক্রেতা এই ধাপ বাদ দিয়েছেন") : at ? fmtDate(at) : t.hint}
@@ -182,8 +182,8 @@ export function OrderProgress({ order, onChanged }: { order: any; onChanged: () 
         );
       })}
       {cancelled ? (
-        <View style={{ flexDirection: "row", gap: 10, alignItems: "center", marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: "#DC262612" }}>
-          <Feather name="x-circle" size={18} color="#DC2626" />
+        <View style={{ flexDirection: "row", gap: 10, alignItems: "center", marginTop: 12, padding: 12, borderRadius: 12, backgroundColor: "#DA2F2F12" }}>
+          <Feather name="x-circle" size={18} color="#DA2F2F" />
           <Text style={{ color: theme.error, fontWeight: "700", flex: 1 }}>
             {L("This order was cancelled", "এই অর্ডার বাতিল হয়েছে")}{when("cancelled") ? ` · ${fmtDate(when("cancelled"))}` : ""}
           </Text>
@@ -280,7 +280,7 @@ export function PaymentInfo({ order }: { order: any }) {
     <Card testID="order-payment">
       {c.subtotal !== undefined ? row(L("Items", "পণ্য"), taka(c.subtotal)) : null}
       {c.deliveryFee !== undefined ? row(L("Delivery", "ডেলিভারি"), c.deliveryFee ? taka(c.deliveryFee) : L("Free", "ফ্রি")) : null}
-      {c.discount ? row(`${L("Discount", "ছাড়")}${c.coupon ? ` (${c.coupon})` : ""}`, `−${taka(c.discount)}`, false, "#047857") : null}
+      {c.discount ? row(`${L("Discount", "ছাড়")}${c.coupon ? ` (${c.coupon})` : ""}`, `−${taka(c.discount)}`, false, "#00875A") : null}
       <View style={{ height: 1, backgroundColor: theme.cardBorder, marginVertical: 6 }} />
       {row(L("Total", "মোট"), taka(order.total), true)}
       {row(L("Payment", "পেমেন্ট"), payLabel(order.paymentMethod, L))}
@@ -373,12 +373,12 @@ export function DeliverySettings() {
         ].map(([k, v], i) => (
           <View key={i} style={[st.row, { justifyContent: "space-between", paddingVertical: 5 }]}>
             <Text style={{ color: theme.textSecondary, fontSize: 13.5, flex: 1 }}>{k as string}</Text>
-            <Text style={{ color: Number(v) === 0 ? "#047857" : theme.text, fontWeight: "700" }}>{Number(v) === 0 ? L("Free", "ফ্রি") : taka(Number(v))}</Text>
+            <Text style={{ color: Number(v) === 0 ? "#00875A" : theme.text, fontWeight: "700" }}>{Number(v) === 0 ? L("Free", "ফ্রি") : taka(Number(v))}</Text>
           </View>
         ))}
       </Card>
       {errors.length ? <View style={{ gap: 4 }}>{errors.map((e) => <Text key={e} style={{ color: theme.error, fontSize: 12.5 }}>• {e}</Text>)}</View> : null}
-      {msg ? <Text style={{ color: msg.ok ? "#047857" : "#B91C1C", fontWeight: "600" }}>{msg.text}</Text> : null}
+      {msg ? <Text style={{ color: msg.ok ? "#00875A" : "#DA2F2F", fontWeight: "600" }}>{msg.text}</Text> : null}
       <View style={{ flexDirection: "row", gap: 10 }}>
         {changed ? <Btn kind="ghost" label={L("Undo changes", "পরিবর্তন বাদ দিন")} onPress={() => reset(d)} /> : null}
         <Btn testID="delivery-save" style={{ flex: 1 }} icon="save" label={changed ? L("Save charges", "চার্জ সংরক্ষণ") : L("No changes", "কোনো পরিবর্তন নেই")} disabled={!changed || errors.length > 0} busy={busy} onPress={save} />

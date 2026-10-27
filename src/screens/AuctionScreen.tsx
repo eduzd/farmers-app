@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
@@ -85,17 +85,17 @@ function CountdownTimer({ endsAt, theme }: { endsAt: Date; theme: any }) {
 
   return (
     <View style={styles.timerContainer}>
-      <View style={[styles.timerBox, { backgroundColor: isUrgent ? "#DC2626" : theme.primary }]}>
+      <View style={[styles.timerBox, { backgroundColor: isUrgent ? "#DA2F2F" : theme.primary }]}>
         <ThemedText style={styles.timerText}>{pad(timeLeft.hours)}</ThemedText>
         <ThemedText style={styles.timerLabel}>{tr("ঘণ্টা")}</ThemedText>
       </View>
       <ThemedText style={[styles.timerSeparator, { color: theme.text }]}>:</ThemedText>
-      <View style={[styles.timerBox, { backgroundColor: isUrgent ? "#DC2626" : theme.primary }]}>
+      <View style={[styles.timerBox, { backgroundColor: isUrgent ? "#DA2F2F" : theme.primary }]}>
         <ThemedText style={styles.timerText}>{pad(timeLeft.minutes)}</ThemedText>
         <ThemedText style={styles.timerLabel}>{tr("মিনিট")}</ThemedText>
       </View>
       <ThemedText style={[styles.timerSeparator, { color: theme.text }]}>:</ThemedText>
-      <View style={[styles.timerBox, { backgroundColor: isUrgent ? "#DC2626" : theme.primary }]}>
+      <View style={[styles.timerBox, { backgroundColor: isUrgent ? "#DA2F2F" : theme.primary }]}>
         <ThemedText style={styles.timerText}>{pad(timeLeft.seconds)}</ThemedText>
         <ThemedText style={styles.timerLabel}>{tr("সেকেন্ড")}</ThemedText>
       </View>
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
     left: Spacing.md,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#DC2626",
+    backgroundColor: "#DA2F2F",
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: BorderRadius.md,

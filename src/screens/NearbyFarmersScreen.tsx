@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInUp } from "react-native-reanimated";
 
@@ -170,19 +170,19 @@ export default function NearbyFarmersScreen() {
               <View
                 style={[
                   styles.openBadge,
-                  { backgroundColor: item.openNow ? "#2FA36B15" : "#DC262615" },
+                  { backgroundColor: item.openNow ? "#2E96EF15" : "#DA2F2F15" },
                 ]}
               >
                 <View
                   style={[
                     styles.openDot,
-                    { backgroundColor: item.openNow ? "#2FA36B" : "#DC2626" },
+                    { backgroundColor: item.openNow ? "#2E96EF" : "#DA2F2F" },
                   ]}
                 />
                 <ThemedText
                   style={[
                     styles.openText,
-                    { color: item.openNow ? "#2FA36B" : "#DC2626" },
+                    { color: item.openNow ? "#2E96EF" : "#DA2F2F" },
                   ]}
                 >
                   {item.openNow ? "খোলা" : "বন্ধ"}

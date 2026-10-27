@@ -14,7 +14,8 @@ import {
   TextInputContentSizeChangeEventData,
 } from "react-native";
 import Animated from "react-native-reanimated";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
@@ -451,7 +452,7 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
     if (item.status === "failed") {
       return (
         <Pressable onPress={() => retry(item)} hitSlop={8} accessibilityRole="button" testID="support-retry">
-          <ThemedText style={[styles.seenStatus, { color: theme.error || "#D32F2F" }]}>{L("Not sent · Tap to retry", "পাঠানো হয়নি · আবার চেষ্টা করতে ট্যাপ করুন")}</ThemedText>
+          <ThemedText style={[styles.seenStatus, { color: theme.error || "#DA2F2F" }]}>{L("Not sent · Tap to retry", "পাঠানো হয়নি · আবার চেষ্টা করতে ট্যাপ করুন")}</ThemedText>
         </Pressable>
       );
     }
@@ -640,7 +641,7 @@ export function SupportConversation({ admin }: { admin?: SupportChatAdmin }) {
               <Pressable style={styles.iconButton} onPress={cancelRecording} hitSlop={8} accessibilityRole="button" accessibilityLabel={L("Cancel voice message", "ভয়েস মেসেজ বাতিল")}>
                 <Feather name="trash-2" size={22} color={theme.error} />
               </Pressable>
-              <View style={[styles.recordingIndicator, { backgroundColor: "#DC2626" }]} />
+              <View style={[styles.recordingIndicator, { backgroundColor: "#DA2F2F" }]} />
               <ThemedText style={[styles.recordingText, { color: theme.text }]}>
                 {formatVoiceTime(voice.durationMs)}
                 <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>

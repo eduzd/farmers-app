@@ -11,7 +11,7 @@ import {
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -125,11 +125,11 @@ export default function RfqScreen() {
             {item.createdAtIso && !item.id.includes("-seed-") ? timeAgo(item.createdAtIso, language) : tr(item.createdAt)}
           </ThemedText>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: item.status === "open" ? "#16A34A20" : theme.backgroundSecondary }]}>
+        <View style={[styles.statusBadge, { backgroundColor: item.status === "open" ? "#00BB7720" : theme.backgroundSecondary }]}>
           <ThemedText
             style={[
               styles.statusText,
-              { color: item.status === "open" ? "#16A34A" : theme.textSecondary },
+              { color: item.status === "open" ? "#00BB77" : theme.textSecondary },
             ]}
           >
             {item.status === "open" ? tr("Open") : tr("Closed")}
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   listContent: {
     padding: Spacing.lg,
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   buyerName: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   rfqTime: {
     fontSize: 12,
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
   rfqTitle: {
     fontSize: 17,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: Spacing.sm,
   },
   rfqDescription: {
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
   viewButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   bidButton: {
     flex: 1,
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
   bidButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   buttonPressed: {
     opacity: 0.9,
@@ -598,14 +598,14 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
     marginBottom: Spacing.sm,
   },
   input: {
     height: 48,
     paddingHorizontal: Spacing.lg,
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     borderWidth: 1,
     borderRadius: BorderRadius.md,
     textAlignVertical: "center",
@@ -628,6 +628,6 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

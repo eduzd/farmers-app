@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -28,12 +28,12 @@ import { ChatIcon } from "@/components/icons/ChatIcon";
 import { AppIcon } from "@/components/icons/AppIcon";
 const getStatusConfig = (status: Dispute["status"]) => {
   const configs: Record<string, { color: string; labelBn: string; labelEn: string; icon: string }> = {
-    open: { color: "#EA8A0C", labelBn: "খোলা", labelEn: "Open", icon: "alert-circle" },
-    under_review: { color: "#2563EB", labelBn: "পর্যালোচনায়", labelEn: "Under Review", icon: "eye" },
-    awaiting_seller: { color: "#7C3AED", labelBn: "সেলারের অপেক্ষায়", labelEn: "Awaiting Seller", icon: "clock" },
-    awaiting_buyer: { color: "#673AB7", labelBn: "ক্রেতার অপেক্ষায়", labelEn: "Awaiting Buyer", icon: "clock" },
-    resolved: { color: "#2FA36B", labelBn: "সমাধান হয়েছে", labelEn: "Resolved", icon: "check-circle" },
-    closed: { color: "#9E9E9E", labelBn: "বন্ধ", labelEn: "Closed", icon: "x-circle" },
+    open: { color: "#B25E09", labelBn: "খোলা", labelEn: "Open", icon: "alert-circle" },
+    under_review: { color: "#2E96EF", labelBn: "পর্যালোচনায়", labelEn: "Under Review", icon: "eye" },
+    awaiting_seller: { color: "#3D38D0", labelBn: "সেলারের অপেক্ষায়", labelEn: "Awaiting Seller", icon: "clock" },
+    awaiting_buyer: { color: "#3D38D0", labelBn: "ক্রেতার অপেক্ষায়", labelEn: "Awaiting Buyer", icon: "clock" },
+    resolved: { color: "#2E96EF", labelBn: "সমাধান হয়েছে", labelEn: "Resolved", icon: "check-circle" },
+    closed: { color: "#7A8CA3", labelBn: "বন্ধ", labelEn: "Closed", icon: "x-circle" },
   };
   return configs[status] || configs.open;
 };
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   },
   createButtonText: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   disputeCard: {
@@ -348,11 +348,11 @@ const styles = StyleSheet.create({
   orderInfo: {},
   orderNumber: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   disputeDate: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   statusBadge: {
     flexDirection: "row",
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   reasonRow: {
     flexDirection: "row",
@@ -381,11 +381,11 @@ const styles = StyleSheet.create({
   },
   reasonText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   description: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     marginBottom: Spacing.sm,
   },
   evidenceRow: {
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   },
   moreText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   messagesInfo: {
     flexDirection: "row",
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   messagesCount: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   emptyState: {
     alignItems: "center",
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   modalOverlay: {
     flex: 1,
@@ -447,14 +447,14 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   modalBody: {
     padding: Spacing.lg,
   },
   label: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: Spacing.sm,
   },
   input: {
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     marginBottom: Spacing.md,
   },
   textArea: {
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   },
   reasonOptionText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   uploadButton: {
     flexDirection: "row",
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
   },
   uploadText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   evidencePreview: {
     flexDirection: "row",
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "#DC2626",
+    backgroundColor: "#DA2F2F",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
 });

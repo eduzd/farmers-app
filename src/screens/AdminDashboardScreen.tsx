@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Switch } from "@/admin/ui";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/lib/authStore";
 import { useCommunityStore } from "@/lib/communityStore";
@@ -504,25 +504,25 @@ export default function AdminDashboardScreen() {
               title={language === "bn" ? "মোট ব্যবহারকারী" : "Total Users"}
               value={stats?.totalUsers || 0}
               icon="users"
-              iconColor="#2563EB"
+              iconColor="#2E96EF"
             />
             <StatCard
               title={language === "bn" ? "সক্রিয় (২৪ঘ)" : "Active (24h)"}
               value={stats?.activeUsers24h || 0}
               icon="activity"
-              iconColor="#16A34A"
+              iconColor="#00BB77"
             />
             <StatCard
               title={language === "bn" ? "মোট পোস্ট" : "Total Posts"}
               value={stats?.totalPosts || 0}
               icon="file-text"
-              iconColor="#7C3AED"
+              iconColor="#3D38D0"
             />
             <StatCard
               title={language === "bn" ? "রিপোর্ট" : "Reports"}
               value={stats?.openReports || 0}
               icon="flag"
-              iconColor="#DC2626"
+              iconColor="#DA2F2F"
             />
           </>
         )}
@@ -534,7 +534,7 @@ export default function AdminDashboardScreen() {
       >
         <View style={styles.toggleRow}>
           <View style={styles.toggleInfo}>
-            <Feather name="tool" size={18} color={appSettings?.maintenanceMode ? "#DC2626" : theme.textSecondary} />
+            <Feather name="tool" size={18} color={appSettings?.maintenanceMode ? "#DA2F2F" : theme.textSecondary} />
             <ThemedText style={{ color: theme.text, marginLeft: Spacing.sm }}>
               {language === "bn" ? "মেইনটেনেন্স মোড" : "Maintenance Mode"}
             </ThemedText>
@@ -542,8 +542,8 @@ export default function AdminDashboardScreen() {
           <Switch
             value={appSettings?.maintenanceMode || false}
             onValueChange={handleToggleMaintenance}
-            trackColor={{ false: theme.divider, true: "#DC262650" }}
-            thumbColor={appSettings?.maintenanceMode ? "#DC2626" : theme.textSecondary}
+            trackColor={{ false: theme.divider, true: "#DA2F2F50" }}
+            thumbColor={appSettings?.maintenanceMode ? "#DA2F2F" : theme.textSecondary}
           />
         </View>
       </AdminCard>
@@ -622,11 +622,11 @@ export default function AdminDashboardScreen() {
                     {item.name || item.email.split("@")[0]}
                   </ThemedText>
                   {item.verified && (
-                    <Feather name="check-circle" size={14} color="#16A34A" style={{ marginLeft: 4 }} />
+                    <Feather name="check-circle" size={14} color="#00BB77" style={{ marginLeft: 4 }} />
                   )}
                   {item.isSuperAdmin && (
-                    <View style={[styles.adminBadge, { backgroundColor: "#DC262620" }]}>
-                      <ThemedText style={{ color: "#DC2626", fontSize: 10 }}>Admin</ThemedText>
+                    <View style={[styles.adminBadge, { backgroundColor: "#DA2F2F20" }]}>
+                      <ThemedText style={{ color: "#DA2F2F", fontSize: 10 }}>Admin</ThemedText>
                     </View>
                   )}
                 </View>
@@ -643,13 +643,13 @@ export default function AdminDashboardScreen() {
               </Pressable>
               {!item.isSuperAdmin && (
                 <Pressable
-                  style={[styles.actionButton, { backgroundColor: item.status === "banned" ? "#16A34A20" : "#DC262620" }]}
+                  style={[styles.actionButton, { backgroundColor: item.status === "banned" ? "#00BB7720" : "#DA2F2F20" }]}
                   onPress={() => {
                     setConfirmModal({
                       visible: true,
                       title: item.status === "banned" ? "আনব্যান করুন" : "ব্যান করুন",
                       message: `আপনি কি ${item.name || item.email} কে ${item.status === "banned" ? "আনব্যান" : "ব্যান"} করতে চান?`,
-                      confirmColor: item.status === "banned" ? "#16A34A" : "#DC2626",
+                      confirmColor: item.status === "banned" ? "#00BB77" : "#DA2F2F",
                       onConfirm: () => {
                         handleBanUser(item.id, item.status === "banned" ? "unban" : "ban");
                         setConfirmModal({ ...confirmModal, visible: false });
@@ -660,7 +660,7 @@ export default function AdminDashboardScreen() {
                   <AppIcon
                     name={item.status === "banned" ? "user-check" : "user-x"}
                     size={16}
-                    color={item.status === "banned" ? "#16A34A" : "#DC2626"}
+                    color={item.status === "banned" ? "#00BB77" : "#DA2F2F"}
                   />
                 </Pressable>
               )}
@@ -740,7 +740,7 @@ export default function AdminDashboardScreen() {
                 <AppIcon
                   name={announcement.type === "info" ? "info" : announcement.type === "warning" ? "alert-triangle" : "check-circle"}
                   size={16}
-                  color={announcement.type === "info" ? "#2563EB" : announcement.type === "warning" ? "#EA8A0C" : "#16A34A"}
+                  color={announcement.type === "info" ? "#2E96EF" : announcement.type === "warning" ? "#B25E09" : "#00BB77"}
                 />
                 <ThemedText style={{ color: theme.text, fontWeight: "500", marginLeft: Spacing.sm, flex: 1 }}>
                   {announcement.title}
@@ -819,8 +819,8 @@ export default function AdminDashboardScreen() {
           <Switch
             value={appSettings?.maintenanceMode || false}
             onValueChange={handleToggleMaintenance}
-            trackColor={{ false: theme.divider, true: "#DC262650" }}
-            thumbColor={appSettings?.maintenanceMode ? "#DC2626" : theme.textSecondary}
+            trackColor={{ false: theme.divider, true: "#DA2F2F50" }}
+            thumbColor={appSettings?.maintenanceMode ? "#DA2F2F" : theme.textSecondary}
           />
         </View>
 
@@ -899,10 +899,10 @@ export default function AdminDashboardScreen() {
               <Pressable
                 onPress={() => deletePost(item.id)}
                 hitSlop={8}
-                style={{ padding: 8, borderRadius: 8, backgroundColor: "#DC262615", marginLeft: 8 }}
+                style={{ padding: 8, borderRadius: 8, backgroundColor: "#DA2F2F15", marginLeft: 8 }}
                 accessibilityLabel="Delete post"
               >
-                <Feather name="trash-2" size={18} color="#DC2626" />
+                <Feather name="trash-2" size={18} color="#DA2F2F" />
               </Pressable>
             </View>
           )}
@@ -913,10 +913,10 @@ export default function AdminDashboardScreen() {
 
   const bn = language === "bn";
   const SERIES: { key: "users" | "posts" | "orders" | "products"; label: string; color: string }[] = [
-    { key: "users", label: bn ? "নতুন ব্যবহারকারী" : "New users", color: "#2563EB" },
-    { key: "posts", label: bn ? "নতুন পোস্ট" : "New posts", color: "#16A34A" },
-    { key: "orders", label: bn ? "অর্ডার" : "Orders", color: "#EA8A0C" },
-    { key: "products", label: bn ? "নতুন পণ্য" : "New products", color: "#7C3AED" },
+    { key: "users", label: bn ? "নতুন ব্যবহারকারী" : "New users", color: "#2E96EF" },
+    { key: "posts", label: bn ? "নতুন পোস্ট" : "New posts", color: "#00BB77" },
+    { key: "orders", label: bn ? "অর্ডার" : "Orders", color: "#B25E09" },
+    { key: "products", label: bn ? "নতুন পণ্য" : "New products", color: "#3D38D0" },
   ];
 
   const renderBarChart = (key: "users" | "posts" | "orders" | "products", label: string, color: string) => {
@@ -1018,13 +1018,13 @@ export default function AdminDashboardScreen() {
             title={bn ? "মোট অর্ডার" : "Total Orders"}
             value={analytics?.totals?.orders ?? 0}
             icon="shopping-cart"
-            iconColor="#EA8A0C"
+            iconColor="#B25E09"
           />
           <StatCard
             title={bn ? "বাজারের পণ্য" : "Market listings"}
             value={analytics?.totals?.products ?? 0}
             icon="package"
-            iconColor="#7C3AED"
+            iconColor="#3D38D0"
           />
         </View>
       </AdminCard>

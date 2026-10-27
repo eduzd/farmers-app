@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { useTheme } from "@/hooks/useTheme";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
@@ -80,24 +80,24 @@ export function UserDetail({ id }: { id: string }) {
             <Text style={{ color: theme.text, fontWeight: "800", fontSize: 18 }} numberOfLines={1}>{d.name || d.username}</Text>
             <Text style={{ color: theme.textSecondary, fontSize: 13 }} numberOfLines={1}>@{d.username}{d.email ? ` · ${d.email}` : ""}</Text>
             <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginTop: 2 }}>
-              <Pill label={d.banned ? L("Banned", "ব্যানড") : L("Active", "সক্রিয়")} color={d.banned ? "#B91C1C" : "#047857"} />
-              {limits.length ? <Pill label={L("Limited", "সীমিত")} color="#B45309" icon="lock" /> : null}
-              {warnings.length ? <Pill label={L(`${warnings.length} warning${warnings.length > 1 ? "s" : ""}`, `${warnings.length}টি সতর্কবার্তা`)} color="#B45309" icon="alert-triangle" /> : null}
-              {isAdmin ? <Pill label={L("Admin", "অ্যাডমিন")} color="#7C3AED" /> : null}
-              {d.verified ? <Pill label={L("Verified", "যাচাইকৃত")} color="#1D4ED8" icon="check" /> : null}
+              <Pill label={d.banned ? L("Banned", "ব্যানড") : L("Active", "সক্রিয়")} color={d.banned ? "#DA2F2F" : "#00875A"} />
+              {limits.length ? <Pill label={L("Limited", "সীমিত")} color="#B25E09" icon="lock" /> : null}
+              {warnings.length ? <Pill label={L(`${warnings.length} warning${warnings.length > 1 ? "s" : ""}`, `${warnings.length}টি সতর্কবার্তা`)} color="#B25E09" icon="alert-triangle" /> : null}
+              {isAdmin ? <Pill label={L("Admin", "অ্যাডমিন")} color="#3D38D0" /> : null}
+              {d.verified ? <Pill label={L("Verified", "যাচাইকৃত")} color="#3D38D0" icon="check" /> : null}
             </View>
           </View>
         </View>
         <View style={{ flexDirection: "row", marginTop: 16, gap: 4 }}>
           <QuickAction testID="qa-message" icon="send" label={L("Message", "মেসেজ")} color={theme.primary} onPress={() => setTab("message")} />
-          {!isAdmin ? <QuickAction testID="qa-warn" icon="alert-triangle" label={L("Warn", "সতর্ক")} color="#B45309" onPress={() => setTab("safety")} /> : null}
-          {!isAdmin ? <QuickAction testID="qa-limit" icon="lock" label={L("Limit", "সীমা")} color="#6D28D9" onPress={() => setTab("safety")} /> : null}
-          <QuickAction testID="qa-edit" icon="edit-2" label={L("Edit", "সম্পাদনা")} color="#0E7490" onPress={() => setTab("account")} />
-          {d.store ? <QuickAction testID="user-open-shop" icon="shopping-bag" label={L("Shop", "দোকান")} color="#047857" onPress={() => nav.push({ name: "store", id: d.store.id })} /> : null}
+          {!isAdmin ? <QuickAction testID="qa-warn" icon="alert-triangle" label={L("Warn", "সতর্ক")} color="#B25E09" onPress={() => setTab("safety")} /> : null}
+          {!isAdmin ? <QuickAction testID="qa-limit" icon="lock" label={L("Limit", "সীমা")} color="#3D38D0" onPress={() => setTab("safety")} /> : null}
+          <QuickAction testID="qa-edit" icon="edit-2" label={L("Edit", "সম্পাদনা")} color="#1F86DB" onPress={() => setTab("account")} />
+          {d.store ? <QuickAction testID="user-open-shop" icon="shopping-bag" label={L("Shop", "দোকান")} color="#00875A" onPress={() => nav.push({ name: "store", id: d.store.id })} /> : null}
         </View>
       </Card>
-      {d.banned ? <Banner color="#B91C1C" icon="slash" title={L("This account is banned", "এই অ্যাকাউন্ট ব্যানড")} sub={[mod.bannedReason, mod.bannedUntil ? L(`until ${fmtDate(mod.bannedUntil, false)}`, `${fmtDate(mod.bannedUntil, false)} পর্যন্ত`) : L("until you unban it", "আপনি তুলে না দেওয়া পর্যন্ত")].filter(Boolean).join(" · ")} /> : null}
-      {!d.banned && limits.length ? <Banner color="#B45309" icon="lock" title={L("Can't: ", "পারবে না: ") + limits.map((k) => limitLabel(k, L)).join(", ")} sub={[mod.restrictions?.reason, mod.restrictions?.until ? L(`until ${fmtDate(mod.restrictions.until, false)}`, `${fmtDate(mod.restrictions.until, false)} পর্যন্ত`) : L("until lifted", "তুলে না দেওয়া পর্যন্ত")].filter(Boolean).join(" · ")} /> : null}
+      {d.banned ? <Banner color="#DA2F2F" icon="slash" title={L("This account is banned", "এই অ্যাকাউন্ট ব্যানড")} sub={[mod.bannedReason, mod.bannedUntil ? L(`until ${fmtDate(mod.bannedUntil, false)}`, `${fmtDate(mod.bannedUntil, false)} পর্যন্ত`) : L("until you unban it", "আপনি তুলে না দেওয়া পর্যন্ত")].filter(Boolean).join(" · ")} /> : null}
+      {!d.banned && limits.length ? <Banner color="#B25E09" icon="lock" title={L("Can't: ", "পারবে না: ") + limits.map((k) => limitLabel(k, L)).join(", ")} sub={[mod.restrictions?.reason, mod.restrictions?.until ? L(`until ${fmtDate(mod.restrictions.until, false)}`, `${fmtDate(mod.restrictions.until, false)} পর্যন্ত`) : L("until lifted", "তুলে না দেওয়া পর্যন্ত")].filter(Boolean).join(" · ")} /> : null}
       <Segmented<Tab>
         testID="user-tabs"
         value={tab}
@@ -125,10 +125,10 @@ function Overview({ d, mod }: { d: any; mod: any }) {
   return (
     <>
       <View style={[st.grid, { gap: 10 }]}>
-        <Stat icon="shopping-bag" color="#1D4ED8" label={L("Orders", "অর্ডার")} value={d.recentOrders?.length || 0} />
-        <Stat icon="credit-card" color="#047857" label={L("Spent", "খরচ")} value={taka(d.spent)} />
-        <Stat icon="tag" color="#B45309" label={L("Products", "পণ্য")} value={d.listings || 0} />
-        <Stat icon="flag" color="#B91C1C" label={L("Reports", "রিপোর্ট")} value={c.reportsAgainst || 0} />
+        <Stat icon="shopping-bag" color="#3D38D0" label={L("Orders", "অর্ডার")} value={d.recentOrders?.length || 0} />
+        <Stat icon="credit-card" color="#00875A" label={L("Spent", "খরচ")} value={taka(d.spent)} />
+        <Stat icon="tag" color="#B25E09" label={L("Products", "পণ্য")} value={d.listings || 0} />
+        <Stat icon="flag" color="#DA2F2F" label={L("Reports", "রিপোর্ট")} value={c.reportsAgainst || 0} />
       </View>
       <Card>
         <KV icon="mail" k={L("Email", "ইমেইল")} v={d.email} />
@@ -178,7 +178,7 @@ function MessagePanel({ id, name, onSent }: { id: string; name: string; onSent: 
       </View>
       <Field testID="user-message-title" label={L("Title (optional)", "শিরোনাম (ঐচ্ছিক)")} value={title} onChange={setTitle} maxLength={120} />
       <Field testID="user-message-body" label={L("Message", "মেসেজ")} value={body} onChange={setBody} multiline maxLength={2000} placeholder={L("Write to this person…", "এই ব্যক্তিকে লিখুন…")} />
-      {msg ? <Text style={{ color: msg.ok ? "#047857" : "#B91C1C", fontWeight: "600", marginBottom: 8 }}>{msg.text}</Text> : null}
+      {msg ? <Text style={{ color: msg.ok ? "#00875A" : "#DA2F2F", fontWeight: "600", marginBottom: 8 }}>{msg.text}</Text> : null}
       <Btn testID="user-message-send" icon="send" label={L("Send message", "মেসেজ পাঠান")} busy={busy} disabled={!body.trim()} onPress={send} />
     </Card>
   );
@@ -212,7 +212,7 @@ function SafetyPanel({ id, d, mod, warnings, onChanged }: { id: string; d: any; 
   const anyLimit = LIMITS.some((k) => mod.restrictions?.[k]);
   return (
     <>
-      {msg ? <Text style={{ color: msg.ok ? "#047857" : "#B91C1C", fontWeight: "600" }}>{msg.text}</Text> : null}
+      {msg ? <Text style={{ color: msg.ok ? "#00875A" : "#DA2F2F", fontWeight: "600" }}>{msg.text}</Text> : null}
       <SectionTitle title={L("Step 1 · Warn", "ধাপ ১ · সতর্ক করুন")} />
       <Card testID="user-warn">
         <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginBottom: 8 }}>{L("The warning arrives in their Chats from Farmers Official. A ban needs a warning first.", "সতর্কবার্তা Farmers Official থেকে চ্যাটে যাবে। ব্যানের আগে সতর্কবার্তা দিতে হয়।")}</Text>
@@ -224,7 +224,7 @@ function SafetyPanel({ id, d, mod, warnings, onChanged }: { id: string; d: any; 
           <View style={{ marginTop: 12, gap: 8 }}>
             {(mod.warnings || []).map((w: any, i: number) => (
               <View key={w.id} style={[st.row, { gap: 10, opacity: w.withdrawn ? 0.5 : 1 }]}>
-                <Feather name="alert-triangle" size={15} color={w.withdrawn ? theme.textTertiary : "#B45309"} />
+                <Feather name="alert-triangle" size={15} color={w.withdrawn ? theme.textTertiary : "#B25E09"} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.text, fontWeight: "600", textDecorationLine: w.withdrawn ? "line-through" : "none" }}>{w.reason}</Text>
                   <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{fmtDate(w.at)}{w.by ? ` · ${w.by}` : ""}{w.withdrawn ? ` · ${L("withdrawn", "প্রত্যাহার করা")}` : ""}</Text>
@@ -260,7 +260,7 @@ function SafetyPanel({ id, d, mod, warnings, onChanged }: { id: string; d: any; 
           <>
             {!warnings.length ? (
               <View style={{ marginBottom: 10 }}>
-                <Banner color="#B45309" icon="alert-triangle" title={L("No warning yet", "এখনও কোনো সতর্কবার্তা নেই")} sub={L("Send a warning first. For serious cases you can ban now and say why.", "আগে সতর্কবার্তা দিন। গুরুতর ক্ষেত্রে কারণ লিখে এখনই ব্যান করতে পারেন।")} />
+                <Banner color="#B25E09" icon="alert-triangle" title={L("No warning yet", "এখনও কোনো সতর্কবার্তা নেই")} sub={L("Send a warning first. For serious cases you can ban now and say why.", "আগে সতর্কবার্তা দিন। গুরুতর ক্ষেত্রে কারণ লিখে এখনই ব্যান করতে পারেন।")} />
                 <ToggleRow testID="ban-skip-warning" icon="zap" label={L("Serious case: ban without a warning", "গুরুতর: সতর্কবার্তা ছাড়া ব্যান")} value={skipWarn} onChange={setSkipWarn} />
               </View>
             ) : null}
@@ -298,7 +298,7 @@ function AccountPanel({ id, d, onChanged }: { id: string; d: any; onChanged: () 
   const roles = ROLES.includes(f.role) ? ROLES : [...ROLES, f.role];
   return (
     <>
-      {msg ? <Text style={{ color: msg.ok ? "#047857" : "#B91C1C", fontWeight: "600" }}>{msg.text}</Text> : null}
+      {msg ? <Text style={{ color: msg.ok ? "#00875A" : "#DA2F2F", fontWeight: "600" }}>{msg.text}</Text> : null}
       <SectionTitle title={L("Details", "তথ্য")} />
       <Card testID="user-edit">
         <Field testID="edit-name" label={L("Name", "নাম")} value={f.name} onChange={(v) => setF({ ...f, name: v })} maxLength={120} />

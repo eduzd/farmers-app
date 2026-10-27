@@ -23,12 +23,12 @@ export interface ReferralTier {
 }
 
 export const REFERRAL_TIERS: ReferralTier[] = [
-  { id: "starter", nameEn: "Starter", nameBn: "নতুন", minReferrals: 0, bonusPoints: 0, badgeColor: "#9E9E9E", icon: "user" },
+  { id: "starter", nameEn: "Starter", nameBn: "নতুন", minReferrals: 0, bonusPoints: 0, badgeColor: "#7A8CA3", icon: "user" },
   { id: "bronze", nameEn: "Bronze Referrer", nameBn: "ব্রোঞ্জ রেফারার", minReferrals: 5, bonusPoints: 100, badgeColor: "#CD7F32", icon: "award" },
   { id: "silver", nameEn: "Silver Referrer", nameBn: "সিলভার রেফারার", minReferrals: 15, bonusPoints: 300, badgeColor: "#C0C0C0", icon: "star" },
   { id: "gold", nameEn: "Gold Referrer", nameBn: "গোল্ড রেফারার", minReferrals: 30, bonusPoints: 600, badgeColor: "#F5B700", icon: "zap" },
   { id: "diamond", nameEn: "Diamond Referrer", nameBn: "ডায়মন্ড রেফারার", minReferrals: 50, bonusPoints: 1000, badgeColor: "#B9F2FF", icon: "diamond" },
-  { id: "elite", nameEn: "Elite Referrer", nameBn: "এলিট রেফারার", minReferrals: 100, bonusPoints: 2500, badgeColor: "#7C3AED", icon: "crown" },
+  { id: "elite", nameEn: "Elite Referrer", nameBn: "এলিট রেফারার", minReferrals: 100, bonusPoints: 2500, badgeColor: "#3D38D0", icon: "crown" },
 ];
 
 export const REFERRAL_POINTS = {

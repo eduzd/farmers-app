@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   itemSeller: {
     fontSize: 13,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   checkoutText: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   emptyWrapper: {
     flex: 1,

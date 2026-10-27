@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 interface CallButtonProps {
@@ -58,22 +58,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   button: {
-    backgroundColor: "#16A34A",
+    backgroundColor: "#00BB77",
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#16A34A",
+    shadowColor: "#00BB77",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   disabled: {
-    backgroundColor: "#94a3b8",
+    backgroundColor: "#7A8CA3",
     shadowOpacity: 0,
   },
   label: {
     fontSize: 12,
-    color: "#64748b",
+    color: "#7A8CA3",
     marginTop: 4,
   },
 });

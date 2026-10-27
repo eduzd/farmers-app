@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -28,10 +28,10 @@ const SERVICES: any[] = [];
 const DISCUSSIONS: any[] = [];
 
 const TIPS = [
-  { title: "প্লাস্টিক কমান", desc: "কাপড়ের ব্যাগ ব্যবহার করুন", icon: "shopping-bag", color: "#2563EB" },
-  { title: "কম্পোস্ট করুন", desc: "রান্নাঘরের বর্জ্য দিয়ে সার", icon: "feather", color: "#16A34A" },
-  { title: "রিসাইকেল করুন", desc: "প্লাস্টিক-কাগজ আলাদা রাখুন", icon: "refresh-cw", color: "#EA8A0C" },
-  { title: "রিইউজ করুন", desc: "পুরনো জিনিস পুনর্ব্যবহার", icon: "repeat", color: "#7C3AED" },
+  { title: "প্লাস্টিক কমান", desc: "কাপড়ের ব্যাগ ব্যবহার করুন", icon: "shopping-bag", color: "#2E96EF" },
+  { title: "কম্পোস্ট করুন", desc: "রান্নাঘরের বর্জ্য দিয়ে সার", icon: "feather", color: "#00BB77" },
+  { title: "রিসাইকেল করুন", desc: "প্লাস্টিক-কাগজ আলাদা রাখুন", icon: "refresh-cw", color: "#B25E09" },
+  { title: "রিইউজ করুন", desc: "পুরনো জিনিস পুনর্ব্যবহার", icon: "repeat", color: "#3D38D0" },
 ];
 
 export default function WasteManagementScreen() {
@@ -44,22 +44,22 @@ export default function WasteManagementScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <LinearGradient
-        colors={isDark ? ["#065f46", "#1f2937"] : ["#d1fae5", "#ecfdf5"]}
+        colors={isDark ? ["#00875A", "#202936"] : ["#D8FFF2", "#D8FFF2"]}
         style={styles.headerGradient}
       >
         <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: "#16A34A20" }]}>
-            <Feather name="refresh-cw" size={24} color="#16A34A" />
+          <View style={[styles.statCard, { backgroundColor: "#00BB7720" }]}>
+            <Feather name="refresh-cw" size={24} color="#00BB77" />
             <ThemedText style={[styles.statValue, { color: theme.text }]}>১২,৫০০ কেজি</ThemedText>
             <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>রিসাইকেল হয়েছে</ThemedText>
           </View>
-          <View style={[styles.statCard, { backgroundColor: "#2563EB20" }]}>
-            <Feather name="users" size={24} color="#2563EB" />
+          <View style={[styles.statCard, { backgroundColor: "#2E96EF20" }]}>
+            <Feather name="users" size={24} color="#2E96EF" />
             <ThemedText style={[styles.statValue, { color: theme.text }]}>৫৬৭</ThemedText>
             <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>সদস্য</ThemedText>
           </View>
-          <View style={[styles.statCard, { backgroundColor: "#EA8A0C20" }]}>
-            <Feather name="map-pin" size={24} color="#EA8A0C" />
+          <View style={[styles.statCard, { backgroundColor: "#B25E0920" }]}>
+            <Feather name="map-pin" size={24} color="#B25E09" />
             <ThemedText style={[styles.statValue, { color: theme.text }]}>৪৫</ThemedText>
             <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>সংগ্রহ কেন্দ্র</ThemedText>
           </View>
@@ -127,8 +127,8 @@ export default function WasteManagementScreen() {
               <Animated.View key={service.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.serviceCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={styles.serviceHeader}>
-                    <View style={[styles.serviceIcon, { backgroundColor: "#16A34A20" }]}>
-                      <Feather name="refresh-cw" size={24} color="#16A34A" />
+                    <View style={[styles.serviceIcon, { backgroundColor: "#00BB7720" }]}>
+                      <Feather name="refresh-cw" size={24} color="#00BB77" />
                     </View>
                     <View style={styles.serviceInfo}>
                       <ThemedText style={[styles.serviceName, { color: theme.text }]}>{service.name}</ThemedText>
@@ -141,7 +141,7 @@ export default function WasteManagementScreen() {
                       </View>
                     </View>
                     <View style={styles.ratingBadge}>
-                      <Feather name="star" size={14} color="#EA8A0C" />
+                      <Feather name="star" size={14} color="#B25E09" />
                       <ThemedText style={[styles.ratingText, { color: theme.text }]}>{service.rating}</ThemedText>
                     </View>
                   </View>
@@ -158,7 +158,7 @@ export default function WasteManagementScreen() {
                   <View style={[styles.serviceFooter, { borderTopColor: theme.cardBorder }]}>
                     <View>
                       <ThemedText style={[styles.priceLabel, { color: theme.textSecondary }]}>ক্রয় মূল্য</ThemedText>
-                      <ThemedText style={[styles.priceValue, { color: "#16A34A" }]}>{service.buyPrice}</ThemedText>
+                      <ThemedText style={[styles.priceValue, { color: "#00BB77" }]}>{service.buyPrice}</ThemedText>
                     </View>
                     <View style={styles.serviceActions}>
                       <Pressable style={[styles.callBtn, { backgroundColor: theme.primary + "20" }]}>
@@ -185,7 +185,7 @@ export default function WasteManagementScreen() {
               <Animated.View key={discussion.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <Pressable style={[styles.discussionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={styles.discussionHeader}>
-                    <View style={[styles.authorAvatar, { backgroundColor: "#16A34A" }]}>
+                    <View style={[styles.authorAvatar, { backgroundColor: "#00BB77" }]}>
                       <ThemedText style={styles.authorInitial}>{discussion.author.charAt(0)}</ThemedText>
                     </View>
                     <View style={styles.discussionMeta}>
@@ -193,9 +193,9 @@ export default function WasteManagementScreen() {
                       <ThemedText style={[styles.postTime, { color: theme.textSecondary }]}>{discussion.time}</ThemedText>
                     </View>
                     {discussion.solved ? (
-                      <View style={[styles.solvedBadge, { backgroundColor: "#16A34A20" }]}>
-                        <Feather name="check-circle" size={14} color="#16A34A" />
-                        <ThemedText style={[styles.solvedText, { color: "#16A34A" }]}>সমাধান</ThemedText>
+                      <View style={[styles.solvedBadge, { backgroundColor: "#00BB7720" }]}>
+                        <Feather name="check-circle" size={14} color="#00BB77" />
+                        <ThemedText style={[styles.solvedText, { color: "#00BB77" }]}>সমাধান</ThemedText>
                       </View>
                     ) : null}
                   </View>
@@ -205,8 +205,8 @@ export default function WasteManagementScreen() {
                   </ThemedText>
                   <View style={styles.tagsRow}>
                     {discussion.tags.map((tag: string, i: number) => (
-                      <View key={i} style={[styles.tag, { backgroundColor: "#16A34A20" }]}>
-                        <ThemedText style={[styles.tagText, { color: "#16A34A" }]}>{tag}</ThemedText>
+                      <View key={i} style={[styles.tag, { backgroundColor: "#00BB7720" }]}>
+                        <ThemedText style={[styles.tagText, { color: "#00BB77" }]}>{tag}</ThemedText>
                       </View>
                     ))}
                   </View>

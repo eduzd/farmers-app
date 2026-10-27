@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { View, Pressable, BackHandler, Platform, StyleSheet, Animated, Easing } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useTheme } from "@/hooks/useTheme";
@@ -128,7 +128,7 @@ export default function AdminAppScreen() {
 
   const top = stack[stack.length - 1];
   const bellBadge = bellCount > 0 ? (
-    <View testID="header-bell-badge" style={{ position: "absolute", top: 3, right: 1, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.backgroundRoot }}>
+    <View testID="header-bell-badge" style={{ position: "absolute", top: 3, right: 1, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DA2F2F", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.backgroundRoot }}>
       <Text style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}>{bellCount > 99 ? "99+" : bellCount}</Text>
     </View>
   ) : null;
@@ -184,7 +184,7 @@ export default function AdminAppScreen() {
     <Pressable testID={testID} accessibilityLabel={label} onPress={onPress} hitSlop={6}
       style={({ pressed }) => ({ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: pressed ? theme.backgroundSecondary : "transparent" })}>
       {child}
-      {dot ? <View style={{ position: "absolute", top: 8, right: 8, width: 9, height: 9, borderRadius: 5, backgroundColor: "#DC2626", borderWidth: 1.5, borderColor: theme.backgroundRoot }} /> : null}
+      {dot ? <View style={{ position: "absolute", top: 8, right: 8, width: 9, height: 9, borderRadius: 5, backgroundColor: "#DA2F2F", borderWidth: 1.5, borderColor: theme.backgroundRoot }} /> : null}
     </Pressable>
   );
   return (
@@ -239,7 +239,7 @@ export default function AdminAppScreen() {
                         <AppIcon name={icon} size={22} color={on ? theme.primary : theme.tabIconDefault || theme.textSecondary} />
                       )}
                       {badge ? (
-                        <View style={{ position: "absolute", top: -4, right: 4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.card }}>
+                        <View style={{ position: "absolute", top: -4, right: 4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#DA2F2F", alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 2, borderColor: theme.card }}>
                           <Text style={{ color: "#fff", fontSize: 10, fontWeight: "800" }}>{badge > 99 ? "99+" : badge}</Text>
                         </View>
                       ) : null}

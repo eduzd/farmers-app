@@ -187,7 +187,7 @@ export function UserAvatar({
           style={[
             styles.onlineDot,
             {
-              backgroundColor: presence === "online" ? "#22C55E" : "#9CA3AF",
+              backgroundColor: presence === "online" ? "#00BB77" : "#9CA3AF",
               width: onlineSize,
               height: onlineSize,
               borderRadius: onlineSize / 2,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   avatarText: {
     color: "#FFFFFF",
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   profileBadge: {
     alignItems: "center",
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     bottom: 0,
-    backgroundColor: "#22C55E",
+    backgroundColor: "#00BB77",
   },
   badgeContainer: {
     position: "absolute",

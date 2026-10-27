@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, View, StyleSheet, Pressable, Platform, StatusBar } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
 import { tr } from "@/lib/tr";
@@ -20,8 +20,8 @@ interface Props {
   onToggleSpeaker: () => void;
 }
 
-const GREEN = "#16A34A";
-const RED = "#DC2626";
+const GREEN = "#00BB77";
+const RED = "#DA2F2F";
 const BG = "#0F2E1D";
 
 function endText(reason?: string): string {
@@ -148,7 +148,7 @@ export function CallOverlay({ call, onAccept, onReject, onHangup, onToggleMute, 
           </View>
         ) : call.phase === "ended" ? (
           <View style={styles.row}>
-            <RoundButton icon="x" label={tr("বন্ধ করুন")} color="#334155" onPress={onHangup} />
+            <RoundButton icon="x" label={tr("বন্ধ করুন")} color="#202936" onPress={onHangup} />
           </View>
         ) : (
           <View>

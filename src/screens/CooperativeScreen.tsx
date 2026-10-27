@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { View, StyleSheet, FlatList, Pressable, RefreshControl, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInUp } from "react-native-reanimated";
 
@@ -83,7 +83,7 @@ export default function CooperativeScreen() {
           <ThemedText style={[styles.benefitsLabel, { color: theme.text }]}>সদস্য সুবিধা:</ThemedText>
           {item.benefits.map((benefit, i) => (
             <View key={i} style={styles.benefitItem}>
-              <Feather name="check-circle" size={14} color="#2FA36B" />
+              <Feather name="check-circle" size={14} color="#2E96EF" />
               <ThemedText style={[styles.benefitText, { color: theme.textSecondary }]}>{benefit}</ThemedText>
             </View>
           ))}

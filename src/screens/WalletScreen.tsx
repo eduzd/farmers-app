@@ -12,7 +12,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
@@ -45,8 +45,8 @@ interface PaymentMethod {
 const PAYMENT_METHODS: PaymentMethod[] = [
   { id: "bkash", name: "বিকাশ", icon: "smartphone", color: "#E2136E" },
   { id: "nagad", name: "নগদ", icon: "smartphone", color: "#F26522" },
-  { id: "rocket", name: "রকেট", icon: "smartphone", color: "#8C3494" },
-  { id: "bank", name: "ব্যাংক ট্রান্সফার", icon: "credit-card", color: "#2563EB" },
+  { id: "rocket", name: "রকেট", icon: "smartphone", color: "#3D38D0" },
+  { id: "bank", name: "ব্যাংক ট্রান্সফার", icon: "credit-card", color: "#2E96EF" },
 ];
 
 export default function WalletScreen() {
@@ -134,14 +134,14 @@ export default function WalletScreen() {
               backgroundColor:
                 transaction.type === "credit"
                   ? theme.primary + "15"
-                  : "#DC262615",
+                  : "#DA2F2F15",
             },
           ]}
         >
           <AppIcon
             name={transaction.type === "credit" ? "arrow-down-left" : "arrow-up-right"}
             size={20}
-            color={transaction.type === "credit" ? theme.primary : "#DC2626"}
+            color={transaction.type === "credit" ? theme.primary : "#DA2F2F"}
           />
         </View>
 
@@ -157,7 +157,7 @@ export default function WalletScreen() {
         <ThemedText
           style={[
             styles.transactionAmount,
-            { color: transaction.type === "credit" ? theme.primary : "#DC2626" },
+            { color: transaction.type === "credit" ? theme.primary : "#DA2F2F" },
           ]}
         >
           {transaction.type === "credit" ? "+" : "-"}৳{transaction.amount}
@@ -377,8 +377,8 @@ export default function WalletScreen() {
 
       <View style={styles.statsRow}>
         <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-          <Feather name="trending-up" size={20} color="#2FA36B" />
-          <ThemedText style={[styles.statAmount, { color: "#2FA36B" }]}>
+          <Feather name="trending-up" size={20} color="#2E96EF" />
+          <ThemedText style={[styles.statAmount, { color: "#2E96EF" }]}>
             ৳{wallet.income.toLocaleString()}
           </ThemedText>
           <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
@@ -387,8 +387,8 @@ export default function WalletScreen() {
         </View>
 
         <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-          <Feather name="trending-down" size={20} color="#DC2626" />
-          <ThemedText style={[styles.statAmount, { color: "#DC2626" }]}>
+          <Feather name="trending-down" size={20} color="#DA2F2F" />
+          <ThemedText style={[styles.statAmount, { color: "#DA2F2F" }]}>
             ৳{wallet.spent.toLocaleString()}
           </ThemedText>
           <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>

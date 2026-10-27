@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable, TextInput, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -24,9 +24,9 @@ const VET_CATEGORIES = [
 const VETS: any[] = [];
 
 const EMERGENCY_SERVICES = [
-  { title: "জরুরি হটলাইন", number: "16263", icon: "phone-call", color: "#DC2626" },
-  { title: "অ্যাম্বুলেন্স", number: "01711-XXXX", icon: "truck", color: "#EA8A0C" },
-  { title: "রাত্রি সেবা", number: "01811-XXXX", icon: "moon", color: "#7C3AED" },
+  { title: "জরুরি হটলাইন", number: "16263", icon: "phone-call", color: "#DA2F2F" },
+  { title: "অ্যাম্বুলেন্স", number: "01711-XXXX", icon: "truck", color: "#B25E09" },
+  { title: "রাত্রি সেবা", number: "01811-XXXX", icon: "moon", color: "#3D38D0" },
 ];
 
 export default function VeterinaryScreen() {
@@ -122,14 +122,14 @@ export default function VeterinaryScreen() {
                     <View style={styles.vetNameRow}>
                       <ThemedText style={[styles.vetName, { color: theme.text }]}>{vet.name}</ThemedText>
                       {vet.available ? (
-                        <View style={[styles.statusBadge, { backgroundColor: "#16A34A20" }]}>
-                          <View style={[styles.statusDot, { backgroundColor: "#16A34A" }]} />
-                          <ThemedText style={[styles.statusText, { color: "#16A34A" }]}>অনলাইন</ThemedText>
+                        <View style={[styles.statusBadge, { backgroundColor: "#00BB7720" }]}>
+                          <View style={[styles.statusDot, { backgroundColor: "#00BB77" }]} />
+                          <ThemedText style={[styles.statusText, { color: "#00BB77" }]}>অনলাইন</ThemedText>
                         </View>
                       ) : (
-                        <View style={[styles.statusBadge, { backgroundColor: "#DC262620" }]}>
-                          <View style={[styles.statusDot, { backgroundColor: "#DC2626" }]} />
-                          <ThemedText style={[styles.statusText, { color: "#DC2626" }]}>অফলাইন</ThemedText>
+                        <View style={[styles.statusBadge, { backgroundColor: "#DA2F2F20" }]}>
+                          <View style={[styles.statusDot, { backgroundColor: "#DA2F2F" }]} />
+                          <ThemedText style={[styles.statusText, { color: "#DA2F2F" }]}>অফলাইন</ThemedText>
                         </View>
                       )}
                     </View>
@@ -138,7 +138,7 @@ export default function VeterinaryScreen() {
                     </ThemedText>
                     <View style={styles.vetMeta}>
                       <View style={styles.vetMetaItem}>
-                        <Feather name="star" size={14} color="#EA8A0C" />
+                        <Feather name="star" size={14} color="#B25E09" />
                         <ThemedText style={[styles.vetMetaText, { color: theme.text }]}>{vet.rating}</ThemedText>
                       </View>
                       <View style={styles.vetMetaItem}>

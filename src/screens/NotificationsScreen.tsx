@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 import { Image } from "expo-image";
@@ -70,23 +70,23 @@ const getNotificationIcon = (type: string): keyof typeof Feather.glyphMap => {
 
 const getNotificationColor = (type: string) => {
   const colors: Record<string, string> = {
-    like: "#DC2626",
-    comment: "#2563EB",
-    follow: "#2FA36B",
+    like: "#DA2F2F",
+    comment: "#2E96EF",
+    follow: "#2E96EF",
     new_post: "#0E9F6E",
-    mention: "#7C3AED",
-    order: "#EA8A0C",
-    system: "#475569",
-    voice_room: "#DB2777",
+    mention: "#3D38D0",
+    order: "#B25E09",
+    system: "#4A5568",
+    voice_room: "#FF4BB7",
     badge: "#F5B700",
-    message: "#2563EB",
+    message: "#2E96EF",
     review: "#F5B700",
-    answer: "#7C3AED",
-    rfq: "#0D9488",
-    price: "#DC2626",
-    reminder: "#2FA36B",
+    answer: "#3D38D0",
+    rfq: "#00BB77",
+    price: "#DA2F2F",
+    reminder: "#2E96EF",
   };
-  return colors[type] || "#475569";
+  return colors[type] || "#4A5568";
 };
 
 const formatTimeAgo = (date: Date) => {
@@ -308,7 +308,7 @@ export default function NotificationsScreen() {
       {permissionStatus !== "granted" ? (
         <Animated.View entering={FadeInUp.delay(50)} style={styles.enableBanner}>
           <LinearGradient
-            colors={["#2FA36B", "#2E7D32"]}
+            colors={["#2E96EF", "#2E96EF"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.enableGradient}
@@ -326,7 +326,7 @@ export default function NotificationsScreen() {
             </View>
             <Pressable style={styles.enableButton} onPress={handleEnableNotifications}>
               <ThemedText style={styles.enableButtonText}>{tr("সক্রিয় করুন")}</ThemedText>
-              <Feather name="chevron-right" size={16} color="#2FA36B" />
+              <Feather name="chevron-right" size={16} color="#2E96EF" />
             </Pressable>
           </LinearGradient>
         </Animated.View>
@@ -505,6 +505,6 @@ const styles = StyleSheet.create({
   enableButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2FA36B",
+    color: "#2E96EF",
   },
 });

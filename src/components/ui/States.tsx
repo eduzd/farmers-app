@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { StyleSheet, View, ViewStyle, StyleProp, ActivityIndicator } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,

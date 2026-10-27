@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Pressable, Alert, Share } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { ResultCard, ResultRow, BreakdownItem } from '@/offline/components/calculate/ResultCard';

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, FlatList, Pressable, Alert } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { HistoryCard } from '@/offline/components/calculate/HistoryCard';
 import { FilterBar } from '@/offline/components/calculate/FilterBar';
 import { useTheme } from '@/hooks/useTheme';

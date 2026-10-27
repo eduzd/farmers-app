@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -46,7 +46,7 @@ const CERTIFICATES: Certificate[] = [
     status: "completed",
     completedDate: "১৫ জানুয়ারি ২০২৫",
     badge: "leaf",
-    color: "#2FA36B",
+    color: "#2E96EF",
   },
   {
     id: "2",
@@ -62,7 +62,7 @@ const CERTIFICATES: Certificate[] = [
     status: "in_progress",
     progress: 65,
     badge: "droplet",
-    color: "#2563EB",
+    color: "#2E96EF",
   },
   {
     id: "3",
@@ -77,7 +77,7 @@ const CERTIFICATES: Certificate[] = [
     duration: "৪ মাস",
     status: "available",
     badge: "heart",
-    color: "#DB2777",
+    color: "#FF4BB7",
   },
   {
     id: "4",
@@ -92,7 +92,7 @@ const CERTIFICATES: Certificate[] = [
     duration: "৬ সপ্তাহ",
     status: "available",
     badge: "briefcase",
-    color: "#EA8A0C",
+    color: "#B25E09",
   },
   {
     id: "5",
@@ -169,9 +169,9 @@ export default function CertificationScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "#2FA36B";
+        return "#2E96EF";
       case "in_progress":
-        return "#EA8A0C";
+        return "#B25E09";
       case "available":
         return theme.primary;
       default:
@@ -246,8 +246,8 @@ export default function CertificationScreen() {
 
           {item.status === "completed" && item.completedDate ? (
             <View style={styles.completedSection}>
-              <Feather name="check-circle" size={16} color="#2FA36B" />
-              <ThemedText style={[styles.completedText, { color: "#2FA36B" }]}>
+              <Feather name="check-circle" size={16} color="#2E96EF" />
+              <ThemedText style={[styles.completedText, { color: "#2E96EF" }]}>
                 {item.completedDate} তারিখে অর্জিত
               </ThemedText>
             </View>
@@ -328,8 +328,8 @@ export default function CertificationScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
           <View style={styles.statsRow}>
-            <View style={[styles.statCard, { backgroundColor: "#2FA36B" + "15" }]}>
-              <Feather name="award" size={24} color="#2FA36B" />
+            <View style={[styles.statCard, { backgroundColor: "#2E96EF" + "15" }]}>
+              <Feather name="award" size={24} color="#2E96EF" />
               <ThemedText style={[styles.statValue, { color: theme.text }]}>
                 {completedCount}
               </ThemedText>
@@ -337,8 +337,8 @@ export default function CertificationScreen() {
                 অর্জিত সনদ
               </ThemedText>
             </View>
-            <View style={[styles.statCard, { backgroundColor: "#EA8A0C" + "15" }]}>
-              <Feather name="loader" size={24} color="#EA8A0C" />
+            <View style={[styles.statCard, { backgroundColor: "#B25E09" + "15" }]}>
+              <Feather name="loader" size={24} color="#B25E09" />
               <ThemedText style={[styles.statValue, { color: theme.text }]}>
                 {inProgressCount}
               </ThemedText>

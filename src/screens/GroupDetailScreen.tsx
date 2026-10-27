@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useRoute, RouteProp } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
@@ -264,12 +264,12 @@ export default function GroupDetailScreen() {
           <Feather
             name="heart"
             size={20}
-            color={item.isLiked ? "#DC2626" : theme.textSecondary}
+            color={item.isLiked ? "#DA2F2F" : theme.textSecondary}
           />
           <ThemedText
             style={[
               styles.actionText,
-              { color: item.isLiked ? "#DC2626" : theme.textSecondary },
+              { color: item.isLiked ? "#DA2F2F" : theme.textSecondary },
             ]}
           >
             {item.likes}

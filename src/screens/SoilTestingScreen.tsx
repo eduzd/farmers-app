@@ -7,7 +7,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -31,12 +31,12 @@ interface TestCenter {
 const TEST_CENTERS: TestCenter[] = [];
 
 const SOIL_PARAMETERS = [
-  { id: "ph", name: "pH মান", ideal: "৬.০ - ৭.০", icon: "droplet", color: "#2563EB" },
-  { id: "organic", name: "জৈব পদার্থ", ideal: "> ২.৫%", icon: "leaf", color: "#2FA36B" },
-  { id: "nitrogen", name: "নাইট্রোজেন (N)", ideal: "০.১২ - ০.২৫%", icon: "zap", color: "#7C3AED" },
-  { id: "phosphorus", name: "ফসফরাস (P)", ideal: "১৫-৩০ পিপিএম", icon: "sun", color: "#EA8A0C" },
-  { id: "potassium", name: "পটাশিয়াম (K)", ideal: "> ০.২ মি.ইক.", icon: "shield", color: "#DC2626" },
-  { id: "zinc", name: "জিংক (Zn)", ideal: "> ১ পিপিএম", icon: "activity", color: "#0D9488" },
+  { id: "ph", name: "pH মান", ideal: "৬.০ - ৭.০", icon: "droplet", color: "#2E96EF" },
+  { id: "organic", name: "জৈব পদার্থ", ideal: "> ২.৫%", icon: "leaf", color: "#2E96EF" },
+  { id: "nitrogen", name: "নাইট্রোজেন (N)", ideal: "০.১২ - ০.২৫%", icon: "zap", color: "#3D38D0" },
+  { id: "phosphorus", name: "ফসফরাস (P)", ideal: "১৫-৩০ পিপিএম", icon: "sun", color: "#B25E09" },
+  { id: "potassium", name: "পটাশিয়াম (K)", ideal: "> ০.২ মি.ইক.", icon: "shield", color: "#DA2F2F" },
+  { id: "zinc", name: "জিংক (Zn)", ideal: "> ১ পিপিএম", icon: "activity", color: "#00BB77" },
 ];
 
 export default function SoilTestingScreen() {
@@ -182,7 +182,7 @@ export default function SoilTestingScreen() {
                   </View>
                 </View>
                 <Pressable
-                  style={[styles.callButton, { backgroundColor: "#2FA36B" }]}
+                  style={[styles.callButton, { backgroundColor: "#2E96EF" }]}
                   onPress={() => handleCall(center.phone)}
                 >
                   <Feather name="phone" size={16} color="#fff" />

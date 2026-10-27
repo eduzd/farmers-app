@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -181,12 +181,12 @@ export function VoiceCallScreen({
   return (
     <Modal visible={visible} animationType="slide" statusBarTranslucent>
       <LinearGradient
-        colors={["#0f172a", "#1e293b", "#334155"]}
+        colors={["#202936", "#202936", "#202936"]}
         style={[styles.container, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}
       >
         {status === "ringing" && (
           <View style={styles.incomingBadge}>
-            <Feather name="phone-incoming" size={16} color="#16A34A" />
+            <Feather name="phone-incoming" size={16} color="#00BB77" />
             <Text style={styles.incomingBadgeText}>ইনকামিং কল</Text>
           </View>
         )}
@@ -195,7 +195,7 @@ export function VoiceCallScreen({
           <Animated.View style={[styles.avatarContainer, pulseStyle]}>
             <View style={styles.avatarRing}>
               <LinearGradient
-                colors={status === "connected" ? ["#16A34A", "#16a34a"] : ["#2563EB", "#2563eb"]}
+                colors={status === "connected" ? ["#00BB77", "#00BB77"] : ["#2E96EF", "#2E96EF"]}
                 style={styles.avatar}
               >
                 <Text style={styles.avatarText}>
@@ -245,7 +245,7 @@ export function VoiceCallScreen({
                   <AppIcon
                     name={isMuted ? "mic-off" : "mic"}
                     size={24}
-                    color={isMuted ? "#DC2626" : "white"}
+                    color={isMuted ? "#DA2F2F" : "white"}
                   />
                 </View>
                 <Text style={styles.controlLabel}>
@@ -274,7 +274,7 @@ export function VoiceCallScreen({
                   <AppIcon
                     name={isSpeakerOn ? "volume-2" : "volume"}
                     size={24}
-                    color={isSpeakerOn ? "#16A34A" : "white"}
+                    color={isSpeakerOn ? "#00BB77" : "white"}
                   />
                 </View>
                 <Text style={styles.controlLabel}>
@@ -292,7 +292,7 @@ export function VoiceCallScreen({
                   <Feather
                     name="pause"
                     size={24}
-                    color={isOnHold ? "#EA8A0C" : "white"}
+                    color={isOnHold ? "#B25E09" : "white"}
                   />
                 </View>
                 <Text style={styles.controlLabel}>
@@ -308,7 +308,7 @@ export function VoiceCallScreen({
                   <AppIcon
                     name={isVideoOn ? "video" : "video-off"}
                     size={24}
-                    color={isVideoOn ? "#2563EB" : "white"}
+                    color={isVideoOn ? "#2E96EF" : "white"}
                   />
                 </View>
                 <Text style={styles.controlLabel}>
@@ -324,7 +324,7 @@ export function VoiceCallScreen({
                   <Feather
                     name="bluetooth"
                     size={24}
-                    color={isBluetoothOn ? "#7C3AED" : "white"}
+                    color={isBluetoothOn ? "#3D38D0" : "white"}
                   />
                 </View>
                 <Text style={styles.controlLabel}>
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   incomingBadgeText: {
-    color: "#16A34A",
+    color: "#00BB77",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 8,
     right: 8,
-    backgroundColor: "#1e293b",
+    backgroundColor: "#202936",
     padding: 4,
     borderRadius: 12,
   },
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#16A34A",
+    backgroundColor: "#00BB77",
   },
   userName: {
     fontSize: 32,
@@ -504,11 +504,11 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   statusTextConnected: {
-    color: "#16A34A",
+    color: "#00BB77",
     fontWeight: "600",
   },
   statusTextHold: {
-    color: "#EA8A0C",
+    color: "#B25E09",
     fontWeight: "600",
   },
   callQuality: {
@@ -635,13 +635,13 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   acceptButton: {
-    backgroundColor: "#16A34A",
+    backgroundColor: "#00BB77",
   },
   rejectButton: {
-    backgroundColor: "#DC2626",
+    backgroundColor: "#DA2F2F",
   },
   endCallButton: {
-    backgroundColor: "#DC2626",
+    backgroundColor: "#DA2F2F",
   },
   callingHint: {
     flexDirection: "row",

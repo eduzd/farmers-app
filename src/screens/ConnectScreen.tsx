@@ -14,7 +14,7 @@ import {
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -236,7 +236,7 @@ export default function ConnectScreen() {
       title: L("Advertise on Farmers", "Farmers-এ বিজ্ঞাপন দিন"),
       subtitle: L("Show your shop, feed or medicine to farmers here. Message us.", "আপনার দোকান, খাদ্য বা ওষুধ কৃষকদের দেখান। আমাদের মেসেজ করুন।"),
       cta: L("Contact", "যোগাযোগ"),
-      colors: ["#7C2D12", "#EA580C"],
+      colors: ["#7C2D12", "#B25E09"],
       onPress: () => (navigation as any).navigate("SupportChat"),
     },
     {
@@ -245,7 +245,7 @@ export default function ConnectScreen() {
       title: L("Animal doctors", "পশু চিকিৎসক"),
       subtitle: L("Cow, goat and poultry health advice", "গরু, ছাগল ও হাঁস-মুরগির চিকিৎসা পরামর্শ"),
       cta: L("See", "দেখুন"),
-      colors: ["#14583A", "#2FA36B"],
+      colors: ["#202936", "#2E96EF"],
       onPress: () => setField("vet"),
     },
     {
@@ -254,7 +254,7 @@ export default function ConnectScreen() {
       title: L("Fish health experts", "মাছ বিশেষজ্ঞ"),
       subtitle: L("Pond water, feed and fish disease", "পুকুরের পানি, খাদ্য ও মাছের রোগ"),
       cta: L("See", "দেখুন"),
-      colors: ["#1D4ED8", "#0D9488"],
+      colors: ["#3D38D0", "#00BB77"],
       onPress: () => setField("fish"),
     },
   ];
@@ -376,7 +376,7 @@ export default function ConnectScreen() {
               accessibilityRole="switch"
               accessibilityState={{ checked: onlineOnly }}
             >
-              <View style={[styles.dotSample, { backgroundColor: "#22C55E" }]} />
+              <View style={[styles.dotSample, { backgroundColor: "#00BB77" }]} />
               <ThemedText style={{ flex: 1 }}>{L("Online now", "এখন অনলাইন")}</ThemedText>
               <Feather name={onlineOnly ? "check-square" : "square"} size={20} color={onlineOnly ? theme.primary : theme.textSecondary} />
             </Pressable>
@@ -583,8 +583,8 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   activeRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 1 },
-  activeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#22C55E" },
-  activeText: { fontSize: 12, fontWeight: "600", color: "#16A34A" },
+  activeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#00BB77" },
+  activeText: { fontSize: 12, fontWeight: "600", color: "#00BB77" },
   empty: { alignItems: "center", paddingTop: Spacing["3xl"], paddingHorizontal: Spacing.xl, gap: Spacing.md },
   emptyText: { textAlign: "center", fontSize: 14, lineHeight: 20 },
   retry: { borderWidth: 1, borderRadius: BorderRadius.full, paddingHorizontal: Spacing.lg, paddingVertical: 8 },

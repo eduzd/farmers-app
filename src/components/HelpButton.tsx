@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Text, Pressable, StyleSheet, AppState } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useNavigation } from "@react-navigation/native";
 import { create } from "zustand";
 import { useTheme } from "@/hooks/useTheme";

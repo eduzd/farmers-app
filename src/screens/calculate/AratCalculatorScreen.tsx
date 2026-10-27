@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderButton, useHeaderHeight } from '@react-navigation/elements';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '@/hooks/useTheme';
@@ -29,8 +29,8 @@ function useColors() {
     border: theme.inputBorder,
     primary: theme.primary,
     error: theme.error,
-    success: '#16A34A',
-    warning: '#EA8A0C',
+    success: '#00BB77',
+    warning: '#B25E09',
   };
 }
 
@@ -400,17 +400,17 @@ export function AratCalculatorScreen() {
         <meta charset="utf-8">
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { color: #2563EB; text-align: center; margin-bottom: 5px; }
+          h1 { color: #2E96EF; text-align: center; margin-bottom: 5px; }
           .date { text-align: center; color: #666; margin-bottom: 20px; }
           .title { text-align: center; font-size: 18px; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
           th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-          th { background-color: #2563EB; color: white; }
-          .result-box { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 20px; }
+          th { background-color: #2E96EF; color: white; }
+          .result-box { background: #F3FAFF; padding: 15px; border-radius: 8px; margin-top: 20px; }
           .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
           .result-label { color: #666; }
           .result-value { font-weight: bold; color: #333; }
-          .total { font-size: 24px; color: #2563EB; text-align: center; margin-top: 20px; }
+          .total { font-size: 24px; color: #2E96EF; text-align: center; margin-top: 20px; }
           .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
         </style>
       </head>

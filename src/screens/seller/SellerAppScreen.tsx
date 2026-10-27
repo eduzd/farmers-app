@@ -20,7 +20,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as ImagePicker from "expo-image-picker";
 import { apiGet, apiPost, apiPut, apiDelete, uploadImage, mediaUrl } from "@/lib/api";
 import { useAuthStore } from "@/lib/authStore";
@@ -304,7 +304,7 @@ function CategoryChips({ value, onChange }: { value: string; onChange: (v: strin
   const cats = useMarketCategories();
   const { language } = useI18n();
   const bn = language === "bn";
-  const list = cats.some((c) => c.slug === value) || !value ? cats : [...cats, { slug: value, nameEn: value, nameBn: value, icon: "grid", color: "#64748B" }];
+  const list = cats.some((c) => c.slug === value) || !value ? cats : [...cats, { slug: value, nameEn: value, nameBn: value, icon: "grid", color: "#7A8CA3" }];
   return (
     <>
       {list.map((c) => (
@@ -368,7 +368,7 @@ function Dashboard({ L, store, stats, orders, products, go, wide }: { L: any; st
     { label: L("Revenue", "আয়"), value: taka(stats?.revenue || 0), icon: "trending-up" as const, color: S.success },
     { label: L("Orders", "অর্ডার"), value: String(stats?.orders || 0), icon: "shopping-bag" as const, color: S.primary },
     { label: L("To confirm", "নিশ্চিত করতে হবে"), value: String(stats?.byStatus?.pending || 0), icon: "clock" as const, color: S.warning },
-    { label: L("Products", "পণ্য"), value: String(stats?.products || 0), icon: "package" as const, color: "#7C3AED" },
+    { label: L("Products", "পণ্য"), value: String(stats?.products || 0), icon: "package" as const, color: "#3D38D0" },
     { label: L("Out of stock", "স্টক শেষ"), value: String(stats?.outOfStock || 0), icon: "alert-triangle" as const, color: S.danger },
   ];
   return (

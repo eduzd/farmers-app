@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
@@ -102,7 +102,7 @@ export default function LiveStreamScreen() {
           <View style={styles.streamerInfo}>
             <View style={styles.streamerNameRow}>
               <ThemedText style={[styles.streamerName, { color: theme.text }]}>{item.streamer.name}</ThemedText>
-              {item.streamer.isVerified ? <Feather name="check-circle" size={12} color="#2FA36B" /> : null}
+              {item.streamer.isVerified ? <Feather name="check-circle" size={12} color="#2E96EF" /> : null}
             </View>
             <ThemedText style={[styles.categoryText, { color: theme.textSecondary }]}>{item.category}</ThemedText>
           </View>
@@ -142,7 +142,7 @@ export default function LiveStreamScreen() {
       <Animated.View entering={FadeIn} style={styles.header}>
         <ThemedText style={[styles.title, { color: theme.text }]}>লাইভ স্ট্রিম</ThemedText>
         <Pressable
-          style={[styles.goLiveButton, { backgroundColor: "#DC2626" }]}
+          style={[styles.goLiveButton, { backgroundColor: "#DA2F2F" }]}
           onPress={() => setShowGoLive(true)}
         >
           <Feather name="video" size={16} color="#fff" />
@@ -238,7 +238,7 @@ export default function LiveStreamScreen() {
                 </Pressable>
               ))}
             </View>
-            <Pressable style={[styles.startLiveButton, { backgroundColor: "#DC2626" }]}>
+            <Pressable style={[styles.startLiveButton, { backgroundColor: "#DA2F2F" }]}>
               <Feather name="video" size={20} color="#fff" />
               <ThemedText style={styles.startLiveText}>লাইভ শুরু করুন</ThemedText>
             </Pressable>
@@ -273,14 +273,14 @@ const styles = StyleSheet.create({
   sectionHeader: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginBottom: Spacing.md, marginTop: Spacing.lg },
   sectionTitle: { fontSize: 16, fontWeight: "600" },
   sectionCount: { fontSize: 14 },
-  liveIndicator: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center" },
+  liveIndicator: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#DA2F2F", alignItems: "center", justifyContent: "center" },
   liveIndicatorDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#fff" },
   streamRow: { justifyContent: "space-between", marginBottom: Spacing.md },
   streamCard: { width: cardWidth, borderRadius: BorderRadius.lg, borderWidth: 1, overflow: "hidden" },
   thumbnailContainer: { position: "relative", height: 100 },
   thumbnail: { width: "100%", height: "100%" },
   thumbnailGradient: { position: "absolute", bottom: 0, left: 0, right: 0, height: 60 },
-  liveBadge: { position: "absolute", top: Spacing.sm, left: Spacing.sm, flexDirection: "row", alignItems: "center", backgroundColor: "#DC2626", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, gap: 4 },
+  liveBadge: { position: "absolute", top: Spacing.sm, left: Spacing.sm, flexDirection: "row", alignItems: "center", backgroundColor: "#DA2F2F", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, gap: 4 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#fff" },
   liveText: { color: "#fff", fontSize: 10, fontWeight: "700" },
   viewersBadge: { position: "absolute", top: Spacing.sm, right: Spacing.sm, flexDirection: "row", alignItems: "center", backgroundColor: "rgba(0,0,0,0.6)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, gap: 4 },

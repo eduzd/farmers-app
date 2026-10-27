@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
@@ -111,12 +111,12 @@ export default function FarmToursScreen() {
             <Image source={{ uri: item.image }} style={styles.tourImage} contentFit="cover" />
             <LinearGradient colors={["transparent", "rgba(0,0,0,0.8)"]} style={styles.imageGradient} />
             {item.isVirtual ? (
-              <View style={[styles.virtualBadge, { backgroundColor: "#2563EB" }]}>
+              <View style={[styles.virtualBadge, { backgroundColor: "#2E96EF" }]}>
                 <Feather name="monitor" size={10} color="#fff" />
                 <ThemedText style={styles.virtualText}>ভার্চুয়াল</ThemedText>
               </View>
             ) : (
-              <View style={[styles.virtualBadge, { backgroundColor: "#2FA36B" }]}>
+              <View style={[styles.virtualBadge, { backgroundColor: "#2E96EF" }]}>
                 <Feather name="map-pin" size={10} color="#fff" />
                 <ThemedText style={styles.virtualText}>সশরীর</ThemedText>
               </View>
@@ -168,13 +168,13 @@ export default function FarmToursScreen() {
             <View style={styles.footer}>
               <View>
                 <ThemedText style={[styles.priceLabel, { color: theme.textSecondary }]}>রেজিস্ট্রেশন ফি</ThemedText>
-                <ThemedText style={[styles.price, { color: item.price === 0 ? "#2FA36B" : theme.text }]}>
+                <ThemedText style={[styles.price, { color: item.price === 0 ? "#2E96EF" : theme.text }]}>
                   {item.price === 0 ? "ফ্রি" : `৳${item.price}`}
                 </ThemedText>
               </View>
               <View style={styles.registrationInfo}>
-                <View style={[styles.spotsContainer, { backgroundColor: isFull ? "#DC262615" : "#2FA36B15" }]}>
-                  <ThemedText style={[styles.spotsText, { color: isFull ? "#DC2626" : "#2FA36B" }]}>
+                <View style={[styles.spotsContainer, { backgroundColor: isFull ? "#DA2F2F15" : "#2E96EF15" }]}>
+                  <ThemedText style={[styles.spotsText, { color: isFull ? "#DA2F2F" : "#2E96EF" }]}>
                     {isFull ? "পূর্ণ" : `${spotsLeft}টি সিট বাকি`}
                   </ThemedText>
                 </View>

@@ -8,7 +8,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -31,22 +31,22 @@ export default function ApplicationsListScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "approved":
-        return "#16A34A";
+        return "#00BB77";
       case "rejected":
-        return "#DC2626";
+        return "#DA2F2F";
       default:
-        return "#EA8A0C";
+        return "#B25E09";
     }
   };
 
   const getStatusBgColor = (status: string) => {
     switch (status) {
       case "approved":
-        return "#16A34A20";
+        return "#00BB7720";
       case "rejected":
-        return "#DC262620";
+        return "#DA2F2F20";
       default:
-        return "#EA8A0C20";
+        return "#B25E0920";
     }
   };
 
@@ -100,13 +100,13 @@ export default function ApplicationsListScreen() {
                 <View
                   style={[
                     styles.applicationIcon,
-                    { backgroundColor: app.type === "welfare" ? "#1D4ED820" : "#0D47A120" },
+                    { backgroundColor: app.type === "welfare" ? "#3D38D020" : "#20293620" },
                   ]}
                 >
                   <AppIcon
                     name={app.type === "welfare" ? "award" : "globe"}
                     size={22}
-                    color={app.type === "welfare" ? "#1D4ED8" : "#0D47A1"}
+                    color={app.type === "welfare" ? "#3D38D0" : "#202936"}
                   />
                 </View>
                 <View style={styles.applicationDetails}>

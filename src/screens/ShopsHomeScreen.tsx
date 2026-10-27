@@ -30,11 +30,11 @@ const SHOP_CATEGORIES = [
   { id: "all", label: "সব", icon: "grid", color: "#37B1FF" },
   { id: "seeds", label: "বীজ", icon: "sun", color: "#00BB77" },
   { id: "fertilizer", label: "সার", icon: "droplet", color: "#37B1FF" },
-  { id: "equipment", label: "যন্ত্রপাতি", icon: "tool", color: "#EA8A0C" },
+  { id: "equipment", label: "যন্ত্রপাতি", icon: "tool", color: "#B25E09" },
   { id: "feed", label: "খাদ্য", icon: "package", color: "#3D38D0" },
   { id: "medicine", label: "ওষুধ", icon: "heart", color: "#DA2F2F" },
   { id: "organic", label: "অর্গানিক", icon: "zap", color: "#00BB77" },
-  { id: "dairy", label: "দুগ্ধ", icon: "coffee", color: "#EA8A0C" },
+  { id: "dairy", label: "দুগ্ধ", icon: "coffee", color: "#B25E09" },
   { id: "fish", label: "মাছ", icon: "anchor", color: "#37B1FF" },
   { id: "poultry", label: "পোল্ট্রি", icon: "feather", color: "#FF4BB7" },
 ];
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Spacing.sm,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   categoriesContainer: {
     paddingVertical: Spacing.sm,
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   featuredSection: {
     marginTop: Spacing.lg,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   featuredLogoText: {
     fontSize: 22,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   featuredInfo: {
     flex: 1,
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   },
   featuredName: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     color: "#FFFFFF",
     flex: 1,
   },
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   featuredRating: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   featuredProducts: {
     color: "rgba(255,255,255,0.8)",
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   shopLogoText: {
     fontSize: 18,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   shopInfo: {
     flex: 1,
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   },
   shopName: {
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   verifiedBadgeSmall: {
     width: 14,
@@ -561,6 +561,6 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
 });

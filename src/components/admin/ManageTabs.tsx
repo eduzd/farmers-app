@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator, Modal, RefreshControl } from "react-native";
 import { Text, Switch } from "@/admin/ui";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
@@ -12,7 +12,7 @@ import { AppIcon } from "@/components/icons/AppIcon";
 
 const taka = (n: number) => `৳${Math.round(Number(n) || 0).toLocaleString("en-IN")}`;
 const STATUSES = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
-const STATUS_COLOR: Record<string, string> = { pending: "#B45309", confirmed: "#1D4ED8", processing: "#6D28D9", shipped: "#0E7490", delivered: "#047857", cancelled: "#B91C1C" };
+const STATUS_COLOR: Record<string, string> = { pending: "#B25E09", confirmed: "#3D38D0", processing: "#3D38D0", shipped: "#1F86DB", delivered: "#00875A", cancelled: "#DA2F2F" };
 
 function useL() {
   const { language } = useI18n();
@@ -281,10 +281,10 @@ export function AdminMarketplacePanel({ onOpen, onOpenSellerHub }: { onOpen: (ta
   const { data } = useLoader<any>(() => apiGet("/api/admin/manage/summary"), []);
   const pending = Number(data?.ordersByStatus?.pending || 0);
   const tiles: { tab: "orders" | "stores" | "listings" | "delivery"; icon: any; color: string; label: string; value: string; sub: string }[] = [
-    { tab: "orders", icon: "shopping-bag", color: "#EA580C", label: L("Orders", "অর্ডার"), value: String(data?.orders ?? "–"), sub: pending ? L(`${pending} waiting`, `${pending}টি অপেক্ষায়`) : L("None waiting", "কোনো অপেক্ষা নেই") },
-    { tab: "stores", icon: "briefcase", color: "#2563EB", label: L("Sellers", "বিক্রেতা"), value: String(data?.stores ?? "–"), sub: data?.suspendedStores ? L(`${data.suspendedStores} suspended`, `${data.suspendedStores}টি স্থগিত`) : L("All active", "সব চালু") },
-    { tab: "listings", icon: "package", color: "#7C3AED", label: L("Listings", "লিস্টিং"), value: String(data?.listings ?? "–"), sub: data?.hiddenListings ? L(`${data.hiddenListings} hidden`, `${data.hiddenListings}টি লুকানো`) : L("All visible", "সব দৃশ্যমান") },
-    { tab: "delivery", icon: "truck", color: "#16A34A", label: L("Sales", "বিক্রি"), value: data ? taka(data.revenue) : "–", sub: L("Delivery charges", "ডেলিভারি চার্জ") },
+    { tab: "orders", icon: "shopping-bag", color: "#B25E09", label: L("Orders", "অর্ডার"), value: String(data?.orders ?? "–"), sub: pending ? L(`${pending} waiting`, `${pending}টি অপেক্ষায়`) : L("None waiting", "কোনো অপেক্ষা নেই") },
+    { tab: "stores", icon: "briefcase", color: "#2E96EF", label: L("Sellers", "বিক্রেতা"), value: String(data?.stores ?? "–"), sub: data?.suspendedStores ? L(`${data.suspendedStores} suspended`, `${data.suspendedStores}টি স্থগিত`) : L("All active", "সব চালু") },
+    { tab: "listings", icon: "package", color: "#3D38D0", label: L("Listings", "লিস্টিং"), value: String(data?.listings ?? "–"), sub: data?.hiddenListings ? L(`${data.hiddenListings} hidden`, `${data.hiddenListings}টি লুকানো`) : L("All visible", "সব দৃশ্যমান") },
+    { tab: "delivery", icon: "truck", color: "#00BB77", label: L("Sales", "বিক্রি"), value: data ? taka(data.revenue) : "–", sub: L("Delivery charges", "ডেলিভারি চার্জ") },
   ];
   return (
     <View testID="admin-marketplace-panel" style={{ marginBottom: 16 }}>
@@ -304,7 +304,7 @@ export function AdminMarketplacePanel({ onOpen, onOpenSellerHub }: { onOpen: (ta
               <Feather name="chevron-right" size={14} color={theme.textSecondary} />
             </View>
             <Text style={{ fontSize: 20, fontWeight: "700", color: theme.text }} numberOfLines={1}>{t.value}</Text>
-            <Text style={[s.muted, { color: t.tab === "orders" && pending ? "#EA580C" : theme.textSecondary }]} numberOfLines={1}>{t.sub}</Text>
+            <Text style={[s.muted, { color: t.tab === "orders" && pending ? "#B25E09" : theme.textSecondary }]} numberOfLines={1}>{t.sub}</Text>
           </Pressable>
         ))}
       </View>

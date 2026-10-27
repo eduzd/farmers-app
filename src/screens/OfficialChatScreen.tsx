@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import { View, StyleSheet, FlatList, Pressable, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -22,7 +22,7 @@ export function OfficialAvatar({ account, size = 52 }: { account: Pick<OfficialA
   const tick = Math.max(14, Math.round(size * 0.36));
   return (
     <View style={{ width: size, height: size }}>
-      <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: account.color || "#2563EB", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: account.color || "#2E96EF", alignItems: "center", justifyContent: "center" }}>
         <Feather name={icon} size={Math.round(size * 0.46)} color="#fff" />
       </View>
       <View style={{ position: "absolute", right: -2, bottom: -2, width: tick, height: tick, borderRadius: tick / 2, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}>

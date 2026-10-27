@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -31,10 +31,10 @@ const MOCK_ANNOUNCEMENTS: Announcement[] = [];
 
 const getTypeConfig = (type: string) => {
   const configs: Record<string, { color: string; icon: keyof typeof Feather.glyphMap; bgColor: string }> = {
-    info: { color: "#2563EB", icon: "info", bgColor: "#2563EB20" },
-    warning: { color: "#EA8A0C", icon: "alert-triangle", bgColor: "#EA8A0C20" },
-    success: { color: "#2FA36B", icon: "check-circle", bgColor: "#2FA36B20" },
-    urgent: { color: "#DC2626", icon: "alert-circle", bgColor: "#DC262620" },
+    info: { color: "#2E96EF", icon: "info", bgColor: "#2E96EF20" },
+    warning: { color: "#B25E09", icon: "alert-triangle", bgColor: "#B25E0920" },
+    success: { color: "#2E96EF", icon: "check-circle", bgColor: "#2E96EF20" },
+    urgent: { color: "#DA2F2F", icon: "alert-circle", bgColor: "#DA2F2F20" },
   };
   return configs[type] || configs.info;
 };

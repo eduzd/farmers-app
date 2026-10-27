@@ -9,7 +9,7 @@ import {
   Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -36,12 +36,12 @@ interface VendorOrder {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
-  pending: { label: "অপেক্ষমান", color: "#EA8A0C", bgColor: "#EA8A0C15" },
-  confirmed: { label: "নিশ্চিত", color: "#2563EB", bgColor: "#2563EB15" },
-  processing: { label: "প্রক্রিয়াধীন", color: "#7C3AED", bgColor: "#7C3AED15" },
-  shipped: { label: "শিপ করা হয়েছে", color: "#06B6D4", bgColor: "#06B6D415" },
-  delivered: { label: "ডেলিভারি সম্পন্ন", color: "#16A34A", bgColor: "#16A34A15" },
-  cancelled: { label: "বাতিল", color: "#DC2626", bgColor: "#DC262615" },
+  pending: { label: "অপেক্ষমান", color: "#B25E09", bgColor: "#B25E0915" },
+  confirmed: { label: "নিশ্চিত", color: "#2E96EF", bgColor: "#2E96EF15" },
+  processing: { label: "প্রক্রিয়াধীন", color: "#3D38D0", bgColor: "#3D38D015" },
+  shipped: { label: "শিপ করা হয়েছে", color: "#39B1FE", bgColor: "#39B1FE15" },
+  delivered: { label: "ডেলিভারি সম্পন্ন", color: "#00BB77", bgColor: "#00BB7715" },
+  cancelled: { label: "বাতিল", color: "#DA2F2F", bgColor: "#DA2F2F15" },
 };
 
 const FILTER_TABS = [
@@ -190,23 +190,23 @@ export default function CompanyOrdersScreen() {
       <View style={[styles.header, { paddingTop: Spacing.md, backgroundColor: theme.card, borderBottomColor: theme.cardBorder }]}>
         <ThemedText type="h2">অর্ডার ম্যানেজমেন্ট</ThemedText>
         <View style={styles.statsRow}>
-          <View style={[styles.statItem, { backgroundColor: "#EA8A0C15" }]}>
-            <ThemedText style={[styles.statValue, { color: "#EA8A0C" }]}>
+          <View style={[styles.statItem, { backgroundColor: "#B25E0915" }]}>
+            <ThemedText style={[styles.statValue, { color: "#B25E09" }]}>
               {orders.filter((o) => o.status === "pending").length}
             </ThemedText>
-            <ThemedText style={[styles.statLabel, { color: "#EA8A0C" }]}>অপেক্ষমান</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: "#B25E09" }]}>অপেক্ষমান</ThemedText>
           </View>
-          <View style={[styles.statItem, { backgroundColor: "#2563EB15" }]}>
-            <ThemedText style={[styles.statValue, { color: "#2563EB" }]}>
+          <View style={[styles.statItem, { backgroundColor: "#2E96EF15" }]}>
+            <ThemedText style={[styles.statValue, { color: "#2E96EF" }]}>
               {orders.filter((o) => o.status === "confirmed" || o.status === "processing").length}
             </ThemedText>
-            <ThemedText style={[styles.statLabel, { color: "#2563EB" }]}>প্রক্রিয়াধীন</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: "#2E96EF" }]}>প্রক্রিয়াধীন</ThemedText>
           </View>
-          <View style={[styles.statItem, { backgroundColor: "#16A34A15" }]}>
-            <ThemedText style={[styles.statValue, { color: "#16A34A" }]}>
+          <View style={[styles.statItem, { backgroundColor: "#00BB7715" }]}>
+            <ThemedText style={[styles.statValue, { color: "#00BB77" }]}>
               {orders.filter((o) => o.status === "delivered").length}
             </ThemedText>
-            <ThemedText style={[styles.statLabel, { color: "#16A34A" }]}>সম্পন্ন</ThemedText>
+            <ThemedText style={[styles.statLabel, { color: "#00BB77" }]}>সম্পন্ন</ThemedText>
           </View>
         </View>
       </View>
@@ -371,7 +371,7 @@ export default function CompanyOrdersScreen() {
                           </Pressable>
                           {order.status === "pending" ? (
                             <Pressable
-                              style={[styles.modalActionButton, { backgroundColor: "#DC2626" }]}
+                              style={[styles.modalActionButton, { backgroundColor: "#DA2F2F" }]}
                               onPress={() => {
                                 handleUpdateStatus(order.id, "cancelled");
                                 setShowOrderModal(false);
@@ -418,11 +418,11 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 20,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   statLabel: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   filterContainer: {
     paddingVertical: Spacing.md,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   },
   filterText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   loadingContainer: {
     flex: 1,
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   },
   orderId: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   orderDate: {
     fontSize: 12,
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   divider: {
     height: 1,
@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
   },
   customerName: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   customerPhone: {
     fontSize: 12,
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
   },
   moreItems: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   orderFooter: {
     flexDirection: "row",
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   },
   totalAmount: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginLeft: Spacing.sm,
     flex: 1,
   },
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   emptyContainer: {
     alignItems: "center",
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: Spacing.sm,
   },
   detailText: {
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   },
   itemTotal: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   totalRow: {
     flexDirection: "row",
@@ -627,6 +627,6 @@ const styles = StyleSheet.create({
   modalActionText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

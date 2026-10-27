@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { orderLineText } from "@shared/selling";
 import { View, Pressable, TextInput, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { useThemeStore, type ThemePreference } from "@/lib/themeStore";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
@@ -34,14 +34,14 @@ export function HomeTab({ supportUnread }: { supportUnread: number }) {
   const h = new Date().getHours();
   const hello = h < 12 ? L("Good morning", "শুভ সকাল") : h < 17 ? L("Good afternoon", "শুভ অপরাহ্ন") : L("Good evening", "শুভ সন্ধ্যা");
   const shortcuts: [string, string, any, string, () => void][] = [
-    ["add-product", L("Add product", "পণ্য যোগ"), "plus-square", "#16A34A", () => nav.push({ name: "productForm" })],
-    ["official", L("Official message", "অফিসিয়াল মেসেজ"), "send", "#2563EB", () => nav.push({ name: "official" })],
-    ["ads", L("Carousel ads", "ক্যারোসেল বিজ্ঞাপন"), "image", "#DB2777", () => nav.push({ name: "ads" })],
-    ["restricted", L("Restricted users", "সীমিত ব্যবহারকারী"), "shield", "#B45309", () => nav.push({ name: "users", filter: "restricted" })],
-    ["open-shop", L("Open a shop", "দোকান খুলুন"), "briefcase", "#7C3AED", () => nav.push({ name: "storeForm" })],
-    ["categories", L("Categories", "ক্যাটাগরি"), "grid", "#0E7490", () => nav.goTab("shop", "categories")],
-    ["notify", L("Notification", "নোটিফিকেশন"), "bell", "#EA580C", () => nav.goTab("more")],
-    ["search", L("Search all", "সব খুঁজুন"), "search", "#475569", () => nav.push({ name: "search" })],
+    ["add-product", L("Add product", "পণ্য যোগ"), "plus-square", "#00BB77", () => nav.push({ name: "productForm" })],
+    ["official", L("Official message", "অফিসিয়াল মেসেজ"), "send", "#2E96EF", () => nav.push({ name: "official" })],
+    ["ads", L("Carousel ads", "ক্যারোসেল বিজ্ঞাপন"), "image", "#FF4BB7", () => nav.push({ name: "ads" })],
+    ["restricted", L("Restricted users", "সীমিত ব্যবহারকারী"), "shield", "#B25E09", () => nav.push({ name: "users", filter: "restricted" })],
+    ["open-shop", L("Open a shop", "দোকান খুলুন"), "briefcase", "#3D38D0", () => nav.push({ name: "storeForm" })],
+    ["categories", L("Categories", "ক্যাটাগরি"), "grid", "#1F86DB", () => nav.goTab("shop", "categories")],
+    ["notify", L("Notification", "নোটিফিকেশন"), "bell", "#B25E09", () => nav.goTab("more")],
+    ["search", L("Search all", "সব খুঁজুন"), "search", "#4A5568", () => nav.push({ name: "search" })],
   ];
   return (
     <Page onRefresh={reload} testID="admin-home">
@@ -61,12 +61,12 @@ export function HomeTab({ supportUnread }: { supportUnread: number }) {
       </Hero>
       {sum.error ? <ErrorBox text={sum.error} onRetry={reload} /> : null}
       <View style={[st.grid, { marginBottom: 6 }]}>
-        <Stat testID="stat-users" label={L("Users", "ব্যবহারকারী")} value={s.users ?? "…"} icon="users" color="#2563EB" onPress={() => nav.push({ name: "users" })} hint={s.banned || s.restricted ? `${s.banned || 0} ${L("banned", "নিষিদ্ধ")} · ${s.restricted || 0} ${L("limited", "সীমিত")}` : undefined} />
-        <Stat testID="stat-orders" label={L("Pending orders", "অপেক্ষমাণ অর্ডার")} value={o.pendingOrders ?? "…"} icon="shopping-bag" color="#B45309" onPress={() => nav.goTab("orders")} />
-        <Stat testID="stat-products" label={L("Products", "পণ্য")} value={o.products ?? "…"} icon="package" color="#0E7490" onPress={() => nav.goTab("shop", "products")} />
-        <Stat testID="stat-shops" label={L("Shops", "দোকান")} value={o.stores ?? "…"} icon="briefcase" color="#7C3AED" onPress={() => nav.goTab("shop", "shops")} />
-        <Stat testID="stat-support" label={L("Unread help", "অপঠিত সাহায্য")} value={supportUnread} icon="message-circle" color="#DB2777" onPress={() => nav.goTab("support")} />
-        <Stat testID="stat-reports" label={L("Open reports", "খোলা রিপোর্ট")} value={s.openReports ?? "…"} icon="flag" color="#DC2626" onPress={() => nav.goTab("more")} />
+        <Stat testID="stat-users" label={L("Users", "ব্যবহারকারী")} value={s.users ?? "…"} icon="users" color="#2E96EF" onPress={() => nav.push({ name: "users" })} hint={s.banned || s.restricted ? `${s.banned || 0} ${L("banned", "নিষিদ্ধ")} · ${s.restricted || 0} ${L("limited", "সীমিত")}` : undefined} />
+        <Stat testID="stat-orders" label={L("Pending orders", "অপেক্ষমাণ অর্ডার")} value={o.pendingOrders ?? "…"} icon="shopping-bag" color="#B25E09" onPress={() => nav.goTab("orders")} />
+        <Stat testID="stat-products" label={L("Products", "পণ্য")} value={o.products ?? "…"} icon="package" color="#1F86DB" onPress={() => nav.goTab("shop", "products")} />
+        <Stat testID="stat-shops" label={L("Shops", "দোকান")} value={o.stores ?? "…"} icon="briefcase" color="#3D38D0" onPress={() => nav.goTab("shop", "shops")} />
+        <Stat testID="stat-support" label={L("Unread help", "অপঠিত সাহায্য")} value={supportUnread} icon="message-circle" color="#FF4BB7" onPress={() => nav.goTab("support")} />
+        <Stat testID="stat-reports" label={L("Open reports", "খোলা রিপোর্ট")} value={s.openReports ?? "…"} icon="flag" color="#DA2F2F" onPress={() => nav.goTab("more")} />
       </View>
       <SectionTitle title={L("Quick actions", "দ্রুত কাজ")} />
       <View style={[st.grid, { marginBottom: 6 }]}>
@@ -90,7 +90,7 @@ export function HomeTab({ supportUnread }: { supportUnread: number }) {
           <View style={st.row}>
             <Thumb uri={p.image} size={44} />
             <Text style={{ flex: 1, color: theme.text, fontWeight: "700" }} numberOfLines={1}>{p.name}</Text>
-            <Pill label={`${L("Stock", "স্টক")} ${p.quantity}`} color={p.quantity > 0 ? "#B45309" : "#B91C1C"} />
+            <Pill label={`${L("Stock", "স্টক")} ${p.quantity}`} color={p.quantity > 0 ? "#B25E09" : "#DA2F2F"} />
           </View>
         </Card>
       ))}
@@ -133,7 +133,7 @@ export function OrderDetail({ id }: { id: string }) {
       <Card>
         <View style={[st.row, { justifyContent: "space-between" }]}>
           <Text style={{ color: theme.text, fontWeight: "800", fontSize: 17 }}>#{String(d.id).slice(-6).toUpperCase()}</Text>
-          <Pill label={statusLabel(d.status, L)} color={STATUS_COLOR[d.status] || "#64748B"} />
+          <Pill label={statusLabel(d.status, L)} color={STATUS_COLOR[d.status] || "#7A8CA3"} />
         </View>
         <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 4 }}>{fmtDate(d.createdAt)} · {payLabel(d.paymentMethod, L)}</Text>
         <Text style={{ color: theme.text, fontWeight: "800", fontSize: 20, marginTop: 8 }}>{taka(d.total)}</Text>
@@ -216,7 +216,7 @@ function PrivateNotes({ order, onChanged }: { order: any; onChanged: () => Promi
           </View>
           {n.id !== "legacy" ? (
             <Pressable testID={`note-delete-${n.id}`} accessibilityLabel={L("Delete note", "নোট মুছুন")} onPress={() => del(n.id)} disabled={!!busy} style={{ padding: 6 }}>
-              <Feather name="trash-2" size={16} color="#B91C1C" />
+              <Feather name="trash-2" size={16} color="#DA2F2F" />
             </Pressable>
           ) : null}
         </View>
@@ -262,7 +262,7 @@ export function SupportTab() {
               </Text>
             </View>
             {t.adminUnread ? (
-              <View style={{ minWidth: 22, height: 22, borderRadius: 11, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 6 }}>
+              <View style={{ minWidth: 22, height: 22, borderRadius: 11, backgroundColor: "#DA2F2F", alignItems: "center", justifyContent: "center", paddingHorizontal: 6 }}>
                 <Text style={{ color: "#fff", fontSize: 11, fontWeight: "800" }}>{t.adminUnread}</Text>
               </View>
             ) : null}
@@ -321,10 +321,10 @@ export function UsersList() {
               <Text style={{ color: theme.text, fontWeight: "700" }} numberOfLines={1}>{u.name}</Text>
               <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>{u.email || u.phone || `@${u.username}`}</Text>
               <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
-                {u.isSuperAdmin ? <Pill label={L("Admin", "অ্যাডমিন")} color="#7C3AED" /> : null}
-                {u.banned ? <Pill label={L("Banned", "ব্যানড")} color="#B91C1C" /> : null}
-                {u.store ? <Pill label={u.store.name} color="#0E7490" /> : null}
-                {u.orders ? <Pill label={`${u.orders} ${L("orders", "অর্ডার")}`} color="#1D4ED8" /> : null}
+                {u.isSuperAdmin ? <Pill label={L("Admin", "অ্যাডমিন")} color="#3D38D0" /> : null}
+                {u.banned ? <Pill label={L("Banned", "ব্যানড")} color="#DA2F2F" /> : null}
+                {u.store ? <Pill label={u.store.name} color="#1F86DB" /> : null}
+                {u.orders ? <Pill label={`${u.orders} ${L("orders", "অর্ডার")}`} color="#3D38D0" /> : null}
               </View>
             </View>
             <Feather name="chevron-right" size={18} color={theme.textTertiary} />

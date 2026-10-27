@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
@@ -252,13 +252,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   input: {
     height: Spacing.inputHeight,
     paddingHorizontal: Spacing.lg,
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     borderWidth: 1,
     borderRadius: BorderRadius.md,
     textAlignVertical: "center",
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   contactInfo: {
     marginTop: Spacing["4xl"],
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   },
   contactTitle: {
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: Spacing.lg,
   },
   contactItem: {

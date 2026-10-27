@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -56,11 +56,11 @@ export default function VideoCoursesScreen() {
   const getLevelColor = (level: string) => {
     switch (level) {
       case "beginner":
-        return "#2FA36B";
+        return "#2E96EF";
       case "intermediate":
-        return "#EA8A0C";
+        return "#B25E09";
       case "advanced":
-        return "#DC2626";
+        return "#DA2F2F";
       default:
         return theme.primary;
     }
@@ -101,7 +101,7 @@ export default function VideoCoursesScreen() {
             <ThemedText style={styles.durationText}>{item.duration}</ThemedText>
           </View>
           {item.isFree ? (
-            <View style={[styles.priceBadge, { backgroundColor: "#2FA36B" }]}>
+            <View style={[styles.priceBadge, { backgroundColor: "#2E96EF" }]}>
               <ThemedText style={styles.priceText}>ফ্রি</ThemedText>
             </View>
           ) : null}
@@ -226,8 +226,8 @@ export default function VideoCoursesScreen() {
                 কোর্স
               </ThemedText>
             </View>
-            <View style={[styles.statCard, { backgroundColor: "#2FA36B" + "15" }]}>
-              <Feather name="users" size={24} color="#2FA36B" />
+            <View style={[styles.statCard, { backgroundColor: "#2E96EF" + "15" }]}>
+              <Feather name="users" size={24} color="#2E96EF" />
               <ThemedText style={[styles.statValue, { color: theme.text }]}>
                 ১৩,৭৪০
               </ThemedText>
@@ -235,8 +235,8 @@ export default function VideoCoursesScreen() {
                 শিক্ষার্থী
               </ThemedText>
             </View>
-            <View style={[styles.statCard, { backgroundColor: "#EA8A0C" + "15" }]}>
-              <Feather name="award" size={24} color="#EA8A0C" />
+            <View style={[styles.statCard, { backgroundColor: "#B25E09" + "15" }]}>
+              <Feather name="award" size={24} color="#B25E09" />
               <ThemedText style={[styles.statValue, { color: theme.text }]}>২</ThemedText>
               <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
                 সার্টিফিকেট

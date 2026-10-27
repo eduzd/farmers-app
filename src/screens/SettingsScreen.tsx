@@ -15,7 +15,8 @@ import { CustomSwitch } from "@/components/CustomSwitch";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { PROFILE_BADGES } from "@/constants/profileBadges";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -483,8 +484,8 @@ export default function SettingsScreen() {
             onPress={handleLogout}
           >
             <View style={styles.settingLeft}>
-              <Feather name="log-out" size={20} color="#DC2626" />
-              <ThemedText style={[styles.settingLabel, { color: "#DC2626" }]}>
+              <Feather name="log-out" size={20} color="#DA2F2F" />
+              <ThemedText style={[styles.settingLabel, { color: "#DA2F2F" }]}>
                 {t("auth.signOut")}
               </ThemedText>
             </View>
@@ -861,7 +862,7 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 16,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   settingRight: {
     flexDirection: "row",
@@ -913,7 +914,7 @@ const styles = StyleSheet.create({
   optionName: {
     fontSize: 16,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   optionSubtext: {
     fontSize: 13,
@@ -1050,14 +1051,14 @@ const styles = StyleSheet.create({
   },
   editLabel: {
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
     marginBottom: Spacing.sm,
   },
   editInput: {
     height: 48,
     paddingHorizontal: Spacing.lg,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     borderWidth: 1,
     borderRadius: BorderRadius.md,
     textAlignVertical: "center",
@@ -1086,7 +1087,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
     padding: Spacing["2xl"],
     borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
+    borderTopColor: "#D6EAF8",
   },
   cancelButton: {
     flex: 1,

@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -106,9 +106,9 @@ export default function TransportScreen() {
             </View>
           </View>
           {item.available ? (
-            <View style={[styles.statusDot, { backgroundColor: "#2FA36B" }]} />
+            <View style={[styles.statusDot, { backgroundColor: "#2E96EF" }]} />
           ) : (
-            <View style={[styles.statusDot, { backgroundColor: "#DC2626" }]} />
+            <View style={[styles.statusDot, { backgroundColor: "#DA2F2F" }]} />
           )}
         </View>
 

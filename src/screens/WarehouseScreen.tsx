@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -92,13 +92,13 @@ export default function WarehouseScreen() {
                 <View
                   style={[
                     styles.typeIcon,
-                    { backgroundColor: warehouse.type === "cold" ? "#2563EB20" : "#16A34A20" },
+                    { backgroundColor: warehouse.type === "cold" ? "#2E96EF20" : "#00BB7720" },
                   ]}
                 >
                   <AppIcon
                     name={warehouse.type === "cold" ? "thermometer" : "box"}
                     size={24}
-                    color={warehouse.type === "cold" ? "#2563EB" : "#16A34A"}
+                    color={warehouse.type === "cold" ? "#2E96EF" : "#00BB77"}
                   />
                 </View>
                 <View style={styles.cardInfo}>
@@ -111,7 +111,7 @@ export default function WarehouseScreen() {
                   </View>
                 </View>
                 <View style={styles.ratingBadge}>
-                  <Feather name="star" size={14} color="#EA8A0C" />
+                  <Feather name="star" size={14} color="#B25E09" />
                   <ThemedText style={[styles.ratingText, { color: theme.text }]}>{warehouse.rating}</ThemedText>
                 </View>
               </View>
@@ -123,7 +123,7 @@ export default function WarehouseScreen() {
                 </View>
                 <View style={styles.capacityItem}>
                   <ThemedText style={[styles.capacityLabel, { color: theme.textSecondary }]}>খালি আছে</ThemedText>
-                  <ThemedText style={[styles.capacityValue, { color: "#16A34A" }]}>{warehouse.available}</ThemedText>
+                  <ThemedText style={[styles.capacityValue, { color: "#00BB77" }]}>{warehouse.available}</ThemedText>
                 </View>
                 <View style={styles.capacityItem}>
                   <ThemedText style={[styles.capacityLabel, { color: theme.textSecondary }]}>মূল্য</ThemedText>

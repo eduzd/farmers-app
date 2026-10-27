@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
@@ -126,12 +126,12 @@ export default function GroupBuyScreen() {
           <Image source={{ uri: deal.productImage }} style={styles.dealImage} contentFit="cover" />
           
           {isSuccess ? (
-            <View style={[styles.statusBadge, { backgroundColor: "#2FA36B" }]}>
+            <View style={[styles.statusBadge, { backgroundColor: "#2E96EF" }]}>
               <Feather name="check" size={12} color="#FFF" />
               <ThemedText style={styles.statusText}>{isBn ? "সফল" : "Success"}</ThemedText>
             </View>
           ) : isFailed ? (
-            <View style={[styles.statusBadge, { backgroundColor: "#DC2626" }]}>
+            <View style={[styles.statusBadge, { backgroundColor: "#DA2F2F" }]}>
               <Feather name="x" size={12} color="#FFF" />
               <ThemedText style={styles.statusText}>{isBn ? "ব্যর্থ" : "Failed"}</ThemedText>
             </View>
@@ -162,7 +162,7 @@ export default function GroupBuyScreen() {
                   {deal.currency}{deal.originalPrice}
                 </ThemedText>
               </View>
-              <View style={[styles.discountBadge, { backgroundColor: "#2FA36B" }]}>
+              <View style={[styles.discountBadge, { backgroundColor: "#2E96EF" }]}>
                 <ThemedText style={styles.discountText}>-{deal.discountPercent}%</ThemedText>
               </View>
             </View>
@@ -182,7 +182,7 @@ export default function GroupBuyScreen() {
                     styles.progressFill,
                     {
                       width: `${Math.min(100, progress)}%`,
-                      backgroundColor: progress >= 100 ? "#2FA36B" : theme.primary,
+                      backgroundColor: progress >= 100 ? "#2E96EF" : theme.primary,
                     },
                   ]}
                 />
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   infoBanner: {
     flexDirection: "row",
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     lineHeight: 18,
   },
   list: {
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     color: "#FFF",
   },
   dealContent: {
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   },
   dealName: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: Spacing.xs,
   },
   sellerRow: {
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   },
   sellerName: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   priceRow: {
     flexDirection: "row",
@@ -393,11 +393,11 @@ const styles = StyleSheet.create({
   },
   groupPrice: {
     fontSize: 22,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   originalPrice: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     textDecorationLine: "line-through",
   },
   discountBadge: {
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   },
   discountText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   progressSection: {
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   timer: {
     flexDirection: "row",
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   timerText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   progressBar: {
     height: 8,
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   },
   progressHint: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     marginTop: 4,
   },
   participantsRow: {
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
   },
   moreCount: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
     marginLeft: Spacing.sm,
   },
   joinButton: {
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   },
   joinButtonText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   emptyState: {
@@ -484,6 +484,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
 });

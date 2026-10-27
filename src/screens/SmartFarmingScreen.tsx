@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 
@@ -40,7 +40,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     title: 'Disease Detection',
     titleBn: 'রোগ সনাক্তকরণ',
     description: 'ফসলের ছবি তুলে রোগ চিহ্নিত করুন',
-    color: '#DC2626',
+    color: '#DA2F2F',
     gradient: ['#FEE2E2', '#FECACA'],
   },
   {
@@ -49,8 +49,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     title: 'Weather Forecast',
     titleBn: 'আবহাওয়া পূর্বাভাস',
     description: '৭ দিনের আবহাওয়া ও কৃষি পরামর্শ',
-    color: '#2563EB',
-    gradient: ['#DBEAFE', '#BFDBFE'],
+    color: '#2E96EF',
+    gradient: ['#E3F4FF', '#BFDBFE'],
   },
   {
     id: 'market',
@@ -58,8 +58,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     title: 'Market Prices',
     titleBn: 'বাজার দর',
     description: 'আজকের ফসলের দাম দেখুন',
-    color: '#16A34A',
-    gradient: ['#D1FAE5', '#A7F3D0'],
+    color: '#00BB77',
+    gradient: ['#D8FFF2', '#B0FFE2'],
   },
   {
     id: 'calendar',
@@ -67,8 +67,8 @@ const QUICK_ACTIONS: QuickAction[] = [
     title: 'Crop Calendar',
     titleBn: 'ফসল ক্যালেন্ডার',
     description: 'রোপণ ও সংগ্রহের সময়সূচি',
-    color: '#EA8A0C',
-    gradient: ['#FEF3C7', '#FDE68A'],
+    color: '#B25E09',
+    gradient: ['#FFF1DE', '#FDE68A'],
   },
   {
     id: 'soil',
@@ -76,7 +76,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     title: 'Soil Analysis',
     titleBn: 'মাটি বিশ্লেষণ',
     description: 'মাটির গুণাগুণ ও সার পরামর্শ',
-    color: '#7C3AED',
+    color: '#3D38D0',
     gradient: ['#EDE9FE', '#DDD6FE'],
   },
   {
@@ -85,7 +85,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     title: 'Livestock Health',
     titleBn: 'পশুস্বাস্থ্য',
     description: 'গবাদি পশুর স্বাস্থ্য ট্র্যাকিং',
-    color: '#EC4899',
+    color: '#FF4BB7',
     gradient: ['#FCE7F3', '#FBCFE8'],
   },
   {
@@ -95,7 +95,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     titleBn: 'মাছ চাষ',
     description: 'মাছের তালিকা ও চাষ পদ্ধতি',
     color: '#0EA5E9',
-    gradient: ['#E0F2FE', '#BAE6FD'],
+    gradient: ['#E0F2FE', '#CFEBFF'],
   },
 ];
 
@@ -213,12 +213,12 @@ export default function SmartFarmingScreen() {
   const getInsightColor = (type: AIInsight['type']) => {
     switch (type) {
       case 'warning':
-        return { bg: '#FEF3C7', text: '#92400E', icon: '#EA8A0C' };
+        return { bg: '#FFF1DE', text: '#B25E09', icon: '#B25E09' };
       case 'success':
-        return { bg: '#D1FAE5', text: '#065F46', icon: '#16A34A' };
+        return { bg: '#D8FFF2', text: '#00875A', icon: '#00BB77' };
       case 'tip':
       default:
-        return { bg: '#DBEAFE', text: '#1E40AF', icon: '#2563EB' };
+        return { bg: '#E3F4FF', text: '#1E40AF', icon: '#2E96EF' };
     }
   };
 
@@ -249,7 +249,7 @@ export default function SmartFarmingScreen() {
           ]}
         >
           <LinearGradient
-            colors={isDark ? ['#1F4E3D', '#0D2818'] : ['#D1FAE5', '#A7F3D0']}
+            colors={isDark ? ['#1F4E3D', '#0D2818'] : ['#D8FFF2', '#B0FFE2']}
             style={styles.heroGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -258,7 +258,7 @@ export default function SmartFarmingScreen() {
               <ThemedText style={styles.heroTitle}>
                 স্মার্ট ফার্মিং
               </ThemedText>
-              <ThemedText style={[styles.heroSubtitle, { color: isDark ? '#A7F3D0' : '#065F46' }]}>
+              <ThemedText style={[styles.heroSubtitle, { color: isDark ? '#B0FFE2' : '#00875A' }]}>
                 AI দ্বারা চালিত কৃষি সহায়তা
               </ThemedText>
 
@@ -274,7 +274,7 @@ export default function SmartFarmingScreen() {
                     onSubmitEditing={handleAskAI}
                   />
                   <Pressable onPress={handleAskAI} style={styles.sendButton}>
-                    <Feather name="send" size={18} color="#16A34A" />
+                    <Feather name="send" size={18} color="#00BB77" />
                   </Pressable>
                 </View>
 
@@ -289,7 +289,7 @@ export default function SmartFarmingScreen() {
                     <AppIcon
                       name={isListening ? 'mic' : 'mic-off'}
                       size={24}
-                      color={isListening ? '#fff' : '#16A34A'}
+                      color={isListening ? '#fff' : '#00BB77'}
                     />
                   </Pressable>
                 </Animated.View>
@@ -348,10 +348,10 @@ export default function SmartFarmingScreen() {
                   <View style={[styles.actionIconContainer, { backgroundColor: action.color + '20' }]}>
                     <AppIcon name={action.icon} size={24} color={action.color} />
                   </View>
-                  <ThemedText style={[styles.actionTitle, { color: '#1F2937' }]}>
+                  <ThemedText style={[styles.actionTitle, { color: '#202936' }]}>
                     {action.titleBn}
                   </ThemedText>
-                  <ThemedText style={[styles.actionDescription, { color: '#6B7280' }]}>
+                  <ThemedText style={[styles.actionDescription, { color: '#7A8CA3' }]}>
                     {action.description}
                   </ThemedText>
                 </LinearGradient>
@@ -364,28 +364,28 @@ export default function SmartFarmingScreen() {
           <ThemedText style={styles.sectionTitle}>আপনার ফার্ম স্ট্যাটস</ThemedText>
           <View style={styles.statsGrid}>
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <Feather name="sun" size={24} color="#EA8A0C" />
+              <Feather name="sun" size={24} color="#B25E09" />
               <ThemedText style={styles.statValue}>২৮°C</ThemedText>
               <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
                 তাপমাত্রা
               </ThemedText>
             </View>
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <Feather name="droplet" size={24} color="#2563EB" />
+              <Feather name="droplet" size={24} color="#2E96EF" />
               <ThemedText style={styles.statValue}>৭৫%</ThemedText>
               <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
                 আর্দ্রতা
               </ThemedText>
             </View>
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <Feather name="wind" size={24} color="#7C3AED" />
+              <Feather name="wind" size={24} color="#3D38D0" />
               <ThemedText style={styles.statValue}>১২ km/h</ThemedText>
               <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
                 বাতাস
               </ThemedText>
             </View>
             <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-              <Feather name="cloud-rain" size={24} color="#06B6D4" />
+              <Feather name="cloud-rain" size={24} color="#39B1FE" />
               <ThemedText style={styles.statValue}>৪০%</ThemedText>
               <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
                 বৃষ্টির সম্ভাবনা
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: 'DMSans_400Regular',
   },
   sendButton: {
     padding: Spacing.xs,
@@ -453,12 +453,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: '#D8FFF2',
     alignItems: 'center',
     justifyContent: 'center',
   },
   voiceButtonActive: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#00BB77',
   },
   insightsSection: {
     marginBottom: Spacing.lg,

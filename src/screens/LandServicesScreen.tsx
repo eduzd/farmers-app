@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable, TextInput, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -28,10 +28,10 @@ const PROFESSIONALS: any[] = [];
 const DISCUSSIONS: any[] = [];
 
 const QUICK_SERVICES = [
-  { id: "1", title: "জমির খতিয়ান", icon: "file", color: "#2563EB" },
-  { id: "2", title: "মৌজা ম্যাপ", icon: "map", color: "#16A34A" },
-  { id: "3", title: "দলিল যাচাই", icon: "check-circle", color: "#7C3AED" },
-  { id: "4", title: "মূল্যায়ন", icon: "dollar-sign", color: "#EA8A0C" },
+  { id: "1", title: "জমির খতিয়ান", icon: "file", color: "#2E96EF" },
+  { id: "2", title: "মৌজা ম্যাপ", icon: "map", color: "#00BB77" },
+  { id: "3", title: "দলিল যাচাই", icon: "check-circle", color: "#3D38D0" },
+  { id: "4", title: "মূল্যায়ন", icon: "dollar-sign", color: "#B25E09" },
 ];
 
 export default function LandServicesScreen() {
@@ -50,7 +50,7 @@ export default function LandServicesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <LinearGradient
-        colors={isDark ? ["#064e3b", "#1f2937"] : ["#d1fae5", "#ffffff"]}
+        colors={isDark ? ["#064e3b", "#202936"] : ["#D8FFF2", "#ffffff"]}
         style={styles.headerGradient}
       >
         <ThemedText style={[styles.headerTitle, { color: theme.text }]}>দ্রুত সেবা</ThemedText>
@@ -147,19 +147,19 @@ export default function LandServicesScreen() {
               <Animated.View key={pro.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.proCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={styles.proHeader}>
-                    <View style={[styles.proAvatar, { backgroundColor: "#16A34A" }]}>
+                    <View style={[styles.proAvatar, { backgroundColor: "#00BB77" }]}>
                       <ThemedText style={styles.proInitials}>{pro.name.split(" ")[1]?.charAt(0) || "U"}</ThemedText>
                     </View>
                     <View style={styles.proInfo}>
                       <View style={styles.proNameRow}>
                         <ThemedText style={[styles.proName, { color: theme.text }]}>{pro.name}</ThemedText>
                         {pro.available ? (
-                          <View style={[styles.availableBadge, { backgroundColor: "#16A34A20" }]}>
-                            <ThemedText style={[styles.availableText, { color: "#16A34A" }]}>উপলব্ধ</ThemedText>
+                          <View style={[styles.availableBadge, { backgroundColor: "#00BB7720" }]}>
+                            <ThemedText style={[styles.availableText, { color: "#00BB77" }]}>উপলব্ধ</ThemedText>
                           </View>
                         ) : (
-                          <View style={[styles.availableBadge, { backgroundColor: "#DC262620" }]}>
-                            <ThemedText style={[styles.availableText, { color: "#DC2626" }]}>ব্যস্ত</ThemedText>
+                          <View style={[styles.availableBadge, { backgroundColor: "#DA2F2F20" }]}>
+                            <ThemedText style={[styles.availableText, { color: "#DA2F2F" }]}>ব্যস্ত</ThemedText>
                           </View>
                         )}
                       </View>
@@ -172,7 +172,7 @@ export default function LandServicesScreen() {
 
                   <View style={styles.proMeta}>
                     <View style={styles.metaItem}>
-                      <Feather name="star" size={14} color="#EA8A0C" />
+                      <Feather name="star" size={14} color="#B25E09" />
                       <ThemedText style={[styles.metaText, { color: theme.text }]}>{pro.rating}</ThemedText>
                     </View>
                     <View style={styles.metaItem}>
@@ -226,9 +226,9 @@ export default function LandServicesScreen() {
                       <ThemedText style={[styles.postTime, { color: theme.textSecondary }]}>{discussion.time}</ThemedText>
                     </View>
                     {discussion.solved ? (
-                      <View style={[styles.solvedBadge, { backgroundColor: "#16A34A20" }]}>
-                        <Feather name="check-circle" size={14} color="#16A34A" />
-                        <ThemedText style={[styles.solvedText, { color: "#16A34A" }]}>সমাধান হয়েছে</ThemedText>
+                      <View style={[styles.solvedBadge, { backgroundColor: "#00BB7720" }]}>
+                        <Feather name="check-circle" size={14} color="#00BB77" />
+                        <ThemedText style={[styles.solvedText, { color: "#00BB77" }]}>সমাধান হয়েছে</ThemedText>
                       </View>
                     ) : null}
                   </View>

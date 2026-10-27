@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp, FadeInRight, SlideInRight, SlideOutLeft } from "react-native-reanimated";
 import { Image } from "expo-image";
@@ -44,8 +44,8 @@ interface StoryItem {
 }
 
 const STORY_BACKGROUNDS = [
-  "#2FA36B", "#2563EB", "#7C3AED", "#EA8A0C", "#DC2626",
-  "#0D9488", "#DB2777", "#673AB7", "#FF5722", "#795548",
+  "#2E96EF", "#2E96EF", "#3D38D0", "#B25E09", "#DA2F2F",
+  "#00BB77", "#FF4BB7", "#3D38D0", "#B25E09", "#795548",
 ];
 
 const MOCK_STORIES: Story[] = [];
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     padding: 2,
   },
-  storyUnreadRing: { borderColor: "#2FA36B" },
+  storyUnreadRing: { borderColor: "#2E96EF" },
   storyOwnRing: { borderColor: "#ddd", borderStyle: "dashed" },
   storyAvatar: { width: "100%", height: "100%", borderRadius: 30 },
   addBadge: {

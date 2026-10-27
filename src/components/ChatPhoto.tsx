@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Pressable, StyleSheet, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { photoDisplayUri } from "@/lib/dmApi";

@@ -3,7 +3,7 @@ import { SaveCalcButton } from '@/components/SaveCalcButton';
 import { View, Text, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 
@@ -197,10 +197,10 @@ export default function ProfitCalculatorScreen() {
       gap: Spacing.md,
     },
     profitCard: {
-      backgroundColor: '#16A34A',
+      backgroundColor: '#00BB77',
     },
     lossCard: {
-      backgroundColor: '#DC2626',
+      backgroundColor: '#DA2F2F',
     },
     resultMain: {
       alignItems: 'center',

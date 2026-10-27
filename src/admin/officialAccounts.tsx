@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import { Page, Card, SectionTitle, Pill, Btn, Field, Empty, Loading, ErrorBox, ToggleRow, Text, useAdminNav, useL, useLoader, confirmAsk, st } from "./ui";
@@ -11,7 +11,7 @@ import { Page, Card, SectionTitle, Pill, Btn, Field, Empty, Loading, ErrorBox, T
  * ============================================================================================= */
 
 const ICONS = ["check-circle", "shield", "alert-triangle", "bell", "trending-up", "shopping-bag", "heart", "sun", "droplet", "info", "award", "truck"] as const;
-const COLORS = ["#2563EB", "#16A34A", "#DC2626", "#EA580C", "#7C3AED", "#0E7490", "#CA8A04", "#DB2777"];
+const COLORS = ["#2E96EF", "#00BB77", "#DA2F2F", "#B25E09", "#3D38D0", "#1F86DB", "#B25E09", "#FF4BB7"];
 
 type Acc = { id: string; nameEn: string; nameBn: string; aboutEn: string; aboutBn: string; icon: string; color: string; isDefault: boolean; active: boolean; messages: number };
 
@@ -31,7 +31,7 @@ function AccountForm({ acc, onDone }: { acc?: Acc | null; onDone: () => void }) 
   const [aboutEn, setAboutEn] = useState(acc?.aboutEn || "");
   const [aboutBn, setAboutBn] = useState(acc?.aboutBn || "");
   const [icon, setIcon] = useState(acc?.icon || "shield");
-  const [color, setColor] = useState(acc?.color || "#DC2626");
+  const [color, setColor] = useState(acc?.color || "#DA2F2F");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const save = async () => {
@@ -78,7 +78,7 @@ function AccountForm({ acc, onDone }: { acc?: Acc | null; onDone: () => void }) 
           </Pressable>
         ))}
       </View>
-      {err ? <Text testID="oa-error" style={{ color: "#B91C1C", fontWeight: "700", marginBottom: 10 }}>{err}</Text> : null}
+      {err ? <Text testID="oa-error" style={{ color: "#DA2F2F", fontWeight: "700", marginBottom: 10 }}>{err}</Text> : null}
       <View style={{ flexDirection: "row", gap: 10 }}>
         <Btn testID="oa-cancel" kind="ghost" label={L("Cancel", "বাতিল")} onPress={onDone} style={{ flex: 1 }} />
         <Btn testID="oa-save" icon="check" label={acc ? L("Save", "সেভ করুন") : L("Create account", "অ্যাকাউন্ট তৈরি")} busy={busy} disabled={!nameEn.trim() && !nameBn.trim()} onPress={save} style={{ flex: 1 }} />
@@ -127,9 +127,9 @@ export function OfficialAccountsScreen({ create }: { create?: boolean }) {
               <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 1 }} numberOfLines={1}>{L(a.nameBn, a.nameEn)}</Text>
               {L(a.aboutEn, a.aboutBn) ? <Text style={{ color: theme.textSecondary, fontSize: 13, marginTop: 4 }} numberOfLines={2}>{L(a.aboutEn, a.aboutBn)}</Text> : null}
               <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
-                {a.isDefault ? <Pill icon="star" label={L("Default", "ডিফল্ট")} color="#CA8A04" /> : null}
-                <Pill icon={a.active ? "eye" : "eye-off"} label={a.active ? L("On", "চালু") : L("Off", "বন্ধ")} color={a.active ? "#16A34A" : "#6B7280"} />
-                <Pill icon="message-circle" label={L(`${a.messages} sent`, `${a.messages}টি পাঠানো`)} color="#2563EB" />
+                {a.isDefault ? <Pill icon="star" label={L("Default", "ডিফল্ট")} color="#B25E09" /> : null}
+                <Pill icon={a.active ? "eye" : "eye-off"} label={a.active ? L("On", "চালু") : L("Off", "বন্ধ")} color={a.active ? "#00BB77" : "#7A8CA3"} />
+                <Pill icon="message-circle" label={L(`${a.messages} sent`, `${a.messages}টি পাঠানো`)} color="#2E96EF" />
               </View>
             </View>
           </View>

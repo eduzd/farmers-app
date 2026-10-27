@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Pressable, Alert, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { InputRow } from '@/offline/components/calculate/InputRow';
 import { ModuleCard } from '@/offline/components/calculate/ModuleCard';
 import { useTheme } from '@/hooks/useTheme';
@@ -214,7 +214,7 @@ export function SettingsScreen() {
           title={t('exportData', lang)}
           subtitle="JSON ফরম্যাটে সব ডাটা এক্সপোর্ট করুন"
           icon="download"
-          iconColor="#16A34A"
+          iconColor="#00BB77"
           onPress={handleExportBackup}
         />
 
@@ -222,7 +222,7 @@ export function SettingsScreen() {
           title={t('importData', lang)}
           subtitle="JSON ব্যাকআপ থেকে ডাটা ইমপোর্ট করুন"
           icon="upload"
-          iconColor="#2563EB"
+          iconColor="#2E96EF"
           onPress={handleImportBackup}
         />
 

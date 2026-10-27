@@ -8,7 +8,7 @@ import {
   Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -208,20 +208,20 @@ export default function LoanCalculatorScreen() {
               </ThemedText>
             </View>
 
-            <View style={[styles.resultCard, { backgroundColor: "#2FA36B" + "15" }]}>
+            <View style={[styles.resultCard, { backgroundColor: "#2E96EF" + "15" }]}>
               <ThemedText style={[styles.resultLabel, { color: theme.textSecondary }]}>
                 {tr("মোট সুদ")}
               </ThemedText>
-              <ThemedText style={[styles.resultValue, { color: "#2FA36B" }]}>
+              <ThemedText style={[styles.resultValue, { color: "#2E96EF" }]}>
                 ৳{result.totalInterest.toLocaleString()}
               </ThemedText>
             </View>
 
-            <View style={[styles.resultCard, { backgroundColor: "#EA8A0C" + "15" }]}>
+            <View style={[styles.resultCard, { backgroundColor: "#B25E09" + "15" }]}>
               <ThemedText style={[styles.resultLabel, { color: theme.textSecondary }]}>
                 {tr("মোট পরিশোধ")}
               </ThemedText>
-              <ThemedText style={[styles.resultValue, { color: "#EA8A0C" }]}>
+              <ThemedText style={[styles.resultValue, { color: "#B25E09" }]}>
                 ৳{result.totalPayment.toLocaleString()}
               </ThemedText>
             </View>
@@ -277,7 +277,7 @@ export default function LoanCalculatorScreen() {
                   <ThemedText style={[styles.scheduleCell, { color: theme.text }]}>
                     ৳{row.principal.toLocaleString()}
                   </ThemedText>
-                  <ThemedText style={[styles.scheduleCell, { color: "#EA8A0C" }]}>
+                  <ThemedText style={[styles.scheduleCell, { color: "#B25E09" }]}>
                     ৳{row.interest.toLocaleString()}
                   </ThemedText>
                   <ThemedText style={[styles.scheduleCell, { color: theme.primary }]}>

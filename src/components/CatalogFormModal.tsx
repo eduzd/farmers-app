@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Modal, View, TextInput, Pressable, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import { uploadImage, mediaUrl } from "@/lib/api";
@@ -170,7 +170,7 @@ export function CatalogFormModal({ visible, title, fields, initial, submitLabel,
                 ) : null}
               </View>
             ))}
-            {error ? <ThemedText style={{ color: theme.error || "#DC2626" }}>{error}</ThemedText> : null}
+            {error ? <ThemedText style={{ color: theme.error || "#DA2F2F" }}>{error}</ThemedText> : null}
             <Pressable
               onPress={submit}
               disabled={busy}
@@ -180,8 +180,8 @@ export function CatalogFormModal({ visible, title, fields, initial, submitLabel,
               {busy ? <ActivityIndicator color="#fff" /> : <ThemedText style={styles.buttonText}>{submitLabel}</ThemedText>}
             </Pressable>
             {onDelete ? (
-              <Pressable onPress={onDelete} accessibilityRole="button" style={[styles.button, { borderWidth: 1, borderColor: theme.error || "#DC2626" }]}>
-                <ThemedText style={{ color: theme.error || "#DC2626", fontWeight: "600" }}>{deleteLabel || "Delete"}</ThemedText>
+              <Pressable onPress={onDelete} accessibilityRole="button" style={[styles.button, { borderWidth: 1, borderColor: theme.error || "#DA2F2F" }]}>
+                <ThemedText style={{ color: theme.error || "#DA2F2F", fontWeight: "600" }}>{deleteLabel || "Delete"}</ThemedText>
               </Pressable>
             ) : null}
           </ScrollView>

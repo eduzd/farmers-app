@@ -14,7 +14,7 @@ import {
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -260,8 +260,8 @@ export default function CompanyProductsScreen() {
           ৳{item.price.toLocaleString()}/{item.unit}
         </ThemedText>
         <View style={styles.gridProductMeta}>
-          <View style={[styles.stockBadge, { backgroundColor: item.quantity > 0 ? "#16A34A15" : "#DC262615" }]}>
-            <ThemedText style={[styles.stockText, { color: item.quantity > 0 ? "#16A34A" : "#DC2626" }]}>
+          <View style={[styles.stockBadge, { backgroundColor: item.quantity > 0 ? "#00BB7715" : "#DA2F2F15" }]}>
+            <ThemedText style={[styles.stockText, { color: item.quantity > 0 ? "#00BB77" : "#DA2F2F" }]}>
               {item.quantity > 0 ? `${item.quantity} স্টকে` : "স্টক আউট"}
             </ThemedText>
           </View>
@@ -288,8 +288,8 @@ export default function CompanyProductsScreen() {
           <ThemedText style={[styles.listProductPrice, { color: theme.primary }]}>
             ৳{item.price.toLocaleString()}/{item.unit}
           </ThemedText>
-          <View style={[styles.stockBadge, { backgroundColor: item.quantity > 0 ? "#16A34A15" : "#DC262615" }]}>
-            <ThemedText style={[styles.stockText, { color: item.quantity > 0 ? "#16A34A" : "#DC2626" }]}>
+          <View style={[styles.stockBadge, { backgroundColor: item.quantity > 0 ? "#00BB7715" : "#DA2F2F15" }]}>
+            <ThemedText style={[styles.stockText, { color: item.quantity > 0 ? "#00BB77" : "#DA2F2F" }]}>
               {item.quantity > 0 ? `${item.quantity} স্টকে` : "স্টক আউট"}
             </ThemedText>
           </View>
@@ -303,10 +303,10 @@ export default function CompanyProductsScreen() {
           <Feather name="edit-2" size={16} color={theme.primary} />
         </Pressable>
         <Pressable
-          style={[styles.actionButton, { backgroundColor: "#DC262615" }]}
+          style={[styles.actionButton, { backgroundColor: "#DA2F2F15" }]}
           onPress={() => setShowDeleteConfirm(item.id)}
         >
-          <Feather name="trash-2" size={16} color="#DC2626" />
+          <Feather name="trash-2" size={16} color="#DA2F2F" />
         </Pressable>
       </View>
     </Pressable>
@@ -495,8 +495,8 @@ export default function CompanyProductsScreen() {
       >
         <View style={styles.deleteModalBackdrop}>
           <View style={[styles.deleteModalContent, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-            <View style={[styles.deleteIconCircle, { backgroundColor: "#DC262620" }]}>
-              <Feather name="trash-2" size={28} color="#DC2626" />
+            <View style={[styles.deleteIconCircle, { backgroundColor: "#DA2F2F20" }]}>
+              <Feather name="trash-2" size={28} color="#DA2F2F" />
             </View>
             <ThemedText type="h4" style={styles.deleteModalTitle}>পণ্য মুছে ফেলুন?</ThemedText>
             <ThemedText style={[styles.deleteModalText, { color: theme.textSecondary }]}>
@@ -510,7 +510,7 @@ export default function CompanyProductsScreen() {
                 <ThemedText>বাতিল</ThemedText>
               </Pressable>
               <Pressable
-                style={[styles.deleteModalButton, { backgroundColor: "#DC2626" }]}
+                style={[styles.deleteModalButton, { backgroundColor: "#DA2F2F" }]}
                 onPress={() => showDeleteConfirm && handleDelete(showDeleteConfirm)}
               >
                 <ThemedText style={{ color: "#FFFFFF" }}>মুছুন</ThemedText>
@@ -810,17 +810,17 @@ export default function CompanyProductsScreen() {
                 style={[
                   styles.toggleOption,
                   { backgroundColor: theme.surface, borderColor: theme.cardBorder },
-                  formData.isOrganic && { backgroundColor: "#16A34A15", borderColor: "#16A34A" },
+                  formData.isOrganic && { backgroundColor: "#00BB7715", borderColor: "#00BB77" },
                 ]}
                 onPress={() => setFormData({ ...formData, isOrganic: !formData.isOrganic })}
               >
                 <Feather 
                   name="check-circle" 
                   size={20} 
-                  color={formData.isOrganic ? "#16A34A" : theme.textSecondary} 
+                  color={formData.isOrganic ? "#00BB77" : theme.textSecondary} 
                 />
                 <View style={styles.toggleContent}>
-                  <ThemedText style={[styles.toggleTitle, formData.isOrganic && { color: "#16A34A" }]}>
+                  <ThemedText style={[styles.toggleTitle, formData.isOrganic && { color: "#00BB77" }]}>
                     অর্গানিক পণ্য
                   </ThemedText>
                   <ThemedText style={[styles.toggleDesc, { color: theme.textSecondary }]}>
@@ -833,17 +833,17 @@ export default function CompanyProductsScreen() {
                 style={[
                   styles.toggleOption,
                   { backgroundColor: theme.surface, borderColor: theme.cardBorder },
-                  formData.isFeatured && { backgroundColor: "#EA8A0C15", borderColor: "#EA8A0C" },
+                  formData.isFeatured && { backgroundColor: "#B25E0915", borderColor: "#B25E09" },
                 ]}
                 onPress={() => setFormData({ ...formData, isFeatured: !formData.isFeatured })}
               >
                 <Feather 
                   name="star" 
                   size={20} 
-                  color={formData.isFeatured ? "#EA8A0C" : theme.textSecondary} 
+                  color={formData.isFeatured ? "#B25E09" : theme.textSecondary} 
                 />
                 <View style={styles.toggleContent}>
-                  <ThemedText style={[styles.toggleTitle, formData.isFeatured && { color: "#EA8A0C" }]}>
+                  <ThemedText style={[styles.toggleTitle, formData.isFeatured && { color: "#B25E09" }]}>
                     ফিচার্ড পণ্য
                   </ThemedText>
                   <ThemedText style={[styles.toggleDesc, { color: theme.textSecondary }]}>
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Spacing.sm,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   categoriesContainer: {
     paddingBottom: Spacing.md,
@@ -1001,20 +1001,20 @@ const styles = StyleSheet.create({
   outOfStockText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   gridProductInfo: {
     padding: Spacing.md,
   },
   gridProductName: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
     lineHeight: 20,
     marginBottom: Spacing.xs,
   },
   gridProductPrice: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   gridProductMeta: {
     marginTop: Spacing.sm,
@@ -1060,7 +1060,7 @@ const styles = StyleSheet.create({
   },
   listProductPrice: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   stockBadge: {
     paddingHorizontal: Spacing.sm,
@@ -1069,7 +1069,7 @@ const styles = StyleSheet.create({
   },
   stockText: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   listProductActions: {
     justifyContent: "center",
@@ -1112,7 +1112,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   fab: {
     position: "absolute",
@@ -1210,7 +1210,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     marginBottom: Spacing.sm,
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   textInput: {
     paddingHorizontal: Spacing.md,
@@ -1218,7 +1218,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   textArea: {
     height: 80,
@@ -1273,7 +1273,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   optionGrid: {
     flexDirection: "row",
@@ -1319,7 +1319,7 @@ const styles = StyleSheet.create({
   },
   toggleTitle: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   toggleDesc: {
     fontSize: 12,
@@ -1338,6 +1338,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

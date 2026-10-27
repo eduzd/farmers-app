@@ -6,7 +6,7 @@ import {
   Modal,
   FlatList,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { useCommunityStore, Community } from "@/lib/communityStore";
 import { useI18n } from "@/lib/i18n";

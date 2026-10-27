@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -27,15 +27,15 @@ const PROFESSIONALS: any[] = [];
 const DISCUSSIONS: any[] = [];
 
 const EMERGENCY = [
-  { title: "বিদ্যুৎ জরুরি", number: "16116", icon: "zap", color: "#EA8A0C" },
-  { title: "অগ্নি নির্বাপক", number: "199", icon: "alert-triangle", color: "#DC2626" },
+  { title: "বিদ্যুৎ জরুরি", number: "16116", icon: "zap", color: "#B25E09" },
+  { title: "অগ্নি নির্বাপক", number: "199", icon: "alert-triangle", color: "#DA2F2F" },
 ];
 
 const TIPS = [
-  { title: "LED বাল্ব ব্যবহার করুন", desc: "৮০% বিদ্যুৎ সাশ্রয়", icon: "sun", color: "#EA8A0C" },
-  { title: "অফ করুন", desc: "অব্যবহৃত যন্ত্র বন্ধ রাখুন", icon: "power", color: "#DC2626" },
-  { title: "সোলার ব্যবহার", desc: "বিনামূল্যে সূর্যের আলো", icon: "sunrise", color: "#16A34A" },
-  { title: "স্টার রেটিং", desc: "৫ স্টার যন্ত্রপাতি কিনুন", icon: "star", color: "#2563EB" },
+  { title: "LED বাল্ব ব্যবহার করুন", desc: "৮০% বিদ্যুৎ সাশ্রয়", icon: "sun", color: "#B25E09" },
+  { title: "অফ করুন", desc: "অব্যবহৃত যন্ত্র বন্ধ রাখুন", icon: "power", color: "#DA2F2F" },
+  { title: "সোলার ব্যবহার", desc: "বিনামূল্যে সূর্যের আলো", icon: "sunrise", color: "#00BB77" },
+  { title: "স্টার রেটিং", desc: "৫ স্টার যন্ত্রপাতি কিনুন", icon: "star", color: "#2E96EF" },
 ];
 
 export default function ElectricityServicesScreen() {
@@ -52,7 +52,7 @@ export default function ElectricityServicesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <LinearGradient
-        colors={isDark ? ["#78350f", "#1f2937"] : ["#fef3c7", "#fffbeb"]}
+        colors={isDark ? ["#78350f", "#202936"] : ["#FFF1DE", "#fffbeb"]}
         style={styles.headerGradient}
       >
         <View style={styles.emergencyRow}>
@@ -131,15 +131,15 @@ export default function ElectricityServicesScreen() {
               <Animated.View key={pro.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.proCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={styles.proHeader}>
-                    <View style={[styles.proIcon, { backgroundColor: "#EA8A0C20" }]}>
-                      <Feather name="zap" size={24} color="#EA8A0C" />
+                    <View style={[styles.proIcon, { backgroundColor: "#B25E0920" }]}>
+                      <Feather name="zap" size={24} color="#B25E09" />
                     </View>
                     <View style={styles.proInfo}>
                       <ThemedText style={[styles.proName, { color: theme.text }]}>{pro.name}</ThemedText>
                       <ThemedText style={[styles.proSpecialty, { color: theme.primary }]}>{pro.specialty}</ThemedText>
                       <View style={styles.proMeta}>
                         <View style={styles.metaItem}>
-                          <Feather name="star" size={12} color="#EA8A0C" />
+                          <Feather name="star" size={12} color="#B25E09" />
                           <ThemedText style={[styles.metaText, { color: theme.text }]}>{pro.rating}</ThemedText>
                         </View>
                         <View style={styles.metaItem}>
@@ -156,8 +156,8 @@ export default function ElectricityServicesScreen() {
 
                   <View style={styles.servicesRow}>
                     {pro.services.map((service: string, i: number) => (
-                      <View key={i} style={[styles.serviceChip, { backgroundColor: "#EA8A0C20" }]}>
-                        <ThemedText style={[styles.serviceChipText, { color: "#EA8A0C" }]}>{service}</ThemedText>
+                      <View key={i} style={[styles.serviceChip, { backgroundColor: "#B25E0920" }]}>
+                        <ThemedText style={[styles.serviceChipText, { color: "#B25E09" }]}>{service}</ThemedText>
                       </View>
                     ))}
                   </View>
@@ -190,7 +190,7 @@ export default function ElectricityServicesScreen() {
               <Animated.View key={discussion.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <Pressable style={[styles.discussionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={styles.discussionHeader}>
-                    <View style={[styles.authorAvatar, { backgroundColor: "#EA8A0C" }]}>
+                    <View style={[styles.authorAvatar, { backgroundColor: "#B25E09" }]}>
                       <ThemedText style={styles.authorInitial}>{discussion.author.charAt(0)}</ThemedText>
                     </View>
                     <View style={styles.discussionMeta}>
@@ -198,9 +198,9 @@ export default function ElectricityServicesScreen() {
                       <ThemedText style={[styles.postTime, { color: theme.textSecondary }]}>{discussion.time}</ThemedText>
                     </View>
                     {discussion.solved ? (
-                      <View style={[styles.solvedBadge, { backgroundColor: "#16A34A20" }]}>
-                        <Feather name="check-circle" size={14} color="#16A34A" />
-                        <ThemedText style={[styles.solvedText, { color: "#16A34A" }]}>সমাধান</ThemedText>
+                      <View style={[styles.solvedBadge, { backgroundColor: "#00BB7720" }]}>
+                        <Feather name="check-circle" size={14} color="#00BB77" />
+                        <ThemedText style={[styles.solvedText, { color: "#00BB77" }]}>সমাধান</ThemedText>
                       </View>
                     ) : null}
                   </View>
@@ -210,8 +210,8 @@ export default function ElectricityServicesScreen() {
                   </ThemedText>
                   <View style={styles.tagsRow}>
                     {discussion.tags.map((tag: string, i: number) => (
-                      <View key={i} style={[styles.tag, { backgroundColor: "#EA8A0C20" }]}>
-                        <ThemedText style={[styles.tagText, { color: "#EA8A0C" }]}>{tag}</ThemedText>
+                      <View key={i} style={[styles.tag, { backgroundColor: "#B25E0920" }]}>
+                        <ThemedText style={[styles.tagText, { color: "#B25E09" }]}>{tag}</ThemedText>
                       </View>
                     ))}
                   </View>

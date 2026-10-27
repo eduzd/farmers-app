@@ -8,7 +8,7 @@ import {
   Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -29,9 +29,9 @@ interface EmergencyContact {
 }
 
 const EMERGENCY_CONTACTS: EmergencyContact[] = [
-  { id: "2", name: "কৃষি হটলাইন", category: "কৃষি পরামর্শ", phone: "১৬১২৩", location: "সারাদেশ", available: "২৪/৭", icon: "phone", color: "#2FA36B" },
-  { id: "5", name: "ফায়ার সার্ভিস", category: "অগ্নিকাণ্ড", phone: "৯৯৯", location: "সারাদেশ", available: "২৪/৭", icon: "zap", color: "#DB2777" },
-  { id: "6", name: "আবহাওয়া সতর্কতা", category: "আবহাওয়া", phone: "১০৯০", location: "সারাদেশ", available: "২৪/৭", icon: "cloud", color: "#0D9488" },
+  { id: "2", name: "কৃষি হটলাইন", category: "কৃষি পরামর্শ", phone: "১৬১২৩", location: "সারাদেশ", available: "২৪/৭", icon: "phone", color: "#2E96EF" },
+  { id: "5", name: "ফায়ার সার্ভিস", category: "অগ্নিকাণ্ড", phone: "৯৯৯", location: "সারাদেশ", available: "২৪/৭", icon: "zap", color: "#FF4BB7" },
+  { id: "6", name: "আবহাওয়া সতর্কতা", category: "আবহাওয়া", phone: "১০৯০", location: "সারাদেশ", available: "২৪/৭", icon: "cloud", color: "#00BB77" },
 ];
 
 const QUICK_TIPS = [
@@ -66,8 +66,8 @@ export default function EmergencyServicesScreen() {
       showsVerticalScrollIndicator={false}
     >
       <Animated.View entering={FadeIn} style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: "#DC2626" + "20" }]}>
-          <Feather name="phone-call" size={32} color="#DC2626" />
+        <View style={[styles.iconContainer, { backgroundColor: "#DA2F2F" + "20" }]}>
+          <Feather name="phone-call" size={32} color="#DA2F2F" />
         </View>
         <ThemedText style={[styles.title, { color: theme.text }]}>জরুরি সেবা</ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -98,8 +98,8 @@ export default function EmergencyServicesScreen() {
                   <ThemedText style={[styles.metaText, { color: theme.textSecondary }]}>
                     {contact.location}
                   </ThemedText>
-                  <View style={[styles.availableBadge, { backgroundColor: "#2FA36B" + "20" }]}>
-                    <ThemedText style={[styles.availableText, { color: "#2FA36B" }]}>
+                  <View style={[styles.availableBadge, { backgroundColor: "#2E96EF" + "20" }]}>
+                    <ThemedText style={[styles.availableText, { color: "#2E96EF" }]}>
                       {contact.available}
                     </ThemedText>
                   </View>

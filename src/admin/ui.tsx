@@ -4,7 +4,7 @@ import { View, Text as RNText, StyleSheet, Pressable, TextInput, ActivityIndicat
 import { LinearGradient } from "expo-linear-gradient";
 import { FontFamily, BanglaFontFamily } from "@/constants/theme";
 import { CustomSwitch } from "@/components/CustomSwitch";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as ImagePicker from "expo-image-picker";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
@@ -49,8 +49,8 @@ export function useL() {
 export const taka = (n: number) => `৳${Math.round(Number(n) || 0).toLocaleString("en-IN")}`;
 export const ORDER_STATUSES = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled"];
 export const STATUS_COLOR: Record<string, string> = {
-  pending: "#B45309", confirmed: "#1D4ED8", processing: "#6D28D9", shipped: "#0E7490", delivered: "#047857", cancelled: "#B91C1C",
-  open: "#047857", closed: "#64748B", active: "#047857", suspended: "#B91C1C", hidden: "#B45309",
+  pending: "#B25E09", confirmed: "#3D38D0", processing: "#3D38D0", shipped: "#1F86DB", delivered: "#00875A", cancelled: "#DA2F2F",
+  open: "#00875A", closed: "#7A8CA3", active: "#00875A", suspended: "#DA2F2F", hidden: "#B25E09",
 };
 export const statusLabel = (s: string, L: ReturnType<typeof useL>) =>
   (({
@@ -111,7 +111,7 @@ const BENGALI = /[\u0980-\u09FF]/;
 const hasBangla = (c: React.ReactNode): boolean =>
   typeof c === "string" ? BENGALI.test(c) : Array.isArray(c) ? c.some(hasBangla) : typeof c === "number" ? false : false;
 
-/** Text in the main app's font (Plus Jakarta Sans, Hind Siliguri for Bangla), picked from fontWeight. */
+/** Text in the main app's font (DM Sans, Hind Siliguri for Bangla), picked from fontWeight. */
 export function Text({ style, children, ...rest }: TextProps & { children?: React.ReactNode }) {
   const flat = (StyleSheet.flatten(style) || {}) as TextStyle;
   let family = flat.fontFamily || WEIGHT_FAMILY[String(flat.fontWeight || "400")] || FontFamily.regular;
@@ -127,7 +127,7 @@ export const R = { card: 18, tile: 16, field: 14, pill: 999 };
 export const shadow = (dark: boolean) =>
   Platform.select({
     web: { boxShadow: dark ? "0 1px 2px rgba(0,0,0,.4)" : "0 1px 2px rgba(16,24,40,.04), 0 4px 14px rgba(16,24,40,.06)" } as any,
-    default: { shadowColor: "#0F172A", shadowOpacity: dark ? 0.3 : 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+    default: { shadowColor: "#202936", shadowOpacity: dark ? 0.3 : 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   });
 
 export function Page({ children, onRefresh, refreshing, testID, pad = true }: { children: React.ReactNode; onRefresh?: () => void; refreshing?: boolean; testID?: string; pad?: boolean }) {
@@ -240,8 +240,8 @@ export function Btn({ label, onPress, icon, kind = "primary", busy, disabled, te
   label: string; onPress: () => void; icon?: keyof typeof Feather.glyphMap; kind?: "primary" | "ghost" | "danger" | "soft" | "dangerSoft"; busy?: boolean; disabled?: boolean; testID?: string; small?: boolean; style?: any;
 }) {
   const { theme } = useTheme();
-  const bg = kind === "primary" ? theme.primary : kind === "danger" ? "#DC2626" : kind === "soft" ? theme.primary + "16" : kind === "dangerSoft" ? "#DC262614" : theme.card;
-  const fg = kind === "primary" || kind === "danger" ? "#fff" : kind === "dangerSoft" ? "#DC2626" : kind === "ghost" ? theme.text : theme.primary;
+  const bg = kind === "primary" ? theme.primary : kind === "danger" ? "#DA2F2F" : kind === "soft" ? theme.primary + "16" : kind === "dangerSoft" ? "#DA2F2F14" : theme.card;
+  const fg = kind === "primary" || kind === "danger" ? "#fff" : kind === "dangerSoft" ? "#DA2F2F" : kind === "ghost" ? theme.text : theme.primary;
   return (
     <Pressable
       testID={testID}
@@ -333,8 +333,8 @@ export function ErrorBox({ text, onRetry }: { text: string; onRetry?: () => void
   const L = useL();
   return (
     <View style={st.error} testID="admin-error">
-      <Feather name="alert-circle" size={18} color="#B91C1C" />
-      <Text style={{ color: "#991B1B", flex: 1, fontSize: 13.5, lineHeight: 19 }}>{text}</Text>
+      <Feather name="alert-circle" size={18} color="#DA2F2F" />
+      <Text style={{ color: "#DA2F2F", flex: 1, fontSize: 13.5, lineHeight: 19 }}>{text}</Text>
       {onRetry ? <Btn small kind="dangerSoft" icon="refresh-cw" label={L("Retry", "আবার")} onPress={onRetry} /> : null}
     </View>
   );
@@ -381,7 +381,7 @@ export function Stat({ label, value, icon, color, onPress, testID, hint }: { lab
 export function Hero({ children, testID }: { children: React.ReactNode; testID?: string }) {
   const { theme } = useTheme();
   return (
-    <LinearGradient testID={testID} colors={[theme.primary, "#0F766E"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.hero}>
+    <LinearGradient testID={testID} colors={[theme.primary, "#3D38D0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.hero}>
       <View style={{ position: "absolute", right: -40, top: -40, width: 160, height: 160, borderRadius: 80, backgroundColor: "rgba(255,255,255,0.08)" }} />
       <View style={{ position: "absolute", right: 40, bottom: -60, width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(255,255,255,0.06)" }} />
       {children}
@@ -491,7 +491,7 @@ export function ListRow({ icon, label, sub, onPress, testID, color, right, badge
         {sub ? <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 1 }} numberOfLines={2}>{sub}</Text> : null}
       </View>
       {badge ? (
-        <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: "#DC2626", alignItems: "center", justifyContent: "center", paddingHorizontal: 5 }}>
+        <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: "#DA2F2F", alignItems: "center", justifyContent: "center", paddingHorizontal: 5 }}>
           <Text style={{ color: "#fff", fontSize: 11, fontWeight: "800" }}>{badge > 99 ? "99+" : badge}</Text>
         </View>
       ) : null}

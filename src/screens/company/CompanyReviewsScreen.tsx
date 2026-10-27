@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -127,7 +127,7 @@ export default function CompanyReviewsScreen() {
           <View style={styles.reviewNameRow}>
             <ThemedText type="h4">{item.userName}</ThemedText>
             {item.verified ? (
-              <View style={[styles.verifiedBadge, { backgroundColor: "#16A34A" }]}>
+              <View style={[styles.verifiedBadge, { backgroundColor: "#00BB77" }]}>
                 <Feather name="check" size={10} color="#FFFFFF" />
               </View>
             ) : null}
@@ -268,7 +268,7 @@ export default function CompanyReviewsScreen() {
 
             <View style={styles.satisfactionRow}>
               <View style={styles.satisfactionItem}>
-                <Feather name="smile" size={20} color="#16A34A" />
+                <Feather name="smile" size={20} color="#00BB77" />
                 <View>
                   <ThemedText style={styles.satisfactionValue}>৯৮%</ThemedText>
                   <ThemedText style={[styles.satisfactionLabel, { color: theme.textSecondary }]}>
@@ -278,7 +278,7 @@ export default function CompanyReviewsScreen() {
               </View>
               <View style={[styles.satisfactionDivider, { backgroundColor: theme.cardBorder }]} />
               <View style={styles.satisfactionItem}>
-                <Feather name="repeat" size={20} color="#2563EB" />
+                <Feather name="repeat" size={20} color="#2E96EF" />
                 <View>
                   <ThemedText style={styles.satisfactionValue}>৮৫%</ThemedText>
                   <ThemedText style={[styles.satisfactionLabel, { color: theme.textSecondary }]}>
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   },
   bigRating: {
     fontSize: 52,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     lineHeight: 58,
   },
   totalReviews: {
@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
   },
   satisfactionValue: {
     fontSize: 18,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   satisfactionLabel: {
     fontSize: 11,
@@ -550,7 +550,7 @@ const styles = StyleSheet.create({
   avatarText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   reviewInfo: {
     flex: 1,
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
   sellerBadgeText: {
     color: "#FFFFFF",
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   replyDate: {
     fontSize: 11,
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     minHeight: 100,
     textAlignVertical: "top",
   },
@@ -698,6 +698,6 @@ const styles = StyleSheet.create({
   sendReplyText: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

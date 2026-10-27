@@ -7,116 +7,78 @@
  * use `theme.*` for surfaces/text and `Palette.*` for status hues.
  */
 import { Platform, ViewStyle } from "react-native";
+import { MayaColors } from "@/constants/mayaTheme";
 
 /** Brand + status hues. Each hue has a strong tone and a soft tint for backgrounds. */
 export const Palette = {
-  leaf: "#1E7F4F", // brand green
-  leafLight: "#2FA36B",
-  leafDark: "#14583A",
-  leafSoft: "#E5F3EB",
-  harvest: "#E3A008", // harvest gold accent
-  harvestSoft: "#FDF3D8",
-  river: "#2563EB", // info / water / fish
-  riverSoft: "#E3ECFD",
-  clay: "#DC2626", // danger
+  // Brand hues now follow Maya (maya.net): the old names stay so every screen keeps working.
+  leaf: "#2E96EF", // Maya link blue (was brand green)
+  leafLight: "#39B1FE", // Maya sky blue
+  leafDark: "#202936", // Maya navy
+  leafSoft: "#E3F4FF", // Maya pale blue band
+  harvest: "#FF4BB7", // Maya pink accent
+  harvestSoft: "#FFD5EE",
+  river: "#2E96EF", // info / water / fish
+  riverSoft: "#E3F4FF",
+  clay: "#DA2F2F", // danger
   claySoft: "#FDE7E7",
-  sun: "#EA8A0C", // warning
-  sunSoft: "#FEF0DC",
-  plum: "#7C3AED",
-  plumSoft: "#EFE7FD",
-  teal: "#0D9488",
-  tealSoft: "#DDF4F1",
-  rose: "#DB2777",
-  roseSoft: "#FCE4F0",
-  slate: "#475569",
-  slateSoft: "#E8EDF2",
+  sun: "#B25E09", // warning (Maya amber)
+  sunSoft: "#FFF1DE",
+  plum: "#3D38D0", // Maya violet
+  plumSoft: "#F2F2FF",
+  teal: "#00BB77", // Maya green
+  tealSoft: "#D8FFF2",
+  rose: "#FF4BB7", // Maya pink
+  roseSoft: "#FFD5EE",
+  slate: "#4A5568",
+  slateSoft: "#E3F4FF",
   gold: "#F5B700",
   white: "#FFFFFF",
   black: "#000000",
 };
 
-export const Colors = {
-  light: {
-    primary: Palette.leaf,
-    primaryTint: Palette.leafLight,
-    primaryDark: Palette.leafDark,
-    primarySoft: Palette.leafSoft,
-    accent: Palette.harvest,
-    accentSoft: Palette.harvestSoft,
-    text: "#0F1A14",
-    textSecondary: "#5A6A61",
-    textTertiary: "#8B9A91",
-    buttonText: "#FFFFFF",
-    tabIconDefault: "#8B9A91",
-    tabIconSelected: Palette.leaf,
-    link: Palette.leaf,
-    backgroundRoot: "#F5F7F4",
-    backgroundDefault: "#FFFFFF",
-    backgroundSecondary: "#EDF1EC",
-    backgroundTertiary: "#E2E8E3",
-    white: "#FFFFFF",
-    overlay: "rgba(9, 20, 14, 0.45)",
-    inputBorder: "#D6DED8",
-    inputBackground: "#FFFFFF",
-    gradientStart: "#1E7F4F",
-    gradientEnd: "#2FA36B",
-    card: "#FFFFFF",
-    cardBorder: "#E4EAE5",
-    cardText: "#0F1A14",
-    surface: "#FFFFFF",
-    surfaceSecondary: "#F5F7F4",
-    divider: "#E8EDE9",
-    border: "#E4EAE5",
-    iconDefault: "#24332B",
-    iconSecondary: "#7A8A81",
-    success: "#16A34A",
-    error: Palette.clay,
-    warning: Palette.sun,
-    info: Palette.river,
-    shadow: "rgba(16, 40, 26, 0.10)",
-  },
-  dark: {
-    primary: "#2FA36B",
-    primaryTint: "#43C285",
-    primaryDark: "#1E7F4F",
-    primarySoft: "#143324",
-    accent: "#F2B83A",
-    accentSoft: "#3A2E10",
-    text: "#ECF3EE",
-    textSecondary: "#A2B4A9",
-    textTertiary: "#71837A",
-    buttonText: "#FFFFFF",
-    tabIconDefault: "#71837A",
-    tabIconSelected: "#43C285",
-    link: "#5FD39A",
-    backgroundRoot: "#0A100C",
-    backgroundDefault: "#111915",
-    backgroundSecondary: "#18221C",
-    backgroundTertiary: "#222E27",
-    white: "#131C17",
-    overlay: "rgba(0, 0, 0, 0.7)",
-    inputBorder: "#2B3A32",
-    inputBackground: "#131C17",
-    gradientStart: "#14583A",
-    gradientEnd: "#1E7F4F",
-    card: "#131C17",
-    cardBorder: "#223029",
-    cardText: "#ECF3EE",
-    surface: "#18221C",
-    surfaceSecondary: "#111915",
-    divider: "#1F2B24",
-    border: "#223029",
-    iconDefault: "#ECF3EE",
-    iconSecondary: "#A2B4A9",
-    success: "#22C55E",
-    error: "#F05252",
-    warning: "#F59E0B",
-    info: "#60A5FA",
-    shadow: "rgba(0, 0, 0, 0.5)",
-  },
-};
+/** The whole app uses the Maya palette (see constants/mayaTheme.ts). */
+export const Colors = MayaColors;
 
-export type ThemeColors = typeof Colors.light;
+export type ThemeColors = {
+  primary: string;
+  primaryTint: string;
+  primaryDark: string;
+  primarySoft: string;
+  accent: string;
+  accentSoft: string;
+  text: string;
+  textSecondary: string;
+  textTertiary: string;
+  buttonText: string;
+  tabIconDefault: string;
+  tabIconSelected: string;
+  link: string;
+  backgroundRoot: string;
+  backgroundDefault: string;
+  backgroundSecondary: string;
+  backgroundTertiary: string;
+  white: string;
+  overlay: string;
+  inputBorder: string;
+  inputBackground: string;
+  gradientStart: string;
+  gradientEnd: string;
+  card: string;
+  cardBorder: string;
+  cardText: string;
+  surface: string;
+  surfaceSecondary: string;
+  divider: string;
+  border: string;
+  iconDefault: string;
+  iconSecondary: string;
+  success: string;
+  error: string;
+  warning: string;
+  info: string;
+  shadow: string;
+};
 
 /** 4-pt spacing scale. */
 export const Spacing = {
@@ -148,15 +110,22 @@ export const BorderRadius = {
 };
 
 export const FontFamily = {
-  regular: "PlusJakartaSans_400Regular",
-  medium: "PlusJakartaSans_500Medium",
-  semibold: "PlusJakartaSans_600SemiBold",
-  bold: "PlusJakartaSans_700Bold",
-  extrabold: "PlusJakartaSans_800ExtraBold",
+  // Maya's text face, DM Sans (SIL Open Font License), everywhere in the app.
+  regular: "DMSans_400Regular",
+  medium: "DMSans_500Medium",
+  semibold: "DMSans_600SemiBold",
+  bold: "DMSans_700Bold",
+  extrabold: "DMSans_800ExtraBold",
 };
 
-/** Bangla script fallbacks: Plus Jakarta Sans has no Bengali glyphs. */
+/** Bangla script fallbacks: DM Sans (and Plus Jakarta Sans) have no Bengali glyphs. */
 export const BanglaFontFamily: Record<string, string> = {
+  DMSans_400Regular: "HindSiliguri_400Regular",
+  DMSans_500Medium: "HindSiliguri_500Medium",
+  DMSans_600SemiBold: "HindSiliguri_600SemiBold",
+  DMSans_700Bold: "HindSiliguri_700Bold",
+  DMSans_800ExtraBold: "HindSiliguri_700Bold",
+  Anton_400Regular: "HindSiliguri_700Bold",
   PlusJakartaSans_400Regular: "HindSiliguri_400Regular",
   PlusJakartaSans_500Medium: "HindSiliguri_500Medium",
   PlusJakartaSans_600SemiBold: "HindSiliguri_600SemiBold",
@@ -252,7 +221,7 @@ function shadow(y: number, blur: number, opacity: number, elevation: number): Vi
       shadowRadius: blur,
     },
     android: { elevation },
-    web: { boxShadow: `0px ${y}px ${blur * 2}px rgba(11, 42, 26, ${opacity})` } as ViewStyle,
+    web: { boxShadow: `0px ${y}px ${blur * 2}px rgba(32, 41, 54, ${opacity})` } as ViewStyle,
     default: {},
   }) as ViewStyle;
 }
@@ -277,7 +246,7 @@ export const Fonts = Platform.select({
     mono: "monospace",
   },
   web: {
-    sans: "'Plus Jakarta Sans', 'Hind Siliguri', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+    sans: "'DM Sans', 'Hind Siliguri', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
     serif: "Georgia, 'Times New Roman', serif",
     rounded: "system-ui, sans-serif",
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace",

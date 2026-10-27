@@ -21,7 +21,8 @@ import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPad
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -297,7 +298,7 @@ export default function ProductDetailScreen() {
     { icon: "check-circle", label: "তাজা পণ্য", color: "#00BB77" },
     { icon: "sun", label: "অর্গানিক", color: "#00BB77" },
     { icon: "shield", label: "গুণমান নিশ্চিত", color: "#37B1FF" },
-    { icon: "truck", label: "দ্রুত ডেলিভারি", color: "#EA8A0C" },
+    { icon: "truck", label: "দ্রুত ডেলিভারি", color: "#B25E09" },
   ];
 
   const specs = [

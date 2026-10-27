@@ -1,5 +1,5 @@
 import React from "react";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { ConfirmSheet, type ConfirmTone } from "@/components/ConfirmSheet";
 
 interface ConfirmModalProps {

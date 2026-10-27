@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import { View, StyleSheet, FlatList, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -146,8 +146,8 @@ export default function MyPostsScreen() {
               style={[
                 styles.filterTab,
                 isActive 
-                  ? { backgroundColor: "#1F2937" } 
-                  : { backgroundColor: "transparent", borderWidth: 1, borderColor: filter.key === "pending" ? "#EA8A0C" : filter.key === "approved" ? "#16A34A" : theme.cardBorder }
+                  ? { backgroundColor: "#202936" } 
+                  : { backgroundColor: "transparent", borderWidth: 1, borderColor: filter.key === "pending" ? "#B25E09" : filter.key === "approved" ? "#00BB77" : theme.cardBorder }
               ]}
               onPress={() => {
                 Haptics.selectionAsync();
@@ -157,11 +157,11 @@ export default function MyPostsScreen() {
               <AppIcon 
                 name={filter.icon} 
                 size={14} 
-                color={isActive ? "#fff" : filter.key === "pending" ? "#EA8A0C" : filter.key === "approved" ? "#16A34A" : theme.text} 
+                color={isActive ? "#fff" : filter.key === "pending" ? "#B25E09" : filter.key === "approved" ? "#00BB77" : theme.text} 
               />
               <ThemedText style={[
                 styles.filterTabText, 
-                { color: isActive ? "#fff" : filter.key === "pending" ? "#EA8A0C" : filter.key === "approved" ? "#16A34A" : theme.text }
+                { color: isActive ? "#fff" : filter.key === "pending" ? "#B25E09" : filter.key === "approved" ? "#00BB77" : theme.text }
               ]}>
                 {filter.label} ({filter.count})
               </ThemedText>
@@ -224,15 +224,15 @@ export default function MyPostsScreen() {
           >
             <View style={[
               styles.actionIconCircle,
-              item.isLiked && { backgroundColor: "#DC262620" }
+              item.isLiked && { backgroundColor: "#DA2F2F20" }
             ]}>
               <Feather 
                 name="heart" 
                 size={18} 
-                color={item.isLiked ? "#DC2626" : theme.textSecondary} 
+                color={item.isLiked ? "#DA2F2F" : theme.textSecondary} 
               />
             </View>
-            <ThemedText style={[styles.actionCount, { color: item.isLiked ? "#DC2626" : theme.textSecondary }]}>
+            <ThemedText style={[styles.actionCount, { color: item.isLiked ? "#DA2F2F" : theme.textSecondary }]}>
               {item.likes}
             </ThemedText>
           </Pressable>
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   userRole: {
     fontSize: 14,
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   filterTabText: {
     fontSize: 14,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   postCard: {
     borderRadius: BorderRadius.xl,
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   postAuthorName: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   postMetaRow: {
     flexDirection: "row",
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     marginTop: Spacing.lg,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   emptySubtitle: {
     fontSize: 14,

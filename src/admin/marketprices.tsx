@@ -3,7 +3,7 @@
 // Market prices board, and matching price alerts fire when today's prices are saved.
 import React, { useMemo, useState } from "react";
 import { View, Pressable, ScrollView } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";

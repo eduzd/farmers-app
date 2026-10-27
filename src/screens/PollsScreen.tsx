@@ -11,7 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, {
   useSharedValue,
@@ -410,10 +410,10 @@ export default function PollsScreen() {
                   />
                   {newOptions.length > 2 ? (
                     <Pressable
-                      style={[styles.removeOptionBtn, { backgroundColor: "#DC262620" }]}
+                      style={[styles.removeOptionBtn, { backgroundColor: "#DA2F2F20" }]}
                       onPress={() => handleRemoveOption(index)}
                     >
-                      <Feather name="minus" size={18} color="#DC2626" />
+                      <Feather name="minus" size={18} color="#DA2F2F" />
                     </Pressable>
                   ) : null}
                 </View>

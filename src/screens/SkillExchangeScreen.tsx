@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -68,27 +68,27 @@ export default function SkillExchangeScreen() {
 
         <View style={styles.skillsSection}>
           <View style={styles.skillRow}>
-            <View style={[styles.skillLabel, { backgroundColor: "#2FA36B15" }]}>
-              <Feather name="gift" size={12} color="#2FA36B" />
-              <ThemedText style={[styles.skillLabelText, { color: "#2FA36B" }]}>দিতে পারি</ThemedText>
+            <View style={[styles.skillLabel, { backgroundColor: "#2E96EF15" }]}>
+              <Feather name="gift" size={12} color="#2E96EF" />
+              <ThemedText style={[styles.skillLabelText, { color: "#2E96EF" }]}>দিতে পারি</ThemedText>
             </View>
             <View style={styles.skillChips}>
               {item.offering.map((skill, idx) => (
-                <View key={idx} style={[styles.skillChip, { backgroundColor: "#2FA36B10", borderColor: "#2FA36B" }]}>
-                  <ThemedText style={[styles.skillChipText, { color: "#2FA36B" }]}>{skill}</ThemedText>
+                <View key={idx} style={[styles.skillChip, { backgroundColor: "#2E96EF10", borderColor: "#2E96EF" }]}>
+                  <ThemedText style={[styles.skillChipText, { color: "#2E96EF" }]}>{skill}</ThemedText>
                 </View>
               ))}
             </View>
           </View>
           <View style={styles.skillRow}>
-            <View style={[styles.skillLabel, { backgroundColor: "#2563EB15" }]}>
-              <Feather name="search" size={12} color="#2563EB" />
-              <ThemedText style={[styles.skillLabelText, { color: "#2563EB" }]}>খুঁজছি</ThemedText>
+            <View style={[styles.skillLabel, { backgroundColor: "#2E96EF15" }]}>
+              <Feather name="search" size={12} color="#2E96EF" />
+              <ThemedText style={[styles.skillLabelText, { color: "#2E96EF" }]}>খুঁজছি</ThemedText>
             </View>
             <View style={styles.skillChips}>
               {item.seeking.map((skill, idx) => (
-                <View key={idx} style={[styles.skillChip, { backgroundColor: "#2563EB10", borderColor: "#2563EB" }]}>
-                  <ThemedText style={[styles.skillChipText, { color: "#2563EB" }]}>{skill}</ThemedText>
+                <View key={idx} style={[styles.skillChip, { backgroundColor: "#2E96EF10", borderColor: "#2E96EF" }]}>
+                  <ThemedText style={[styles.skillChipText, { color: "#2E96EF" }]}>{skill}</ThemedText>
                 </View>
               ))}
             </View>
@@ -138,21 +138,21 @@ export default function SkillExchangeScreen() {
         </View>
         <View style={styles.mySkillsRow}>
           <View style={styles.mySkillSection}>
-            <ThemedText style={[styles.mySkillLabel, { color: "#2FA36B" }]}>দিতে পারি:</ThemedText>
+            <ThemedText style={[styles.mySkillLabel, { color: "#2E96EF" }]}>দিতে পারি:</ThemedText>
             <View style={styles.mySkillChipsRow}>
               {MY_SKILLS.offering.map((skill, idx) => (
-                <View key={idx} style={[styles.mySkillChip, { backgroundColor: "#2FA36B20" }]}>
-                  <ThemedText style={[styles.mySkillChipText, { color: "#2FA36B" }]}>{skill}</ThemedText>
+                <View key={idx} style={[styles.mySkillChip, { backgroundColor: "#2E96EF20" }]}>
+                  <ThemedText style={[styles.mySkillChipText, { color: "#2E96EF" }]}>{skill}</ThemedText>
                 </View>
               ))}
             </View>
           </View>
           <View style={styles.mySkillSection}>
-            <ThemedText style={[styles.mySkillLabel, { color: "#2563EB" }]}>খুঁজছি:</ThemedText>
+            <ThemedText style={[styles.mySkillLabel, { color: "#2E96EF" }]}>খুঁজছি:</ThemedText>
             <View style={styles.mySkillChipsRow}>
               {MY_SKILLS.seeking.map((skill, idx) => (
-                <View key={idx} style={[styles.mySkillChip, { backgroundColor: "#2563EB20" }]}>
-                  <ThemedText style={[styles.mySkillChipText, { color: "#2563EB" }]}>{skill}</ThemedText>
+                <View key={idx} style={[styles.mySkillChip, { backgroundColor: "#2E96EF20" }]}>
+                  <ThemedText style={[styles.mySkillChipText, { color: "#2E96EF" }]}>{skill}</ThemedText>
                 </View>
               ))}
             </View>

@@ -6,7 +6,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -56,7 +56,7 @@ export default function CommunityStatsScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(50)} style={styles.heroCard}>
-          <LinearGradient colors={[theme.primary, "#2563EB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroGradient}>
+          <LinearGradient colors={[theme.primary, "#2E96EF"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroGradient}>
             <View style={styles.heroContent}>
               <View style={styles.heroStat}>
                 <ThemedText style={styles.heroValue}>{(COMMUNITY_STATS.totalMembers / 1000).toFixed(0)}k+</ThemedText>
@@ -76,10 +76,10 @@ export default function CommunityStatsScreen() {
 
         <Animated.View entering={FadeInUp.delay(100)} style={styles.statsGrid}>
           {[
-            { icon: "edit-3" as const, value: COMMUNITY_STATS.postsToday, label: "পোস্ট আজ", color: "#2FA36B" },
-            { icon: "help-circle" as const, value: COMMUNITY_STATS.questionsAnswered, label: "উত্তর দেওয়া হয়েছে", color: "#2563EB" },
-            { icon: "shopping-bag" as const, value: COMMUNITY_STATS.productsListed, label: "পণ্য তালিকাভুক্ত", color: "#EA8A0C" },
-            { icon: "check-circle" as const, value: COMMUNITY_STATS.ordersCompleted, label: "অর্ডার সম্পন্ন", color: "#7C3AED" },
+            { icon: "edit-3" as const, value: COMMUNITY_STATS.postsToday, label: "পোস্ট আজ", color: "#2E96EF" },
+            { icon: "help-circle" as const, value: COMMUNITY_STATS.questionsAnswered, label: "উত্তর দেওয়া হয়েছে", color: "#2E96EF" },
+            { icon: "shopping-bag" as const, value: COMMUNITY_STATS.productsListed, label: "পণ্য তালিকাভুক্ত", color: "#B25E09" },
+            { icon: "check-circle" as const, value: COMMUNITY_STATS.ordersCompleted, label: "অর্ডার সম্পন্ন", color: "#3D38D0" },
           ].map((stat, index) => (
             <View key={index} style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
               <View style={[styles.statIcon, { backgroundColor: stat.color + "15" }]}>
@@ -132,8 +132,8 @@ export default function CommunityStatsScreen() {
             </View>
             <View style={styles.growthSummary}>
               <View style={styles.growthItem}>
-                <Feather name="trending-up" size={16} color="#2FA36B" />
-                <ThemedText style={[styles.growthValue, { color: "#2FA36B" }]}>+56%</ThemedText>
+                <Feather name="trending-up" size={16} color="#2E96EF" />
+                <ThemedText style={[styles.growthValue, { color: "#2E96EF" }]}>+56%</ThemedText>
                 <ThemedText style={[styles.growthLabel, { color: theme.textSecondary }]}>৬ মাসে বৃদ্ধি</ThemedText>
               </View>
             </View>
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   heroValue: { color: "#fff", fontSize: 36, fontWeight: "700" },
   heroLabel: { color: "rgba(255,255,255,0.8)", fontSize: 14, marginTop: 4 },
   liveIndicator: { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: Spacing.md, gap: Spacing.xs },
-  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#DC2626" },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#DA2F2F" },
   liveText: { color: "#fff", fontSize: 13 },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.md, marginBottom: Spacing.lg },
   statCard: { width: (width - Spacing.lg * 3) / 2, padding: Spacing.md, borderRadius: BorderRadius.lg, borderWidth: 1, alignItems: "center" },

@@ -4,7 +4,7 @@ import React, { useMemo, useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable, RefreshControl, ActivityIndicator, TextInput, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";

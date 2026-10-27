@@ -9,7 +9,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInUp } from "react-native-reanimated";
@@ -74,9 +74,9 @@ const SERVICES: ServiceItem[] = [
     title: "ভয়েস রুম",
     subtitle: "লাইভ অডিও আলোচনা",
     icon: "radio",
-    colors: ["#DB2777", "#C2185B"],
+    colors: ["#FF4BB7", "#FF4BB7"],
     badge: "LIVE",
-    badgeColor: "#DC2626",
+    badgeColor: "#DA2F2F",
     route: "VoiceRooms",
   },
   {
@@ -100,9 +100,9 @@ const SERVICES: ServiceItem[] = [
     title: "স্টোরি",
     subtitle: "২৪ ঘণ্টার আপডেট",
     icon: "circle",
-    colors: ["#FF6B6B", "#DB2777"],
+    colors: ["#FF6B6B", "#FF4BB7"],
     badge: "NEW",
-    badgeColor: "#DB2777",
+    badgeColor: "#FF4BB7",
     route: "Stories",
   },
   {
@@ -110,9 +110,9 @@ const SERVICES: ServiceItem[] = [
     title: "নোটিফিকেশন",
     subtitle: "সব আপডেট এক জায়গায়",
     icon: "bell",
-    colors: ["#FF5722", "#E64A19"],
+    colors: ["#B25E09", "#B25E09"],
     badge: "3",
-    badgeColor: "#DC2626",
+    badgeColor: "#DA2F2F",
     route: "Notifications",
   },
   {
@@ -120,7 +120,7 @@ const SERVICES: ServiceItem[] = [
     title: "লিডারবোর্ড",
     subtitle: "সেরা কৃষকদের দেখুন",
     icon: "trending-up",
-    colors: ["#F5B700", "#EA8A0C"],
+    colors: ["#F5B700", "#B25E09"],
     route: "Leaderboard",
   },
   {
@@ -128,7 +128,7 @@ const SERVICES: ServiceItem[] = [
     title: "ব্যবহারকারী খুঁজুন",
     subtitle: "কৃষক ও বিশেষজ্ঞ খুঁজুন",
     icon: "search",
-    colors: ["#0D9488", "#0097A7"],
+    colors: ["#00BB77", "#39B1FE"],
     route: "UserSearch",
   },
   {
@@ -136,7 +136,7 @@ const SERVICES: ServiceItem[] = [
     title: "ঘোষণা",
     subtitle: "গুরুত্বপূর্ণ নোটিশ",
     icon: "volume-2",
-    colors: ["#475569", "#455A64"],
+    colors: ["#4A5568", "#4A5568"],
     route: "Announcements",
   },
   {
@@ -144,9 +144,9 @@ const SERVICES: ServiceItem[] = [
     title: "রিওয়ার্ড",
     subtitle: "পয়েন্ট আয় করুন",
     icon: "gift",
-    colors: ["#7C3AED", "#7B1FA2"],
+    colors: ["#3D38D0", "#3D38D0"],
     badge: "3,500",
-    badgeColor: "#2FA36B",
+    badgeColor: "#2E96EF",
     route: "Rewards",
   },
   {
@@ -154,9 +154,9 @@ const SERVICES: ServiceItem[] = [
     title: "লাইভ স্ট্রিম",
     subtitle: "লাইভ ভিডিও দেখুন",
     icon: "video",
-    colors: ["#DC2626", "#D32F2F"],
+    colors: ["#DA2F2F", "#DA2F2F"],
     badge: "LIVE",
-    badgeColor: "#DC2626",
+    badgeColor: "#DA2F2F",
     route: "LiveStream",
   },
   {
@@ -164,7 +164,7 @@ const SERVICES: ServiceItem[] = [
     title: "ট্রেন্ডিং",
     subtitle: "জনপ্রিয় টপিক",
     icon: "trending-up",
-    colors: ["#FF5722", "#E64A19"],
+    colors: ["#B25E09", "#B25E09"],
     route: "Trending",
   },
   {
@@ -182,7 +182,7 @@ const SERVICES: ServiceItem[] = [
     title: "দৈনিক চেক-ইন",
     subtitle: "প্রতিদিন পয়েন্ট পান",
     icon: "calendar",
-    colors: ["#2FA36B", "#388E3C"],
+    colors: ["#2E96EF", "#39B1FE"],
     route: "DailyCheckIn",
   },
   {
@@ -190,7 +190,7 @@ const SERVICES: ServiceItem[] = [
     title: "ফিচার্ড কৃষক",
     subtitle: "সেরা কৃষকদের দেখুন",
     icon: "star",
-    colors: ["#2563EB", "#1976D2"],
+    colors: ["#2E96EF", "#2E96EF"],
     route: "FeaturedFarmers",
   },
   {
@@ -198,7 +198,7 @@ const SERVICES: ServiceItem[] = [
     title: "জ্ঞানভাণ্ডার",
     subtitle: "কৃষি তথ্য ভাণ্ডার",
     icon: "book",
-    colors: ["#7C3AED", "#7B1FA2"],
+    colors: ["#3D38D0", "#3D38D0"],
     route: "KnowledgeWiki",
   },
   {
@@ -206,7 +206,7 @@ const SERVICES: ServiceItem[] = [
     title: "মেন্টরশিপ",
     subtitle: "অভিজ্ঞদের কাছ থেকে শিখুন",
     icon: "user-check",
-    colors: ["#0D9488", "#0097A7"],
+    colors: ["#00BB77", "#39B1FE"],
     route: "Mentorship",
   },
   {
@@ -214,7 +214,7 @@ const SERVICES: ServiceItem[] = [
     title: "ফসল বিশ্বকোষ",
     subtitle: "সব ফসল সম্পর্কে জানুন",
     icon: "book-open",
-    colors: ["#65A30D", "#689F38"],
+    colors: ["#00BB77", "#00BB77"],
     route: "CropEncyclopedia",
   },
   {
@@ -222,7 +222,7 @@ const SERVICES: ServiceItem[] = [
     title: "ফার্ম ট্যুর",
     subtitle: "সফল খামার পরিদর্শন",
     icon: "navigation",
-    colors: ["#EA8A0C", "#F57C00"],
+    colors: ["#B25E09", "#B25E09"],
     route: "FarmTours",
   },
   {
@@ -230,7 +230,7 @@ const SERVICES: ServiceItem[] = [
     title: "দক্ষতা বিনিময়",
     subtitle: "জ্ঞান শেয়ার করুন",
     icon: "refresh-cw",
-    colors: ["#3F51B5", "#303F9F"],
+    colors: ["#3D38D0", "#3D38D0"],
     route: "SkillExchange",
   },
   {
@@ -238,7 +238,7 @@ const SERVICES: ServiceItem[] = [
     title: "কমিউনিটি স্ট্যাটস",
     subtitle: "রিয়েল-টাইম ডাটা",
     icon: "bar-chart",
-    colors: ["#475569", "#455A64"],
+    colors: ["#4A5568", "#4A5568"],
     route: "CommunityStats",
   },
   {
@@ -254,7 +254,7 @@ const SERVICES: ServiceItem[] = [
     title: "হেল্প সেন্টার",
     subtitle: "সহায়তা নিন",
     icon: "life-buoy",
-    colors: ["#DB2777", "#C2185B"],
+    colors: ["#FF4BB7", "#FF4BB7"],
     route: "HelpCenter",
   },
   {
@@ -262,7 +262,7 @@ const SERVICES: ServiceItem[] = [
     title: "কার্যকলাপ",
     subtitle: "সাম্প্রতিক কার্যকলাপ",
     icon: "activity",
-    colors: ["#673AB7", "#512DA8"],
+    colors: ["#3D38D0", "#512DA8"],
     route: "ActivityFeed",
   },
   {
@@ -270,9 +270,9 @@ const SERVICES: ServiceItem[] = [
     title: "QR স্ক্যানার",
     subtitle: "পণ্য ও বিক্রেতা যাচাই",
     icon: "maximize",
-    colors: ["#1E88E5", "#1D4ED8"],
+    colors: ["#1E88E5", "#3D38D0"],
     badge: "NEW",
-    badgeColor: "#2563EB",
+    badgeColor: "#2E96EF",
     route: "QRScanner",
   },
   {
@@ -288,9 +288,9 @@ const SERVICES: ServiceItem[] = [
     title: "পশু চিকিৎসা",
     subtitle: "ভেটেরিনারি সেবা",
     icon: "heart",
-    colors: ["#E53935", "#C62828"],
+    colors: ["#E53935", "#DA2F2F"],
     badge: "জরুরি",
-    badgeColor: "#D32F2F",
+    badgeColor: "#DA2F2F",
     route: "Veterinary",
   },
   {
@@ -308,7 +308,7 @@ const SERVICES: ServiceItem[] = [
     icon: "rss",
     colors: ["#FB8C00", "#EF6C00"],
     badge: "LIVE",
-    badgeColor: "#FF5722",
+    badgeColor: "#B25E09",
     route: "AgriNews",
   },
   {
@@ -316,7 +316,7 @@ const SERVICES: ServiceItem[] = [
     title: "মূল্য সতর্কতা",
     subtitle: "দাম পরিবর্তনের নোটিশ",
     icon: "bell",
-    colors: ["#43A047", "#2E7D32"],
+    colors: ["#43A047", "#2E96EF"],
     route: "PriceAlert",
   },
   {
@@ -348,9 +348,9 @@ const SERVICES: ServiceItem[] = [
     title: "স্বাস্থ্য সেবা",
     subtitle: "ডাক্তার খুঁজুন ও আলোচনা",
     icon: "plus-circle",
-    colors: ["#DC2626", "#991B1B"],
+    colors: ["#DA2F2F", "#DA2F2F"],
     badge: "NEW",
-    badgeColor: "#DC2626",
+    badgeColor: "#DA2F2F",
     route: "MedicalServices",
   },
   {
@@ -358,9 +358,9 @@ const SERVICES: ServiceItem[] = [
     title: "ভূমি সেবা",
     subtitle: "জমি সমস্যা ও সমাধান",
     icon: "map",
-    colors: ["#059669", "#047857"],
+    colors: ["#00875A", "#00875A"],
     badge: "NEW",
-    badgeColor: "#16A34A",
+    badgeColor: "#00BB77",
     route: "LandServices",
   },
   {
@@ -368,9 +368,9 @@ const SERVICES: ServiceItem[] = [
     title: "বর্জ্য ব্যবস্থাপনা",
     subtitle: "রিসাইক্লিং ও পরিবেশ",
     icon: "trash-2",
-    colors: ["#16A34A", "#15803D"],
+    colors: ["#00BB77", "#2E96EF"],
     badge: "NEW",
-    badgeColor: "#16A34A",
+    badgeColor: "#00BB77",
     route: "WasteManagement",
   },
   {
@@ -380,7 +380,7 @@ const SERVICES: ServiceItem[] = [
     icon: "droplet",
     colors: ["#0284C7", "#0369A1"],
     badge: "NEW",
-    badgeColor: "#2563EB",
+    badgeColor: "#2E96EF",
     route: "WaterServices",
   },
   {
@@ -388,9 +388,9 @@ const SERVICES: ServiceItem[] = [
     title: "বিদ্যুৎ সেবা",
     subtitle: "সোলার ও বৈদ্যুতিক সমস্যা",
     icon: "zap",
-    colors: ["#D97706", "#B45309"],
+    colors: ["#D97706", "#B25E09"],
     badge: "NEW",
-    badgeColor: "#EA8A0C",
+    badgeColor: "#B25E09",
     route: "ElectricityServices",
   },
 ];
@@ -439,7 +439,7 @@ export default function ServicesScreen() {
           <View
             style={[
               styles.badge,
-              { backgroundColor: service.badgeColor || "#DC2626" },
+              { backgroundColor: service.badgeColor || "#DA2F2F" },
             ]}
           >
             <ThemedText style={styles.badgeText}>{service.badge}</ThemedText>
@@ -451,7 +451,7 @@ export default function ServicesScreen() {
 
   return (
     <LinearGradient
-      colors={isDark ? ["#1a1a2e", "#16213e"] : ["#f8f9fa", "#e9ecef"]}
+      colors={isDark ? ["#202936", "#202936"] : ["#F3FAFF", "#e9ecef"]}
       style={styles.container}
     >
       <ScrollView
@@ -475,7 +475,7 @@ export default function ServicesScreen() {
 
         <View style={styles.categorySeparator}>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#1a1a2e" : "#f8f9fa" }]}>
+          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
             কমিউনিটি
           </ThemedText>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
@@ -487,7 +487,7 @@ export default function ServicesScreen() {
 
         <View style={styles.categorySeparator}>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#1a1a2e" : "#f8f9fa" }]}>
+          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
             শিক্ষা ও জ্ঞান
           </ThemedText>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
@@ -499,7 +499,7 @@ export default function ServicesScreen() {
 
         <View style={styles.categorySeparator}>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#1a1a2e" : "#f8f9fa" }]}>
+          <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
             অন্যান্য সেবা
           </ThemedText>
           <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: 4,
   },
   cardSubtitle: {

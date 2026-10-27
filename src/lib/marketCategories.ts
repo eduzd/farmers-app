@@ -6,19 +6,19 @@ export type MarketCategory = { slug: string; nameEn: string; nameBn: string; ico
 
 /** Used only until the server answers, or if it can't be reached. Same list the server seeds. */
 export const FALLBACK_CATEGORIES: MarketCategory[] = [
-  ["vegetables", "Vegetables", "সবজি", "feather", "#16A34A"],
-  ["fruits", "Fruits", "ফল", "sun", "#EA580C"],
-  ["grains", "Grains", "শস্য", "layers", "#CA8A04"],
-  ["livestock", "Livestock", "গবাদি পশু", "github", "#92400E"],
-  ["seeds", "Seeds", "বীজ", "sun", "#65A30D"],
-  ["fertilizer", "Fertilizer", "সার", "droplet", "#0891B2"],
-  ["equipment", "Equipment", "যন্ত্রপাতি", "tool", "#475569"],
-  ["feed", "Feed", "খাদ্য", "package", "#B45309"],
-  ["medicine", "Medicine", "ওষুধ", "heart", "#DC2626"],
-  ["organic", "Organic", "অর্গানিক", "zap", "#15803D"],
-  ["dairy", "Dairy", "দুগ্ধ", "coffee", "#2563EB"],
-  ["fish", "Fish", "মাছ", "anchor", "#0E7490"],
-  ["other", "Other", "অন্যান্য", "grid", "#64748B"],
+  ["vegetables", "Vegetables", "সবজি", "feather", "#00BB77"],
+  ["fruits", "Fruits", "ফল", "sun", "#B25E09"],
+  ["grains", "Grains", "শস্য", "layers", "#B25E09"],
+  ["livestock", "Livestock", "গবাদি পশু", "github", "#B25E09"],
+  ["seeds", "Seeds", "বীজ", "sun", "#00BB77"],
+  ["fertilizer", "Fertilizer", "সার", "droplet", "#39B1FE"],
+  ["equipment", "Equipment", "যন্ত্রপাতি", "tool", "#4A5568"],
+  ["feed", "Feed", "খাদ্য", "package", "#B25E09"],
+  ["medicine", "Medicine", "ওষুধ", "heart", "#DA2F2F"],
+  ["organic", "Organic", "অর্গানিক", "zap", "#2E96EF"],
+  ["dairy", "Dairy", "দুগ্ধ", "coffee", "#2E96EF"],
+  ["fish", "Fish", "মাছ", "anchor", "#1F86DB"],
+  ["other", "Other", "অন্যান্য", "grid", "#7A8CA3"],
 ].map(([slug, nameEn, nameBn, icon, color]) => ({ slug, nameEn, nameBn, icon, color }));
 
 let cache: MarketCategory[] | null = null;

@@ -4,7 +4,7 @@ import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, RefreshContro
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   meta: { flexDirection: "row", alignItems: "center", gap: 4 },
   card: { flex: 1, maxWidth: "48.5%", borderRadius: 14, borderWidth: 1, overflow: "hidden" },
   cardImg: { width: "100%", aspectRatio: 1 },
-  outTag: { position: "absolute", top: 8, left: 8, backgroundColor: "#B91C1C", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  outTag: { position: "absolute", top: 8, left: 8, backgroundColor: "#DA2F2F", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   outText: { color: "#fff", fontSize: 11, fontWeight: "700" },
   empty: { alignItems: "center", paddingTop: 40, paddingHorizontal: 24 },
   retry: { marginTop: 12, borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8 },

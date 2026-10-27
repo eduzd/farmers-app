@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View, Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import {
@@ -113,9 +113,9 @@ function ProductRow({ p, cats, onPress, onPreview, previewBusy }: { p: any; cats
           </Text>
           <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
             <Text style={{ color: theme.text, fontWeight: "800", fontSize: 13 }}>{taka(p.price)}/{p.unit || "kg"}</Text>
-            <Pill label={p.quantity > 0 ? `${L("Stock", "স্টক")} ${p.quantity}` : L("Out of stock", "স্টক শেষ")} color={p.quantity > 0 ? "#047857" : "#B91C1C"} />
-            {p.hidden ? <Pill label={L("Hidden", "লুকানো")} color="#B45309" /> : null}
-            {p.orders ? <Pill label={`${p.orders} ${L("orders", "অর্ডার")}`} color="#1D4ED8" /> : null}
+            <Pill label={p.quantity > 0 ? `${L("Stock", "স্টক")} ${p.quantity}` : L("Out of stock", "স্টক শেষ")} color={p.quantity > 0 ? "#00875A" : "#DA2F2F"} />
+            {p.hidden ? <Pill label={L("Hidden", "লুকানো")} color="#B25E09" /> : null}
+            {p.orders ? <Pill label={`${p.orders} ${L("orders", "অর্ডার")}`} color="#3D38D0" /> : null}
           </View>
         </View>
         {onPreview ? <PreviewIconBtn testID={`product-preview-${p.id}`} onPress={onPreview} busy={previewBusy} label={L("View as buyer", "ক্রেতার চোখে দেখুন")} /> : null}
@@ -161,7 +161,7 @@ function ProductsList() {
       {pv.error ? <ErrorBox text={pv.error} /> : null}
       {list.loading && !list.data ? <Loading /> : null}
       {list.data && !list.data.length ? <Empty icon="package" text={dq || cat || status ? L("No products match", "কোনো পণ্য মিলেনি") : L("No products yet", "এখনও কোনো পণ্য নেই")} /> : null}
-      {list.data?.length ? <Text style={{ color: "#64748B", fontSize: 12, marginBottom: 8 }}>{list.data.length} {L("products", "টি পণ্য")}</Text> : null}
+      {list.data?.length ? <Text style={{ color: "#7A8CA3", fontSize: 12, marginBottom: 8 }}>{list.data.length} {L("products", "টি পণ্য")}</Text> : null}
       {(list.data || []).map((p) => (
         <ProductRow key={p.id} p={p} cats={cats.data} onPress={() => nav.push({ name: "product", id: p.id })} onPreview={() => pv.openProduct(p.id)} previewBusy={pv.busy === `p-${p.id}`} />
       ))}
@@ -205,9 +205,9 @@ function ShopsList() {
               <Text style={{ color: theme.text, fontWeight: "700", fontSize: 14.5 }} numberOfLines={1}>{s.name}</Text>
               <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>{s.companyShop ? L("Company shop", "কোম্পানির দোকান") : s.ownerName || s.ownerEmail}{s.location ? ` · ${s.location}` : ""}</Text>
               <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
-                <Pill label={statusLabel(s.status, L)} color={STATUS_COLOR[s.status] || "#64748B"} />
-                <Pill label={`${s.products} ${L("products", "পণ্য")}`} color="#0E7490" />
-                <Pill label={`${s.orders} ${L("orders", "অর্ডার")}`} color="#1D4ED8" />
+                <Pill label={statusLabel(s.status, L)} color={STATUS_COLOR[s.status] || "#7A8CA3"} />
+                <Pill label={`${s.products} ${L("products", "পণ্য")}`} color="#1F86DB" />
+                <Pill label={`${s.orders} ${L("orders", "অর্ডার")}`} color="#3D38D0" />
               </View>
             </View>
             <View style={{ alignItems: "flex-end", gap: 6 }}>
@@ -264,8 +264,8 @@ function CategoriesList() {
             <Pressable style={{ flex: 1, gap: 2 }} onPress={() => nav.push({ name: "categoryForm", id: c.id })}>
               <Text style={{ color: theme.text, fontWeight: "700", fontSize: 14.5 }} numberOfLines={1}>{c.nameEn} · {c.nameBn}</Text>
               <View style={{ flexDirection: "row", gap: 6 }}>
-                <Pill label={`${c.productCount ?? 0} ${L("products", "পণ্য")}`} color="#0E7490" />
-                {!c.active ? <Pill label={L("Hidden", "লুকানো")} color="#B45309" /> : null}
+                <Pill label={`${c.productCount ?? 0} ${L("products", "পণ্য")}`} color="#1F86DB" />
+                {!c.active ? <Pill label={L("Hidden", "লুকানো")} color="#B25E09" /> : null}
               </View>
             </Pressable>
             <Pressable testID={`cat-up-${c.slug}`} disabled={i === 0 || !!busy} onPress={() => move(i, -1)} hitSlop={6} style={{ padding: 6, opacity: i === 0 ? 0.3 : 1 }}>
@@ -285,7 +285,7 @@ function CategoriesList() {
 }
 
 const ICONS = ["grid", "feather", "sun", "layers", "droplet", "tool", "package", "heart", "zap", "coffee", "anchor", "github", "truck", "shopping-bag", "box", "activity", "thermometer", "umbrella", "wind", "star"];
-const COLORS = ["#16A34A", "#15803D", "#65A30D", "#CA8A04", "#EA580C", "#DC2626", "#DB2777", "#7C3AED", "#2563EB", "#0891B2", "#0E7490", "#92400E", "#475569"];
+const COLORS = ["#00BB77", "#2E96EF", "#00BB77", "#B25E09", "#B25E09", "#DA2F2F", "#FF4BB7", "#3D38D0", "#2E96EF", "#39B1FE", "#1F86DB", "#B25E09", "#4A5568"];
 
 export function CategoryForm({ id }: { id?: string }) {
   const nav = useAdminNav();
@@ -293,7 +293,7 @@ export function CategoryForm({ id }: { id?: string }) {
   const L = useL();
   const cats = useCategories();
   const cur = cats.data?.find((c) => c.id === id);
-  const [f, setF] = useState({ nameEn: "", nameBn: "", icon: "grid", color: "#16A34A", active: true });
+  const [f, setF] = useState({ nameEn: "", nameBn: "", icon: "grid", color: "#00BB77", active: true });
   const [moveTo, setMoveTo] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -339,7 +339,7 @@ export function CategoryForm({ id }: { id?: string }) {
         </View>
         <View style={[st.row, { marginBottom: 4 }]}>
           <Chip label={L("Shown in marketplace", "মার্কেটপ্লেসে দেখাবে")} on={f.active} onPress={() => setF({ ...f, active: true })} />
-          <Chip label={L("Hidden", "লুকানো")} on={!f.active} color="#B45309" onPress={() => setF({ ...f, active: false })} />
+          <Chip label={L("Hidden", "লুকানো")} on={!f.active} color="#B25E09" onPress={() => setF({ ...f, active: false })} />
         </View>
       </Card>
       <Btn testID="save-category" icon="check" label={L("Save", "সংরক্ষণ")} busy={busy} disabled={!f.nameEn.trim()} onPress={save} />
@@ -398,9 +398,9 @@ export function ProductDetail({ id }: { id: string }) {
             <Text style={{ color: theme.text, fontWeight: "800", fontSize: 17 }}>{d.name}</Text>
             <Text style={{ color: theme.text, fontWeight: "700" }}>{taka(d.price)} / {d.unit || "kg"}</Text>
             <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
-              <Pill label={d.hidden ? L("Hidden", "লুকানো") : L("Visible", "দেখা যাচ্ছে")} color={d.hidden ? "#B45309" : "#047857"} />
-              <Pill label={catName(cats.data, d.category, L)} color="#0E7490" />
-              {d.featured ? <Pill label={L("Featured", "ফিচার্ড")} color="#7C3AED" /> : null}
+              <Pill label={d.hidden ? L("Hidden", "লুকানো") : L("Visible", "দেখা যাচ্ছে")} color={d.hidden ? "#B25E09" : "#00875A"} />
+              <Pill label={catName(cats.data, d.category, L)} color="#1F86DB" />
+              {d.featured ? <Pill label={L("Featured", "ফিচার্ড")} color="#3D38D0" /> : null}
             </View>
           </View>
         </View>
@@ -411,8 +411,8 @@ export function ProductDetail({ id }: { id: string }) {
         )}
       </Card>
       <View style={[st.grid, { marginBottom: 10 }]}>
-        <Stat label={L("In stock", "স্টকে")} value={d.quantity} icon="box" color={d.quantity > 0 ? "#047857" : "#B91C1C"} />
-        <Stat label={L("Sold", "বিক্রি")} value={d.sold || 0} icon="trending-up" color="#1D4ED8" />
+        <Stat label={L("In stock", "স্টকে")} value={d.quantity} icon="box" color={d.quantity > 0 ? "#00875A" : "#DA2F2F"} />
+        <Stat label={L("Sold", "বিক্রি")} value={d.sold || 0} icon="trending-up" color="#3D38D0" />
       </View>
       <Card>
         <KV k={L("Shop", "দোকান")} v={d.storeName || L("No shop", "দোকান নেই")} testID="product-open-shop" onPress={d.storeId ? () => nav.push({ name: "store", id: d.storeId }) : undefined} />
@@ -463,7 +463,7 @@ export function OrderRow({ o, productId }: { o: any; productId?: string }) {
         </View>
         <View style={{ alignItems: "flex-end", gap: 4 }}>
           <Text style={{ color: theme.text, fontWeight: "800" }}>{taka(o.total)}</Text>
-          <Pill label={statusLabel(o.status, L)} color={STATUS_COLOR[o.status] || "#64748B"} />
+          <Pill label={statusLabel(o.status, L)} color={STATUS_COLOR[o.status] || "#7A8CA3"} />
         </View>
       </View>
     </Card>
@@ -527,7 +527,7 @@ export function StoreDetail({ id }: { id: string }) {
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={{ color: theme.text, fontWeight: "800", fontSize: 17 }}>{d.name}</Text>
             {d.tagline ? <Text style={{ color: theme.textSecondary, fontSize: 13 }}>{d.tagline}</Text> : null}
-            <Pill label={statusLabel(d.status, L)} color={STATUS_COLOR[d.status] || "#64748B"} />
+            <Pill label={statusLabel(d.status, L)} color={STATUS_COLOR[d.status] || "#7A8CA3"} />
           </View>
         </View>
         <View style={{ marginTop: 8 }}>
@@ -549,10 +549,10 @@ export function StoreDetail({ id }: { id: string }) {
         </View>
       </Card>
       <View style={[st.grid, { marginBottom: 10 }]}>
-        <Stat label={L("Products", "পণ্য")} value={d.products.length} icon="package" color="#0E7490" onPress={() => setTab("products")} />
-        <Stat label={L("Orders", "অর্ডার")} value={d.orders.length} icon="shopping-bag" color="#1D4ED8" onPress={() => setTab("orders")} />
-        <Stat label={L("Customers", "ক্রেতা")} value={d.customers.length} icon="users" color="#7C3AED" onPress={() => setTab("customers")} />
-        <Stat label={L("Revenue", "আয়")} value={taka(d.revenue)} icon="dollar-sign" color="#047857" />
+        <Stat label={L("Products", "পণ্য")} value={d.products.length} icon="package" color="#1F86DB" onPress={() => setTab("products")} />
+        <Stat label={L("Orders", "অর্ডার")} value={d.orders.length} icon="shopping-bag" color="#3D38D0" onPress={() => setTab("orders")} />
+        <Stat label={L("Customers", "ক্রেতা")} value={d.customers.length} icon="users" color="#3D38D0" onPress={() => setTab("customers")} />
+        <Stat label={L("Revenue", "আয়")} value={taka(d.revenue)} icon="dollar-sign" color="#00875A" />
       </View>
       <ChipRow>
         <Chip testID="store-tab-products" label={`${L("Products", "পণ্য")} (${d.products.length})`} on={tab === "products"} onPress={() => setTab("products")} />

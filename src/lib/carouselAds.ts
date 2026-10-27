@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Linking } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { apiGet, mediaUrl } from "@/lib/api";
 import type { AdCard } from "@/components/AdCarousel";
 
@@ -130,7 +130,7 @@ export function adsToCards(ads: CarouselAd[], bn: boolean, navigation: any): AdC
       title: pick(a.titleEn, a.titleBn),
       subtitle: pick(a.subtitleEn, a.subtitleBn),
       cta: opens ? pick(a.ctaEn, a.ctaBn) || (bn ? "দেখুন" : "Open") : pick(a.ctaEn, a.ctaBn),
-      colors: [HEX.test(a.color1) ? a.color1 : "#16A34A", HEX.test(a.color2) ? a.color2 : "#0E7490"],
+      colors: [HEX.test(a.color1) ? a.color1 : "#00BB77", HEX.test(a.color2) ? a.color2 : "#1F86DB"],
       image: a.image ? mediaUrl(a.image) : undefined,
       onPress: opens ? () => openAd(a, navigation) : undefined,
     };

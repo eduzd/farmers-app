@@ -8,7 +8,7 @@ import {
   Linking,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -115,11 +115,11 @@ export default function GovernmentSchemesScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "#2FA36B";
+        return "#2E96EF";
       case "upcoming":
-        return "#EA8A0C";
+        return "#B25E09";
       case "closed":
-        return "#DC2626";
+        return "#DA2F2F";
       default:
         return theme.textSecondary;
     }
@@ -171,7 +171,7 @@ export default function GovernmentSchemesScreen() {
           <ThemedText style={[styles.sectionLabel, { color: theme.text }]}>সুবিধাসমূহ:</ThemedText>
           {item.benefits.map((benefit, i) => (
             <View key={i} style={styles.benefitItem}>
-              <Feather name="check-circle" size={14} color="#2FA36B" />
+              <Feather name="check-circle" size={14} color="#2E96EF" />
               <ThemedText style={[styles.benefitText, { color: theme.text }]}>{benefit}</ThemedText>
             </View>
           ))}
@@ -189,8 +189,8 @@ export default function GovernmentSchemesScreen() {
 
         {item.deadline ? (
           <View style={styles.deadlineRow}>
-            <Feather name="clock" size={14} color="#EA8A0C" />
-            <ThemedText style={[styles.deadline, { color: "#EA8A0C" }]}>
+            <Feather name="clock" size={14} color="#B25E09" />
+            <ThemedText style={[styles.deadline, { color: "#B25E09" }]}>
               শেষ তারিখ: {item.deadline}
             </ThemedText>
           </View>

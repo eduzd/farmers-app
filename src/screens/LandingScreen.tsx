@@ -2,7 +2,7 @@ import React from "react";
 import { View, StyleSheet, ImageBackground, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Haptics from "expo-haptics";
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   langBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: BorderRadius.full },
   langBtnActive: { backgroundColor: "#FFFFFF" },
   langText: { color: "rgba(255,255,255,0.85)", fontSize: 12, lineHeight: 16, fontFamily: FontFamily.semibold },
-  langTextActive: { color: "#0F1A14" },
+  langTextActive: { color: "#202936" },
   spacer: { flex: 1, minHeight: 120 },
   headline: {
     color: "#FFFFFF",
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.xl,
     paddingRight: 8,
   },
-  primaryText: { color: "#0F1A14", fontSize: 16, lineHeight: 22, fontFamily: FontFamily.bold },
+  primaryText: { color: "#202936", fontSize: 16, lineHeight: 22, fontFamily: FontFamily.bold },
   primaryArrow: {
     width: 40,
     height: 40,

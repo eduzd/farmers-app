@@ -41,6 +41,8 @@ import { tr, useTr } from "@/lib/tr";
 import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
 import { DIVISIONS, divisionOf, divisionLabel } from "@/lib/bdLocations";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { CountBadge } from "@/components/CountBadge";
+import { useUnreadCounts } from "@/lib/liveStatus";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_WIDTH = (SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md) / 2;
 
@@ -254,14 +256,6 @@ export default function MarketScreen() {
   useEffect(() => {
     useFavoritesStore.getState().load();
   }, []);
-  const SORTS = [
-    { id: "newest", icon: "clock", label: tr("Newest") },
-    { id: "nearby", icon: "navigation", label: tr("Nearby") },
-    { id: "price_asc", icon: "arrow-up", label: tr("Price: low to high") },
-    { id: "price_desc", icon: "arrow-down", label: tr("Price: high to low") },
-    { id: "rating", icon: "star", label: tr("Top rated") },
-    { id: "saved", icon: "heart", label: tr("Saved") },
-  ] as const;
 
   const filteredProducts = useMemo(() => {
     let result = products;
@@ -313,12 +307,14 @@ export default function MarketScreen() {
     setSelectedCategory(categoryId);
   }, []);
 
+  const unreadNotifications = useUnreadCounts((st) => st.notifications);
+
   const handleCartPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     navigation.navigate("Cart");
   }, [navigation]);
 
-  // One title only: the app header shows "Marketplace"; Sell and Cart sit on the right of it.
+  // One title only: the app header shows "Marketplace"; Notifications and Cart sit on the right of it.
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -326,12 +322,17 @@ export default function MarketScreen() {
           {loggedIn ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t("market.sell")}
-              style={[styles.sellButton, { backgroundColor: theme.primary }]}
-              onPress={() => setSellForm({ open: true, item: null })}
+              accessibilityLabel={
+                unreadNotifications > 0
+                  ? language === "bn" ? `নোটিফিকেশন, ${unreadNotifications}টি নতুন` : `Notifications, ${unreadNotifications} unread`
+                  : language === "bn" ? "নোটিফিকেশন" : "Notifications"
+              }
+              testID="market-bell"
+              style={[styles.cartHeaderButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
+              onPress={() => navigation.navigate("Notifications" as any)}
             >
-              <AppIcon name="plus" size={16} color="#FFFFFF" />
-              <ThemedText style={{ color: "#FFFFFF", fontWeight: "600", fontSize: 14 }}>{t("market.sell")}</ThemedText>
+              <AppIcon name="bell" size={20} color={theme.text} />
+              <CountBadge count={unreadNotifications} style={{ top: -2, right: -2 }} testID="market-bell-badge" />
             </Pressable>
           ) : null}
           <Pressable
@@ -350,7 +351,7 @@ export default function MarketScreen() {
         </View>
       ),
     });
-  }, [navigation, loggedIn, theme, cartCount, language, handleCartPress, t, tr]);
+  }, [navigation, loggedIn, theme, cartCount, unreadNotifications, language, handleCartPress, t, tr]);
 
   const handleSeeAllShops = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -596,27 +597,6 @@ export default function MarketScreen() {
             </Pressable>
           )}
         />
-        <FlatList
-          horizontal
-          data={SORTS as any}
-          keyExtractor={(item: any) => item.id}
-          showsHorizontalScrollIndicator={false}
-          style={styles.chipRowList}
-          contentContainerStyle={[styles.categoriesContainer, styles.sortRow]}
-          renderItem={({ item }: any) => {
-            const active = sortBy === item.id;
-            return (
-              <Pressable
-                style={[styles.categoryChip, { backgroundColor: active ? theme.primarySoft || theme.card : theme.card, borderColor: active ? theme.primary : theme.cardBorder }]}
-                onPress={() => setSortBy(item.id)}
-                accessibilityLabel={item.label}
-              >
-                <AppIcon name={item.icon} size={13} color={active ? theme.primary : theme.textSecondary} />
-                <ThemedText style={[styles.categoryText, { color: active ? theme.primary : theme.textSecondary }]}>{item.label}</ThemedText>
-              </Pressable>
-            );
-          }}
-        />
       </View>
 
       <FlatList
@@ -641,62 +621,6 @@ export default function MarketScreen() {
         }
         ListHeaderComponent={
           <View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.quickFeaturesRow}
-            >
-              <Pressable
-                style={[styles.quickFeatureBtn, { backgroundColor: "#DA2F2F" }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  navigation.navigate("FlashSale" as any);
-                }}
-              >
-                <AppIcon name="zap" size={18} color="#FFFFFF" />
-                <ThemedText style={styles.quickFeatureText}>{isBn ? "ফ্ল্যাশ সেল" : "Flash Sale"}</ThemedText>
-              </Pressable>
-              <Pressable
-                style={[styles.quickFeatureBtn, { backgroundColor: theme.primary }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  navigation.navigate("Auction" as any);
-                }}
-              >
-                <AppIcon name="activity" size={18} color="#FFFFFF" />
-                <ThemedText style={styles.quickFeatureText}>{isBn ? "নিলাম" : "Auction"}</ThemedText>
-              </Pressable>
-              <Pressable
-                style={[styles.quickFeatureBtn, { backgroundColor: "#202936" }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  navigation.navigate("BulkOrder" as any);
-                }}
-              >
-                <AppIcon name="package" size={18} color="#FFFFFF" />
-                <ThemedText style={styles.quickFeatureText}>{isBn ? "বাল্ক অর্ডার" : "Bulk Order"}</ThemedText>
-              </Pressable>
-              <Pressable
-                style={[styles.quickFeatureBtn, { backgroundColor: "#3D38D0" }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  navigation.navigate("MarketPrice" as any);
-                }}
-              >
-                <AppIcon name="trending-up" size={18} color="#FFFFFF" />
-                <ThemedText style={styles.quickFeatureText}>{isBn ? "বাজার দর" : "Market Price"}</ThemedText>
-              </Pressable>
-              <Pressable
-                style={[styles.quickFeatureBtn, { backgroundColor: "#37B1FF" }]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  navigation.navigate("ProductCompare" as any);
-                }}
-              >
-                <AppIcon name="columns" size={18} color="#FFFFFF" />
-                <ThemedText style={styles.quickFeatureText}>{isBn ? "তুলনা" : "Compare"}</ThemedText>
-              </Pressable>
-            </ScrollView>
 
             {recentItems.length > 0 && !searchQuery ? (
               <View style={styles.recentSection}>
@@ -958,7 +882,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     textAlignVertical: "center",
   },
   // Two chip rows (categories, then sort) with clear space between and around them.
@@ -994,7 +918,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontSize: 13,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   productsContainer: {
     paddingHorizontal: Spacing.lg,
@@ -1065,7 +989,7 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: Spacing.xs,
     lineHeight: 20,
   },
@@ -1145,7 +1069,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   cartFab: {
     position: "absolute",
@@ -1175,7 +1099,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   shopsContainer: {
     gap: Spacing.md,

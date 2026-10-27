@@ -3,7 +3,7 @@ import { View, StyleSheet, Pressable, Modal, TextInput, Text, ScrollView, FlatLi
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeaderButton, useHeaderHeight } from '@react-navigation/elements';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -338,17 +338,17 @@ export function BepariCalculatorScreen() {
         <meta charset="utf-8">
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { color: #16A34A; text-align: center; margin-bottom: 5px; }
+          h1 { color: #00BB77; text-align: center; margin-bottom: 5px; }
           .date { text-align: center; color: #666; margin-bottom: 20px; }
           .title { text-align: center; font-size: 18px; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
           th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-          th { background-color: #16A34A; color: white; }
-          .result-box { background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 20px; }
+          th { background-color: #00BB77; color: white; }
+          .result-box { background: #F3FAFF; padding: 15px; border-radius: 8px; margin-top: 20px; }
           .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
           .result-label { color: #666; }
           .result-value { font-weight: bold; color: #333; }
-          .total { font-size: 24px; color: #16A34A; text-align: center; margin-top: 20px; }
+          .total { font-size: 24px; color: #00BB77; text-align: center; margin-top: 20px; }
           .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
         </style>
       </head>

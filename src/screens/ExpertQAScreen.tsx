@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 
@@ -271,7 +271,7 @@ export default function ExpertQAScreen() {
       {item.answer && item.expert ? (
         <View style={[styles.answerSection, { backgroundColor: theme.backgroundRoot }]}>
           <View style={styles.answerHeader}>
-            <View style={[styles.expertAvatarSmall, { backgroundColor: "#2FA36B" }]}>
+            <View style={[styles.expertAvatarSmall, { backgroundColor: "#2E96EF" }]}>
               <ThemedText style={styles.expertInitialsSmall}>
                 {item.expert.initials}
               </ThemedText>
@@ -555,12 +555,12 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#DC2626",
+    backgroundColor: "#DA2F2F",
   },
   liveLabel: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#DC2626",
+    color: "#DA2F2F",
   },
   liveScroll: {
     gap: Spacing.md,
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#DC2626",
+    backgroundColor: "#DA2F2F",
     alignItems: "center",
     justifyContent: "center",
   },

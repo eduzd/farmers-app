@@ -10,7 +10,7 @@ import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollV
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -347,7 +347,7 @@ export default function SellerOnboardingScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <LinearGradient
-        colors={isDark ? ["#1F2123", "#1F2123"] : ["#16A34A15", "#FAFAF9"]}
+        colors={isDark ? ["#1F2123", "#1F2123"] : ["#00BB7715", "#FAFAF9"]}
         style={[styles.header, { paddingTop: insets.top + Spacing.md }]}
       >
         <Pressable style={styles.backButton} onPress={handleBack}>
@@ -378,7 +378,7 @@ export default function SellerOnboardingScreen() {
           style={[
             styles.nextButton,
             {
-              backgroundColor: isStepValid() ? "#16A34A" : theme.cardBorder,
+              backgroundColor: isStepValid() ? "#00BB77" : theme.cardBorder,
             },
           ]}
           onPress={handleNext}
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
   },
   stepNumber: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   stepLine: {
     width: 60,
@@ -459,21 +459,21 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   input: {
     borderWidth: 1,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   textArea: {
     borderWidth: 1,
     borderRadius: BorderRadius.lg,
     padding: Spacing.md,
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     minHeight: 100,
   },
   categoryGrid: {
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   categoryLabel: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
     textAlign: "center",
   },
   footer: {
@@ -511,6 +511,6 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

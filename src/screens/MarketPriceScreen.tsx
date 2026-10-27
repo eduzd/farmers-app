@@ -7,7 +7,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInUp } from "react-native-reanimated";
 
@@ -52,7 +52,7 @@ function MiniChart({ data, trend, theme }: { data: number[]; trend: string; them
     .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
     .join(" ");
 
-  const color = trend === "up" ? "#2FA36B" : trend === "down" ? "#DC2626" : theme.textSecondary;
+  const color = trend === "up" ? "#2E96EF" : trend === "down" ? "#DA2F2F" : theme.textSecondary;
 
   return (
     <View style={{ width: chartWidth, height: chartHeight }}>
@@ -103,7 +103,7 @@ export default function MarketPriceScreen() {
   const renderPriceCard = (item: PriceItem, index: number) => {
     const changePercent = getChangePercentage(item.currentPrice, item.previousPrice);
     const trendColor =
-      item.trend === "up" ? "#2FA36B" : item.trend === "down" ? "#DC2626" : theme.textSecondary;
+      item.trend === "up" ? "#2E96EF" : item.trend === "down" ? "#DA2F2F" : theme.textSecondary;
 
     return (
       <Animated.View
@@ -193,10 +193,10 @@ export default function MarketPriceScreen() {
         </ThemedText>
         <View style={styles.summaryStats}>
           <View style={styles.summaryStat}>
-            <View style={[styles.summaryIcon, { backgroundColor: "#2FA36B15" }]}>
-              <Feather name="trending-up" size={18} color="#2FA36B" />
+            <View style={[styles.summaryIcon, { backgroundColor: "#2E96EF15" }]}>
+              <Feather name="trending-up" size={18} color="#2E96EF" />
             </View>
-            <ThemedText style={[styles.summaryValue, { color: "#2FA36B" }]}>
+            <ThemedText style={[styles.summaryValue, { color: "#2E96EF" }]}>
               ৫টি
             </ThemedText>
             <ThemedText style={[styles.summaryLabel, { color: theme.textSecondary }]}>
@@ -205,10 +205,10 @@ export default function MarketPriceScreen() {
           </View>
 
           <View style={styles.summaryStat}>
-            <View style={[styles.summaryIcon, { backgroundColor: "#DC262615" }]}>
-              <Feather name="trending-down" size={18} color="#DC2626" />
+            <View style={[styles.summaryIcon, { backgroundColor: "#DA2F2F15" }]}>
+              <Feather name="trending-down" size={18} color="#DA2F2F" />
             </View>
-            <ThemedText style={[styles.summaryValue, { color: "#DC2626" }]}>
+            <ThemedText style={[styles.summaryValue, { color: "#DA2F2F" }]}>
               ২টি
             </ThemedText>
             <ThemedText style={[styles.summaryLabel, { color: theme.textSecondary }]}>

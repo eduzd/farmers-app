@@ -1,6 +1,6 @@
 import React, { useLayoutEffect } from "react";
 import { Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useNavigation } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/hooks/useTheme";

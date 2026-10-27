@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation, useIsFocused } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
@@ -396,7 +396,7 @@ export default function CommunityScreen() {
       icon: "heart",
       title: isBn ? "কল্যাণ সমিতি" : "Welfare Association",
       subtitle: isBn ? "সদস্য হন, সুবিধা পান" : "Join and get member benefits",
-      colors: ["#14583A", "#2FA36B"],
+      colors: ["#202936", "#2E96EF"],
       onPress: () => navigation.navigate("WelfareAssociation"),
     },
     {
@@ -404,7 +404,7 @@ export default function CommunityScreen() {
       icon: "globe",
       title: isBn ? "আন্তর্জাতিক মৎস্য সম্মেলন" : "International Fish Summit",
       subtitle: isBn ? "প্রদর্শনী, বক্তা ও নিবন্ধন" : "Expo, speakers and registration",
-      colors: ["#1D4ED8", "#0D9488"],
+      colors: ["#3D38D0", "#00BB77"],
       onPress: () => navigation.navigate("InternationalFishSummit"),
     },
     {
@@ -412,7 +412,7 @@ export default function CommunityScreen() {
       icon: "calendar",
       title: isBn ? "ইভেন্ট ক্যালেন্ডার" : "Events calendar",
       subtitle: isBn ? "কৃষি মেলা ও প্রশিক্ষণ" : "Fairs, trainings and meetups",
-      colors: ["#B45309", "#E3A008"],
+      colors: ["#B25E09", "#E3A008"],
       onPress: () => navigation.navigate("EventsCalendar"),
     },
   ];
@@ -566,7 +566,7 @@ export default function CommunityScreen() {
               {f.cta === undefined || f.cta ? (
                 <View style={styles.featureCta}>
                   <ThemedText style={styles.featureCtaText} numberOfLines={1}>{f.cta || (isBn ? "দেখুন" : "Open")}</ThemedText>
-                  {f.onPress ? <Feather name="arrow-right" size={14} color="#0F1A14" /> : null}
+                  {f.onPress ? <Feather name="arrow-right" size={14} color="#202936" /> : null}
                 </View>
               ) : null}
             </LinearGradient>
@@ -1084,7 +1084,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  featureCtaText: { color: "#0F1A14", fontSize: 12, lineHeight: 16, fontFamily: FontFamily.bold },
+  featureCtaText: { color: "#202936", fontSize: 12, lineHeight: 16, fontFamily: FontFamily.bold },
   featureImage: {
     position: "absolute",
     right: Spacing.lg,

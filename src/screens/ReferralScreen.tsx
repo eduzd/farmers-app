@@ -10,7 +10,7 @@ import {
   FlatList,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
@@ -108,7 +108,7 @@ export default function ReferralScreen() {
             {new Date(item.referredAt).toLocaleDateString(isBn ? "bn-BD" : "en-US")}
           </ThemedText>
         </View>
-        <View style={[styles.pointsBadge, { backgroundColor: item.status === "completed" ? "#2FA36B" : theme.primary }]}>
+        <View style={[styles.pointsBadge, { backgroundColor: item.status === "completed" ? "#2E96EF" : theme.primary }]}>
           <ThemedText style={styles.pointsBadgeText}>
             +{item.pointsEarned}
           </ThemedText>
@@ -160,7 +160,7 @@ export default function ReferralScreen() {
       >
         <Animated.View entering={FadeIn}>
           <LinearGradient
-            colors={[theme.primary, "#7C3AED"]}
+            colors={[theme.primary, "#3D38D0"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroCard}
@@ -348,7 +348,7 @@ export default function ReferralScreen() {
                       </ThemedText>
                     </View>
                     {isUnlocked ? (
-                      <Feather name="check-circle" size={20} color="#2FA36B" />
+                      <Feather name="check-circle" size={20} color="#2E96EF" />
                     ) : (
                       <Feather name="lock" size={20} color={theme.textSecondary} />
                     )}
@@ -408,13 +408,13 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 24,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
     marginBottom: 4,
   },
   heroSubtitle: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     color: "rgba(255,255,255,0.8)",
   },
   heroStats: {
@@ -425,12 +425,12 @@ const styles = StyleSheet.create({
   },
   heroStatsValue: {
     fontSize: 28,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   heroStatsLabel: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     color: "rgba(255,255,255,0.8)",
   },
   codeContainer: {
@@ -446,13 +446,13 @@ const styles = StyleSheet.create({
   },
   codeLabel: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     color: "rgba(255,255,255,0.7)",
     marginBottom: 4,
   },
   codeText: {
     fontSize: 24,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
     letterSpacing: 2,
   },
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   tierBadgeText: {
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   progressContainer: {
     flexDirection: "row",
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     color: "#FFF",
   },
   tabContainer: {
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   howItWorks: {
     borderRadius: BorderRadius.lg,
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: Spacing.md,
   },
   stepItem: {
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   },
   stepNumberText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   stepIcon: {
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   stepText: {
     flex: 1,
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   shareButton: {
     flexDirection: "row",
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   },
   shareButtonText: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   referralsSection: {
@@ -599,11 +599,11 @@ const styles = StyleSheet.create({
   },
   referralName: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   referralDate: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   pointsBadge: {
     paddingHorizontal: Spacing.md,
@@ -612,7 +612,7 @@ const styles = StyleSheet.create({
   },
   pointsBadgeText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   rewardsCard: {
@@ -641,11 +641,11 @@ const styles = StyleSheet.create({
   },
   tierName: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   tierRequirement: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   tierReward: {
     alignItems: "center",
@@ -653,11 +653,11 @@ const styles = StyleSheet.create({
   },
   tierBonus: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   tierBonusLabel: {
     fontSize: 10,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   totalEarned: {
     flexDirection: "row",
@@ -671,12 +671,12 @@ const styles = StyleSheet.create({
   },
   totalEarnedLabel: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     color: "rgba(255,255,255,0.8)",
   },
   totalEarnedValue: {
     fontSize: 28,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   leaderboardItem: {
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   },
   rankText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   leaderboardInfo: {
     flex: 1,
@@ -705,17 +705,17 @@ const styles = StyleSheet.create({
   },
   leaderboardName: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   leaderboardStats: {
     alignItems: "center",
   },
   leaderboardCount: {
     fontSize: 18,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   leaderboardLabel: {
     fontSize: 10,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
 });

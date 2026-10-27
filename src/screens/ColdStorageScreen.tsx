@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { View, StyleSheet, FlatList, Pressable, RefreshControl, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -58,8 +58,8 @@ export default function ColdStorageScreen() {
         onPress={() => handleBook(item)}
       >
         <View style={styles.storageHeader}>
-          <View style={[styles.tempIcon, { backgroundColor: "#0D9488" + "20" }]}>
-            <Feather name="thermometer" size={24} color="#0D9488" />
+          <View style={[styles.tempIcon, { backgroundColor: "#00BB77" + "20" }]}>
+            <Feather name="thermometer" size={24} color="#00BB77" />
           </View>
           <View style={styles.storageInfo}>
             <ThemedText style={[styles.storageName, { color: theme.text }]}>{item.name}</ThemedText>
@@ -77,15 +77,15 @@ export default function ColdStorageScreen() {
         </View>
 
         <View style={styles.tempRow}>
-          <View style={[styles.tempBadge, { backgroundColor: "#0D9488" + "15" }]}>
-            <Feather name="wind" size={14} color="#0D9488" />
-            <ThemedText style={[styles.tempText, { color: "#0D9488" }]}>{item.temperature}</ThemedText>
+          <View style={[styles.tempBadge, { backgroundColor: "#00BB77" + "15" }]}>
+            <Feather name="wind" size={14} color="#00BB77" />
+            <ThemedText style={[styles.tempText, { color: "#00BB77" }]}>{item.temperature}</ThemedText>
           </View>
           <View style={styles.capacityInfo}>
             <ThemedText style={[styles.capacityLabel, { color: theme.textSecondary }]}>
               মোট: {item.capacity}
             </ThemedText>
-            <ThemedText style={[styles.availableText, { color: "#2FA36B" }]}>
+            <ThemedText style={[styles.availableText, { color: "#2E96EF" }]}>
               উপলব্ধ: {item.available}
             </ThemedText>
           </View>
@@ -128,8 +128,8 @@ export default function ColdStorageScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.primary} />}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
-          <View style={[styles.headerCard, { backgroundColor: "#0D9488" + "15" }]}>
-            <Feather name="box" size={24} color="#0D9488" />
+          <View style={[styles.headerCard, { backgroundColor: "#00BB77" + "15" }]}>
+            <Feather name="box" size={24} color="#00BB77" />
             <View style={styles.headerContent}>
               <ThemedText style={[styles.headerTitle, { color: theme.text }]}>হিমাগার খুঁজুন</ThemedText>
               <ThemedText style={[styles.headerSubtitle, { color: theme.textSecondary }]}>

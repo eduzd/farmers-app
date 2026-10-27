@@ -2,31 +2,31 @@
 export const S = {
   bg: "#F5F7FA",
   surface: "#FFFFFF",
-  sidebar: "#0F172A",
+  sidebar: "#202936",
   sidebarText: "#CBD5E1",
-  sidebarActive: "#1E293B",
+  sidebarActive: "#202936",
   border: "#E2E8F0",
-  text: "#0F172A",
-  muted: "#64748B",
-  faint: "#94A3B8",
-  primary: "#2563EB",
+  text: "#202936",
+  muted: "#7A8CA3",
+  faint: "#7A8CA3",
+  primary: "#2E96EF",
   primarySoft: "#EFF6FF",
-  success: "#059669",
-  successSoft: "#ECFDF5",
+  success: "#00875A",
+  successSoft: "#D8FFF2",
   warning: "#D97706",
   warningSoft: "#FFFBEB",
-  danger: "#DC2626",
+  danger: "#DA2F2F",
   dangerSoft: "#FEF2F2",
   radius: 10,
 };
 
 export const STATUS_COLORS: Record<string, { fg: string; bg: string }> = {
-  pending: { fg: "#B45309", bg: "#FEF3C7" },
-  confirmed: { fg: "#1D4ED8", bg: "#DBEAFE" },
-  processing: { fg: "#6D28D9", bg: "#EDE9FE" },
-  shipped: { fg: "#0E7490", bg: "#CFFAFE" },
-  delivered: { fg: "#047857", bg: "#D1FAE5" },
-  cancelled: { fg: "#B91C1C", bg: "#FEE2E2" },
+  pending: { fg: "#B25E09", bg: "#FFF1DE" },
+  confirmed: { fg: "#3D38D0", bg: "#E3F4FF" },
+  processing: { fg: "#3D38D0", bg: "#EDE9FE" },
+  shipped: { fg: "#1F86DB", bg: "#CFFAFE" },
+  delivered: { fg: "#00875A", bg: "#D8FFF2" },
+  cancelled: { fg: "#DA2F2F", bg: "#FEE2E2" },
 };
 
 export const NEXT_STATUS: Record<string, string[]> = {
@@ -38,5 +38,5 @@ export const NEXT_STATUS: Record<string, string[]> = {
   cancelled: [],
 };
 
-export const THEME_SWATCHES = ["#2563EB", "#0F766E", "#059669", "#7C3AED", "#DB2777", "#EA580C", "#CA8A04", "#0F172A"];
+export const THEME_SWATCHES = ["#2E96EF", "#3D38D0", "#00875A", "#3D38D0", "#FF4BB7", "#B25E09", "#B25E09", "#202936"];
 export const CATEGORIES = ["vegetables", "fruits", "grains", "fish", "livestock", "dairy", "seeds", "fertilizer", "equipment", "other"];

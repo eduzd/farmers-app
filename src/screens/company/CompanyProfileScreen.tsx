@@ -15,7 +15,7 @@ import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -361,40 +361,40 @@ export default function CompanyProfileScreen() {
           <ThemedText type="h4" style={styles.sectionTitle}>{t("vendor.quickActions")}</ThemedText>
           <View style={styles.quickActionsRow}>
             <Pressable
-              style={[styles.quickActionBtn, { backgroundColor: "#16A34A15" }]}
+              style={[styles.quickActionBtn, { backgroundColor: "#00BB7715" }]}
               onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: "#16A34A" }]}>
+              <View style={[styles.quickActionIcon, { backgroundColor: "#00BB77" }]}>
                 <Feather name="plus" size={18} color="#FFFFFF" />
               </View>
               <ThemedText style={[styles.quickActionText, { color: theme.text }]}>{t("vendor.addProduct")}</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.quickActionBtn, { backgroundColor: "#2563EB15" }]}
+              style={[styles.quickActionBtn, { backgroundColor: "#2E96EF15" }]}
               onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: "#2563EB" }]}>
+              <View style={[styles.quickActionIcon, { backgroundColor: "#2E96EF" }]}>
                 <Feather name="clipboard" size={18} color="#FFFFFF" />
               </View>
               <ThemedText style={[styles.quickActionText, { color: theme.text }]}>{t("vendor.orders")}</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.quickActionBtn, { backgroundColor: "#EA8A0C15" }]}
+              style={[styles.quickActionBtn, { backgroundColor: "#B25E0915" }]}
               onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: "#EA8A0C" }]}>
+              <View style={[styles.quickActionIcon, { backgroundColor: "#B25E09" }]}>
                 <Feather name="bar-chart-2" size={18} color="#FFFFFF" />
               </View>
               <ThemedText style={[styles.quickActionText, { color: theme.text }]}>{language === "bn" ? "রিপোর্ট" : "Report"}</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.quickActionBtn, { backgroundColor: "#7C3AED15" }]}
+              style={[styles.quickActionBtn, { backgroundColor: "#3D38D015" }]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 setShowEditModal(true);
               }}
             >
-              <View style={[styles.quickActionIcon, { backgroundColor: "#7C3AED" }]}>
+              <View style={[styles.quickActionIcon, { backgroundColor: "#3D38D0" }]}>
                 <Feather name="settings" size={18} color="#FFFFFF" />
               </View>
               <ThemedText style={[styles.quickActionText, { color: theme.text }]}>{language === "bn" ? "সেটিংস" : "Settings"}</ThemedText>
@@ -528,8 +528,8 @@ export default function CompanyProfileScreen() {
           <ScrollView style={styles.policyContent} contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}>
             <View style={[styles.policySection, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
               <View style={styles.policySectionHeader}>
-                <View style={[styles.policyIconSmall, { backgroundColor: "#16A34A20" }]}>
-                  <Feather name="refresh-cw" size={18} color="#16A34A" />
+                <View style={[styles.policyIconSmall, { backgroundColor: "#00BB7720" }]}>
+                  <Feather name="refresh-cw" size={18} color="#00BB77" />
                 </View>
                 <ThemedText type="h4">{t("vendor.returnPolicy")}</ThemedText>
               </View>
@@ -540,8 +540,8 @@ export default function CompanyProfileScreen() {
 
             <View style={[styles.policySection, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
               <View style={styles.policySectionHeader}>
-                <View style={[styles.policyIconSmall, { backgroundColor: "#2563EB20" }]}>
-                  <Feather name="truck" size={18} color="#2563EB" />
+                <View style={[styles.policyIconSmall, { backgroundColor: "#2E96EF20" }]}>
+                  <Feather name="truck" size={18} color="#2E96EF" />
                 </View>
                 <ThemedText type="h4">{t("vendor.shippingPolicy")}</ThemedText>
               </View>
@@ -552,8 +552,8 @@ export default function CompanyProfileScreen() {
 
             <View style={[styles.policySection, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
               <View style={styles.policySectionHeader}>
-                <View style={[styles.policyIconSmall, { backgroundColor: "#EA8A0C20" }]}>
-                  <Feather name="credit-card" size={18} color="#EA8A0C" />
+                <View style={[styles.policyIconSmall, { backgroundColor: "#B25E0920" }]}>
+                  <Feather name="credit-card" size={18} color="#B25E09" />
                 </View>
                 <ThemedText type="h4">{t("vendor.paymentMethods")}</ThemedText>
               </View>
@@ -563,7 +563,7 @@ export default function CompanyProfileScreen() {
                   if (!method) return null;
                   return (
                     <View key={methodId} style={styles.paymentMethodItem}>
-                      <Feather name="check-circle" size={16} color="#16A34A" />
+                      <Feather name="check-circle" size={16} color="#00BB77" />
                       <ThemedText style={{ color: theme.text }}>{method.label}</ThemedText>
                     </View>
                   );
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
   createButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   featuresRow: {
     flexDirection: "row",
@@ -891,7 +891,7 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontSize: 28,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   storeInfo: {
     flex: 1,
@@ -904,7 +904,7 @@ const styles = StyleSheet.create({
   },
   storeName: {
     fontSize: 22,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
   },
   verifiedBadge: {
@@ -965,20 +965,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   statCardGradient1: {
-    backgroundColor: "#16A34A",
-    borderColor: "#16A34A",
+    backgroundColor: "#00BB77",
+    borderColor: "#00BB77",
   },
   statCardGradient2: {
-    backgroundColor: "#2563EB",
-    borderColor: "#2563EB",
+    backgroundColor: "#2E96EF",
+    borderColor: "#2E96EF",
   },
   statCardGradient3: {
-    backgroundColor: "#EA8A0C",
-    borderColor: "#EA8A0C",
+    backgroundColor: "#B25E09",
+    borderColor: "#B25E09",
   },
   statCardGradient4: {
-    backgroundColor: "#7C3AED",
-    borderColor: "#7C3AED",
+    backgroundColor: "#3D38D0",
+    borderColor: "#3D38D0",
   },
   statIconNew: {
     width: 44,
@@ -990,7 +990,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 24,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
   },
   statLabelNew: {
@@ -1026,7 +1026,7 @@ const styles = StyleSheet.create({
   },
   quickActionText: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
     textAlign: "center",
   },
   performanceSection: {
@@ -1055,7 +1055,7 @@ const styles = StyleSheet.create({
   },
   performanceValue: {
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   performanceLabel: {
     fontSize: 11,
@@ -1134,7 +1134,7 @@ const styles = StyleSheet.create({
   },
   paymentText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   modalContainer: {
     flex: 1,
@@ -1195,7 +1195,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     marginBottom: Spacing.sm,
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   textInput: {
     paddingHorizontal: Spacing.md,
@@ -1203,7 +1203,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   textArea: {
     height: 100,
@@ -1254,7 +1254,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   viewStoreButton: {
     flexDirection: "row",
@@ -1271,7 +1271,7 @@ const styles = StyleSheet.create({
   viewStoreButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   categoryCheckmark: {
     marginLeft: Spacing.xs,

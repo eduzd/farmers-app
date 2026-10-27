@@ -9,7 +9,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -50,12 +50,12 @@ const getTypeIcon = (type: string): keyof typeof Feather.glyphMap => {
 
 const getTypeColor = (type: string) => {
   const colors: Record<string, string> = {
-    post: "#2563EB",
-    product: "#2FA36B",
-    article: "#EA8A0C",
-    video: "#DC2626",
+    post: "#2E96EF",
+    product: "#2E96EF",
+    article: "#B25E09",
+    video: "#DA2F2F",
   };
-  return colors[type] || "#475569";
+  return colors[type] || "#4A5568";
 };
 
 export default function SavedPostsScreen() {

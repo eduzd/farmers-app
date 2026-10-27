@@ -68,7 +68,7 @@ export function CalculateHomeScreen() {
           title={t('bepariCalculator', lang)}
           subtitle={L('বিক্রি হিসাব, ওজন, দাম নির্ধারণ', 'Sales, weight and pricing')}
           icon="dollar-sign"
-          iconColor="#16A34A"
+          iconColor="#00BB77"
           onPress={() => navigation.navigate('CalculateBepari')}
           onLongPress={handleLongPress}
         />
@@ -77,7 +77,7 @@ export function CalculateHomeScreen() {
           title={t('aratCalculator', lang)}
           subtitle={L('আড়ত কমিশন, ফি, ট্যাক্স হিসাব', 'Commission, fees and tax')}
           icon="percent"
-          iconColor="#2563EB"
+          iconColor="#2E96EF"
           onPress={() => navigation.navigate('CalculateArat')}
         />
 
@@ -85,7 +85,7 @@ export function CalculateHomeScreen() {
           title={t('feedCalculator', lang)}
           subtitle={L('মাসিক খাদ্য পরিমাণ ও খরচ', 'Monthly feed amount and cost')}
           icon="box"
-          iconColor="#EA8A0C"
+          iconColor="#B25E09"
           onPress={() => navigation.navigate('CalculateFeed')}
         />
 
@@ -95,7 +95,7 @@ export function CalculateHomeScreen() {
           title={t('ledger', lang)}
           subtitle={L('বেপারী/পাইকার হিসাব, বাকি', 'Trader accounts and dues')}
           icon="book"
-          iconColor="#7C3AED"
+          iconColor="#3D38D0"
           onPress={() => navigation.navigate('CalculateLedger')}
         />
 
@@ -105,7 +105,7 @@ export function CalculateHomeScreen() {
           title={t('history', lang)}
           subtitle={L('সব হিসাব দেখুন', 'See all records')}
           icon="clock"
-          iconColor="#EC4899"
+          iconColor="#FF4BB7"
           onPress={() => navigation.navigate('CalculateHistory')}
         />
 
@@ -113,7 +113,7 @@ export function CalculateHomeScreen() {
           title={t('monthlySummary', lang)}
           subtitle={L('মাসিক সারাংশ ও রিপোর্ট', 'Monthly summary and reports')}
           icon="bar-chart-2"
-          iconColor="#06B6D4"
+          iconColor="#39B1FE"
           onPress={() => navigation.navigate('CalculateMonthlySummary')}
         />
 
@@ -123,7 +123,7 @@ export function CalculateHomeScreen() {
           title={t('settings', lang)}
           subtitle={L('মূল্য নির্ধারণ, ব্যাকআপ', 'Rates and backup')}
           icon="settings"
-          iconColor="#6B7280"
+          iconColor="#7A8CA3"
           onPress={() => navigation.navigate('CalculateSettings')}
         />
       </ScrollView>

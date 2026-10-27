@@ -22,7 +22,8 @@ import Animated from "react-native-reanimated";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
@@ -814,7 +815,7 @@ export default function ChatScreen() {
     if (item.status === "failed") {
       return (
         <Pressable onPress={() => retry(item)} hitSlop={8} accessibilityRole="button">
-          <ThemedText style={[styles.seenStatus, { color: theme.error || "#D32F2F" }]}>
+          <ThemedText style={[styles.seenStatus, { color: theme.error || "#DA2F2F" }]}>
             {tr("Not sent · Tap to retry")}
           </ThemedText>
         </Pressable>
@@ -1134,7 +1135,7 @@ export default function ChatScreen() {
             >
               <Feather name="trash-2" size={22} color={theme.error} />
             </Pressable>
-            <View style={[styles.recordingIndicator, { backgroundColor: "#DC2626" }]} />
+            <View style={[styles.recordingIndicator, { backgroundColor: "#DA2F2F" }]} />
             <ThemedText style={[styles.recordingText, { color: theme.text }]}>
               {formatVoiceTime(voice.durationMs)}
               <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>
@@ -1352,7 +1353,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   onlineIndicator: {
     position: "absolute",
@@ -1361,7 +1362,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#16A34A",
+    backgroundColor: "#00BB77",
     borderWidth: 2,
   },
   headerInfo: {
@@ -1370,11 +1371,11 @@ const styles = StyleSheet.create({
   headerName: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   headerStatus: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   headerRightContainer: {
     flexDirection: "row",
@@ -1408,7 +1409,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 28,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   emptyTitle: {
     textAlign: "center",
@@ -1445,7 +1446,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 11,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   messageContainer: {
     maxWidth: "80%",
@@ -1504,7 +1505,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     marginBottom: Spacing.xs,
     borderLeftWidth: 3,
-    borderLeftColor: "#2563EB",
+    borderLeftColor: "#2E96EF",
   },
   replyName: {
     fontSize: 12,
@@ -1676,7 +1677,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     paddingVertical: Spacing.sm,
     maxHeight: 80,
     textAlignVertical: "center",
@@ -1768,7 +1769,7 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   imageMessageBubble: {
     borderRadius: BorderRadius.lg,
@@ -1810,7 +1811,7 @@ const styles = StyleSheet.create({
   },
   mediaOptionText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
 });
 export { styles as chatStyles };

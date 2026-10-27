@@ -8,7 +8,7 @@ import {
   Share,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInUp } from "react-native-reanimated";
@@ -40,7 +40,7 @@ const TIPS: Tip[] = [
     title: "ধান ক্ষেতে সেচ দেওয়ার সঠিক সময়",
     content: "বোরো মৌসুমে সেচ দেওয়ার সেরা সময় হলো সকাল ৬-৮টা বা বিকাল ৪-৬টা। এ সময় পানির বাষ্পীভবন কম হয় এবং গাছ বেশি পানি শোষণ করতে পারে।",
     category: "ফসল",
-    categoryColor: "#2FA36B",
+    categoryColor: "#2E96EF",
     image: "https://images.unsplash.com/photo-1536617621572-1d5f1e6269a0?w=600",
     author: "কৃষি পরামর্শ",
     date: "আজ",
@@ -53,7 +53,7 @@ const TIPS: Tip[] = [
     title: "মাছের পুকুরে অক্সিজেন বাড়ানোর উপায়",
     content: "গরমের দিনে পুকুরে অক্সিজেন কমে যায়। এয়ারেটর ব্যবহার করুন বা সকাল-সন্ধ্যায় পানিতে লাঠি দিয়ে নাড়াচাড়া করুন। এতে পানিতে বাতাস মিশবে।",
     category: "মাছ",
-    categoryColor: "#2563EB",
+    categoryColor: "#2E96EF",
     author: "কৃষি পরামর্শ",
     date: "গতকাল",
     likes: 0,
@@ -65,7 +65,7 @@ const TIPS: Tip[] = [
     title: "মুরগির গরমকালীন যত্ন",
     content: "গরমে মুরগির খামারে পর্যাপ্ত বাতাস চলাচল নিশ্চিত করুন। পানিতে ভিটামিন-সি মিশান। দুপুরে খাবার দেওয়া থেকে বিরত থাকুন।",
     category: "পোল্ট্রি",
-    categoryColor: "#EA8A0C",
+    categoryColor: "#B25E09",
     author: "কৃষি পরামর্শ",
     date: "২ দিন আগে",
     likes: 0,
@@ -77,7 +77,7 @@ const TIPS: Tip[] = [
     title: "টমেটোর ফল ঝরে পড়া রোধ",
     content: "টমেটো গাছে ফুল আসলে বোরণ স্প্রে করুন। এতে ফল ঝরে পড়া কমবে এবং ফলের আকার বড় হবে। প্রতি লিটার পানিতে ১ গ্রাম বোরিক এসিড মেশান।",
     category: "সবজি",
-    categoryColor: "#65A30D",
+    categoryColor: "#00BB77",
     image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=600",
     author: "কৃষি পরামর্শ",
     date: "৩ দিন আগে",
@@ -102,7 +102,7 @@ const TIPS: Tip[] = [
     title: "এই সপ্তাহে সবজির দাম বাড়তে পারে",
     content: "বন্যার কারণে উত্তরাঞ্চলে সবজি উৎপাদন কমেছে। আগামী ২-৩ সপ্তাহে টমেটো, আলু, পেঁয়াজের দাম ১০-১৫% বাড়তে পারে।",
     category: "বাজার",
-    categoryColor: "#7C3AED",
+    categoryColor: "#3D38D0",
     author: "কৃষি পরামর্শ",
     date: "গতকাল",
     likes: 0,
@@ -221,12 +221,12 @@ export default function DailyTipsScreen() {
               <Feather
                 name="heart"
                 size={18}
-                color={item.isLiked ? "#DC2626" : theme.textSecondary}
+                color={item.isLiked ? "#DA2F2F" : theme.textSecondary}
               />
               <ThemedText
                 style={[
                   styles.actionText,
-                  { color: item.isLiked ? "#DC2626" : theme.textSecondary },
+                  { color: item.isLiked ? "#DA2F2F" : theme.textSecondary },
                 ]}
               >
                 {item.likes}

@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp, SlideInRight } from "react-native-reanimated";
@@ -140,7 +140,7 @@ export default function ProductTraceabilityScreen() {
             <View
               style={[
                 styles.timelineDot,
-                { backgroundColor: point.verified ? "#2FA36B" : theme.textSecondary },
+                { backgroundColor: point.verified ? "#2E96EF" : theme.textSecondary },
               ]}
             >
               <AppIcon
@@ -153,7 +153,7 @@ export default function ProductTraceabilityScreen() {
               <View
                 style={[
                   styles.timelineLine,
-                  { backgroundColor: point.verified ? "#2FA36B" : theme.inputBorder },
+                  { backgroundColor: point.verified ? "#2E96EF" : theme.inputBorder },
                 ]}
               />
             )}
@@ -162,9 +162,9 @@ export default function ProductTraceabilityScreen() {
             <View style={styles.timelineHeader}>
               <ThemedText style={styles.stageName}>{point.stageBn}</ThemedText>
               {point.verified && (
-                <View style={[styles.verifiedBadge, { backgroundColor: "#2FA36B" + "20" }]}>
-                  <Feather name="check" size={10} color="#2FA36B" />
-                  <ThemedText style={[styles.verifiedText, { color: "#2FA36B" }]}>যাচাই</ThemedText>
+                <View style={[styles.verifiedBadge, { backgroundColor: "#2E96EF" + "20" }]}>
+                  <Feather name="check" size={10} color="#2E96EF" />
+                  <ThemedText style={[styles.verifiedText, { color: "#2E96EF" }]}>যাচাই</ThemedText>
                 </View>
               )}
             </View>
@@ -211,7 +211,7 @@ export default function ProductTraceabilityScreen() {
       >
         <Animated.View entering={FadeIn.duration(400)}>
           <LinearGradient
-            colors={["#00796B", "#004D40"]}
+            colors={["#00875A", "#004D40"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.headerCard}
@@ -260,13 +260,13 @@ export default function ProductTraceabilityScreen() {
         <Animated.View entering={FadeInUp.delay(200)}>
           <View style={styles.actionsRow}>
             <Pressable
-              style={[styles.actionButton, { backgroundColor: "#2FA36B" }]}
+              style={[styles.actionButton, { backgroundColor: "#2E96EF" }]}
               onPress={() => setShowCreateModal(true)}
             >
               <Feather name="plus" size={20} color="#FFF" />
               <ThemedText style={styles.actionButtonText}>নতুন পণ্য</ThemedText>
             </Pressable>
-            <Pressable style={[styles.actionButton, { backgroundColor: "#2563EB" }]}>
+            <Pressable style={[styles.actionButton, { backgroundColor: "#2E96EF" }]}>
               <Feather name="download" size={20} color="#FFF" />
               <ThemedText style={styles.actionButtonText}>QR ডাউনলোড</ThemedText>
             </Pressable>
@@ -287,15 +287,15 @@ export default function ProductTraceabilityScreen() {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   }}
                 >
-                  <View style={[styles.productIcon, { backgroundColor: product.organic ? "#2FA36B" + "20" : theme.primary + "20" }]}>
-                    <Feather name="box" size={24} color={product.organic ? "#2FA36B" : theme.primary} />
+                  <View style={[styles.productIcon, { backgroundColor: product.organic ? "#2E96EF" + "20" : theme.primary + "20" }]}>
+                    <Feather name="box" size={24} color={product.organic ? "#2E96EF" : theme.primary} />
                   </View>
                   <View style={styles.productInfo}>
                     <View style={styles.productHeader}>
                       <ThemedText style={styles.productName}>{product.name}</ThemedText>
                       {product.organic && (
-                        <View style={[styles.organicBadge, { backgroundColor: "#2FA36B" + "20" }]}>
-                          <ThemedText style={[styles.organicText, { color: "#2FA36B" }]}>জৈব</ThemedText>
+                        <View style={[styles.organicBadge, { backgroundColor: "#2E96EF" + "20" }]}>
+                          <ThemedText style={[styles.organicText, { color: "#2E96EF" }]}>জৈব</ThemedText>
                         </View>
                       )}
                     </View>
@@ -394,7 +394,7 @@ export default function ProductTraceabilityScreen() {
                         <View style={styles.farmerNameRow}>
                           <ThemedText style={styles.farmerName}>{selectedProduct.farmer.name}</ThemedText>
                           {selectedProduct.farmer.verified && (
-                            <Feather name="check-circle" size={14} color="#2FA36B" style={{ marginLeft: 4 }} />
+                            <Feather name="check-circle" size={14} color="#2E96EF" style={{ marginLeft: 4 }} />
                           )}
                         </View>
                         <ThemedText style={[styles.farmName, { color: theme.textSecondary }]}>
@@ -412,9 +412,9 @@ export default function ProductTraceabilityScreen() {
                       <ThemedText style={styles.subSectionTitle}>সার্টিফিকেশন</ThemedText>
                       <View style={styles.certificationsList}>
                         {selectedProduct.certifications.map((cert, index) => (
-                          <View key={index} style={[styles.certBadge, { backgroundColor: "#2FA36B" + "15" }]}>
-                            <Feather name="award" size={12} color="#2FA36B" />
-                            <ThemedText style={[styles.certText, { color: "#2FA36B" }]}>{cert}</ThemedText>
+                          <View key={index} style={[styles.certBadge, { backgroundColor: "#2E96EF" + "15" }]}>
+                            <Feather name="award" size={12} color="#2E96EF" />
+                            <ThemedText style={[styles.certText, { color: "#2E96EF" }]}>{cert}</ThemedText>
                           </View>
                         ))}
                       </View>
@@ -501,13 +501,13 @@ export default function ProductTraceabilityScreen() {
                 onPress={() => setNewProduct((prev) => ({ ...prev, organic: !prev.organic }))}
               >
                 <View style={styles.organicToggleContent}>
-                  <Feather name="check-circle" size={20} color="#2FA36B" />
+                  <Feather name="check-circle" size={20} color="#2E96EF" />
                   <ThemedText style={styles.organicToggleText}>জৈব পণ্য</ThemedText>
                 </View>
                 <View
                   style={[
                     styles.toggle,
-                    { backgroundColor: newProduct.organic ? "#2FA36B" : theme.inputBorder },
+                    { backgroundColor: newProduct.organic ? "#2E96EF" : theme.inputBorder },
                   ]}
                 >
                   <View
