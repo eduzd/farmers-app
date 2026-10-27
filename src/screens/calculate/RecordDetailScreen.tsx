@@ -4,6 +4,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@/components/icons/Feather';
 import * as Print from 'expo-print';
+import { saveHtmlAsPdf } from '@/lib/htmlPdf';
 import * as Sharing from 'expo-sharing';
 import { ResultCard, ResultRow, BreakdownItem } from '@/offline/components/calculate/ResultCard';
 import { StickyActionBar } from '@/offline/components/calculate/StickyActionBar';
@@ -127,28 +128,28 @@ export function RecordDetailScreen() {
       </head>
       <body>
         <div class="header">
-          <div class="title">{tr("ক্যালকুলেট")}</div>
-          <div class="subtitle">${typeLabel.bn} - ${date}</div>
+          <div class="title">${tr("ক্যালকুলেট")}</div>
+          <div class="subtitle">${typeLabel?.bn || ''} - ${date}</div>
         </div>
     `;
 
     if (record.record_type === 'BEPARI' || record.record_type === 'ARAT') {
       htmlContent += `
         <div class="section">
-          <div class="section-title">{tr("সারাংশ")}</div>
-          <div class="row"><span class="label">{tr("মোট ওজন:")}</span><span class="value">${outputs.total_weight || outputs.weight_kg} কেজি</span></div>
-          <div class="row"><span class="label">{tr("দর:")}</span><span class="value">৳${outputs.final_price_per_kg || outputs.rate_per_kg}</span></div>
-          <div class="row"><span class="label">{tr("মোট মূল্য:")}</span><span class="value">৳${outputs.gross_amount}</span></div>
+          <div class="section-title">${tr("সারাংশ")}</div>
+          <div class="row"><span class="label">${tr("মোট ওজন:")}</span><span class="value">${outputs.total_weight || outputs.weight_kg} কেজি</span></div>
+          <div class="row"><span class="label">${tr("দর:")}</span><span class="value">৳${outputs.final_price_per_kg || outputs.rate_per_kg}</span></div>
+          <div class="row"><span class="label">${tr("মোট মূল্য:")}</span><span class="value">৳${outputs.gross_amount}</span></div>
         </div>
         <div class="total">নেট: ৳${outputs.net_amount}</div>
       `;
     } else if (record.record_type === 'FEED') {
       htmlContent += `
         <div class="section">
-          <div class="section-title">{tr("খাদ্য হিসাব")}</div>
-          <div class="row"><span class="label">{tr("মাছের সংখ্যা:")}</span><span class="value">${outputs.fish_count}</span></div>
-          <div class="row"><span class="label">{tr("দৈনিক খাদ্য:")}</span><span class="value">${outputs.daily_feed_kg?.toFixed(2)} কেজি</span></div>
-          <div class="row"><span class="label">{tr("মাসিক খাদ্য:")}</span><span class="value">${outputs.total_feed_with_wastage_kg?.toFixed(2)} কেজি</span></div>
+          <div class="section-title">${tr("খাদ্য হিসাব")}</div>
+          <div class="row"><span class="label">${tr("মাছের সংখ্যা:")}</span><span class="value">${outputs.fish_count}</span></div>
+          <div class="row"><span class="label">${tr("দৈনিক খাদ্য:")}</span><span class="value">${outputs.daily_feed_kg?.toFixed(2)} কেজি</span></div>
+          <div class="row"><span class="label">${tr("মাসিক খাদ্য:")}</span><span class="value">${outputs.total_feed_with_wastage_kg?.toFixed(2)} কেজি</span></div>
         </div>
         <div class="total">মোট বস্তা: ${outputs.total_bags}</div>
       `;
@@ -160,18 +161,15 @@ export function RecordDetailScreen() {
     }
 
     htmlContent += `
-        <div class="footer">{tr("অফলাইনে তৈরি - ক্যালকুলেট")}</div>
+        <div class="footer">${tr("অফলাইনে তৈরি - ক্যালকুলেট")}</div>
       </body>
       </html>
     `;
 
     try {
-      const { uri } = await Print.printToFileAsync({ html: htmlContent });
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, { mimeType: 'application/pdf' });
-      }
-    } catch (error) {
-      Alert.alert('ত্রুটি', 'PDF তৈরি করতে সমস্যা হয়েছে');
+      await saveHtmlAsPdf(htmlContent, `Farmers-${typeLabel?.en || record.record_type}-${new Date(record.created_at).toISOString().slice(0, 10)}`);
+    } catch (error: any) {
+      Alert.alert(tr('ত্রুটি'), `${tr('PDF তৈরি করতে সমস্যা হয়েছে')}${error?.message ? `\n${error.message}` : ''}`);
     }
   };
 

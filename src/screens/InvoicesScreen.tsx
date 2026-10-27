@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import * as Print from "expo-print";
+import { webPrintHtml, pdfFileName } from "@/lib/htmlPdf";
 import * as Sharing from "expo-sharing";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -73,8 +74,9 @@ ${invoice.notes ? `<p>${esc(invoice.notes)}</p>` : ""}</body></html>`;
     try {
       const html = invoiceHtml(invoice);
       if (Platform.OS === "web") {
-        // opens the browser's print dialog, where "Save as PDF" is available
-        await Print.printAsync({ html });
+        // prints the invoice itself (expo-print on the web only prints the app page);
+        // the browser's print window has "Save as PDF"
+        await webPrintHtml(html, pdfFileName(`Invoice-${invoice.invoiceNumber}`), "invoice-print-frame");
         return;
       }
       const { uri } = await Print.printToFileAsync({ html });
