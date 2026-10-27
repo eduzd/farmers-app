@@ -1,6 +1,9 @@
 /** English -> Bangla phrases for tr() (src/lib/tr.ts). Bangla text is translated back with the reverse map. */
 export const BN_OF_EN: Record<string, string> = {
   "Saved": "সংরক্ষিত হয়েছে",
+  "Download PDF": "পিডিএফ ডাউনলোড",
+  "There was a problem creating the PDF": "পিডিএফ তৈরি করতে সমস্যা হয়েছে",
+  "There was a problem creating the PDF.": "PDF তৈরি করতে সমস্যা হয়েছে",
   "Delete calculation": "হিসাব মুছুন",
   "Delete this calculation?": "হিসাব মুছবেন?",
   "Couldn't delete it. Please try again.": "মুছে ফেলা যায়নি। আবার চেষ্টা করুন।",
