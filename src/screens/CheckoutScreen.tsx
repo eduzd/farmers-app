@@ -22,6 +22,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { getApiUrl } from "@/lib/query-client";
 import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
 import { makeGuestKey, saveGuestOrder } from "@/lib/guestOrders";
+import { OrderDocButtons } from "@/components/OrderDocButtons";
 import { DIVISIONS, divisionOf, divisionLabel } from "@/lib/bdLocations";
 import { useTr } from "@/lib/tr";
 
@@ -208,7 +209,7 @@ export default function CheckoutScreen() {
   const [quote, setQuote] = useState<Quote>(() => localQuote(getTotal(), "home", "inside_dhaka"));
   const [quoting, setQuoting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [placed, setPlaced] = useState<{ id: string; total: number } | null>(null);
+  const [placed, setPlaced] = useState<{ id: string; total: number; guestKey?: string } | null>(null);
 
   useEffect(() => {
     apiGet("/api/coupons").then(setCoupons).catch(() => {});
@@ -389,7 +390,7 @@ export default function CheckoutScreen() {
       await saveGuestOrder({ id: orderId, key: guestKey, total: finalTotal, createdAt: new Date().toISOString(), contactName: checkout.contactName }).catch(() => {});
       setIsProcessing(false);
       clearCart();
-      setPlaced({ id: orderId, total: finalTotal });
+      setPlaced({ id: orderId, total: finalTotal, guestKey });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return;
     }
@@ -1076,6 +1077,9 @@ export default function CheckoutScreen() {
                   ? "অ্যাকাউন্ট ছাড়াই অর্ডার হয়েছে। দোকান নিশ্চিত করতে আপনাকে কল করতে পারে। অর্ডারের অবস্থা দেখতে \"অর্ডার দেখুন\" চাপুন।"
                   : "Ordered without an account. The shop may call you to confirm. Tap Track order to see its status any time."}
             </ThemedText>
+            {placed ? (
+              <OrderDocButtons orderId={placed.id} guestKey={placed.guestKey || null} style={{ alignSelf: "stretch", marginTop: Spacing.md }} testIDPrefix="placed-doc" />
+            ) : null}
             <Pressable
               style={[styles.modalBtn, { backgroundColor: theme.primary, marginTop: Spacing.lg }]}
               onPress={() => {
