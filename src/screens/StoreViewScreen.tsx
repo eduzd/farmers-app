@@ -222,8 +222,8 @@ export default function StoreViewScreen() {
           ৳{item.price.toLocaleString()}/{item.unit}
         </ThemedText>
         <View style={styles.productMeta}>
-          <View style={[styles.stockBadge, { backgroundColor: item.quantity > 0 ? "#16A34A15" : "#DC262615" }]}>
-            <ThemedText style={[styles.stockText, { color: item.quantity > 0 ? "#16A34A" : "#DC2626" }]}>
+          <View style={[styles.stockBadge, { backgroundColor: item.quantity > 0 ? "#16A34A15" : "#DA2F2F15" }]}>
+            <ThemedText style={[styles.stockText, { color: item.quantity > 0 ? "#00BB77" : "#DA2F2F" }]}>
               {item.quantity > 0 ? "স্টকে আছে" : "স্টক আউট"}
             </ThemedText>
           </View>
@@ -537,7 +537,7 @@ export default function StoreViewScreen() {
               <ThemedText type="h4" style={styles.aboutTitle}>{tr("স্টোর পলিসি")}</ThemedText>
               <View style={styles.policyItem}>
                 <View style={[styles.policyIcon, { backgroundColor: "#16A34A20" }]}>
-                  <AppIcon name="refresh-cw" size={16} color="#16A34A" />
+                  <AppIcon name="refresh-cw" size={16} color="#00BB77" />
                 </View>
                 <View style={styles.policyInfo}>
                   <ThemedText style={styles.policyLabel}>{tr("রিটার্ন পলিসি")}</ThemedText>
@@ -548,7 +548,7 @@ export default function StoreViewScreen() {
               </View>
               <View style={styles.policyItem}>
                 <View style={[styles.policyIcon, { backgroundColor: "#2563EB20" }]}>
-                  <AppIcon name="truck" size={16} color="#2563EB" />
+                  <AppIcon name="truck" size={16} color="#37B1FF" />
                 </View>
                 <View style={styles.policyInfo}>
                   <ThemedText style={styles.policyLabel}>{tr("শিপিং")}</ThemedText>
@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -4,
     right: -4,
-    backgroundColor: "#DC2626",
+    backgroundColor: "#DA2F2F",
     minWidth: 18,
     height: 18,
     borderRadius: 9,
@@ -748,7 +748,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: "#1DA1F2",
+    backgroundColor: "#37B1FF",
     justifyContent: "center",
     alignItems: "center",
   },

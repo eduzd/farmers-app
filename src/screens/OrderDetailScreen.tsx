@@ -247,9 +247,9 @@ export default function OrderDetailScreen() {
         </View>
 
         {order.status === "cancelled" ? (
-          <FadeSlideIn runKey="cancelled" style={[styles.cancelledBanner, { backgroundColor: "#DC262615" }]}>
-            <AppIcon name="x-circle" size={20} color="#DC2626" />
-            <ThemedText style={[styles.cancelledText, { color: "#DC2626" }]}>
+          <FadeSlideIn runKey="cancelled" style={[styles.cancelledBanner, { backgroundColor: "#DA2F2F15" }]}>
+            <AppIcon name="x-circle" size={20} color="#DA2F2F" />
+            <ThemedText style={[styles.cancelledText, { color: "#DA2F2F" }]}>
               {tr("This order has been cancelled")}
             </ThemedText>
           </FadeSlideIn>
@@ -468,10 +468,10 @@ export default function OrderDetailScreen() {
 
       {(isSellerView ? order.status === "pending" || order.status === "confirmed" || order.status === "processing" : buyerCanCancel) ? (
         <Pressable
-          style={[styles.cancelButton, { borderColor: "#DC2626" }]}
+          style={[styles.cancelButton, { borderColor: "#DA2F2F" }]}
           onPress={handleCancelOrder}
         >
-          <AppIcon name="x" size={18} color="#DC2626" />
+          <AppIcon name="x" size={18} color="#DA2F2F" />
           <ThemedText style={styles.cancelButtonText}>
             {tr("Cancel Order")}
           </ThemedText>
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 16,
-    color: "#DC2626",
+    color: "#DA2F2F",
     fontWeight: "600",
     fontFamily: "PlusJakartaSans_600SemiBold",
   },

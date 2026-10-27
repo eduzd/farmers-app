@@ -27,7 +27,7 @@ export type ShopSummary = {
 };
 
 export function ShopLogo({ shop, size = 52 }: { shop: Pick<ShopSummary, "name" | "logo" | "themeColor">; size?: number }) {
-  const color = shop.themeColor || "#16A34A";
+  const color = shop.themeColor || "#00BB77";
   const initials = (shop.name || "?").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   if (shop.logo) return <Image source={{ uri: shop.logo }} style={{ width: size, height: size, borderRadius: size / 2 }} contentFit="cover" />;
   return (

@@ -393,7 +393,7 @@ export default function MarketScreen() {
           </View>
         ) : null}
         {item.quantity !== undefined && item.quantity !== null && Number(item.quantity) <= 0 ? (
-          <View style={[styles.stockBadge, { backgroundColor: "#DC2626" }]}>
+          <View style={[styles.stockBadge, { backgroundColor: "#DA2F2F" }]}>
             <ThemedText style={styles.stockBadgeText}>{tr("Out of stock")}</ThemedText>
           </View>
         ) : item.quantity !== undefined && item.quantity !== null && Number(item.quantity) > 0 && Number(item.quantity) < 10 ? (
@@ -647,7 +647,7 @@ export default function MarketScreen() {
               contentContainerStyle={styles.quickFeaturesRow}
             >
               <Pressable
-                style={[styles.quickFeatureBtn, { backgroundColor: "#DC2626" }]}
+                style={[styles.quickFeatureBtn, { backgroundColor: "#DA2F2F" }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   navigation.navigate("FlashSale" as any);
@@ -677,7 +677,7 @@ export default function MarketScreen() {
                 <ThemedText style={styles.quickFeatureText}>{isBn ? "বাল্ক অর্ডার" : "Bulk Order"}</ThemedText>
               </Pressable>
               <Pressable
-                style={[styles.quickFeatureBtn, { backgroundColor: "#7C3AED" }]}
+                style={[styles.quickFeatureBtn, { backgroundColor: "#3D38D0" }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   navigation.navigate("MarketPrice" as any);
@@ -687,7 +687,7 @@ export default function MarketScreen() {
                 <ThemedText style={styles.quickFeatureText}>{isBn ? "বাজার দর" : "Market Price"}</ThemedText>
               </Pressable>
               <Pressable
-                style={[styles.quickFeatureBtn, { backgroundColor: "#2563EB" }]}
+                style={[styles.quickFeatureBtn, { backgroundColor: "#37B1FF" }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   navigation.navigate("ProductCompare" as any);
@@ -1051,7 +1051,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: Spacing.sm,
     left: Spacing.sm,
-    backgroundColor: "#1DA1F2",
+    backgroundColor: "#37B1FF",
     width: 20,
     height: 20,
     borderRadius: 10,

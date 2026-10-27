@@ -27,16 +27,16 @@ import { AppIcon } from "@/components/icons/AppIcon";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const SHOP_CATEGORIES = [
-  { id: "all", label: "সব", icon: "grid", color: "#2563EB" },
-  { id: "seeds", label: "বীজ", icon: "sun", color: "#16A34A" },
-  { id: "fertilizer", label: "সার", icon: "droplet", color: "#2563EB" },
+  { id: "all", label: "সব", icon: "grid", color: "#37B1FF" },
+  { id: "seeds", label: "বীজ", icon: "sun", color: "#00BB77" },
+  { id: "fertilizer", label: "সার", icon: "droplet", color: "#37B1FF" },
   { id: "equipment", label: "যন্ত্রপাতি", icon: "tool", color: "#EA8A0C" },
-  { id: "feed", label: "খাদ্য", icon: "package", color: "#7C3AED" },
-  { id: "medicine", label: "ওষুধ", icon: "heart", color: "#DC2626" },
-  { id: "organic", label: "অর্গানিক", icon: "zap", color: "#16A34A" },
+  { id: "feed", label: "খাদ্য", icon: "package", color: "#3D38D0" },
+  { id: "medicine", label: "ওষুধ", icon: "heart", color: "#DA2F2F" },
+  { id: "organic", label: "অর্গানিক", icon: "zap", color: "#00BB77" },
   { id: "dairy", label: "দুগ্ধ", icon: "coffee", color: "#EA8A0C" },
-  { id: "fish", label: "মাছ", icon: "anchor", color: "#06B6D4" },
-  { id: "poultry", label: "পোল্ট্রি", icon: "feather", color: "#EC4899" },
+  { id: "fish", label: "মাছ", icon: "anchor", color: "#37B1FF" },
+  { id: "poultry", label: "পোল্ট্রি", icon: "feather", color: "#FF4BB7" },
 ];
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -179,7 +179,7 @@ export default function ShopsHomeScreen() {
         <View style={styles.shopNameRow}>
           <ThemedText style={styles.shopName} numberOfLines={1}>{item.name}</ThemedText>
           {item.verified ? (
-            <View style={[styles.verifiedBadgeSmall, { backgroundColor: "#1DA1F2" }]}>
+            <View style={[styles.verifiedBadgeSmall, { backgroundColor: "#37B1FF" }]}>
               <AppIcon name="check" size={8} color="#FFFFFF" />
             </View>
           ) : null}
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: "#1DA1F2",
+    backgroundColor: "#37B1FF",
     justifyContent: "center",
     alignItems: "center",
   },

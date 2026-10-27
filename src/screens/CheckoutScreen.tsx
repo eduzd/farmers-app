@@ -631,15 +631,15 @@ export default function CheckoutScreen() {
               </View>
               <View style={styles.formCol}>
                 <ThemedText style={[styles.label, { color: theme.text }]}>{tr("Mobile number")}</ThemedText>
-                <TextInput testID="input-contact-phone" style={[input, contact.phone && !phoneOk ? { borderColor: "#DC2626" } : null]} value={contact.phone} onChangeText={editContact("phone")} placeholder="01XXXXXXXXX" placeholderTextColor={theme.textSecondary} keyboardType="phone-pad" maxLength={16} />
+                <TextInput testID="input-contact-phone" style={[input, contact.phone && !phoneOk ? { borderColor: "#DA2F2F" } : null]} value={contact.phone} onChangeText={editContact("phone")} placeholder="01XXXXXXXXX" placeholderTextColor={theme.textSecondary} keyboardType="phone-pad" maxLength={16} />
               </View>
             </View>
             {contact.phone && !phoneOk ? (
-              <ThemedText style={{ color: "#DC2626", fontSize: 12, marginBottom: Spacing.sm }}>{tr("Enter a Bangladeshi mobile number, like 01712345678")}</ThemedText>
+              <ThemedText style={{ color: "#DA2F2F", fontSize: 12, marginBottom: Spacing.sm }}>{tr("Enter a Bangladeshi mobile number, like 01712345678")}</ThemedText>
             ) : null}
             <ThemedText style={[styles.label, { color: theme.text }]}>{tr("Second number (optional)")}</ThemedText>
-            <TextInput testID="input-contact-alt" style={[input, !altOk ? { borderColor: "#DC2626" } : null]} value={contact.alt} onChangeText={editContact("alt")} placeholder="01XXXXXXXXX" placeholderTextColor={theme.textSecondary} keyboardType="phone-pad" maxLength={16} />
-            {!altOk ? <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>{tr("Enter a Bangladeshi mobile number, like 01712345678")}</ThemedText> : null}
+            <TextInput testID="input-contact-alt" style={[input, !altOk ? { borderColor: "#DA2F2F" } : null]} value={contact.alt} onChangeText={editContact("alt")} placeholder="01XXXXXXXXX" placeholderTextColor={theme.textSecondary} keyboardType="phone-pad" maxLength={16} />
+            {!altOk ? <ThemedText style={{ color: "#DA2F2F", fontSize: 12 }}>{tr("Enter a Bangladeshi mobile number, like 01712345678")}</ThemedText> : null}
           </View>
 
           {/* Delivery area */}
@@ -783,8 +783,8 @@ export default function CheckoutScreen() {
               </View>
             ) : couponCode && quote.couponError ? (
               <View style={styles.checkRow}>
-                <AppIcon name="alert-circle" size={16} color="#DC2626" />
-                <ThemedText style={{ color: "#DC2626", fontSize: 13, flex: 1 }}>{tr(quote.couponError)}</ThemedText>
+                <AppIcon name="alert-circle" size={16} color="#DA2F2F" />
+                <ThemedText style={{ color: "#DA2F2F", fontSize: 13, flex: 1 }}>{tr(quote.couponError)}</ThemedText>
               </View>
             ) : null}
             {!quote.coupon && coupons.length ? (
@@ -804,7 +804,7 @@ export default function CheckoutScreen() {
             <Header icon="credit-card" step={4} done={payDone} title={tr("Payment Method")} />
             {payMethods === null ? <ActivityIndicator color={theme.primary} style={{ marginVertical: Spacing.sm }} /> : null}
             {payMethods && payMethods.length === 0 ? (
-              <ThemedText style={{ color: "#DC2626", fontSize: 13 }}>
+              <ThemedText style={{ color: "#DA2F2F", fontSize: 13 }}>
                 {isBn ? "এই মুহূর্তে পেমেন্ট বন্ধ আছে। একটু পরে আবার চেষ্টা করুন।" : "Payments are paused right now. Please try again later."}
               </ThemedText>
             ) : null}
@@ -871,7 +871,7 @@ export default function CheckoutScreen() {
                   placeholderTextColor={theme.textSecondary}
                 />
                 {rocketFrom.trim() && !rocketNum(rocketFrom) ? (
-                  <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>{isBn ? "০১ দিয়ে শুরু ১১ বা ১২ সংখ্যার নম্বর লিখুন" : "Use the 11 or 12 digit number that starts with 01"}</ThemedText>
+                  <ThemedText style={{ color: "#DA2F2F", fontSize: 12 }}>{isBn ? "০১ দিয়ে শুরু ১১ বা ১২ সংখ্যার নম্বর লিখুন" : "Use the 11 or 12 digit number that starts with 01"}</ThemedText>
                 ) : null}
                 <TextInput
                   testID="rocket-trx"
@@ -884,7 +884,7 @@ export default function CheckoutScreen() {
                   placeholderTextColor={theme.textSecondary}
                 />
                 {rocketTrx.trim() && !trxOk(rocketTrx) ? (
-                  <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>{isBn ? "রকেটের মেসেজে থাকা TrxID লিখুন (৬ থেকে ২০ অক্ষর)" : "Type the TrxID from Rocket's message (6 to 20 letters or digits)"}</ThemedText>
+                  <ThemedText style={{ color: "#DA2F2F", fontSize: 12 }}>{isBn ? "রকেটের মেসেজে থাকা TrxID লিখুন (৬ থেকে ২০ অক্ষর)" : "Type the TrxID from Rocket's message (6 to 20 letters or digits)"}</ThemedText>
                 ) : null}
                 <ThemedText style={{ color: theme.textSecondary, fontSize: 12, lineHeight: 17 }}>
                   {isBn ? "অ্যাডমিন TrxID মিলিয়ে দেখে আপনার পেমেন্ট নিশ্চিত করবেন। নিশ্চিত হলে নোটিফিকেশন পাবেন।" : "An admin matches your TrxID in Rocket and confirms the payment. You'll get a notification when it's checked."}
@@ -931,17 +931,17 @@ export default function CheckoutScreen() {
                       {totalContentText(cartRule(i), i.quantity, language === "bn") ? ` · ${totalContentText(cartRule(i), i.quantity, language === "bn")}` : ""}
                     </ThemedText>
                     {err ? (
-                      <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>
+                      <ThemedText style={{ color: "#DA2F2F", fontSize: 12 }}>
                         {tr("Only")} {amountText(cartRule(i), err.available, language === "bn")} {tr("left")}
                       </ThemedText>
                     ) : null}
-                    {itemErr ? <ThemedText style={{ color: "#DC2626", fontSize: 12 }}>{tr(itemErr.error)}</ThemedText> : null}
+                    {itemErr ? <ThemedText style={{ color: "#DA2F2F", fontSize: 12 }}>{tr(itemErr.error)}</ThemedText> : null}
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 6 }}>
                     <ThemedText style={{ color: theme.text, fontWeight: "600" }}>{money(i.price * i.quantity)}</ThemedText>
                     <View style={[styles.stepper, { borderColor: "transparent", backgroundColor: theme.backgroundSecondary }]}>
                       <Pressable testID={`qty-minus-${i.productId}`} hitSlop={6} style={styles.stepBtn} onPress={() => (nextQty(i, -1) === 0 ? removeItem(i.id) : updateQuantity(i.id, nextQty(i, -1)))}>
-                        <AppIcon name={nextQty(i, -1) === 0 ? "trash-2" : "minus"} size={14} color={nextQty(i, -1) === 0 ? "#DC2626" : theme.text} />
+                        <AppIcon name={nextQty(i, -1) === 0 ? "trash-2" : "minus"} size={14} color={nextQty(i, -1) === 0 ? "#DA2F2F" : theme.text} />
                       </Pressable>
                       <ThemedText testID={`qty-${i.productId}`} style={{ color: theme.text, minWidth: 26, textAlign: "center", fontWeight: "600" }}>{amountText(cartRule(i), i.quantity, language === "bn")}</ThemedText>
                       <Pressable testID={`qty-plus-${i.productId}`} hitSlop={6} style={styles.stepBtn} disabled={!!err || !canStepUp(i)} onPress={() => updateQuantity(i.id, nextQty(i, 1))}>

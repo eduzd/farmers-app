@@ -27,11 +27,11 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const STATUS_CONFIG: Record<OrderStatus, { color: string; icon: string; label: string }> = {
   pending: { color: "#FF9500", icon: "clock", label: "Pending" },
-  confirmed: { color: "#007AFF", icon: "check-circle", label: "Confirmed" },
-  processing: { color: "#5856D6", icon: "package", label: "Processing" },
-  shipped: { color: "#16A34A", icon: "truck", label: "Shipped" },
-  delivered: { color: "#389466", icon: "check", label: "Delivered" },
-  cancelled: { color: "#DC2626", icon: "x-circle", label: "Cancelled" },
+  confirmed: { color: "#2E96EF", icon: "check-circle", label: "Confirmed" },
+  processing: { color: "#3D38D0", icon: "package", label: "Processing" },
+  shipped: { color: "#00BB77", icon: "truck", label: "Shipped" },
+  delivered: { color: "#00BB77", icon: "check", label: "Delivered" },
+  cancelled: { color: "#DA2F2F", icon: "x-circle", label: "Cancelled" },
 };
 
 export default function OrdersScreen() {

@@ -101,7 +101,7 @@ export default function CartScreen() {
         hitSlop={6}
         onPress={() => handleRemoveItem(item.id)}
       >
-        <AppIcon name="trash-2" size={15} color="#DC2626" />
+        <AppIcon name="trash-2" size={15} color="#DA2F2F" />
       </Pressable>
     </View>
   );

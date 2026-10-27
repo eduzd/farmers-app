@@ -294,9 +294,9 @@ export default function ProductDetailScreen() {
   };
 
   const features = [
-    { icon: "check-circle", label: "তাজা পণ্য", color: "#16A34A" },
-    { icon: "sun", label: "অর্গানিক", color: "#16A34A" },
-    { icon: "shield", label: "গুণমান নিশ্চিত", color: "#2563EB" },
+    { icon: "check-circle", label: "তাজা পণ্য", color: "#00BB77" },
+    { icon: "sun", label: "অর্গানিক", color: "#00BB77" },
+    { icon: "shield", label: "গুণমান নিশ্চিত", color: "#37B1FF" },
     { icon: "truck", label: "দ্রুত ডেলিভারি", color: "#EA8A0C" },
   ];
 
@@ -360,7 +360,7 @@ export default function ProductDetailScreen() {
               style={[styles.headerButton, { backgroundColor: "rgba(255,255,255,0.95)" }]}
               onPress={() => (navigation.canGoBack() ? navigation.goBack() : null)}
             >
-              <AppIcon name="arrow-left" size={22} color="#1A1A1A" />
+              <AppIcon name="arrow-left" size={22} color="#202936" />
             </Pressable>
             <View style={styles.headerActions}>
               <Pressable
@@ -378,7 +378,7 @@ export default function ProductDetailScreen() {
                 style={[styles.headerButton, { backgroundColor: "rgba(255,255,255,0.95)" }]}
                 onPress={handleShare}
               >
-                <AppIcon name="share-2" size={20} color="#1A1A1A" />
+                <AppIcon name="share-2" size={20} color="#202936" />
               </Pressable>
             </View>
           </View>
@@ -535,7 +535,7 @@ export default function ProductDetailScreen() {
                   </ThemedText>
                   {product.company?.verified ? (
                     <View style={styles.verifiedIcon}>
-                      <AppIcon name="check-circle" size={16} color="#1DA1F2" />
+                      <AppIcon name="check-circle" size={16} color="#37B1FF" />
                     </View>
                   ) : null}
                 </View>
@@ -923,7 +923,7 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#16A34A",
+    backgroundColor: "#00BB77",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 20,
@@ -946,7 +946,7 @@ const styles = StyleSheet.create({
   },
   categoryTag: {
     alignSelf: "flex-start",
-    backgroundColor: "rgba(16, 185, 129, 0.1)",
+    backgroundColor: "rgba(0, 187, 119, 0.1)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
@@ -1301,7 +1301,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -4,
     right: -4,
-    backgroundColor: "#DC2626",
+    backgroundColor: "#DA2F2F",
     minWidth: 20,
     height: 20,
     borderRadius: 10,

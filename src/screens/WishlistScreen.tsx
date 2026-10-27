@@ -171,7 +171,7 @@ export default function WishlistScreen() {
           />
 
           {discount > 0 ? (
-            <View style={[styles.discountBadge, { backgroundColor: "#DC2626" }]}>
+            <View style={[styles.discountBadge, { backgroundColor: "#DA2F2F" }]}>
               <ThemedText style={styles.discountText}>-{discount}%</ThemedText>
             </View>
           ) : null}
@@ -214,20 +214,20 @@ export default function WishlistScreen() {
                   {
                     backgroundColor: item.inStock
                       ? theme.primary + "15"
-                      : "#DC262615",
+                      : "#DA2F2F15",
                   },
                 ]}
               >
                 <View
                   style={[
                     styles.stockDot,
-                    { backgroundColor: item.inStock ? theme.primary : "#DC2626" },
+                    { backgroundColor: item.inStock ? theme.primary : "#DA2F2F" },
                   ]}
                 />
                 <ThemedText
                   style={[
                     styles.stockText,
-                    { color: item.inStock ? theme.primary : "#DC2626" },
+                    { color: item.inStock ? theme.primary : "#DA2F2F" },
                   ]}
                 >
                   {item.inStock ? tr("স্টকে আছে") : tr("স্টক নেই")}

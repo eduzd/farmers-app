@@ -353,7 +353,7 @@ export default function BulkOrderScreen() {
                         <ThemedText style={[styles.priceLabel, { color: theme.textSecondary }]}>
                           {tr("সাশ্রয়")}
                         </ThemedText>
-                        <ThemedText style={[styles.priceValue, { color: "#2FA36B" }]}>
+                        <ThemedText style={[styles.priceValue, { color: "#00BB77" }]}>
                           ৳{priceInfo.savings.toLocaleString()}
                         </ThemedText>
                       </View>
