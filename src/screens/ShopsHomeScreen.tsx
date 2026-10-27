@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { MayaRadius } from "@/constants/mayaTheme";
 import {
   View,
   StyleSheet,
@@ -12,7 +13,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -144,7 +144,7 @@ export default function ShopsHomeScreen() {
             </ThemedText>
             {item.verified ? (
               <View style={styles.verifiedBadge}>
-                <Feather name="check" size={10} color="#FFFFFF" />
+                <AppIcon name="check" size={10} color="#FFFFFF" />
               </View>
             ) : null}
           </View>
@@ -152,7 +152,7 @@ export default function ShopsHomeScreen() {
             {CATEGORY_LABELS[item.category] || item.category}
           </ThemedText>
           <View style={styles.featuredMeta}>
-            <Feather name="star" size={12} color="#F5B700" />
+            <AppIcon name="star" size={12} color="#F5B700" />
             <ThemedText style={styles.featuredRating}>
               {item.rating.toFixed(1)}
             </ThemedText>
@@ -180,7 +180,7 @@ export default function ShopsHomeScreen() {
           <ThemedText style={styles.shopName} numberOfLines={1}>{item.name}</ThemedText>
           {item.verified ? (
             <View style={[styles.verifiedBadgeSmall, { backgroundColor: "#1DA1F2" }]}>
-              <Feather name="check" size={8} color="#FFFFFF" />
+              <AppIcon name="check" size={8} color="#FFFFFF" />
             </View>
           ) : null}
         </View>
@@ -189,33 +189,33 @@ export default function ShopsHomeScreen() {
         </ThemedText>
         <View style={styles.shopMeta}>
           <View style={styles.shopMetaItem}>
-            <Feather name="star" size={12} color="#F5B700" />
+            <AppIcon name="star" size={12} color="#F5B700" />
             <ThemedText style={[styles.shopMetaText, { color: theme.text }]}>
               {item.rating.toFixed(1)}
             </ThemedText>
           </View>
           <View style={styles.shopMetaItem}>
-            <Feather name="package" size={12} color={theme.textSecondary} />
+            <AppIcon name="package" size={12} color={theme.textSecondary} />
             <ThemedText style={[styles.shopMetaText, { color: theme.textSecondary }]}>
               {item.productsCount}
             </ThemedText>
           </View>
           <View style={styles.shopMetaItem}>
-            <Feather name="users" size={12} color={theme.textSecondary} />
+            <AppIcon name="users" size={12} color={theme.textSecondary} />
             <ThemedText style={[styles.shopMetaText, { color: theme.textSecondary }]}>
               {item.followersCount}
             </ThemedText>
           </View>
         </View>
       </View>
-      <Feather name="chevron-right" size={20} color={theme.textSecondary} />
+      <AppIcon name="chevron-right" size={20} color={theme.textSecondary} />
     </Pressable>
   ), [theme, handleShopPress]);
 
   const renderHeader = () => (
     <View style={styles.headerSection}>
       <View style={[styles.searchContainer, { backgroundColor: theme.surface, borderColor: theme.cardBorder }]}>
-        <Feather name="search" size={20} color={theme.textSecondary} />
+        <AppIcon name="search" size={20} color={theme.textSecondary} />
         <TextInput
           style={[styles.searchInput, { color: theme.text }]}
           placeholder="দোকান খুঁজুন..."
@@ -225,7 +225,7 @@ export default function ShopsHomeScreen() {
         />
         {searchQuery ? (
           <Pressable onPress={() => setSearchQuery("")}>
-            <Feather name="x" size={18} color={theme.textSecondary} />
+            <AppIcon name="x" size={18} color={theme.textSecondary} />
           </Pressable>
         ) : null}
       </View>
@@ -291,7 +291,7 @@ export default function ShopsHomeScreen() {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Feather name="shopping-bag" size={48} color={theme.textSecondary} />
+      <AppIcon name="shopping-bag" size={48} color={theme.textSecondary} />
       <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
         {searchQuery || selectedCategory !== "all"
           ? "কোনো দোকান পাওয়া যায়নি"
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.xl,
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     marginBottom: Spacing.md,
   },
@@ -410,10 +410,10 @@ const styles = StyleSheet.create({
   featuredCard: {
     width: SCREEN_WIDTH * 0.7,
     marginRight: Spacing.md,
-    borderRadius: BorderRadius.xl,
+    borderRadius: MayaRadius.xl,
     overflow: "hidden",
     borderWidth: 1,
-    ...Shadows.medium,
+    ...Shadows.small,
   },
   featuredGradient: {
     flexDirection: "row",
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: Spacing.md,
-    borderRadius: BorderRadius.xl,
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     marginBottom: Spacing.md,
     ...Shadows.small,

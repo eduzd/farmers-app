@@ -354,7 +354,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootStackNavigator() {
   // re-render every screen title when the language changes (Bangla <-> English)
-  useI18n((st) => st.language);
+  const language = useI18n((st) => st.language);
   const screenOptions = useScreenOptions();
   const { isAuthenticated, isLoading, onboardingComplete } = useAuthStore();
   const variant = getAppVariant();
@@ -364,7 +364,10 @@ export default function RootStackNavigator() {
   const mayaHeader = {
     headerStyle: { backgroundColor: maya.backgroundRoot },
     headerTintColor: maya.text,
-    headerTitleStyle: { fontFamily: MayaFontFamily.bold, color: maya.text },
+    // Anton has no Bengali glyphs, so Bangla titles use Hind Siliguri Bold.
+    headerTitleStyle: language === "bn"
+      ? { fontFamily: "HindSiliguri_700Bold", fontSize: 20, color: maya.text }
+      : { fontFamily: MayaFontFamily.display, fontSize: 22, color: maya.text },
     headerShadowVisible: false,
   } as const;
 

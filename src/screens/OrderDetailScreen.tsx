@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { MayaRadius } from "@/constants/mayaTheme";
 import {
   View,
   StyleSheet,
@@ -8,7 +9,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, RouteProp } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { StepFill, StepPop, CurrentHalo, FadeSlideIn, OrderProgressBar, useStepStagger, bnDigits } from "@/components/OrderProgressMotion";
@@ -153,7 +153,7 @@ export default function OrderDetailScreen() {
       <View testID={loaded ? "order-not-found" : "order-loading"} style={[styles.container, { backgroundColor: theme.backgroundRoot, alignItems: "center", justifyContent: "center", padding: 24, gap: 8 }]}>
         {loaded ? (
           <>
-            <Feather name="package" size={34} color={theme.textSecondary} />
+            <AppIcon name="package" size={34} color={theme.textSecondary} />
             <ThemedText style={{ fontWeight: "700", fontSize: 16 }}>{tr("Order not found")}</ThemedText>
             <ThemedText style={{ color: theme.textSecondary, textAlign: "center" }}>
               {useI18n.getState().language === "bn" ? "এই অর্ডারটি আপনার অ্যাকাউন্টে নেই, অথবা আর নেই।" : "This order isn't on your account, or isn't there anymore."}
@@ -238,7 +238,7 @@ export default function OrderDetailScreen() {
           </View>
           {order.trackingNumber ? (
             <View style={[styles.trackingBadge, { backgroundColor: theme.primary + "15" }]}>
-              <Feather name="hash" size={14} color={theme.primary} />
+              <AppIcon name="hash" size={14} color={theme.primary} />
               <ThemedText style={[styles.trackingNumber, { color: theme.primary }]}>
                 {order.trackingNumber}
               </ThemedText>
@@ -248,7 +248,7 @@ export default function OrderDetailScreen() {
 
         {order.status === "cancelled" ? (
           <FadeSlideIn runKey="cancelled" style={[styles.cancelledBanner, { backgroundColor: "#DC262615" }]}>
-            <Feather name="x-circle" size={20} color="#DC2626" />
+            <AppIcon name="x-circle" size={20} color="#DC2626" />
             <ThemedText style={[styles.cancelledText, { color: "#DC2626" }]}>
               {tr("This order has been cancelled")}
             </ThemedText>
@@ -362,7 +362,7 @@ export default function OrderDetailScreen() {
         </ThemedText>
         
         <View style={styles.addressInfo}>
-          <Feather name="map-pin" size={20} color={theme.primary} />
+          <AppIcon name="map-pin" size={20} color={theme.primary} />
           <View style={styles.addressText}>
             <ThemedText style={[styles.addressName, { color: theme.text }]}>
               {order.shippingAddress.fullName}
@@ -460,7 +460,7 @@ export default function OrderDetailScreen() {
               style={[styles.cancelButton, { borderColor: theme.primary, backgroundColor: theme.primary, marginBottom: Spacing.sm }]}
               onPress={() => changeStatus(st)}
             >
-              <Feather name="check" size={18} color={theme.white} />
+              <AppIcon name="check" size={18} color={theme.white} />
               <ThemedText style={[styles.cancelButtonText, { color: theme.white }]}>{sellerLabel[st]}</ThemedText>
             </Pressable>
           ))
@@ -471,7 +471,7 @@ export default function OrderDetailScreen() {
           style={[styles.cancelButton, { borderColor: "#DC2626" }]}
           onPress={handleCancelOrder}
         >
-          <Feather name="x" size={18} color="#DC2626" />
+          <AppIcon name="x" size={18} color="#DC2626" />
           <ThemedText style={styles.cancelButtonText}>
             {tr("Cancel Order")}
           </ThemedText>
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   card: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.lg,
   },
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     gap: Spacing.sm,
   },
   cancelledText: {
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
   itemImage: {
     width: 56,
     height: 56,
-    borderRadius: BorderRadius.sm,
+    borderRadius: MayaRadius.sm,
   },
   itemInfo: {
     flex: 1,
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: Spacing.lg,
     borderWidth: 1,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     gap: Spacing.sm,
     marginTop: Spacing.sm,
   },

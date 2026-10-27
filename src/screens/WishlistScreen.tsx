@@ -1,4 +1,6 @@
 import React, { useState, useCallback } from "react";
+import { MayaRadius } from "@/constants/mayaTheme";
+import { AppIcon } from "@/components/icons/AppIcon";
 import {
   View,
   StyleSheet,
@@ -16,7 +18,6 @@ import { sellRule } from "@shared/selling";
 import { useCartStore } from "@/lib/cartStore";
 import { apiPost, isLoggedIn, timeAgo } from "@/lib/api";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeOut, Layout } from "react-native-reanimated";
@@ -187,7 +188,7 @@ export default function WishlistScreen() {
                 style={styles.removeButton}
                 onPress={() => handleRemove(item.id)}
               >
-                <Feather name="x" size={18} color={theme.textSecondary} />
+                <AppIcon name="x" size={18} color={theme.textSecondary} />
               </Pressable>
             </View>
 
@@ -245,7 +246,7 @@ export default function WishlistScreen() {
                 ]}
                 onPress={() => handleTogglePriceAlert(item.id)}
               >
-                <Feather
+                <AppIcon
                   name="bell"
                   size={14}
                   color={item.priceAlert ? theme.primary : theme.textSecondary}
@@ -262,7 +263,7 @@ export default function WishlistScreen() {
                 onPress={() => handleAddToCart(item)}
                 disabled={!item.inStock}
               >
-                <Feather name="shopping-cart" size={16} color={theme.white} />
+                <AppIcon name="shopping-cart" size={16} color={theme.white} />
                 <ThemedText style={[styles.addToCartText, { color: theme.white }]}>
                   {tr("কার্টে যোগ করুন")}
                 </ThemedText>
@@ -298,7 +299,7 @@ export default function WishlistScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Feather name="heart" size={64} color={theme.textSecondary} />
+            <AppIcon name="heart" size={64} color={theme.textSecondary} />
             <ThemedText style={[styles.emptyTitle, { color: theme.text }]}>
               {tr("উইশলিস্ট খালি")}
             </ThemedText>
@@ -344,10 +345,10 @@ const styles = StyleSheet.create({
   },
   itemCard: {
     flexDirection: "row",
-    borderRadius: BorderRadius["2xl"],
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     overflow: "hidden",
-    ...Shadows.medium,
+    ...Shadows.small,
   },
   outOfStock: {
     opacity: 0.7,
@@ -363,7 +364,7 @@ const styles = StyleSheet.create({
     left: Spacing.sm,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
+    borderRadius: MayaRadius.sm,
   },
   discountText: {
     color: "#FFFFFF",
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     gap: 4,
   },
   stockDot: {
@@ -447,7 +448,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     gap: Spacing.xs,
   },
   addToCartText: {
@@ -475,7 +476,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     paddingHorizontal: Spacing["2xl"],
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
   },
   browseButtonText: {
     fontSize: 15,

@@ -79,7 +79,7 @@ export function ThemedText({
   if (scope === "maya") {
     // Maya type: big headings in the heavy condensed display face, everything else DM Sans.
     const baseFamily = (Typography[type] ?? Typography.body).fontFamily;
-    const isHeading = (type === "display" || type === "h1" || type === "h2") && flat.fontFamily === baseFamily;
+    const isHeading = (type === "display" || type === "h1" || type === "h2" || type === "h3") && flat.fontFamily === baseFamily;
     if (isHeading) {
       family = MayaFontFamily.display;
       letterSpacing = 0.2;

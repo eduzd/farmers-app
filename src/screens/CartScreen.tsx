@@ -1,4 +1,6 @@
 import React from "react";
+import { MayaRadius } from "@/constants/mayaTheme";
+import { AppIcon } from "@/components/icons/AppIcon";
 import {
   View,
   StyleSheet,
@@ -9,7 +11,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
-import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -66,7 +67,7 @@ export default function CartScreen() {
           {item.name}
         </ThemedText>
         <ThemedText style={[styles.itemSeller, { color: theme.textSecondary }]} numberOfLines={1}>
-          {item.seller ? <Feather name="shopping-bag" size={11} color={theme.textSecondary} /> : null}{item.seller ? " " : ""}{item.seller}
+          {item.seller ? <AppIcon name="shopping-bag" size={11} color={theme.textSecondary} /> : null}{item.seller ? " " : ""}{item.seller}
           {totalContentText(cartRule(item), item.quantity, bn) ? ` · ${totalContentText(cartRule(item), item.quantity, bn)}` : ""}
         </ThemedText>
         <View style={styles.itemFooter}>
@@ -79,7 +80,7 @@ export default function CartScreen() {
               testID={`cart-minus-${item.productId}`}
               onPress={() => handleUpdateQuantity(item.id, nextQty(item, -1))}
             >
-              <Feather name="minus" size={16} color={theme.primary} />
+              <AppIcon name="minus" size={16} color={theme.primary} />
             </Pressable>
             <ThemedText style={[styles.quantityValue, { color: theme.text }]}>
               {amountText(cartRule(item), item.quantity, bn)}
@@ -90,7 +91,7 @@ export default function CartScreen() {
               disabled={!canStepUp(item)}
               onPress={() => handleUpdateQuantity(item.id, nextQty(item, 1))}
             >
-              <Feather name="plus" size={16} color={canStepUp(item) ? theme.primary : theme.textSecondary} />
+              <AppIcon name="plus" size={16} color={canStepUp(item) ? theme.primary : theme.textSecondary} />
             </Pressable>
           </View>
         </View>
@@ -100,7 +101,7 @@ export default function CartScreen() {
         hitSlop={6}
         onPress={() => handleRemoveItem(item.id)}
       >
-        <Feather name="trash-2" size={15} color="#DC2626" />
+        <AppIcon name="trash-2" size={15} color="#DC2626" />
       </Pressable>
     </View>
   );
@@ -108,8 +109,8 @@ export default function CartScreen() {
   const renderEmptyCart = () => (
     <View style={styles.emptyContainer}>
       <View style={[styles.emptyRing, { backgroundColor: theme.primarySoft }]}>
-        <LinearGradient colors={[theme.primary, theme.primaryTint]} style={styles.emptyIcon}>
-          <Feather name="shopping-cart" size={40} color="#FFFFFF" />
+        <LinearGradient colors={[theme.primary, theme.primaryDark]} style={styles.emptyIcon}>
+          <AppIcon name="shopping-cart" size={40} color="#FFFFFF" />
         </LinearGradient>
       </View>
       <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>
@@ -119,7 +120,7 @@ export default function CartScreen() {
         {tr("Add products from the marketplace to get started")}
       </ThemedText>
       <Pressable
-        style={[styles.shopButton, { backgroundColor: theme.primary }, Shadows.medium]}
+        style={[styles.shopButton, { backgroundColor: theme.primary }, Shadows.small]}
         onPress={() => navigation.goBack()}
       >
         <ThemedText style={[styles.shopButtonText, { color: theme.white }]}>
@@ -162,7 +163,7 @@ export default function CartScreen() {
                 backgroundColor: theme.white,
                 paddingBottom: insets.bottom > 0 ? insets.bottom + Spacing.sm : Spacing.lg,
               },
-              Shadows.large,
+              Shadows.small,
             ]}
           >
             <View style={styles.summarySection}>
@@ -194,12 +195,12 @@ export default function CartScreen() {
             </View>
 
             <Pressable testID="button-cart-checkout" onPress={handleCheckout} style={({ pressed }) => [styles.checkoutWrap, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}>
-              <LinearGradient colors={[theme.primary, theme.primaryTint]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.checkoutButton}>
+              <LinearGradient colors={[theme.primary, theme.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.checkoutButton}>
                 <ThemedText style={[styles.checkoutText, { color: "#FFFFFF" }]}>
                   {tr("Proceed to Checkout")}
                 </ThemedText>
                 <View style={styles.checkoutArrow}>
-                  <Feather name="arrow-right" size={18} color="#FFFFFF" />
+                  <AppIcon name="arrow-right" size={18} color="#FFFFFF" />
                 </View>
               </LinearGradient>
             </Pressable>
@@ -225,12 +226,12 @@ const styles = StyleSheet.create({
   cartItem: {
     flexDirection: "row",
     padding: Spacing.md,
-    borderRadius: BorderRadius.xl,
+    borderRadius: MayaRadius.xl,
   },
   itemImage: {
     width: 92,
     height: 92,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
   },
   listHeader: {
     flexDirection: "row",
@@ -323,8 +324,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: Spacing.lg,
-    borderTopLeftRadius: BorderRadius["2xl"],
-    borderTopRightRadius: BorderRadius["2xl"],
+    borderTopLeftRadius: MayaRadius.xl,
+    borderTopRightRadius: MayaRadius.xl,
   },
   summarySection: {
     marginBottom: Spacing.lg,

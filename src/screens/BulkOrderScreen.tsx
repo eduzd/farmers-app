@@ -1,4 +1,6 @@
 import React, { useState, useCallback } from "react";
+import { MayaRadius } from "@/constants/mayaTheme";
+import { AppIcon } from "@/components/icons/AppIcon";
 import {
   View,
   StyleSheet,
@@ -13,7 +15,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
@@ -191,7 +192,7 @@ export default function BulkOrderScreen() {
               style={[styles.orderButton, { backgroundColor: theme.primary }]}
               onPress={() => openOrderModal(item)}
             >
-              <Feather name="package" size={16} color={theme.white} />
+              <AppIcon name="package" size={16} color={theme.white} />
               <ThemedText style={styles.orderButtonText}>{tr("অর্ডার করুন")}</ThemedText>
             </Pressable>
           </View>
@@ -228,7 +229,7 @@ export default function BulkOrderScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
           <View style={[styles.header, { backgroundColor: theme.card }]}>
-            <Feather name="package" size={24} color={theme.primary} />
+            <AppIcon name="package" size={24} color={theme.primary} />
             <View style={styles.headerText}>
               <ThemedText style={[styles.headerTitle, { color: theme.text }]}>
                 {tr("বাল্ক অর্ডার")}
@@ -258,7 +259,7 @@ export default function BulkOrderScreen() {
                 {tr("বাল্ক অর্ডার")}
               </ThemedText>
               <Pressable onPress={() => setShowOrderModal(false)}>
-                <Feather name="x" size={24} color={theme.text} />
+                <AppIcon name="x" size={24} color={theme.text} />
               </Pressable>
             </View>
 
@@ -416,7 +417,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: Spacing.lg,
-    borderRadius: BorderRadius["2xl"],
+    borderRadius: MayaRadius.xl,
     marginBottom: Spacing.lg,
     gap: Spacing.md,
   },
@@ -432,10 +433,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   productCard: {
-    borderRadius: BorderRadius["2xl"],
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     overflow: "hidden",
-    ...Shadows.medium,
+    ...Shadows.small,
   },
   productImage: {
     width: "100%",
@@ -447,7 +448,7 @@ const styles = StyleSheet.create({
     right: Spacing.md,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
   },
   discountText: {
     color: "#FFFFFF",
@@ -488,7 +489,7 @@ const styles = StyleSheet.create({
   tierBadge: {
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
-    borderRadius: BorderRadius.sm,
+    borderRadius: MayaRadius.sm,
   },
   tierText: {
     fontSize: 11,
@@ -499,7 +500,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     gap: Spacing.sm,
   },
   orderButtonText: {
@@ -519,8 +520,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
+    borderTopLeftRadius: MayaRadius.xl,
+    borderTopRightRadius: MayaRadius.xl,
     paddingTop: Spacing["2xl"],
     paddingHorizontal: Spacing["2xl"],
     maxHeight: "85%",
@@ -546,7 +547,7 @@ const styles = StyleSheet.create({
   },
   quantityInput: {
     borderWidth: 1,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     padding: Spacing.md,
     fontSize: 18,
     fontWeight: "600",
@@ -561,7 +562,7 @@ const styles = StyleSheet.create({
   quickQtyChip: {
     flex: 1,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     borderWidth: 1,
     alignItems: "center",
   },
@@ -571,7 +572,7 @@ const styles = StyleSheet.create({
   },
   priceBreakdown: {
     padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
   },
   priceRow2: {
     flexDirection: "row",
@@ -602,7 +603,7 @@ const styles = StyleSheet.create({
   },
   addressInput: {
     borderWidth: 1,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     padding: Spacing.md,
     fontSize: 15,
     minHeight: 80,
@@ -610,7 +611,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     height: 52,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },

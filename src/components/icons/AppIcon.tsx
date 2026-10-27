@@ -27,6 +27,7 @@ export function ThinIcon({
   style,
   testID,
   strokeWidth = MAYA_ICON_STROKE,
+  fill = "none",
 }: {
   name: string;
   size?: number;
@@ -34,6 +35,7 @@ export function ThinIcon({
   style?: any;
   testID?: string;
   strokeWidth?: number;
+  fill?: string;
 }) {
   const els = FEATHER_PATHS[name];
   if (!els) return null;
@@ -42,7 +44,7 @@ export function ThinIcon({
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={fill}
       stroke={color}
       strokeWidth={strokeWidth}
       strokeLinecap="round"
@@ -68,21 +70,21 @@ export function isChatIconName(name: unknown): boolean {
   return typeof name === "string" && CHAT_ICON_NAMES.has(name);
 }
 
-type Props = React.ComponentProps<typeof Feather>;
+type Props = React.ComponentProps<typeof Feather> & { fill?: string };
 
 /**
  * Drop-in for <Feather name=...>: same props. Chat / message / comment names render the shared
  * ChatIcon (the Chats tab icon), every other name renders Feather as before.
  */
 export function AppIcon(props: Props) {
-  const { name, size = 20, color, style, testID } = props as any;
+  const { name, size = 20, color, style, testID, fill } = props as any;
   const scope = useThemeScope();
   if (isChatIconName(name)) {
     return <ChatIcon size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} />;
   }
   // Maya marketplace: thin outline icons instead of the Feather font's 2px stroke.
   if (scope === "maya" && typeof name === "string" && FEATHER_PATHS[name]) {
-    return <ThinIcon name={name} size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} />;
+    return <ThinIcon name={name} size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} fill={fill} />;
   }
   return <Feather {...props} />;
 }

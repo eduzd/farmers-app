@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { AppIcon } from "@/components/icons/AppIcon";
 import { askConfirm } from "@/components/ConfirmSheet";
 import { View, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert, Platform, Share, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -115,12 +115,12 @@ export default function GuestOrderScreen() {
   const header = (
     <View style={[styles.topBar, { paddingTop: insets.top + 8, backgroundColor: theme.backgroundRoot }]}>
       <Pressable testID="guest-order-back" hitSlop={10} onPress={close} style={styles.iconBtn}>
-        <Feather name="arrow-left" size={22} color={theme.text} />
+        <AppIcon name="arrow-left" size={22} color={theme.text} />
       </Pressable>
       <ThemedText type="h4" style={{ color: theme.text, flex: 1 }} numberOfLines={1}>{title}</ThemedText>
       {order && key ? (
         <Pressable testID="guest-order-share" hitSlop={10} onPress={shareLink} style={styles.iconBtn} accessibilityLabel={L("Save order link", "অর্ডার লিংক সেভ করুন")}>
-          <Feather name="link" size={20} color={theme.text} />
+          <AppIcon name="link" size={20} color={theme.text} />
         </Pressable>
       ) : null}
     </View>
@@ -142,7 +142,7 @@ export default function GuestOrderScreen() {
         <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 32 }}>
           {(saved || []).length === 0 ? (
             <View style={[styles.center, { paddingTop: 60 }]}>
-              <Feather name="shopping-bag" size={40} color={theme.textSecondary} />
+              <AppIcon name="shopping-bag" size={40} color={theme.textSecondary} />
               <ThemedText style={{ color: theme.textSecondary, marginTop: 10, textAlign: "center" }}>
                 {L("No orders on this device yet.", "এই ডিভাইসে এখনো কোনো অর্ডার নেই।")}
               </ThemedText>
@@ -151,7 +151,7 @@ export default function GuestOrderScreen() {
             (saved || []).map((o) => (
               <Pressable key={o.id} testID={`guest-order-row-${o.id}`} onPress={() => navigation.push("GuestOrder", { orderId: o.id })} style={[card, styles.row]}>
                 <View style={[styles.rowIcon, { backgroundColor: theme.primarySoft }]}>
-                  <Feather name="package" size={18} color={theme.primary} />
+                  <AppIcon name="package" size={18} color={theme.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <ThemedText style={{ color: theme.text, fontWeight: "700" }} numberOfLines={1}>{o.id}</ThemedText>
@@ -159,7 +159,7 @@ export default function GuestOrderScreen() {
                     {new Date(o.createdAt).toLocaleDateString(bn ? "bn-BD" : "en-GB")} · {taka(o.total)}
                   </ThemedText>
                 </View>
-                <Feather name="chevron-right" size={18} color={theme.textSecondary} />
+                <AppIcon name="chevron-right" size={18} color={theme.textSecondary} />
               </Pressable>
             ))
           )}
@@ -173,7 +173,7 @@ export default function GuestOrderScreen() {
       <View style={[styles.root, { backgroundColor: theme.backgroundRoot }]}>
         {header}
         <View style={[styles.center, { padding: 24 }]}>
-          <Feather name="alert-circle" size={40} color={theme.textSecondary} />
+          <AppIcon name="alert-circle" size={40} color={theme.textSecondary} />
           <ThemedText style={{ color: theme.text, marginTop: 10, textAlign: "center" }}>{error}</ThemedText>
           <Pressable onPress={load} style={[styles.pill, { borderColor: theme.primary, marginTop: 16 }]}>
             <ThemedText style={{ color: theme.primary, fontWeight: "700" }}>{L("Try again", "আবার চেষ্টা করুন")}</ThemedText>
@@ -207,7 +207,7 @@ export default function GuestOrderScreen() {
             {order.createdAt ? new Date(order.createdAt).toLocaleString(bn ? "bn-BD" : "en-GB", { dateStyle: "medium", timeStyle: "short" }) : ""}
           </ThemedText>
           <View style={[styles.guestNote, { backgroundColor: theme.primarySoft }]}>
-            <Feather name="info" size={14} color={theme.primary} />
+            <AppIcon name="info" size={14} color={theme.primary} />
             <ThemedText style={{ color: theme.text, fontSize: 12, flex: 1 }}>
               {L("Ordered without an account. Tap the link icon to save this order's link; the shop may call you to confirm.", "অ্যাকাউন্ট ছাড়া অর্ডার করা হয়েছে। অর্ডারের লিংক সেভ করতে লিংক আইকনে ট্যাপ করুন; দোকান নিশ্চিত করতে আপনাকে কল করতে পারে।")}
             </ThemedText>
@@ -217,7 +217,7 @@ export default function GuestOrderScreen() {
         <View style={card}>
           {cancelled ? (
             <View style={styles.stepRow}>
-              <View style={[styles.stepDot, { backgroundColor: theme.error }]}><Feather name="x" size={14} color="#fff" /></View>
+              <View style={[styles.stepDot, { backgroundColor: theme.error }]}><AppIcon name="x" size={14} color="#fff" /></View>
               <ThemedText testID="guest-order-status" style={{ color: theme.error, fontWeight: "700" }}>{L("Cancelled", "বাতিল")}</ThemedText>
             </View>
           ) : (
@@ -226,7 +226,7 @@ export default function GuestOrderScreen() {
               return (
                 <View key={s.status} style={styles.stepRow}>
                   <View style={[styles.stepDot, { backgroundColor: done ? theme.primary : theme.backgroundSecondary }]}>
-                    <Feather name={s.icon as any} size={13} color={done ? "#fff" : theme.textSecondary} />
+                    <AppIcon name={s.icon as any} size={13} color={done ? "#fff" : theme.textSecondary} />
                   </View>
                   <ThemedText testID={i === reached ? "guest-order-status" : undefined} style={{ color: done ? theme.text : theme.textSecondary, fontWeight: i === reached ? "800" : "500" }}>
                     {bn ? s.bn : s.en}

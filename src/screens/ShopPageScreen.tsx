@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { AppIcon } from "@/components/icons/AppIcon";
 import { View, StyleSheet, Pressable, FlatList, ActivityIndicator, RefreshControl, TextInput, Share, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -104,17 +105,17 @@ export default function ShopPageScreen() {
     {previewInfo ? <BuyerPreviewBar info={previewInfo} topInset={realInsets.top} onClose={() => navigation.goBack()} /> : null}
     <View style={[styles.topBar, { paddingTop: insets.top + 8, backgroundColor: theme.backgroundRoot }]}>
       <Pressable testID="shop-back" hitSlop={10} onPress={() => (navigation.canGoBack() ? navigation.goBack() : null)} style={styles.backBtn}>
-        <Feather name="arrow-left" size={22} color={theme.text} />
+        <AppIcon name="arrow-left" size={22} color={theme.text} />
       </Pressable>
       <ThemedText type="h4" style={{ color: theme.text, flex: 1 }} numberOfLines={1}>{title}</ThemedText>
       {!preview && slug && shop ? (
         <Pressable testID="shop-share" hitSlop={10} onPress={shareShop} style={styles.backBtn} accessibilityLabel={bn ? "দোকানের লিংক শেয়ার করুন" : "Share shop link"}>
-          <Feather name="share-2" size={20} color={theme.text} />
+          <AppIcon name="share-2" size={20} color={theme.text} />
         </Pressable>
       ) : null}
       {!preview ? (
         <Pressable testID="shop-cart" hitSlop={10} onPress={() => navigation.navigate("Cart")} style={styles.backBtn} accessibilityLabel={bn ? "কার্ট" : "Cart"}>
-          <Feather name="shopping-cart" size={21} color={theme.text} />
+          <AppIcon name="shopping-cart" size={21} color={theme.text} />
           {cartCount > 0 ? (
             <View style={[styles.cartBadge, { backgroundColor: theme.primary }]}>
               <ThemedText style={styles.cartBadgeText}>{cartCount > 9 ? "9+" : cartCount}</ThemedText>
@@ -127,7 +128,7 @@ export default function ShopPageScreen() {
   );
   const search = (
     <View style={[styles.search, { backgroundColor: theme.backgroundSecondary }]}>
-      <Feather name="search" size={16} color={theme.textSecondary} />
+      <AppIcon name="search" size={16} color={theme.textSecondary} />
       <TextInput
         testID="shop-search"
         value={q}
@@ -152,7 +153,7 @@ export default function ShopPageScreen() {
       <View style={[styles.flex, { backgroundColor: theme.backgroundRoot }]}>
         {header(bn ? "দোকান" : "Shop")}
         <View style={styles.empty}>
-          <Feather name="alert-circle" size={40} color={theme.textSecondary} />
+          <AppIcon name="alert-circle" size={40} color={theme.textSecondary} />
           <ThemedText style={{ color: theme.textSecondary, marginTop: 8 }}>{error}</ThemedText>
           <Pressable onPress={() => { setLoading(true); load(); }} style={[styles.retry, { borderColor: theme.primary }]}>
             <ThemedText style={{ color: theme.primary, fontWeight: "700" }}>{bn ? "আবার চেষ্টা" : "Try again"}</ThemedText>
@@ -183,7 +184,7 @@ export default function ShopPageScreen() {
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                   <ThemedText style={{ color: theme.text, fontWeight: "700", fontSize: 15, flexShrink: 1 }} numberOfLines={1}>{item.name}</ThemedText>
-                  {item.verified ? <Feather name="check-circle" size={14} color={theme.primary} /> : null}
+                  {item.verified ? <AppIcon name="check-circle" size={14} color={theme.primary} /> : null}
                 </View>
                 <ThemedText style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>
                   {[item.tagline || item.category, item.location].filter(Boolean).join(" · ") || (bn ? "দোকান" : "Shop")}
@@ -220,7 +221,7 @@ export default function ShopPageScreen() {
               <View style={[styles.logoRing, { borderColor: theme.backgroundRoot }]}><ShopLogo shop={st} size={72} /></View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 }}>
                 <ThemedText testID="shop-name" type="h3" style={{ color: theme.text }}>{st.name}</ThemedText>
-                {st.verified ? <Feather name="check-circle" size={18} color={theme.primary} /> : null}
+                {st.verified ? <AppIcon name="check-circle" size={18} color={theme.primary} /> : null}
               </View>
               {st.tagline ? <ThemedText style={{ color: theme.textSecondary, marginTop: 2, textAlign: "center" }}>{st.tagline}</ThemedText> : null}
               <View style={styles.metaRow}>
@@ -235,7 +236,7 @@ export default function ShopPageScreen() {
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Feather name="package" size={40} color={theme.textSecondary} />
+            <AppIcon name="package" size={40} color={theme.textSecondary} />
             <ThemedText style={{ color: theme.textSecondary, marginTop: 8 }}>{bn ? "এই দোকানে এখনো পণ্য নেই" : "No products in this shop yet"}</ThemedText>
           </View>
         }
@@ -267,7 +268,7 @@ export default function ShopPageScreen() {
   function Meta({ icon, text }: { icon: keyof typeof Feather.glyphMap; text: string }) {
     return (
       <View style={styles.meta}>
-        <Feather name={icon} size={13} color={theme.textSecondary} />
+        <AppIcon name={icon} size={13} color={theme.textSecondary} />
         <ThemedText style={{ color: theme.textSecondary, fontSize: 12.5 }}>{text}</ThemedText>
       </View>
     );

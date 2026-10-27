@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { AppIcon } from "@/components/icons/AppIcon";
 import { View, StyleSheet, ActivityIndicator, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
@@ -50,7 +50,7 @@ export default function ProductLinkScreen() {
     <View style={[styles.root, { backgroundColor: theme.backgroundRoot, paddingTop: insets.top + 24 }]}>
       {failed ? (
         <View style={styles.center}>
-          <Feather name="package" size={42} color={theme.textSecondary} />
+          <AppIcon name="package" size={42} color={theme.textSecondary} />
           <ThemedText type="h4" style={{ color: theme.text, marginTop: 12, textAlign: "center" }}>
             {bn ? "এই পণ্যটি আর পাওয়া যাচ্ছে না" : "This product isn't available any more"}
           </ThemedText>

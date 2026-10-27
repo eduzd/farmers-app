@@ -1,4 +1,5 @@
 import { useMarketCategories } from "@/lib/marketCategories";
+import { MayaRadius } from "@/constants/mayaTheme";
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
 import {
   View,
@@ -15,7 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
@@ -330,7 +330,7 @@ export default function MarketScreen() {
               style={[styles.sellButton, { backgroundColor: theme.primary }]}
               onPress={() => setSellForm({ open: true, item: null })}
             >
-              <Feather name="plus" size={16} color="#FFFFFF" />
+              <AppIcon name="plus" size={16} color="#FFFFFF" />
               <ThemedText style={{ color: "#FFFFFF", fontWeight: "600", fontSize: 14 }}>{t("market.sell")}</ThemedText>
             </Pressable>
           ) : null}
@@ -340,7 +340,7 @@ export default function MarketScreen() {
             style={[styles.cartHeaderButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
             onPress={handleCartPress}
           >
-            <Feather name="shopping-cart" size={20} color={theme.text} />
+            <AppIcon name="shopping-cart" size={20} color={theme.text} />
             {cartCount > 0 ? (
               <View style={[styles.cartBadge, { backgroundColor: theme.primary }]}>
                 <ThemedText style={styles.cartBadgeText}>{cartCount > 9 ? "9+" : cartCount}</ThemedText>
@@ -388,7 +388,7 @@ export default function MarketScreen() {
         />
         {Number(item.rating) > 0 ? (
           <View style={styles.ratingBadge}>
-            <Feather name="star" size={10} color="#FFFFFF" />
+            <AppIcon name="star" size={10} color="#FFFFFF" />
             <ThemedText style={styles.ratingBadgeText}>{Number(item.rating).toFixed(1)}</ThemedText>
           </View>
         ) : null}
@@ -403,7 +403,7 @@ export default function MarketScreen() {
         ) : null}
         {item.company?.verified ? (
           <View style={styles.verifiedBadge}>
-            <Feather name="check" size={10} color="#FFFFFF" />
+            <AppIcon name="check" size={10} color="#FFFFFF" />
           </View>
         ) : null}
       </View>
@@ -441,7 +441,7 @@ export default function MarketScreen() {
               {item.seller}
             </ThemedText>
             <View style={styles.locationContainer}>
-              <Feather name="map-pin" size={9} color={theme.textSecondary} />
+              <AppIcon name="map-pin" size={9} color={theme.textSecondary} />
               <ThemedText style={[styles.locationText, { color: theme.textSecondary }]} numberOfLines={1}>
                 {item.location.split(",")[0]}
               </ThemedText>
@@ -480,7 +480,7 @@ export default function MarketScreen() {
             { backgroundColor: theme.white, borderColor: theme.cardBorder },
           ]}
         >
-          <Feather name="search" size={18} color={theme.iconSecondary || theme.textSecondary} />
+          <AppIcon name="search" size={18} color={theme.iconSecondary || theme.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: theme.text }]}
             placeholder={isBn ? "পণ্য অনুসন্ধান করুন..." : "Search products..."}
@@ -490,7 +490,7 @@ export default function MarketScreen() {
           />
           {searchQuery.length > 0 ? (
             <Pressable onPress={() => setSearchQuery("")} accessibilityLabel={tr("Clear search")}>
-              <Feather name="x" size={18} color={theme.textSecondary} />
+              <AppIcon name="x" size={18} color={theme.textSecondary} />
             </Pressable>
           ) : null}
           <Pressable
@@ -498,7 +498,7 @@ export default function MarketScreen() {
             accessibilityLabel={tr("Filters")}
             style={[styles.filterButton, { backgroundColor: showFilters || activeFilterCount ? theme.primary : theme.backgroundRoot }]}
           >
-            <Feather name="sliders" size={16} color={showFilters || activeFilterCount ? "#FFFFFF" : theme.text} />
+            <AppIcon name="sliders" size={16} color={showFilters || activeFilterCount ? "#FFFFFF" : theme.text} />
             {activeFilterCount ? <ThemedText style={styles.filterCount}>{activeFilterCount}</ThemedText> : null}
           </Pressable>
         </View>
@@ -653,7 +653,7 @@ export default function MarketScreen() {
                   navigation.navigate("FlashSale" as any);
                 }}
               >
-                <Feather name="zap" size={18} color="#FFFFFF" />
+                <AppIcon name="zap" size={18} color="#FFFFFF" />
                 <ThemedText style={styles.quickFeatureText}>{isBn ? "ফ্ল্যাশ সেল" : "Flash Sale"}</ThemedText>
               </Pressable>
               <Pressable
@@ -663,7 +663,7 @@ export default function MarketScreen() {
                   navigation.navigate("Auction" as any);
                 }}
               >
-                <Feather name="activity" size={18} color="#FFFFFF" />
+                <AppIcon name="activity" size={18} color="#FFFFFF" />
                 <ThemedText style={styles.quickFeatureText}>{isBn ? "নিলাম" : "Auction"}</ThemedText>
               </Pressable>
               <Pressable
@@ -673,7 +673,7 @@ export default function MarketScreen() {
                   navigation.navigate("BulkOrder" as any);
                 }}
               >
-                <Feather name="package" size={18} color="#FFFFFF" />
+                <AppIcon name="package" size={18} color="#FFFFFF" />
                 <ThemedText style={styles.quickFeatureText}>{isBn ? "বাল্ক অর্ডার" : "Bulk Order"}</ThemedText>
               </Pressable>
               <Pressable
@@ -683,7 +683,7 @@ export default function MarketScreen() {
                   navigation.navigate("MarketPrice" as any);
                 }}
               >
-                <Feather name="trending-up" size={18} color="#FFFFFF" />
+                <AppIcon name="trending-up" size={18} color="#FFFFFF" />
                 <ThemedText style={styles.quickFeatureText}>{isBn ? "বাজার দর" : "Market Price"}</ThemedText>
               </Pressable>
               <Pressable
@@ -693,7 +693,7 @@ export default function MarketScreen() {
                   navigation.navigate("ProductCompare" as any);
                 }}
               >
-                <Feather name="columns" size={18} color="#FFFFFF" />
+                <AppIcon name="columns" size={18} color="#FFFFFF" />
                 <ThemedText style={styles.quickFeatureText}>{isBn ? "তুলনা" : "Compare"}</ThemedText>
               </Pressable>
             </ScrollView>
@@ -745,7 +745,7 @@ export default function MarketScreen() {
                   <ThemedText style={[styles.seeAllText, { color: theme.primary }]}>
                     {isBn ? "সব দেখুন" : "See All"}
                   </ThemedText>
-                  <Feather name="chevron-right" size={16} color={theme.primary} />
+                  <AppIcon name="chevron-right" size={16} color={theme.primary} />
                 </Pressable>
               </View>
               <ScrollView
@@ -788,7 +788,7 @@ export default function MarketScreen() {
                     </ThemedText>
                     {company.verified ? (
                       <View style={[styles.verifiedTag, { backgroundColor: theme.primary + "15" }]}>
-                        <Feather name="check-circle" size={10} color={theme.primary} />
+                        <AppIcon name="check-circle" size={10} color={theme.primary} />
                         <ThemedText style={[styles.verifiedTagText, { color: theme.primary }]}>
                           {isBn ? "যাচাইকৃত" : "Verified"}
                         </ThemedText>
@@ -808,7 +808,7 @@ export default function MarketScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Feather name="package" size={48} color={theme.textSecondary} />
+            <AppIcon name="package" size={48} color={theme.textSecondary} />
             <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
               {isBn ? "কোনো পণ্য পাওয়া যায়নি" : "No products found"}
             </ThemedText>
@@ -875,13 +875,13 @@ const styles = StyleSheet.create({
   filterPanel: {
     marginTop: Spacing.sm,
     padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     gap: Spacing.sm,
   },
   filterLabel: { fontSize: 13, fontWeight: "600" },
   priceRow2: { flexDirection: "row", alignItems: "center", gap: Spacing.sm },
-  priceInput: { flex: 1, minWidth: 0, height: 40, borderWidth: 1, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, fontSize: 14 },
+  priceInput: { flex: 1, minWidth: 0, height: 40, borderWidth: 1, borderRadius: MayaRadius.md, paddingHorizontal: Spacing.md, fontSize: 14 },
   chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.xs },
   smallChip: {
     flexDirection: "row",
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
   },
   stockBadgeText: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
   recentSection: { marginBottom: Spacing.md },
-  recentCard: { width: 112, borderRadius: BorderRadius.md, borderWidth: 1, overflow: "hidden", paddingBottom: Spacing.xs },
+  recentCard: { width: 112, borderRadius: MayaRadius.md, borderWidth: 1, overflow: "hidden", paddingBottom: Spacing.xs },
   recentImage: { width: "100%", height: 72 },
   recentName: { fontSize: 12, fontWeight: "600", paddingHorizontal: 6, marginTop: 4 },
   recentPrice: { fontSize: 12, fontWeight: "700", paddingHorizontal: 6 },
@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
     height: 50,
-    borderRadius: BorderRadius["2xl"],
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     gap: Spacing.sm,
     ...Shadows.small,
@@ -1006,10 +1006,10 @@ const styles = StyleSheet.create({
   },
   productCard: {
     width: CARD_WIDTH,
-    borderRadius: BorderRadius["2xl"],
+    borderRadius: MayaRadius.xl,
     overflow: "hidden",
     borderWidth: 1,
-    ...Shadows.medium,
+    ...Shadows.small,
   },
   productPressed: {
     opacity: 0.95,
@@ -1156,7 +1156,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
-    ...Shadows.large,
+    ...Shadows.small,
   },
   shopsSection: {
     marginBottom: Spacing.lg,
@@ -1184,7 +1184,7 @@ const styles = StyleSheet.create({
   shopCard: {
     width: 100,
     padding: Spacing.md,
-    borderRadius: BorderRadius.xl,
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     alignItems: "center",
     gap: Spacing.sm,

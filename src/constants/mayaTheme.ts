@@ -4,7 +4,7 @@
  * The marketplace (Market tab, shops, product pages, cart, checkout and guest order
  * tracking) uses the visual language of maya.net: deep navy ink (#202936) for text and
  * primary buttons, sky blue (#37B1FF) for highlights and tags, a pale blue band
- * (#E3F4FF), hot pink (#FF4BB7) for prices, mint green (#00BB77) for "supported" /
+ * (#E3F4FF), Maya pink (#FF4BB7) as the accent, mint green (#00BB77) for "supported" /
  * success, flat white cards with a 1px #E6E6E6 hairline and 12px corners, DM Sans for
  * text and a heavy condensed display face for big headings. The rest of the app keeps
  * the Farmers green design system; only screens wrapped in <MayaScope> read these.
@@ -20,9 +20,9 @@ export const MayaPalette = {
   ink: "#202936", // primary buttons, headings, body text
   inkSoft: "#545454", // secondary text
   sky: "#37B1FF", // highlight, tags, "Most popular"
-  skyStrong: "#0E8CE4", // sky blue dark enough for small link text
+  skyStrong: "#2E96EF", // Maya anchor / link text
   skySoft: "#E3F4FF", // pale blue band / soft fills
-  pink: "#FF4BB7", // prices
+  pink: "#FF4BB7", // Maya pink accent (favourites, badges)
   pinkSoft: "#FFE6F4",
   green: "#00BB77", // supported / success
   greenBright: "#00CC58",
@@ -118,11 +118,6 @@ export const MayaColors: { light: ThemeColors; dark: ThemeColors } = {
     shadow: "rgba(0, 0, 0, 0.5)",
   },
 };
-
-/** Price colour (Maya shows prices in hot pink). */
-export function mayaPriceColor(isDark: boolean) {
-  return isDark ? "#FF6EC4" : MayaPalette.pink;
-}
 
 export const MayaFontFamily = {
   regular: "DMSans_400Regular",

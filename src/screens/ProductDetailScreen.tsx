@@ -1,4 +1,5 @@
 import { useMarketCategories, categoryLabel } from "@/lib/marketCategories";
+import { MayaRadius } from "@/constants/mayaTheme";
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import {
   View,
@@ -359,25 +360,25 @@ export default function ProductDetailScreen() {
               style={[styles.headerButton, { backgroundColor: "rgba(255,255,255,0.95)" }]}
               onPress={() => (navigation.canGoBack() ? navigation.goBack() : null)}
             >
-              <Feather name="arrow-left" size={22} color="#1A1A1A" />
+              <AppIcon name="arrow-left" size={22} color="#1A1A1A" />
             </Pressable>
             <View style={styles.headerActions}>
               <Pressable
                 style={[styles.headerButton, { backgroundColor: "rgba(255,255,255,0.95)" }]}
                 onPress={handleToggleFavorite}
               >
-                <Feather 
+                <AppIcon 
                   name="heart" 
                   size={20} 
-                  color={isFavorite ? "#DC2626" : "#1A1A1A"}
-                  fill={isFavorite ? "#DC2626" : "none"}
+                  color={isFavorite ? theme.accent : "#202936"}
+                  fill={isFavorite ? theme.accent : "none"}
                 />
               </Pressable>
               <Pressable
                 style={[styles.headerButton, { backgroundColor: "rgba(255,255,255,0.95)" }]}
                 onPress={handleShare}
               >
-                <Feather name="share-2" size={20} color="#1A1A1A" />
+                <AppIcon name="share-2" size={20} color="#1A1A1A" />
               </Pressable>
             </View>
           </View>
@@ -396,7 +397,7 @@ export default function ProductDetailScreen() {
 
           {product.company?.verified ? (
             <View style={styles.verifiedBadge}>
-              <Feather name="check" size={12} color="#FFFFFF" />
+              <AppIcon name="check" size={12} color="#FFFFFF" />
               <ThemedText style={styles.verifiedText}>{tr("ভেরিফাইড")}</ThemedText>
             </View>
           ) : null}
@@ -534,20 +535,20 @@ export default function ProductDetailScreen() {
                   </ThemedText>
                   {product.company?.verified ? (
                     <View style={styles.verifiedIcon}>
-                      <Feather name="check-circle" size={16} color="#1DA1F2" />
+                      <AppIcon name="check-circle" size={16} color="#1DA1F2" />
                     </View>
                   ) : null}
                 </View>
                 <View style={styles.sellerMeta}>
                   <View style={styles.locationRow}>
-                    <Feather name="map-pin" size={12} color={theme.textSecondary} />
+                    <AppIcon name="map-pin" size={12} color={theme.textSecondary} />
                     <ThemedText style={[styles.locationText, { color: theme.textSecondary }]}>
                       {product.location}
                     </ThemedText>
                   </View>
                   {product.company?.rating ? (
                     <View style={styles.sellerRating}>
-                      <Feather name="star" size={12} color="#F5B700" />
+                      <AppIcon name="star" size={12} color="#F5B700" />
                       <ThemedText style={[styles.sellerRatingText, { color: theme.textSecondary }]}>
                         {Number(product.company.rating || 0).toFixed(1)}
                       </ThemedText>
@@ -576,14 +577,14 @@ export default function ProductDetailScreen() {
                 style={[styles.callButton, { backgroundColor: theme.primary }]}
                 onPress={handleCallSeller}
               >
-                <Feather name="phone" size={18} color="#FFFFFF" />
+                <AppIcon name="phone" size={18} color="#FFFFFF" />
               </Pressable>
             </View>
           </View>
 
           <View style={[styles.descriptionCard, { backgroundColor: theme.white, borderColor: theme.inputBorder }]}>
             <View style={styles.sectionHeader}>
-              <Feather name="file-text" size={18} color={theme.primary} />
+              <AppIcon name="file-text" size={18} color={theme.primary} />
               <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>
                 {tr("বিবরণ")}
               </ThemedText>
@@ -603,7 +604,7 @@ export default function ProductDetailScreen() {
 
           <View style={[styles.descriptionCard, { backgroundColor: theme.white, borderColor: theme.inputBorder }]}>
             <View style={styles.sectionHeader}>
-              <Feather name="star" size={18} color={theme.primary} />
+              <AppIcon name="star" size={18} color={theme.primary} />
               <ThemedText style={[styles.sectionTitle, { color: theme.text, flex: 1 }]}>
                 {tr("Ratings & reviews")}
               </ThemedText>
@@ -638,7 +639,7 @@ export default function ProductDetailScreen() {
 
           <View style={[styles.specsCard, { backgroundColor: theme.white, borderColor: theme.inputBorder }]}>
             <View style={styles.sectionHeader}>
-              <Feather name="info" size={18} color={theme.primary} />
+              <AppIcon name="info" size={18} color={theme.primary} />
               <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>
                 {tr("পণ্যের তথ্য")}
               </ThemedText>
@@ -663,7 +664,7 @@ export default function ProductDetailScreen() {
           </View>
 
           <View style={[styles.guaranteeCard, { backgroundColor: `${theme.primary}10`, borderColor: `${theme.primary}30` }]}>
-            <Feather name="shield" size={24} color={theme.primary} />
+            <AppIcon name="shield" size={24} color={theme.primary} />
             <View style={styles.guaranteeContent}>
               <ThemedText style={[styles.guaranteeTitle, { color: theme.text }]}>
                 {tr("গুণমান নিশ্চয়তা")}
@@ -746,7 +747,7 @@ export default function ProductDetailScreen() {
                 onPress={decreaseQuantity}
                 disabled={quantity <= minOrder}
               >
-                <Feather name="minus" size={16} color={quantity <= minOrder ? theme.textSecondary : theme.text} />
+                <AppIcon name="minus" size={16} color={quantity <= minOrder ? theme.textSecondary : theme.text} />
               </Pressable>
               <TextInput
                 testID="product-qty-input"
@@ -759,7 +760,7 @@ export default function ProductDetailScreen() {
                 accessibilityLabel={tr("Quantity")}
               />
               <Pressable testID="product-qty-plus" style={styles.qtyBtn} onPress={increaseQuantity} disabled={quantity + rule.step > maxQty + 1e-9}>
-                <Feather name="plus" size={16} color={quantity + rule.step > maxQty + 1e-9 ? theme.textSecondary : theme.text} />
+                <AppIcon name="plus" size={16} color={quantity + rule.step > maxQty + 1e-9 ? theme.textSecondary : theme.text} />
               </Pressable>
             </View>
             <ThemedText
@@ -780,7 +781,7 @@ export default function ProductDetailScreen() {
               disabled={outOfStock}
               accessibilityLabel={tr("Add to cart")}
             >
-              <Feather name="shopping-cart" size={20} color={outOfStock ? theme.textSecondary : theme.primary} />
+              <AppIcon name="shopping-cart" size={20} color={outOfStock ? theme.textSecondary : theme.primary} />
             </Pressable>
 
             <Pressable
@@ -801,7 +802,7 @@ export default function ProductDetailScreen() {
           style={[styles.cartBadge, { backgroundColor: theme.primary, top: insets.top + 70 }]}
           onPress={() => (preview ? previewNote.show(tr("Cart")) : navigation.navigate("Cart"))}
         >
-          <Feather name="shopping-cart" size={18} color="#FFFFFF" />
+          <AppIcon name="shopping-cart" size={18} color="#FFFFFF" />
           <View style={styles.cartCount}>
             <ThemedText style={styles.cartCountText}>{cartCount}</ThemedText>
           </View>
@@ -835,7 +836,7 @@ export default function ProductDetailScreen() {
 
 const styles = StyleSheet.create({
   relatedSection: { paddingHorizontal: Spacing.lg, marginTop: Spacing.lg, marginBottom: Spacing.lg },
-  relatedCard: { width: 130, borderRadius: BorderRadius.md, borderWidth: 1, overflow: "hidden", paddingBottom: Spacing.xs },
+  relatedCard: { width: 130, borderRadius: MayaRadius.md, borderWidth: 1, overflow: "hidden", paddingBottom: Spacing.xs },
   relatedImage: { width: "100%", height: 86 },
   relatedName: { fontSize: 12, fontWeight: "600", paddingHorizontal: 6, marginTop: 4 },
   relatedPrice: { fontSize: 12, fontWeight: "700", paddingHorizontal: 6 },

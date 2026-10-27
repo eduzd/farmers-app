@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { MayaRadius } from "@/constants/mayaTheme";
 import {
   View,
   StyleSheet,
@@ -15,7 +16,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -198,7 +198,7 @@ export default function StoreViewScreen() {
   const renderStars = (rating: number) => (
     <View style={styles.starsContainer}>
       {[1, 2, 3, 4, 5].map((star) => (
-        <Feather
+        <AppIcon
           key={star}
           name="star"
           size={14}
@@ -214,7 +214,7 @@ export default function StoreViewScreen() {
       onPress={() => handleProductPress(item)}
     >
       <View style={[styles.productImage, { backgroundColor: theme.surface }]}>
-        <Feather name="package" size={36} color={theme.textSecondary} />
+        <AppIcon name="package" size={36} color={theme.textSecondary} />
       </View>
       <View style={styles.productInfo}>
         <ThemedText numberOfLines={2} style={styles.productName}>{item.name}</ThemedText>
@@ -236,7 +236,7 @@ export default function StoreViewScreen() {
               handleAddToCart(item);
             }}
           >
-            <Feather name="shopping-cart" size={14} color="#FFFFFF" />
+            <AppIcon name="shopping-cart" size={14} color="#FFFFFF" />
             <ThemedText style={styles.addToCartText}>{tr("কার্টে যোগ করুন")}</ThemedText>
           </Pressable>
         ) : null}
@@ -255,7 +255,7 @@ export default function StoreViewScreen() {
   if (!company) {
     return (
       <View style={[styles.errorContainer, { backgroundColor: theme.backgroundRoot, paddingTop: insets.top }]}>
-        <Feather name="alert-circle" size={48} color={theme.textSecondary} />
+        <AppIcon name="alert-circle" size={48} color={theme.textSecondary} />
         <ThemedText style={[styles.errorText, { color: theme.textSecondary }]}>
           {tr("স্টোর পাওয়া যায়নি")}
         </ThemedText>
@@ -292,13 +292,13 @@ export default function StoreViewScreen() {
           style={[styles.floatingButton, { backgroundColor: "rgba(0,0,0,0.3)" }]}
           onPress={() => navigation.goBack()}
         >
-          <Feather name="arrow-left" size={22} color="#FFFFFF" />
+          <AppIcon name="arrow-left" size={22} color="#FFFFFF" />
         </Pressable>
         <Pressable
           style={[styles.floatingButton, { backgroundColor: "rgba(0,0,0,0.3)" }]}
           onPress={() => navigation.navigate("Cart")}
         >
-          <Feather name="shopping-cart" size={20} color="#FFFFFF" />
+          <AppIcon name="shopping-cart" size={20} color="#FFFFFF" />
           {cartItemCount > 0 ? (
             <View style={[styles.floatingCartBadge, { backgroundColor: theme.primary }]}>
               <ThemedText style={styles.floatingCartBadgeText}>
@@ -333,7 +333,7 @@ export default function StoreViewScreen() {
                 <ThemedText style={styles.storeName}>{company.name}</ThemedText>
                 {company.verified ? (
                   <View style={styles.verifiedBadge}>
-                    <Feather name="check" size={12} color="#FFFFFF" />
+                    <AppIcon name="check" size={12} color="#FFFFFF" />
                   </View>
                 ) : null}
               </View>
@@ -342,13 +342,13 @@ export default function StoreViewScreen() {
               </ThemedText>
               <View style={styles.storeMetaRow}>
                 <View style={styles.storeMetaItem}>
-                  <Feather name="star" size={14} color="#F5B700" />
+                  <AppIcon name="star" size={14} color="#F5B700" />
                   <ThemedText style={styles.storeMetaText}>
                     {company.rating.toFixed(1)} ({company.reviewsCount})
                   </ThemedText>
                 </View>
                 <View style={styles.storeMetaItem}>
-                  <Feather name="users" size={14} color="#FFFFFF" />
+                  <AppIcon name="users" size={14} color="#FFFFFF" />
                   <ThemedText style={styles.storeMetaText}>
                     {company.followersCount} ফলোয়ার
                   </ThemedText>
@@ -416,7 +416,7 @@ export default function StoreViewScreen() {
               style={[styles.tab, activeTab === "products" && { backgroundColor: theme.primary + "15" }]}
               onPress={() => setActiveTab("products")}
             >
-              <Feather name="grid" size={18} color={activeTab === "products" ? theme.primary : theme.textSecondary} />
+              <AppIcon name="grid" size={18} color={activeTab === "products" ? theme.primary : theme.textSecondary} />
               <ThemedText style={[styles.tabText, activeTab === "products" && { color: theme.primary }]}>
                 পণ্য ({products.length})
               </ThemedText>
@@ -425,7 +425,7 @@ export default function StoreViewScreen() {
               style={[styles.tab, activeTab === "about" && { backgroundColor: theme.primary + "15" }]}
               onPress={() => setActiveTab("about")}
             >
-              <Feather name="info" size={18} color={activeTab === "about" ? theme.primary : theme.textSecondary} />
+              <AppIcon name="info" size={18} color={activeTab === "about" ? theme.primary : theme.textSecondary} />
               <ThemedText style={[styles.tabText, activeTab === "about" && { color: theme.primary }]}>
                 {tr("সম্পর্কে")}
               </ThemedText>
@@ -434,7 +434,7 @@ export default function StoreViewScreen() {
               style={[styles.tab, activeTab === "reviews" && { backgroundColor: theme.primary + "15" }]}
               onPress={() => setActiveTab("reviews")}
             >
-              <Feather name="star" size={18} color={activeTab === "reviews" ? theme.primary : theme.textSecondary} />
+              <AppIcon name="star" size={18} color={activeTab === "reviews" ? theme.primary : theme.textSecondary} />
               <ThemedText style={[styles.tabText, activeTab === "reviews" && { color: theme.primary }]}>
                 রিভিউ ({company.reviewsCount})
               </ThemedText>
@@ -445,7 +445,7 @@ export default function StoreViewScreen() {
         {activeTab === "products" ? (
           <View style={styles.productsSection}>
             <View style={[styles.searchBar, { backgroundColor: theme.surface, borderColor: theme.cardBorder }]}>
-              <Feather name="search" size={18} color={theme.textSecondary} />
+              <AppIcon name="search" size={18} color={theme.textSecondary} />
               <TextInput
                 style={[styles.searchInput, { color: theme.text }]}
                 placeholder={tr("এই স্টোরে খুঁজুন...")}
@@ -455,7 +455,7 @@ export default function StoreViewScreen() {
               />
               {searchQuery ? (
                 <Pressable onPress={() => setSearchQuery("")}>
-                  <Feather name="x" size={18} color={theme.textSecondary} />
+                  <AppIcon name="x" size={18} color={theme.textSecondary} />
                 </Pressable>
               ) : null}
             </View>
@@ -499,7 +499,7 @@ export default function StoreViewScreen() {
               </View>
             ) : (
               <View style={styles.emptyProducts}>
-                <Feather name="package" size={48} color={theme.textSecondary} />
+                <AppIcon name="package" size={48} color={theme.textSecondary} />
                 <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
                   {searchQuery || selectedCategory !== "all" ? "কোনো পণ্য পাওয়া যায়নি" : "এই স্টোরে কোনো পণ্য নেই"}
                 </ThemedText>
@@ -519,15 +519,15 @@ export default function StoreViewScreen() {
               <ThemedText type="h4" style={styles.aboutTitle}>{tr("যোগাযোগ")}</ThemedText>
               <View style={styles.contactList}>
                 <View style={styles.contactItem}>
-                  <Feather name="map-pin" size={18} color={theme.textSecondary} />
+                  <AppIcon name="map-pin" size={18} color={theme.textSecondary} />
                   <ThemedText style={{ color: theme.text, flex: 1 }}>{company.address || "ঠিকানা নেই"}</ThemedText>
                 </View>
                 <View style={styles.contactItem}>
-                  <Feather name="mail" size={18} color={theme.textSecondary} />
+                  <AppIcon name="mail" size={18} color={theme.textSecondary} />
                   <ThemedText style={{ color: theme.text }}>{company.email || "ইমেইল নেই"}</ThemedText>
                 </View>
                 <View style={styles.contactItem}>
-                  <Feather name="clock" size={18} color={theme.textSecondary} />
+                  <AppIcon name="clock" size={18} color={theme.textSecondary} />
                   <ThemedText style={{ color: theme.text }}>{company.businessHours || "সকাল ৯টা - রাত ৯টা"}</ThemedText>
                 </View>
               </View>
@@ -537,7 +537,7 @@ export default function StoreViewScreen() {
               <ThemedText type="h4" style={styles.aboutTitle}>{tr("স্টোর পলিসি")}</ThemedText>
               <View style={styles.policyItem}>
                 <View style={[styles.policyIcon, { backgroundColor: "#16A34A20" }]}>
-                  <Feather name="refresh-cw" size={16} color="#16A34A" />
+                  <AppIcon name="refresh-cw" size={16} color="#16A34A" />
                 </View>
                 <View style={styles.policyInfo}>
                   <ThemedText style={styles.policyLabel}>{tr("রিটার্ন পলিসি")}</ThemedText>
@@ -548,7 +548,7 @@ export default function StoreViewScreen() {
               </View>
               <View style={styles.policyItem}>
                 <View style={[styles.policyIcon, { backgroundColor: "#2563EB20" }]}>
-                  <Feather name="truck" size={16} color="#2563EB" />
+                  <AppIcon name="truck" size={16} color="#2563EB" />
                 </View>
                 <View style={styles.policyInfo}>
                   <ThemedText style={styles.policyLabel}>{tr("শিপিং")}</ThemedText>
@@ -565,7 +565,7 @@ export default function StoreViewScreen() {
                 <View style={styles.paymentMethods}>
                   {company.paymentMethods.map((method) => (
                     <View key={method} style={[styles.paymentBadge, { backgroundColor: theme.primary + "15" }]}>
-                      <Feather name="check-circle" size={14} color={theme.primary} />
+                      <AppIcon name="check-circle" size={14} color={theme.primary} />
                       <ThemedText style={[styles.paymentText, { color: theme.primary }]}>
                         {method === "cash" ? "ক্যাশ" : method === "bkash" ? "বিকাশ" : method === "nagad" ? "নগদ" : method === "rocket" ? "রকেট" : "ব্যাংক"}
                       </ThemedText>
@@ -589,7 +589,7 @@ export default function StoreViewScreen() {
 
             {company.reviewsCount === 0 ? (
               <View style={styles.emptyReviews}>
-                <Feather name="star" size={48} color={theme.textSecondary} />
+                <AppIcon name="star" size={48} color={theme.textSecondary} />
                 <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
                   {tr("এই স্টোরে এখনো কোনো রিভিউ নেই")}
                 </ThemedText>
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   backButton: {
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     marginTop: Spacing.md,
   },
   backButtonText: {
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
     borderRadius: 36,
     justifyContent: "center",
     alignItems: "center",
-    ...Shadows.medium,
+    ...Shadows.small,
   },
   logoText: {
     fontSize: 26,
@@ -782,7 +782,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     borderColor: "transparent",
     gap: Spacing.sm,
@@ -797,7 +797,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     gap: Spacing.sm,
   },
@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: "row",
-    borderRadius: BorderRadius.xl,
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     padding: Spacing.xs,
     ...Shadows.small,
@@ -848,7 +848,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     gap: Spacing.xs,
     // Uniform tab size: never squeezed by its neighbours or its label length.
     minHeight: 44,
@@ -866,7 +866,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     borderWidth: 1,
     marginBottom: Spacing.md,
   },
@@ -904,7 +904,7 @@ const styles = StyleSheet.create({
   },
   productCard: {
     width: PRODUCT_CARD_WIDTH,
-    borderRadius: BorderRadius.xl,
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     marginBottom: Spacing.md,
     overflow: "hidden",
@@ -936,7 +936,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
-    borderRadius: BorderRadius.sm,
+    borderRadius: MayaRadius.sm,
   },
   stockText: {
     fontSize: 10,
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
     marginTop: Spacing.sm,
     gap: Spacing.xs,
   },
@@ -969,7 +969,7 @@ const styles = StyleSheet.create({
   },
   aboutCard: {
     padding: Spacing.lg,
-    borderRadius: BorderRadius.xl,
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     marginBottom: Spacing.md,
     ...Shadows.small,
@@ -1035,7 +1035,7 @@ const styles = StyleSheet.create({
   },
   reviewsSummary: {
     padding: Spacing.lg,
-    borderRadius: BorderRadius.xl,
+    borderRadius: MayaRadius.xl,
     borderWidth: 1,
     marginBottom: Spacing.md,
     ...Shadows.small,

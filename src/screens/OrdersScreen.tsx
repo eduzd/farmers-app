@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, useState } from "react";
+import { MayaRadius } from "@/constants/mayaTheme";
 import {
   View,
   StyleSheet,
@@ -9,7 +10,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
@@ -64,11 +64,11 @@ export default function OrdersScreen() {
     {guestCount > 0 && tab === "buying" ? (
       // orders placed without an account on this phone
       <Pressable testID="orders-guest-link" onPress={() => navigation.navigate("GuestOrder" as any)} style={[styles.guestRow, { backgroundColor: theme.primarySoft }]}>
-        <Feather name="user-check" size={16} color={theme.primary} />
+        <AppIcon name="user-check" size={16} color={theme.primary} />
         <ThemedText style={{ color: theme.text, flex: 1, fontSize: 13 }}>
           {bn ? `অ্যাকাউন্ট ছাড়া করা অর্ডার (${guestCount})` : `Orders placed without an account (${guestCount})`}
         </ThemedText>
-        <Feather name="chevron-right" size={16} color={theme.primary} />
+        <AppIcon name="chevron-right" size={16} color={theme.primary} />
       </Pressable>
     ) : null}
     <View style={styles.tabRow}>
@@ -183,7 +183,7 @@ export default function OrdersScreen() {
             <ThemedText style={[styles.trackButtonText, { color: theme.primary }]}>
               {tr("Track Order")}
             </ThemedText>
-            <Feather name="chevron-right" size={18} color={theme.primary} />
+            <AppIcon name="chevron-right" size={18} color={theme.primary} />
           </View>
         </View>
       </Pressable>
@@ -193,7 +193,7 @@ export default function OrdersScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <View style={[styles.emptyIcon, { backgroundColor: theme.backgroundDefault }]}>
-        <Feather name="shopping-bag" size={48} color={theme.textSecondary} />
+        <AppIcon name="shopping-bag" size={48} color={theme.textSecondary} />
       </View>
       <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>
         {tr("No Orders Yet")}
@@ -240,7 +240,7 @@ export default function OrdersScreen() {
           ) : (
             <View style={styles.emptyState}>
               <View style={[styles.emptyIcon, { backgroundColor: theme.backgroundDefault }]}>
-                <Feather name="package" size={48} color={theme.textSecondary} />
+                <AppIcon name="package" size={48} color={theme.textSecondary} />
               </View>
               <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>
                 {tr("No sales yet")}
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   orderCard: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: MayaRadius.lg,
     padding: Spacing.lg,
   },
   cardPressed: {
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   shopButton: {
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+    borderRadius: MayaRadius.md,
   },
   shopButtonText: {
     fontSize: 16,

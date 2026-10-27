@@ -44,6 +44,7 @@ const TAB_BAR_HEIGHT = Platform.OS === "web" ? 74 : 70; // plus the bottom safe 
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
   const { t } = useI18n();
+  const language = useI18n((st) => st.language);
   const insets = useSafeAreaInsets();
   // Keeps unread counts and online dots fresh while signed in.
   useLiveStatus();
@@ -133,8 +134,9 @@ export default function MainTabNavigator() {
           headerStyle: { backgroundColor: MayaColors[isDark ? "dark" : "light"].backgroundRoot },
           headerTintColor: MayaColors[isDark ? "dark" : "light"].text,
           headerTitleStyle: {
-            fontFamily: MayaFontFamily.display,
-            fontSize: 24,
+            // Anton has no Bengali glyphs, so the Bangla title uses Hind Siliguri Bold.
+            fontFamily: language === "bn" ? "HindSiliguri_700Bold" : MayaFontFamily.display,
+            fontSize: language === "bn" ? 22 : 24,
             letterSpacing: 0.2,
             color: MayaColors[isDark ? "dark" : "light"].text,
           },
