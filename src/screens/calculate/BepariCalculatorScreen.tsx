@@ -164,6 +164,11 @@ export function BepariCalculatorScreen() {
   const [calculationName, setCalculationName] = useState('');
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  // A short note at the top: 'saved' after the + button (and where to find it), 'opened' after a
+  // saved calculation is opened for editing.
+  const [savedNotice, setSavedNotice] = useState<null | 'saved' | 'opened'>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (noticeTimer.current) clearTimeout(noticeTimer.current); }, []);
   const savingRef = useRef(false);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
@@ -234,9 +239,6 @@ export function BepariCalculatorScreen() {
       const lastRow = newRows[index];
       if (lastRow.weight && lastRow.pieces) {
         newRows.push({ weight: '', pieces: '' });
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd?.({ animated: true });
-        }, 100);
       }
     }
     setRows(newRows);
@@ -300,10 +302,25 @@ export function BepariCalculatorScreen() {
     }
   };
 
+  /**
+   * The + button: saves the calculation on screen (a new record, or the same record when a saved one
+   * was opened), then starts an empty one. The saved one is in the list behind the bookmark icon.
+   */
+  const showNotice = (kind: 'saved' | 'opened') => {
+    setSavedNotice(kind);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setSavedNotice(null), 5000);
+    scrollViewRef.current?.scrollTo?.({ y: 0, animated: true });
+  };
+
   const handleNewCalculation = async () => {
+    const hadCalculation = !!results;
     // Keep the current calculation first; if that fails, nothing is cleared.
     const ok = await handleSaveCalculation({ quiet: true });
     if (!ok) return;
+    if (hadCalculation) {
+      showNotice('saved');
+    }
     autoAdvance.cancel();
     setRows([{ weight: '', pieces: '' }]);
     setCalculationName('');
@@ -366,6 +383,7 @@ export function BepariCalculatorScreen() {
     setEditingRecordId(record.id);
     setDrawerVisible(false);
     draftReady.current = true;
+    showNotice('opened');
   };
 
   useEffect(() => {
@@ -397,17 +415,17 @@ export function BepariCalculatorScreen() {
         <meta charset="utf-8">
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; }
-          h1 { color: #00BB77; text-align: center; margin-bottom: 5px; }
+          h1 { color: #202936; text-align: center; margin-bottom: 5px; }
           .date { text-align: center; color: #666; margin-bottom: 20px; }
           .title { text-align: center; font-size: 18px; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
           th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-          th { background-color: #00BB77; color: white; }
+          th { background-color: #202936; color: white; }
           .result-box { background: #F3FAFF; padding: 15px; border-radius: 8px; margin-top: 20px; }
           .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; }
           .result-label { color: #666; }
           .result-value { font-weight: bold; color: #333; }
-          .total { font-size: 24px; color: #00BB77; text-align: center; margin-top: 20px; }
+          .total { font-size: 24px; color: #202936; text-align: center; margin-top: 20px; }
           .footer { text-align: center; margin-top: 30px; color: #999; font-size: 12px; }
         </style>
       </head>
@@ -479,6 +497,7 @@ export function BepariCalculatorScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAwareScrollViewCompat
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.content,
@@ -487,6 +506,22 @@ export function BepariCalculatorScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {savedNotice ? (
+          <Pressable
+            testID="calc-saved-notice"
+            accessibilityRole="button"
+            onPress={() => { setSavedNotice(null); if (savedNotice === 'saved') openSavedList(); }}
+            style={[styles.savedNotice, { backgroundColor: colors.success + '1A', borderColor: colors.success }]}
+          >
+            <Feather name="check-circle" size={18} color={colors.success} />
+            <Text style={[styles.savedNoticeText, { color: colors.text }]}>
+              {savedNotice === 'opened'
+                ? tr('সংরক্ষিত হিসাব খোলা হয়েছে। বদলান বা নতুন সারি যোগ করুন, তারপর "আপডেট করুন" চাপুন — একই হিসাবে সেভ হবে।')
+                : tr('হিসাব সংরক্ষিত হয়েছে। দেখতে উপরের বুকমার্ক আইকনে চাপুন।')}
+            </Text>
+          </Pressable>
+        ) : null}
+
         {/* Current Calculation - Summary Card */}
         {results ? (
           <View style={[styles.summaryCard, { backgroundColor: colors.primary }]}>
@@ -553,7 +588,7 @@ export function BepariCalculatorScreen() {
           </Text>
         </Pressable>
         <Text style={[styles.saveCalcHint, { color: colors.textSecondary }]}>
-          {editingRecordId ? tr('একই হিসাব আপডেট হবে, নতুন কপি হবে না।') : tr('ফোনে এনক্রিপ্ট করে রাখা হয়, ইন্টারনেট ছাড়াও কাজ করে।')}
+          {editingRecordId ? tr('একই হিসাব আপডেট হবে, নতুন কপি হবে না।') : Platform.OS === 'web' ? tr('এই ব্রাউজারে রাখা হয়, ইন্টারনেট ছাড়াও খোলা যায়।') : tr('ফোনে এনক্রিপ্ট করে রাখা হয়, ইন্টারনেট ছাড়াও কাজ করে।')}
         </Text>
 
         {/* Column Headers */}
@@ -679,6 +714,8 @@ export function BepariCalculatorScreen() {
                 return (
                   <Pressable
                     key={record.id}
+                    testID="calc-saved-item"
+                    accessibilityRole="button"
                     style={[styles.drawerItem, { 
                       backgroundColor: editingRecordId === record.id ? colors.primary + '20' : colors.background,
                       borderColor: editingRecordId === record.id ? colors.primary : colors.border 
@@ -693,7 +730,7 @@ export function BepariCalculatorScreen() {
                     </View>
                     <View style={styles.drawerItemStats}>
                       <Text style={[styles.drawerItemStat, { color: colors.textSecondary }]}>
-                        {formatDate(record.created_at)} • {formatNum(r.avgWeight, 3)} কেজি • {r.totalPieces} পিস
+                        {formatDate(record.created_at)} • {formatNum(r.avgWeight, 3)} {tr('কেজি')} • {r.totalPieces} {tr('পিস')}
                       </Text>
                     </View>
                   </Pressable>
@@ -807,6 +844,8 @@ function SettingField({
 }
 
 const styles = StyleSheet.create({
+  savedNotice: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: 10, marginBottom: Spacing.sm },
+  savedNoticeText: { flex: 1, fontSize: 13, fontWeight: '600' },
   saveCalcBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 46, borderRadius: BorderRadius.md, marginTop: Spacing.sm },
   saveCalcText: { fontSize: 15, fontWeight: '700' },
   saveCalcHint: { fontSize: 12, textAlign: 'center', marginTop: 4, marginBottom: Spacing.sm },

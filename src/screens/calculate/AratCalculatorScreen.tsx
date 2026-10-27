@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import { View, StyleSheet, Pressable, Modal, ScrollView, Platform, Alert, KeyboardAvoidingView } from 'react-native';
+import { View, StyleSheet, Pressable, Modal, ScrollView, Platform, Alert, KeyboardAvoidingView, useWindowDimensions } from 'react-native';
 import { Text, TextInput } from '@/components/MayaText';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,7 +30,7 @@ function useColors() {
     border: theme.inputBorder,
     primary: theme.primary,
     error: theme.error,
-    success: '#00BB77',
+    success: theme.success,
     warning: '#B25E09',
   };
 }
@@ -159,47 +159,80 @@ function SettingsModal({ colors, settings, onSave, onClose }: {
   );
 }
 
+/**
+ * Fish name picker. The list opens from the left, right under the fish field that was tapped
+ * (above it when the field is near the bottom of the screen), not in the middle of the screen.
+ */
 function FishDropdown({ value, onSelect, colors }: {
   value: string;
   onSelect: (name: string) => void;
   colors: any;
 }) {
   const [visible, setVisible] = useState(false);
+  const [anchor, setAnchor] = useState<{ x: number; y: number; h: number } | null>(null);
+  const triggerRef = useRef<View>(null);
+  const { width: winW, height: winH } = useWindowDimensions();
+
+  const open = () => {
+    const node: any = triggerRef.current;
+    if (node && typeof node.measureInWindow === 'function') {
+      node.measureInWindow((x: number, y: number, _w: number, h: number) => {
+        setAnchor(Number.isFinite(x) && Number.isFinite(y) ? { x, y, h } : null);
+        setVisible(true);
+      });
+    } else {
+      setAnchor(null);
+      setVisible(true);
+    }
+  };
+
+  const menuH = FISH_NAMES.length * FISH_ITEM_H;
+  let menuPos: { left: number; top: number } = { left: Spacing.md, top: Math.max(Spacing.md, (winH - menuH) / 2) };
+  if (anchor) {
+    const left = Math.max(Spacing.sm, Math.min(anchor.x, winW - FISH_MENU_W - Spacing.sm));
+    let top = anchor.y + anchor.h + 4;
+    if (top + menuH > winH - Spacing.md) top = Math.max(Spacing.md, anchor.y - menuH - 4);
+    menuPos = { left, top };
+  }
 
   return (
     <View style={styles.dropdownContainer}>
       <Pressable
+        ref={triggerRef}
+        testID="arat-fish-trigger"
         style={[styles.dropdownTrigger, { borderColor: colors.border, backgroundColor: colors.card }]}
-        onPress={() => setVisible(true)}
+        onPress={open}
       >
         <Text style={[styles.dropdownText, { color: value ? colors.text : colors.textTertiary }]}>
-          {value || 'মাছ'}
+          {value || tr('মাছ')}
         </Text>
         <Feather name="chevron-down" size={16} color={colors.textSecondary} />
       </Pressable>
 
-      <Modal visible={visible} transparent animationType="fade" onRequestClose={() => setVisible(false)}>
-        <Pressable style={styles.dropdownOverlay} onPress={() => setVisible(false)}>
-          <View style={[styles.dropdownMenu, { backgroundColor: colors.card }]}>
-            {FISH_NAMES.map((name) => (
-              <Pressable
-                key={name}
-                style={[styles.dropdownItem, value === name && { backgroundColor: colors.primary + '20' }]}
-                onPress={() => {
-                  onSelect(name);
-                  setVisible(false);
-                }}
-              >
-                <Text style={[styles.dropdownItemText, { color: colors.text }]}>{name}</Text>
-                {value === name ? <Feather name="check" size={16} color={colors.primary} /> : null}
-              </Pressable>
-            ))}
-          </View>
-        </Pressable>
+      <Modal visible={visible} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={() => setVisible(false)}>
+        <Pressable style={styles.dropdownOverlay} onPress={() => setVisible(false)} accessibilityLabel={tr('বন্ধ')} />
+        <View testID="arat-fish-menu" style={[styles.dropdownMenu, { backgroundColor: colors.card, borderColor: colors.border, left: menuPos.left, top: menuPos.top }]}>
+          {FISH_NAMES.map((name) => (
+            <Pressable
+              key={name}
+              style={[styles.dropdownItem, value === name && { backgroundColor: colors.primary + '20' }]}
+              onPress={() => {
+                onSelect(name);
+                setVisible(false);
+              }}
+            >
+              <Text style={[styles.dropdownItemText, { color: colors.text }]}>{name}</Text>
+              {value === name ? <Feather name="check" size={16} color={colors.primary} /> : null}
+            </Pressable>
+          ))}
+        </View>
       </Modal>
     </View>
   );
 }
+
+const FISH_MENU_W = 180;
+const FISH_ITEM_H = 46;
 
 export function AratCalculatorScreen() {
   const tr = useTr();
@@ -222,6 +255,11 @@ export function AratCalculatorScreen() {
   const [calculationName, setCalculationName] = useState('');
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
+  // A short note at the top: 'saved' after the + button (and where to find it), 'opened' after a
+  // saved calculation is opened for editing.
+  const [savedNotice, setSavedNotice] = useState<null | 'saved' | 'opened'>(null);
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (noticeTimer.current) clearTimeout(noticeTimer.current); }, []);
   const savingRef = useRef(false);
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
@@ -293,9 +331,6 @@ export function AratCalculatorScreen() {
       const lastRow = newRows[index];
       if (lastRow.rate && lastRow.weight) {
         newRows.push({ fishName: '', rate: '', weight: '' });
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd?.({ animated: true });
-        }, 100);
       }
     }
     
@@ -357,10 +392,25 @@ export function AratCalculatorScreen() {
     }
   };
 
+  /**
+   * The + button: saves the calculation on screen (a new record, or the same record when a saved one
+   * was opened), then starts an empty one. The saved one is in the list behind the bookmark icon.
+   */
+  const showNotice = (kind: 'saved' | 'opened') => {
+    setSavedNotice(kind);
+    if (noticeTimer.current) clearTimeout(noticeTimer.current);
+    noticeTimer.current = setTimeout(() => setSavedNotice(null), 5000);
+    scrollViewRef.current?.scrollTo?.({ y: 0, animated: true });
+  };
+
   const handleNewCalculation = async () => {
+    const hadCalculation = !!results;
     // Keep the current calculation first; if that fails, nothing is cleared.
     const ok = await handleSaveCalculation({ quiet: true });
     if (!ok) return;
+    if (hadCalculation) {
+      showNotice('saved');
+    }
     autoAdvance.cancel();
     setRows([{ fishName: '', rate: '', weight: '' }]);
     setCalculationName('');
@@ -423,6 +473,7 @@ export function AratCalculatorScreen() {
     setEditingRecordId(record.id);
     setDrawerVisible(false);
     draftReady.current = true;
+    showNotice('opened');
   };
 
   useEffect(() => {
@@ -536,11 +587,28 @@ export function AratCalculatorScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAwareScrollViewCompat
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[styles.content, { paddingTop: Spacing.sm, paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {savedNotice ? (
+          <Pressable
+            testID="calc-saved-notice"
+            accessibilityRole="button"
+            onPress={() => { setSavedNotice(null); if (savedNotice === 'saved') openSavedList(); }}
+            style={[styles.savedNotice, { backgroundColor: colors.success + '1A', borderColor: colors.success }]}
+          >
+            <Feather name="check-circle" size={18} color={colors.success} />
+            <Text style={[styles.savedNoticeText, { color: colors.text }]}>
+              {savedNotice === 'opened'
+                ? tr('সংরক্ষিত হিসাব খোলা হয়েছে। বদলান বা নতুন সারি যোগ করুন, তারপর "আপডেট করুন" চাপুন — একই হিসাবে সেভ হবে।')
+                : tr('হিসাব সংরক্ষিত হয়েছে। দেখতে উপরের বুকমার্ক আইকনে চাপুন।')}
+            </Text>
+          </Pressable>
+        ) : null}
+
         {/* Summary Card */}
         {results ? (
           <View style={[styles.summaryCard, { backgroundColor: colors.primary }]}>
@@ -597,7 +665,7 @@ export function AratCalculatorScreen() {
           </Text>
         </Pressable>
         <Text style={[styles.saveCalcHint, { color: colors.textSecondary }]}>
-          {editingRecordId ? tr('একই হিসাব আপডেট হবে, নতুন কপি হবে না।') : tr('ফোনে এনক্রিপ্ট করে রাখা হয়, ইন্টারনেট ছাড়াও কাজ করে।')}
+          {editingRecordId ? tr('একই হিসাব আপডেট হবে, নতুন কপি হবে না।') : Platform.OS === 'web' ? tr('এই ব্রাউজারে রাখা হয়, ইন্টারনেট ছাড়াও খোলা যায়।') : tr('ফোনে এনক্রিপ্ট করে রাখা হয়, ইন্টারনেট ছাড়াও কাজ করে।')}
         </Text>
 
         {/* Column Headers */}
@@ -716,6 +784,8 @@ export function AratCalculatorScreen() {
                 return (
                   <Pressable
                     key={record.id}
+                    testID="calc-saved-item"
+                    accessibilityRole="button"
                     style={[styles.drawerItem, { 
                       backgroundColor: editingRecordId === record.id ? colors.primary + '20' : colors.background,
                       borderColor: editingRecordId === record.id ? colors.primary : colors.border 
@@ -730,7 +800,7 @@ export function AratCalculatorScreen() {
                     </View>
                     <View style={styles.drawerItemStats}>
                       <Text style={[styles.drawerItemStat, { color: colors.textSecondary }]}>
-                        {formatDate(record.created_at)} • {formatNum(r.totalWeight)} কেজি • {r.rowCount} আইটেম
+                        {formatDate(record.created_at)} • {formatNum(r.totalWeight)} {tr('কেজি')} • {r.rowCount} {tr('আইটেম')}
                       </Text>
                     </View>
                   </Pressable>
@@ -744,6 +814,8 @@ export function AratCalculatorScreen() {
 }
 
 const styles = StyleSheet.create({
+  savedNotice: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: 10, marginBottom: Spacing.sm },
+  savedNoticeText: { flex: 1, fontSize: 13, fontWeight: '600' },
   saveCalcBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 46, borderRadius: BorderRadius.md, marginTop: Spacing.sm },
   saveCalcText: { fontSize: 15, fontWeight: '700' },
   saveCalcHint: { fontSize: 12, textAlign: 'center', marginTop: 4, marginBottom: Spacing.sm },
@@ -897,21 +969,26 @@ const styles = StyleSheet.create({
   },
   dropdownText: { fontSize: Typography.sizes.xs },
   dropdownOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.25)',
   },
   dropdownMenu: {
-    width: 200,
+    position: 'absolute',
+    width: FISH_MENU_W,
     borderRadius: BorderRadius.md,
+    borderWidth: 1,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
   dropdownItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
+    height: FISH_ITEM_H,
     paddingHorizontal: Spacing.lg,
   },
   dropdownItemText: { fontSize: Typography.sizes.md },
