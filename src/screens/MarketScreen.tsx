@@ -298,7 +298,7 @@ export default function MarketScreen() {
     setSelectedCategory(categoryId);
   }, []);
 
-  const unreadNotifications = useUnreadCounts((st) => st.notificationsMarket) // only marketplace notifications on this bell;
+  const unreadNotifications = useUnreadCounts((st) => st.notificationsMarket); // only marketplace notifications on this bell
 
   const handleCartPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

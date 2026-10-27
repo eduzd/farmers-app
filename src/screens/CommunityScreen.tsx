@@ -74,7 +74,7 @@ export default function CommunityScreen() {
   const getToken = useAuthStore((s) => s.getToken);
   const { language } = useI18n();
   const isBn = language === "bn";
-  const unreadNotifications = useUnreadCounts((s) => s.notificationsHome) // everything except marketplace notifications;
+  const unreadNotifications = useUnreadCounts((s) => s.notificationsHome); // everything except marketplace notifications
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 640);
   // Featured cards: the original full-width card shape (one card fills the row), still
