@@ -374,6 +374,12 @@ export function AratCalculatorScreen() {
   };
 
   // Set up header buttons
+  /** The saved icon at the top: opens the saved calculations list, fresh from the phone. */
+  const openSavedList = () => {
+    loadRecords();
+    setDrawerVisible(true);
+  };
+
   useLayoutEffect(() => {
     const savedCount = savedRecords.length;
     navigation.setOptions({
@@ -685,16 +691,20 @@ export function AratCalculatorScreen() {
         <SettingsModal colors={colors} settings={settings} onSave={saveSettingsHandler} onClose={() => setSettingsVisible(false)} />
       </Modal>
 
-      <Modal visible={drawerVisible} animationType="slide" transparent onRequestClose={() => setDrawerVisible(false)}>
-        <View style={styles.drawerOverlay}>
-          <View style={[styles.drawerContent, { backgroundColor: colors.card }]}>
+      {/* Saved calculations: the same slide-up panel as the app's other bottom menus
+          (ChatOptionsSheet / PostActionsSheet): backdrop, rounded top, handle, and padding that
+          keeps the list clear of the phone's bottom navigation bar. */}
+      <Modal visible={drawerVisible} animationType="slide" transparent statusBarTranslucent navigationBarTranslucent onRequestClose={() => setDrawerVisible(false)}>
+        <Pressable style={styles.drawerOverlay} onPress={() => setDrawerVisible(false)} accessibilityLabel={tr("বন্ধ")} testID="calc-saved-backdrop" />
+          <View testID="calc-saved-sheet" style={[styles.drawerContent, { backgroundColor: colors.card, paddingBottom: insets.bottom + Spacing.md }]}>
+            <View style={[styles.drawerHandle, { backgroundColor: colors.border }]} />
             <View style={styles.drawerHeader}>
               <Text style={[styles.drawerTitle, { color: colors.text }]}>{tr("সংরক্ষিত হিসাব")}</Text>
-              <Pressable onPress={() => setDrawerVisible(false)} hitSlop={12}>
+              <Pressable onPress={() => setDrawerVisible(false)} hitSlop={12} accessibilityLabel={tr("বন্ধ")}>
                 <Feather name="x" size={24} color={colors.textSecondary} />
               </Pressable>
             </View>
-            
+
             <ScrollView style={styles.drawerList} showsVerticalScrollIndicator={false}>
               {savedRecords.length === 0 ? (
                 <View style={styles.emptyDrawer}>
@@ -733,7 +743,6 @@ export function AratCalculatorScreen() {
               })}
             </ScrollView>
           </View>
-        </View>
       </Modal>
     </View>
   );
@@ -1022,15 +1031,16 @@ const styles = StyleSheet.create({
   },
   drawerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
   },
   drawerContent: {
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
     maxHeight: '80%',
   },
+  drawerHandle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, marginBottom: Spacing.sm },
   drawerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

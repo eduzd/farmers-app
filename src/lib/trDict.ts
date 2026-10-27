@@ -149,6 +149,7 @@ export const BN_OF_EN: Record<string, string> = {
   "Fish": "মাছ",
   "Rate": "দর",
   "Saved records": "সংরক্ষিত হিসাব",
+  "Close": "বন্ধ",
   "No saved records": "কোন হিসাব সংরক্ষিত নেই",
   "Bepari account": "ব্যাপারী হিসাব",
   "Pcs": "পিস",
