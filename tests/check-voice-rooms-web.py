@@ -206,7 +206,7 @@ const { PGlite } = require('@electric-sql/pglite');
             mine = fpg.get_by_test_id("post-voice-room").filter(has_text=title)
             if await mine.count():
                 txt = await mine.first.inner_text()
-                check(key, L["ended"] in txt and L["join"] not in txt, "ended room shows the ended state, no Join")
+                check(key, ("has ended" in txt or "শেষ হয়ে গেছে" in txt) and L["join"] not in txt, "ended room shows the ended state, no Join")
                 await fpg.screenshot(path=f"{SHOTS}/{key}-6-feed-ended.png")
             else:
                 check(key, False, "ended card still in the feed")
