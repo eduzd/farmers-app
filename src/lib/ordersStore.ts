@@ -31,7 +31,7 @@ export interface Order {
     city: string;
     phone: string;
   };
-  paymentMethod: "cod" | "card" | "bkash";
+  paymentMethod: "cod" | "card" | "bkash" | "rocket";
   checkout?: {
     deliveryMethod?: "home" | "express" | "pickup";
     zone?: "inside_dhaka" | "outside_dhaka" | null;
@@ -81,7 +81,7 @@ function fromServer(o: any, role: "buyer" | "seller"): Order {
     currency: "৳",
     status: o.status,
     shippingAddress: { fullName: addr.fullName || o.buyer?.name || "", address: addr.address || "", city: addr.city || "", phone: addr.phone || "" },
-    paymentMethod: o.paymentMethod === "card" ? "card" : o.paymentMethod === "bkash" ? "bkash" : "cod",
+    paymentMethod: o.paymentMethod === "card" ? "card" : o.paymentMethod === "bkash" ? "bkash" : o.paymentMethod === "rocket" ? "rocket" : "cod",
     checkout: o.checkout || null,
     createdAt: o.createdAt,
     updatedAt: o.updatedAt,

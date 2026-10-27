@@ -21,6 +21,7 @@ import { useOrdersStore, Order, OrderStatus } from "@/lib/ordersStore";
 
 import { tr, useTr } from "@/lib/tr";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { OrderDocButtons } from "@/components/OrderDocButtons";
 import { useI18n } from "@/lib/i18n";
 import { orderLineText } from "@shared/selling";
 type OrderDetailRouteProp = RouteProp<RootStackParamList, "OrderDetail">;
@@ -425,10 +426,12 @@ export default function OrderDetailScreen() {
             color={theme.primary}
           />
           <ThemedText style={[styles.paymentText, { color: theme.text }]}>
-            {tr(order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod === "bkash" ? "bKash" : "Credit/Debit Card")}
+            {order.paymentMethod === "rocket" ? "Rocket" : tr(order.paymentMethod === "cod" ? "Cash on Delivery" : order.paymentMethod === "bkash" ? "bKash" : "Credit/Debit Card")}
           </ThemedText>
         </View>
       </View>
+
+      <OrderDocButtons orderId={order.id} style={{ marginBottom: Spacing.md }} testIDPrefix="order-detail-doc" />
 
       {isSellerView && order.buyer ? (
         <View style={[styles.card, { backgroundColor: theme.white }]}>

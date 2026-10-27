@@ -14,6 +14,7 @@ import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import {
   SavedGuestOrder, listGuestOrders, findGuestKey, saveGuestOrder, fetchGuestOrder, cancelGuestOrder, guestOrderLink,
 } from "@/lib/guestOrders";
+import { OrderDocButtons } from "@/components/OrderDocButtons";
 
 /**
  * A guest's order (bought without an account): status, items, delivery and payment.
@@ -278,6 +279,8 @@ export default function GuestOrderScreen() {
           <ThemedText style={{ color: theme.textSecondary }}>{payLabel}</ThemedText>
           {pay?.note ? <ThemedText style={{ color: theme.textSecondary, marginTop: 2 }}>{pay.note}</ThemedText> : null}
         </View>
+
+        {key ? <OrderDocButtons orderId={order.id} guestKey={key} testIDPrefix="guest-order-doc" /> : null}
 
         {order.status === "pending" ? (
           <Pressable testID="guest-order-cancel" disabled={busy} onPress={doCancel} style={[styles.pill, { borderColor: theme.error, alignSelf: "stretch", alignItems: "center", opacity: busy ? 0.6 : 1 }]}>
