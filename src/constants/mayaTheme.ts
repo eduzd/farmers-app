@@ -1,11 +1,12 @@
 /**
  * Maya-style theme for the whole app (main app and admin dashboard).
  *
- * Every screen uses the visual language of maya.net: deep navy ink (#202936) for text and
- * primary buttons, sky blue (#37B1FF) for highlights and tags, a pale blue band
- * (#E3F4FF), Maya pink (#FF4BB7) as the accent, mint green (#00BB77) for "supported" /
- * success, flat white cards with a 1px #E6E6E6 hairline and 12px corners, DM Sans for
- * text and a heavy condensed display face for big headings.
+ * Every screen uses the visual language of maya.net: deep navy (#202936) for text and the
+ * solid buttons, sky blue (#39B1FE / #2E96EF) for icons, tabs, links and active states,
+ * Maya pink (#FF4BB7) for prices, favourites and badges, the pale blue (#E3F4FF), pink
+ * (#FFD5EE) and mint (#D8FFF2) bands for soft fills, green (#00BB77) for success, flat
+ * white cards with pale-blue hairlines and 12px corners, DM Sans for text and a heavy
+ * condensed display face for big headings. No neutral greys.
  *
  * Fonts: DM Sans and Anton are SIL Open Font License fonts (see assets/fonts/maya).
  * Maya's own heading face (JuturuBlaarr) is not openly licensed, so Anton, the closest
@@ -18,7 +19,7 @@ export const MayaPalette = {
   ink: "#202936", // Maya navy: headings, body text, dark buttons
   inkSoft: "#4A5568", // navy-tinted secondary text
   sky: "#39B1FE", // Maya sky blue: icons, highlights, tags, bands
-  skyStrong: "#2E96EF", // Maya link blue: primary buttons and active states
+  skyStrong: "#2E96EF", // Maya link blue: active states, tabs, links, accent fills
   skySoft: "#E3F4FF", // Maya pale blue band
   skyMist: "#F3FAFF", // lightest step of the pale blue band, page background
   pink: "#FF4BB7", // Maya pink: prices, favourites, badges
@@ -39,7 +40,7 @@ export const MayaPalette = {
 
 /**
  * Maya colours for the whole app. Colour comes from Maya's own bands and accents: sky blue for
- * buttons, icons and active states, navy for text, pink for prices and favourites, pale blue,
+ * active states, icons and accents, navy for text and solid buttons, pink for prices and favourites, pale blue,
  * pink and mint bands for soft fills. No neutral greys.
  */
 export const MayaColors: { light: ThemeColors; dark: ThemeColors } = {
