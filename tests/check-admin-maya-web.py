@@ -1,7 +1,7 @@
 """Admin dashboard in the Maya look (web build in ./dist), on a throwaway local server.
 
 For light and dark, English and Bangla, at 390 (phone) and 1280 (computer) wide:
-Home, Shop, Orders, Support, More and the Add product form.
+Home, Shop, Orders, Support, More, the Add product form, and (on phones) the five older full-screen\nadmin pages opened from More (posts and reports, content, analytics, settings, activity log).
 Checks: flat Maya cards (no drop shadow, 1px hairline, 12px corners), the navy hero band with no
 gradient, solid navy primary buttons (sky in dark), white outline second buttons, DM Sans text with
 the Maya display face on titles, no old Farmers green, no Plus Jakarta, no sideways scrolling, no
@@ -112,6 +112,17 @@ async def main():
                             out = await pg.evaluate(STYLE, T("admin-logout"))
                             want_bc = "rgb(32, 41, 54)" if not dark else "rgb(255, 255, 255)"
                             h.ok(out and out["bw"] == "1px" and out["radius"] == "12px", f"{tag} more: second-choice button is outlined, 12px corners", out)
+                    # More -> the older full-screen admin pages (posts, content, analytics, settings, log).
+                    if w == 390:
+                        for k in ("posts", "content", "analytics", "settings", "logs"):
+                            await pg.locator(T("admin-tab-more")).first.click()
+                            await pg.wait_for_timeout(1200)
+                            await pg.locator(T(f"more-{k}")).first.click()
+                            await pg.wait_for_timeout(2500)
+                            await check_screen(pg, tag, f"classic-{k}", lang, theme)
+                            await pg.goto(h.base + "/admin", wait_until="load")
+                            await h.wait_for(pg, "admin-hero", 30000)
+                            await pg.wait_for_timeout(800)
                     # Shop -> Add product: solid navy (sky in dark) primary button, white inputs with hairline.
                     await pg.locator(T("admin-tab-shop")).first.click()
                     await pg.wait_for_timeout(1500)
