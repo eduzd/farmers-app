@@ -4,6 +4,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
   interpolateColor,
 } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -32,19 +33,24 @@ export function CustomSwitch({
   testID,
 }: CustomSwitchProps) {
   const progress = useSharedValue(value ? 1 : 0);
+  // The track colour fades on its own short timer, so it always ends exactly on Maya green (or the
+  // off grey) instead of a blend left over from the thumb's spring.
+  const tint = useSharedValue(value ? 1 : 0);
 
   React.useEffect(() => {
     progress.value = withSpring(value ? 1 : 0, {
       damping: 15,
       stiffness: 120,
     });
+    tint.value = withTiming(value ? 1 : 0, { duration: 220 });
   }, [value]);
 
   const trackAnimatedStyle = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
-      progress.value,
+      tint.value,
       [0, 1],
-      ["#D4E8D6", "#00BB77"]
+      // off: Maya muted blue-grey (the old pale-green track was Farmers green); on: Maya green
+      ["#A9C2DC", "#00BB77"]
     );
     return { backgroundColor };
   });
