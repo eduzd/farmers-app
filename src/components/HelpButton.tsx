@@ -88,7 +88,9 @@ export function HelpFab({ bottom = 16, testID = "help-fab" }: { bottom?: number;
 }
 
 /** Header Help button (question mark): goes straight to the Support chat, with the unread reply count on it. */
-export default function HelpButton({ color, size = 40 }: { color?: string; size?: number }) {
+export default function HelpButton({ color, size = 40, header = false }: { color?: string; size?: number; header?: boolean }) {
+  // header: the title-bar look, identical to the Market bell and cart (44px circle, 1px border, 20px icon).
+  if (header) size = 44;
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const { language } = useI18n();
@@ -106,11 +108,11 @@ export default function HelpButton({ color, size = 40 }: { color?: string; size?
       hitSlop={6}
       style={({ pressed }) => ({
         width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center",
-        backgroundColor: theme.backgroundDefault, borderColor: theme.cardBorder, borderWidth: StyleSheet.hairlineWidth,
+        backgroundColor: header ? theme.card : theme.backgroundDefault, borderColor: theme.cardBorder, borderWidth: header ? 1 : StyleSheet.hairlineWidth,
         opacity: pressed ? 0.7 : 1,
       })}
     >
-      <Feather name="help-circle" size={size * 0.48} color={color || theme.iconDefault || theme.text} />
+      <Feather name="help-circle" size={header ? 20 : size * 0.48} color={color || (header ? theme.text : theme.iconDefault) || theme.text} />
       <CountBadge count={unread} style={{ top: -4, right: -6 }} testID="help-unread" />
     </Pressable>
   );

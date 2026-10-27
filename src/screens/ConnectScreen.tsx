@@ -91,8 +91,7 @@ export default function ConnectScreen() {
         <View style={{ marginRight: Spacing.lg }} testID="connect-filter-button">
           <IconButton
             icon="sliders"
-            size={38}
-            tone={activeFilters ? "primary" : "surface"}
+            tone={activeFilters ? "headerActive" : "header"}
             accessibilityLabel={bn ? "ফিল্টার" : "Filter"}
             onPress={() => setFilterOpen(true)}
           />

@@ -24,19 +24,23 @@ export function useHeaderAddButton(onPress: () => void, label: string, icon: key
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             onPress();
           }}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
+          // Same title-bar icon button as the Market bell and cart.
+          style={({ pressed }) => ({
+            width: 44,
+            height: 44,
+            borderRadius: 22,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: theme.primary,
+            backgroundColor: theme.card,
+            borderWidth: 1,
+            borderColor: theme.cardBorder,
             marginRight: 4,
-          }}
+            opacity: pressed ? 0.7 : 1,
+          })}
         >
-          <AppIcon name={icon} size={20} color="#FFFFFF" />
+          <AppIcon name={icon} size={20} color={theme.text} />
         </Pressable>
       ),
     });
-  }, [navigation, label, theme.primary]);
+  }, [navigation, label, theme.card, theme.cardBorder, theme.text]);
 }

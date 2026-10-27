@@ -3,7 +3,8 @@ import { View, StyleSheet, Pressable, Modal, ScrollView, Platform, Alert, Keyboa
 import { Text, TextInput } from '@/components/MayaText';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { HeaderButton, useHeaderHeight } from '@react-navigation/elements';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { HeaderIconCircle } from '@/components/HeaderIconCircle';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { Feather } from '@/components/icons/Feather';
 import * as Print from 'expo-print';
@@ -430,25 +431,25 @@ export function AratCalculatorScreen() {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerRight}>
-          <HeaderButton onPress={handleDownloadPDF}>
-            <Feather name="download" size={20} color={results ? colors.primary : colors.textTertiary} />
-          </HeaderButton>
-          <HeaderButton onPress={openSavedList} accessibilityLabel={tr("সংরক্ষিত হিসাব")}>
+          <HeaderIconCircle size={40} onPress={handleDownloadPDF}>
+            <Feather name="download" size={20} color={results ? colors.text : colors.textTertiary} />
+          </HeaderIconCircle>
+          <HeaderIconCircle size={40} onPress={openSavedList} accessibilityLabel={tr("সংরক্ষিত হিসাব")}>
             <View style={styles.badgeContainer}>
-              <Feather name="bookmark" size={20} color={colors.textSecondary} />
+              <Feather name="bookmark" size={20} color={colors.text} />
               {savedCount > 0 ? (
                 <View style={[styles.badge, { backgroundColor: colors.primary }]}>
                   <Text style={styles.badgeText}>{savedCount > 9 ? '9+' : savedCount}</Text>
                 </View>
               ) : null}
             </View>
-          </HeaderButton>
-          <HeaderButton onPress={handleNewCalculation} accessibilityLabel={tr("নতুন হিসাব")}>
-            <Feather name="plus" size={22} color={colors.primary} />
-          </HeaderButton>
-          <HeaderButton onPress={() => setSettingsVisible(true)}>
-            <Feather name="settings" size={20} color={colors.textSecondary} />
-          </HeaderButton>
+          </HeaderIconCircle>
+          <HeaderIconCircle size={40} onPress={handleNewCalculation} accessibilityLabel={tr("নতুন হিসাব")}>
+            <Feather name="plus" size={20} color={colors.text} />
+          </HeaderIconCircle>
+          <HeaderIconCircle size={40} onPress={() => setSettingsVisible(true)}>
+            <Feather name="settings" size={20} color={colors.text} />
+          </HeaderIconCircle>
         </View>
       ),
     });
@@ -1081,7 +1082,8 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
+    marginRight: 8,
   },
   badgeContainer: {
     position: 'relative',

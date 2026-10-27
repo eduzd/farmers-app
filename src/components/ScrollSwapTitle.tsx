@@ -34,7 +34,7 @@ export function ScrollSwapTitle({ title, swapTo, progress }: { title: string; sw
 }
 
 const styles = StyleSheet.create({
-  box: { height: 34, justifyContent: "center", overflow: "hidden", maxWidth: 230 },
+  box: { height: 28, justifyContent: "center", overflow: "hidden", maxWidth: 230 },
   text: { fontWeight: "400" },
   overlay: { position: "absolute", left: 0, right: 0 },
 });
