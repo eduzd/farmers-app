@@ -857,7 +857,7 @@ export function registerPlatformRoutes(app: Express) {
     if (table === "catalog_items") await db.execute(sql`UPDATE catalog_items SET data = ${JSON.stringify(d)}::jsonb, updated_at = now() WHERE id = ${r[0].id}`);
     else await db.execute(sql`UPDATE community_items SET data = ${JSON.stringify(d)}::jsonb, updated_at = now() WHERE id = ${r[0].id}`);
     if (b.hidden !== undefined && r[0].owner_id) {
-      await notify(r[0].owner_id, "moderation", b.hidden ? "Item hidden by admin" : "Item visible again", `${d.name || d.title || d.question || "Your item"} was ${b.hidden ? "hidden" : "made visible"} by the admin.`, { itemId: r[0].id });
+      await notify(r[0].owner_id, "moderation", b.hidden ? "Item hidden by admin" : "Item visible again", `${d.name || d.title || d.question || "Your item"} was ${b.hidden ? "hidden" : "made visible"} by the admin.`, { itemId: r[0].id, market: r[0].kind === "listings" });
     }
     await audit(req, "UPDATE_ITEM", req.params.kind, r[0].id, b);
     res.json({ success: true });

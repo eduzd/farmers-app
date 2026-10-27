@@ -17,12 +17,19 @@ const authed = (t: string) => ({ Authorization: `Bearer ${t}` });
 
 // ---------- unread counts ----------
 interface UnreadState {
+  /** Every unread notification. */
   notifications: number;
+  /** Unread on the Marketplace bell (orders, shop, price alerts, quotes, product reviews). */
+  notificationsMarket: number;
+  /** Unread on the Home bell (everything that isn't marketplace). */
+  notificationsHome: number;
   messages: number;
-  set: (p: Partial<Pick<UnreadState, "notifications" | "messages">>) => void;
+  set: (p: Partial<Pick<UnreadState, "notifications" | "notificationsMarket" | "notificationsHome" | "messages">>) => void;
 }
 export const useUnreadCounts = create<UnreadState>((set) => ({
   notifications: 0,
+  notificationsMarket: 0,
+  notificationsHome: 0,
   messages: 0,
   set: (p) => set(p),
 }));
@@ -38,7 +45,7 @@ let unreadAgain = false;
 export function refreshUnreadCounts(): Promise<void> {
   const t = token();
   if (!t) {
-    useUnreadCounts.getState().set({ notifications: 0, messages: 0 });
+    useUnreadCounts.getState().set({ notifications: 0, notificationsMarket: 0, notificationsHome: 0, messages: 0 });
     return Promise.resolve();
   }
   if (unreadInflight) {
@@ -52,7 +59,12 @@ export function refreshUnreadCounts(): Promise<void> {
       fetch(`${base}/api/dm/unread`, { headers: authed(t) }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
     ]);
     const patch: Partial<UnreadState> = {};
-    if (n && typeof n.unread === "number") patch.notifications = n.unread;
+    if (n && typeof n.unread === "number") {
+      patch.notifications = n.unread;
+      // An older server sends only the total: then both bells show it, as before.
+      patch.notificationsMarket = typeof n.market === "number" ? n.market : n.unread;
+      patch.notificationsHome = typeof n.home === "number" ? n.home : n.unread;
+    }
     if (m && typeof m.total === "number") patch.messages = m.total;
     useUnreadCounts.getState().set(patch);
   })().finally(() => {
@@ -193,7 +205,7 @@ export function useLiveStatus() {
   const userId = useAuthStore((s) => s.user?.id);
   useEffect(() => {
     if (!userId) {
-      useUnreadCounts.getState().set({ notifications: 0, messages: 0 });
+      useUnreadCounts.getState().set({ notifications: 0, notificationsMarket: 0, notificationsHome: 0, messages: 0 });
       online = new Set();
       known = new Set();
       emit();

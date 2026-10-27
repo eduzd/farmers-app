@@ -8,6 +8,7 @@ import { sql } from "drizzle-orm";
 import { db, dbReady } from "./db";
 import { config } from "./config";
 import { sendPush } from "./push";
+import { MARKET_TYPES, marketPredicate, parseScope, scopeCondition } from "./notificationScope";
 
 /**
  * Pass 4 features (all stored in the same database as the rest of the app):
@@ -117,6 +118,9 @@ export async function notify(userId: string | null | undefined, type: string, ti
   try {
     await ensureFeatures();
     const id = `n-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+    // Orders, shops, price alerts and quotes always belong to the Marketplace bell; say so in the
+    // data too, so a push that arrives while the app is open lands under the right bell.
+    if ((MARKET_TYPES as readonly string[]).includes(type) && data?.market === undefined) data = { ...data, market: true };
     await db.execute(sql`INSERT INTO app_notifications (id, user_id, type, title, body, data)
       VALUES (${id}, ${userId}, ${type}, ${title.slice(0, 200)}, ${body.slice(0, 500)}, ${JSON.stringify(data)}::jsonb)`);
     // Also send it to the user's phones (fire and forget).
@@ -271,16 +275,23 @@ export function registerFeatureRoutes(app: Express) {
   app.get("/api/me/notifications", auth, wrap("notifications", async (req, res) => {
     const uid = (req as any).uid;
     await fireDueReminders(uid);
-    const r = rows(await db.execute(sql`SELECT * FROM app_notifications WHERE user_id = ${uid} ORDER BY created_at DESC LIMIT 200`));
-    const list = r.map((n) => ({ id: n.id, type: n.type, title: n.title, body: n.body, data: J(n.data) || {}, read: !!n.read_at, createdAt: iso(n.created_at) }));
+    // ?scope=market for the Marketplace bell, ?scope=home for the Home bell, nothing for all.
+    const scope = parseScope(req.query?.scope);
+    const r = rows(await db.execute(sql`SELECT app_notifications.*, ${marketPredicate} AS is_market FROM app_notifications
+      WHERE user_id = ${uid}${scopeCondition(scope)} ORDER BY created_at DESC LIMIT 200`));
+    const list = r.map((n) => ({ id: n.id, type: n.type, title: n.title, body: n.body, data: J(n.data) || {}, read: !!n.read_at, createdAt: iso(n.created_at), market: !!n.is_market }));
     res.json({ notifications: list, unread: list.filter((n) => !n.read).length });
   }));
   // Just the number of unread notifications, for the badge on the bell.
   app.get("/api/me/notifications/unread-count", auth, wrap("notifications", async (req, res) => {
     const uid = (req as any).uid;
     await fireDueReminders(uid);
-    const r = rows(await db.execute(sql`SELECT count(*)::int AS n FROM app_notifications WHERE user_id = ${uid} AND read_at IS NULL`));
-    res.json({ unread: Number(r[0]?.n) || 0 });
+    // unread: every unread one; market: the Marketplace bell's; home: the Home bell's.
+    const r = rows(await db.execute(sql`SELECT count(*)::int AS n, count(*) FILTER (WHERE ${marketPredicate})::int AS m
+      FROM app_notifications WHERE user_id = ${uid} AND read_at IS NULL`));
+    const all = Number(r[0]?.n) || 0;
+    const market = Number(r[0]?.m) || 0;
+    res.json({ unread: all, market, home: Math.max(0, all - market) });
   }));
   app.post("/api/me/notifications/read", auth, wrap("notifications", async (req, res) => {
     const uid = (req as any).uid;
@@ -292,7 +303,9 @@ export function registerFeatureRoutes(app: Express) {
         AND type = 'support' AND data->>'supportThreadId' = ${supportThreadId}`);
       return res.json({ success: true });
     }
-    if (req.body?.all || !ids.length) await db.execute(sql`UPDATE app_notifications SET read_at = now() WHERE user_id = ${uid} AND read_at IS NULL`);
+    // "Mark all read" from one bell only marks that bell's notifications (scope market/home).
+    const scope = parseScope(req.body?.scope);
+    if (req.body?.all || !ids.length) await db.execute(sql`UPDATE app_notifications SET read_at = now() WHERE user_id = ${uid} AND read_at IS NULL${scopeCondition(scope)}`);
     else for (const id of ids) await db.execute(sql`UPDATE app_notifications SET read_at = now() WHERE user_id = ${uid} AND id = ${id}`);
     res.json({ success: true });
   }));
@@ -340,15 +353,16 @@ export function registerFeatureRoutes(app: Express) {
     // A review only counts toward a person's profile rating when the reviewed listing really is theirs.
     // (Never trust an owner id sent by the client: that would let anyone add stars to anyone's profile.)
     let owner: string | null = null;
-    const cat = rows(await db.execute(sql`SELECT owner_id FROM catalog_items WHERE id = ${targetId} LIMIT 1`));
+    const cat = rows(await db.execute(sql`SELECT owner_id, kind FROM catalog_items WHERE id = ${targetId} LIMIT 1`));
     if (cat[0]?.owner_id) owner = String(cat[0].owner_id);
+    const reviewIsMarket = cat[0]?.kind === "listings"; // a product review goes to the Marketplace bell
     if (owner === uid) return res.status(400).json({ error: "You can't review your own listing" });
     const comment = String(req.body?.comment || "").slice(0, 1000);
     const id = `rv-${crypto.randomUUID()}`;
     await db.execute(sql`INSERT INTO item_reviews (id, target_id, target_owner_id, user_id, rating, comment) VALUES (${id}, ${targetId}, ${owner}, ${uid}, ${rating}, ${comment})
       ON CONFLICT (target_id, user_id) DO UPDATE SET rating = ${rating}, comment = ${comment}, created_at = now()`);
     const me = await publicUser(uid);
-    await notify(owner, "review", "New review", `${me?.name || "Someone"} rated ${req.body?.targetName || "your listing"} ${rating} star(s)`, { targetId });
+    await notify(owner, "review", "New review", `${me?.name || "Someone"} rated ${req.body?.targetName || "your listing"} ${rating} star(s)`, { targetId, market: reviewIsMarket });
     res.status(201).json({ success: true });
   }));
   app.get("/api/sellers/:userId/rating", wrap("reviews", async (req, res) => {

@@ -302,7 +302,7 @@ export type RootStackParamList = {
   VoiceRoom: { roomId: string; room?: any; isHost?: boolean };
   VoiceRoomCreate: undefined;
   Stories: undefined;
-  Notifications: undefined;
+  Notifications: { scope?: "market" | "home" } | undefined;
   Leaderboard: undefined;
   UserSearch: undefined;
   Announcements: undefined;
