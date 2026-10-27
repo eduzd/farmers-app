@@ -133,7 +133,7 @@ const { PGlite } = require('@electric-sql/pglite');
             # Plain farmer: no card, no Start
             fctx, fpg, ferrs = await open_app(b, farmer, lang, w)
             await go(fpg, "Main", {"screen": "Connect"})
-            check(key, await fpg.get_by_test_id("connect-voice-rooms").count() == 0, "Connect has no Voice rooms card (removed)")
+            check(key, await fpg.get_by_test_id("connect-voice-rooms").count() == 1, "Connect has the Voice rooms tile beside the ads")
             check(key, await fpg.get_by_test_id("connect-voice-room-create-icon").count() == 0, "plain farmer has no voice room icon")
             check(key, await fpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room under the card")
             check(key, await width(fpg) <= w, "Connect fits the screen (farmer)")

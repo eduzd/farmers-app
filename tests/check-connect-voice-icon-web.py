@@ -150,7 +150,7 @@ const { PGlite } = require('@electric-sql/pglite');
             check(key, await visible(fpg.locator(fil_sel)) is not None, "farmer sees the filter icon")
             check(key, await visible(fpg.locator(mic_sel)) is None, "plain farmer has no voice room icon")
             check(key, await width(fpg) <= w, "Connect fits the screen (farmer)")
-            check(key, await fpg.get_by_test_id("connect-voice-rooms").count() == 0, "Voice rooms card is gone from Connect (farmer)")
+            check(key, await fpg.get_by_test_id("connect-voice-rooms").count() == 1, "Voice rooms tile is on Connect (farmer)")
             check(key, await fpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room under the card (farmer)")
             await fpg.screenshot(path=f"{SHOTS}/{key}-1-farmer-connect.png")
 
@@ -178,7 +178,7 @@ const { PGlite } = require('@electric-sql/pglite');
             await hpg.screenshot(path=f"{SHOTS}/{key}-2-admin-connect.png")
 
             # The Voice rooms card (and its old "Start a room" button) is gone from Connect
-            check(key, await hpg.get_by_test_id("connect-voice-rooms").count() == 0, "Voice rooms card is gone from Connect (admin)")
+            check(key, await hpg.get_by_test_id("connect-voice-rooms").count() == 1, "Voice rooms tile is on Connect (admin)")
             check(key, await hpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room button on Connect (admin)")
             await go(hpg, "VoiceRooms")
             check(key, await route(hpg) == "VoiceRooms", "Voice rooms page still opens")
