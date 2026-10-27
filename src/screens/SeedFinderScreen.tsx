@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { View, StyleSheet, FlatList, Pressable, RefreshControl, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -63,7 +63,7 @@ export default function SeedFinderScreen() {
             <ThemedText style={styles.cropText}>{item.crop}</ThemedText>
           </View>
           {item.certified ? (
-            <View style={[styles.certifiedBadge, { backgroundColor: "#2FA36B" }]}>
+            <View style={[styles.certifiedBadge, { backgroundColor: "#2E96EF" }]}>
               <Feather name="check-circle" size={12} color="#fff" />
               <ThemedText style={styles.certifiedText}>সনদপ্রাপ্ত</ThemedText>
             </View>

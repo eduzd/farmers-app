@@ -1,14 +1,9 @@
 import React, { useState } from "react";
 import { SaveCalcButton } from "@/components/SaveCalcButton";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  Pressable,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -27,10 +22,10 @@ interface InsuranceResult {
 }
 
 const INSURANCE_TYPES = [
-  { id: "crop", name: "ফসল বীমা", rate: 2, subsidy: 50, icon: "sun", color: "#2FA36B" },
-  { id: "livestock", name: "গবাদি পশু বীমা", rate: 3, subsidy: 40, icon: "heart", color: "#DC2626" },
-  { id: "fishery", name: "মাছ চাষ বীমা", rate: 2.5, subsidy: 45, icon: "droplet", color: "#2563EB" },
-  { id: "poultry", name: "হাঁস-মুরগি বীমা", rate: 3.5, subsidy: 35, icon: "feather", color: "#EA8A0C" },
+  { id: "crop", name: "ফসল বীমা", rate: 2, subsidy: 50, icon: "sun", color: "#2E96EF" },
+  { id: "livestock", name: "গবাদি পশু বীমা", rate: 3, subsidy: 40, icon: "heart", color: "#DA2F2F" },
+  { id: "fishery", name: "মাছ চাষ বীমা", rate: 2.5, subsidy: 45, icon: "droplet", color: "#2E96EF" },
+  { id: "poultry", name: "হাঁস-মুরগি বীমা", rate: 3.5, subsidy: 35, icon: "feather", color: "#B25E09" },
 ];
 
 const CROP_TYPES = [
@@ -90,8 +85,8 @@ export default function InsuranceCalculatorScreen() {
       showsVerticalScrollIndicator={false}
     >
       <Animated.View entering={FadeIn} style={styles.header}>
-        <View style={[styles.iconContainer, { backgroundColor: "#7C3AED" + "20" }]}>
-          <Feather name="shield" size={32} color="#7C3AED" />
+        <View style={[styles.iconContainer, { backgroundColor: "#3D38D0" + "20" }]}>
+          <Feather name="shield" size={32} color="#3D38D0" />
         </View>
         <ThemedText style={[styles.title, { color: theme.text }]}>{tr("কৃষি বীমা ক্যালকুলেটর")}</ThemedText>
         <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
@@ -197,9 +192,9 @@ export default function InsuranceCalculatorScreen() {
                 ৳{result.coverage.toLocaleString()}
               </ThemedText>
             </View>
-            <View style={[styles.resultCard, { backgroundColor: "#2FA36B" + "15" }]}>
+            <View style={[styles.resultCard, { backgroundColor: "#2E96EF" + "15" }]}>
               <ThemedText style={[styles.resultLabel, { color: theme.textSecondary }]}>{tr("সরকারি ভর্তুকি")}</ThemedText>
-              <ThemedText style={[styles.resultValue, { color: "#2FA36B" }]}>
+              <ThemedText style={[styles.resultValue, { color: "#2E96EF" }]}>
                 ৳{result.govtSubsidy.toLocaleString()}
               </ThemedText>
             </View>
@@ -214,7 +209,7 @@ export default function InsuranceCalculatorScreen() {
             </View>
             <View style={styles.mainResultRow}>
               <ThemedText style={[styles.mainResultLabel, { color: theme.text }]}>{tr("সরকারি ভর্তুকি")}</ThemedText>
-              <ThemedText style={[styles.mainResultValue, { color: "#2FA36B" }]}>
+              <ThemedText style={[styles.mainResultValue, { color: "#2E96EF" }]}>
                 - ৳{result.govtSubsidy.toLocaleString()}
               </ThemedText>
             </View>
@@ -227,7 +222,7 @@ export default function InsuranceCalculatorScreen() {
             </View>
             <View style={styles.mainResultRow}>
               <ThemedText style={[styles.mainResultLabel, { color: theme.textSecondary }]}>{tr("সর্বোচ্চ দাবি")}</ThemedText>
-              <ThemedText style={[styles.mainResultValue, { color: "#EA8A0C" }]}>
+              <ThemedText style={[styles.mainResultValue, { color: "#B25E09" }]}>
                 ৳{result.maxClaim.toLocaleString()}
               </ThemedText>
             </View>

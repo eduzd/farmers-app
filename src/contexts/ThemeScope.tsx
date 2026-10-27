@@ -7,7 +7,8 @@ import React, { createContext, useContext } from "react";
  */
 export type ThemeScopeName = "maya" | null;
 
-const ThemeScopeContext = createContext<ThemeScopeName>(null);
+// The whole app (main app and admin dashboard) uses the Maya theme by default.
+const ThemeScopeContext = createContext<ThemeScopeName>("maya");
 
 export function useThemeScope(): ThemeScopeName {
   return useContext(ThemeScopeContext);

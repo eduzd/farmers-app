@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInUp } from "react-native-reanimated";
@@ -69,7 +69,7 @@ export default function PodcastsScreen() {
           <View style={styles.thumbnailContainer}>
             <Image source={{ uri: item.thumbnail }} style={styles.thumbnail} contentFit="cover" />
             <Pressable
-              style={[styles.playButton, { backgroundColor: isPlaying ? "#DC2626" : theme.primary }]}
+              style={[styles.playButton, { backgroundColor: isPlaying ? "#DA2F2F" : theme.primary }]}
               onPress={() => handlePlay(item)}
             >
               <AppIcon name={isPlaying ? "pause" : "play"} size={24} color="#fff" />

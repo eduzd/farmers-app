@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, TextInput, Linking } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Linking } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -29,8 +30,8 @@ const DOCTORS: any[] = [];
 const DISCUSSIONS: any[] = [];
 
 const EMERGENCY = [
-  { title: "জরুরি হটলাইন", number: "999", icon: "phone-call", color: "#DC2626" },
-  { title: "অ্যাম্বুলেন্স", number: "199", icon: "truck", color: "#EA8A0C" },
+  { title: "জরুরি হটলাইন", number: "999", icon: "phone-call", color: "#DA2F2F" },
+  { title: "অ্যাম্বুলেন্স", number: "199", icon: "truck", color: "#B25E09" },
 ];
 
 export default function MedicalServicesScreen() {
@@ -49,7 +50,7 @@ export default function MedicalServicesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <LinearGradient
-        colors={isDark ? ["#7f1d1d", "#1f2937"] : ["#fee2e2", "#ffffff"]}
+        colors={isDark ? ["#7f1d1d", "#202936"] : ["#fee2e2", "#ffffff"]}
         style={styles.headerGradient}
       >
         <View style={styles.emergencyRow}>
@@ -146,16 +147,16 @@ export default function MedicalServicesScreen() {
               <Animated.View key={doctor.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.doctorCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={styles.doctorHeader}>
-                    <View style={[styles.doctorAvatar, { backgroundColor: "#DC2626" }]}>
+                    <View style={[styles.doctorAvatar, { backgroundColor: "#DA2F2F" }]}>
                       <ThemedText style={styles.doctorInitials}>{doctor.name.charAt(3)}</ThemedText>
                     </View>
                     <View style={styles.doctorInfo}>
                       <View style={styles.doctorNameRow}>
                         <ThemedText style={[styles.doctorName, { color: theme.text }]}>{doctor.name}</ThemedText>
                         {doctor.available ? (
-                          <View style={[styles.availableBadge, { backgroundColor: "#16A34A20" }]}>
-                            <View style={[styles.availableDot, { backgroundColor: "#16A34A" }]} />
-                            <ThemedText style={[styles.availableText, { color: "#16A34A" }]}>অনলাইন</ThemedText>
+                          <View style={[styles.availableBadge, { backgroundColor: "#00BB7720" }]}>
+                            <View style={[styles.availableDot, { backgroundColor: "#00BB77" }]} />
+                            <ThemedText style={[styles.availableText, { color: "#00BB77" }]}>অনলাইন</ThemedText>
                           </View>
                         ) : null}
                       </View>
@@ -170,7 +171,7 @@ export default function MedicalServicesScreen() {
 
                   <View style={styles.doctorMeta}>
                     <View style={styles.metaItem}>
-                      <Feather name="star" size={14} color="#EA8A0C" />
+                      <Feather name="star" size={14} color="#B25E09" />
                       <ThemedText style={[styles.metaText, { color: theme.text }]}>{doctor.rating}</ThemedText>
                     </View>
                     <View style={styles.metaItem}>

@@ -9,7 +9,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, {
@@ -79,15 +79,15 @@ function CountdownTimer({ endsAt, theme }: { endsAt: Date; theme: any }) {
 
   return (
     <View style={styles.timerContainer}>
-      <View style={[styles.timerBox, { backgroundColor: "#DC2626" }]}>
+      <View style={[styles.timerBox, { backgroundColor: "#DA2F2F" }]}>
         <ThemedText style={styles.timerText}>{pad(timeLeft.hours)}</ThemedText>
       </View>
       <ThemedText style={[styles.timerSeparator, { color: theme.text }]}>:</ThemedText>
-      <View style={[styles.timerBox, { backgroundColor: "#DC2626" }]}>
+      <View style={[styles.timerBox, { backgroundColor: "#DA2F2F" }]}>
         <ThemedText style={styles.timerText}>{pad(timeLeft.minutes)}</ThemedText>
       </View>
       <ThemedText style={[styles.timerSeparator, { color: theme.text }]}>:</ThemedText>
-      <View style={[styles.timerBox, { backgroundColor: "#DC2626" }]}>
+      <View style={[styles.timerBox, { backgroundColor: "#DA2F2F" }]}>
         <ThemedText style={styles.timerText}>{pad(timeLeft.seconds)}</ThemedText>
       </View>
     </View>
@@ -162,7 +162,7 @@ export default function FlashSaleScreen() {
             ফ্ল্যাশ সেল
           </ThemedText>
         </View>
-        <View style={[styles.liveBadge, { backgroundColor: "#DC2626" }]}>
+        <View style={[styles.liveBadge, { backgroundColor: "#DA2F2F" }]}>
           <View style={styles.liveDot} />
           <ThemedText style={styles.liveText}>LIVE</ThemedText>
         </View>
@@ -194,7 +194,7 @@ export default function FlashSaleScreen() {
             contentFit="cover"
             transition={200}
           />
-          <View style={[styles.discountBadge, { backgroundColor: "#DC2626" }]}>
+          <View style={[styles.discountBadge, { backgroundColor: "#DA2F2F" }]}>
             <ThemedText style={styles.discountText}>-{discount}%</ThemedText>
           </View>
         </View>
@@ -212,7 +212,7 @@ export default function FlashSaleScreen() {
           </ThemedText>
 
           <View style={styles.priceRow}>
-            <ThemedText style={[styles.price, { color: "#DC2626" }]}>
+            <ThemedText style={[styles.price, { color: "#DA2F2F" }]}>
               ৳{item.price}
             </ThemedText>
             <ThemedText style={[styles.originalPrice, { color: theme.textSecondary }]}>
@@ -221,7 +221,7 @@ export default function FlashSaleScreen() {
           </View>
 
           <View style={styles.timerRow}>
-            <Feather name="clock" size={12} color="#DC2626" />
+            <Feather name="clock" size={12} color="#DA2F2F" />
             <CountdownTimer endsAt={item.endsAt} theme={theme} />
           </View>
 
@@ -230,7 +230,7 @@ export default function FlashSaleScreen() {
               <View
                 style={[
                   styles.progressFill,
-                  { backgroundColor: "#DC2626", width: `${soldPercentage}%` },
+                  { backgroundColor: "#DA2F2F", width: `${soldPercentage}%` },
                 ]}
               />
             </View>
@@ -240,7 +240,7 @@ export default function FlashSaleScreen() {
           </View>
 
           <Pressable
-            style={[styles.buyButton, { backgroundColor: "#DC2626" }]}
+            style={[styles.buyButton, { backgroundColor: "#DA2F2F" }]}
             onPress={() => handleBuyNow(item)}
           >
             <Feather name="shopping-bag" size={16} color="#FFFFFF" />

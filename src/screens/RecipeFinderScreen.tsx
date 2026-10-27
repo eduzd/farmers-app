@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, TextInput } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import { Image } from "expo-image";
@@ -161,10 +162,10 @@ export default function RecipeFinderScreen() {
                       {
                         backgroundColor:
                           recipe.difficulty === "সহজ"
-                            ? "#16A34A20"
+                            ? "#00BB7720"
                             : recipe.difficulty === "মাঝারি"
-                            ? "#EA8A0C20"
-                            : "#DC262620",
+                            ? "#B25E0920"
+                            : "#DA2F2F20",
                       },
                     ]}
                   >
@@ -174,10 +175,10 @@ export default function RecipeFinderScreen() {
                         {
                           color:
                             recipe.difficulty === "সহজ"
-                              ? "#16A34A"
+                              ? "#00BB77"
                               : recipe.difficulty === "মাঝারি"
-                              ? "#EA8A0C"
-                              : "#DC2626",
+                              ? "#B25E09"
+                              : "#DA2F2F",
                         },
                       ]}
                     >

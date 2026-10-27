@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Pressable, Alert, Share } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { ResultCard, ResultRow, BreakdownItem } from '@/offline/components/calculate/ResultCard';
@@ -59,6 +59,9 @@ export function RecordDetailScreen() {
 
   useEffect(() => {
     loadRecord();
+    // Coming back after editing in the calculator shows the updated record.
+    const unsub = navigation.addListener('focus', () => { loadRecord(); });
+    return unsub;
   }, [recordId]);
 
   const loadRecord = async () => {
@@ -183,9 +186,19 @@ export function RecordDetailScreen() {
     );
   }
 
-  const outputs = JSON.parse(record.outputs_json);
-  const inputs = JSON.parse(record.inputs_json);
-  const typeLabel = recordTypeLabels[record.record_type];
+  const parse = (v: string) => { try { return JSON.parse(v) || {}; } catch { return {}; } };
+  const outputs = parse(record.outputs_json);
+  const inputs = parse(record.inputs_json);
+  const typeLabel = recordTypeLabels[record.record_type] || { bn: record.record_type, en: record.record_type };
+  const num = (...vals: any[]) => { for (const v of vals) { const x = Number(v); if (v !== undefined && v !== null && v !== '' && Number.isFinite(x)) return x; } return 0; };
+  // Arat / Bepari calculations keep their whole table in inputs.rows and can be reopened for editing.
+  const tableRows: any[] = Array.isArray(inputs.rows)
+    ? inputs.rows.filter((r: any) => record.record_type === 'ARAT' ? (parseFloat(r?.rate) > 0 && parseFloat(r?.weight) > 0) : (parseFloat(r?.weight) > 0 && parseFloat(r?.pieces) > 0))
+    : [];
+  const canEdit = (record.record_type === 'ARAT' || record.record_type === 'BEPARI') && Array.isArray(inputs.rows);
+  const handleEdit = () => {
+    navigation.navigate(record.record_type === 'ARAT' ? 'CalculateArat' : 'CalculateBepari', { recordId: record.id, openedAt: Date.now() });
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -207,24 +220,44 @@ export function RecordDetailScreen() {
         {record.record_type === 'BEPARI' ? (
           <>
             <ResultCard title="সারাংশ">
-              <ResultRow label={t('totalWeight', lang)} value={fmtWeight(outputs.total_weight)} />
-              <ResultRow label={t('totalPieces', lang)} value={outputs.total_pieces?.toString()} />
-              <ResultRow label={t('avgWeight', lang)} value={fmtWeight(outputs.avg_weight)} highlight />
-              <ResultRow label={t('ratePerKg', lang)} value={fmtCurrency(outputs.final_price_per_kg)} highlight />
-              <ResultRow label={t('grossAmount', lang)} value={fmtCurrency(outputs.gross_amount)} />
-              <ResultRow label={t('netAmount', lang)} value={fmtCurrency(outputs.net_amount)} isTotal />
-              <ResultRow label={t('perPiece', lang)} value={fmtCurrency(outputs.per_piece_net)} highlight />
+              <ResultRow label={t('totalWeight', lang)} value={fmtWeight(num(outputs.totalWeight, outputs.total_weight))} />
+              <ResultRow label={t('totalPieces', lang)} value={String(num(outputs.totalPieces, outputs.total_pieces))} />
+              <ResultRow label={t('avgWeight', lang)} value={fmtWeight(num(outputs.avgWeight, outputs.avg_weight))} highlight />
+              <ResultRow label={t('ratePerKg', lang)} value={fmtCurrency(num(outputs.pricePerKg, outputs.final_price_per_kg))} highlight />
+              {outputs.gross_amount !== undefined ? (
+                <ResultRow label={t('grossAmount', lang)} value={fmtCurrency(num(outputs.gross_amount))} />
+              ) : null}
+              <ResultRow label={t('netAmount', lang)} value={fmtCurrency(num(outputs.netAmount, outputs.net_amount))} isTotal />
+              <ResultRow label={t('perPiece', lang)} value={fmtCurrency(num(outputs.perPiece, outputs.per_piece_net))} highlight />
             </ResultCard>
+            {tableRows.length > 0 ? (
+              <ResultCard title={tr('হিসাবের তালিকা')}>
+                {tableRows.map((r: any, i: number) => (
+                  <ResultRow key={i} label={`${i + 1}. ${r.weight} ${tr('কেজি')}`} value={`${r.pieces} ${tr('পিস')}`} />
+                ))}
+              </ResultCard>
+            ) : null}
           </>
         ) : record.record_type === 'ARAT' ? (
           <>
             <ResultCard title="সারাংশ">
-              <ResultRow label={t('weightKg', lang)} value={fmtWeight(outputs.weight_kg)} />
-              <ResultRow label={t('ratePerKg', lang)} value={fmtCurrency(outputs.rate_per_kg)} />
-              <ResultRow label={t('grossAmount', lang)} value={fmtCurrency(outputs.gross_amount)} />
-              <ResultRow label={t('commission', lang)} value={fmtCurrency(outputs.commission_amount)} />
-              <ResultRow label={t('netAmount', lang)} value={fmtCurrency(outputs.net_amount)} isTotal />
+              <ResultRow label={t('weightKg', lang)} value={fmtWeight(num(outputs.totalWeight, outputs.weight_kg))} />
+              <ResultRow label={t('ratePerKg', lang)} value={fmtCurrency(num(outputs.avgRate, outputs.rate_per_kg))} />
+              <ResultRow label={t('grossAmount', lang)} value={fmtCurrency(num(outputs.rawAmount, outputs.gross_amount))} />
+              <ResultRow label={t('commission', lang)} value={fmtCurrency(num(outputs.commission, outputs.commission_amount))} />
+              <ResultRow label={t('netAmount', lang)} value={fmtCurrency(num(outputs.netAmount, outputs.net_amount))} isTotal />
             </ResultCard>
+            {tableRows.length > 0 ? (
+              <ResultCard title={tr('হিসাবের তালিকা')}>
+                {tableRows.map((r: any, i: number) => (
+                  <ResultRow
+                    key={i}
+                    label={`${i + 1}. ${r.fishName ? r.fishName + ' • ' : ''}${r.weight} ${tr('কেজি')} × ৳${r.rate}`}
+                    value={fmtCurrency((parseFloat(r.rate) || 0) * (parseFloat(r.weight) || 0))}
+                  />
+                ))}
+              </ResultCard>
+            ) : null}
           </>
         ) : record.record_type === 'FEED' ? (
           <>
@@ -274,6 +307,7 @@ export function RecordDetailScreen() {
       <StickyActionBar
         actions={[
           { label: t('archive', lang), onPress: handleArchive, variant: 'secondary', icon: 'archive' },
+          ...(canEdit ? [{ label: tr('এডিট করুন'), onPress: handleEdit, variant: 'secondary' as const, icon: 'edit-2' as const }] : []),
           { label: t('export', lang), onPress: generatePDF, variant: 'primary', icon: 'download' },
         ]}
       />

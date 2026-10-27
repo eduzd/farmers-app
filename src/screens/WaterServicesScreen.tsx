@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, TextInput, Linking } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Linking } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -27,8 +28,8 @@ const PROFESSIONALS: any[] = [];
 const DISCUSSIONS: any[] = [];
 
 const EMERGENCY = [
-  { title: "বন্যা হটলাইন", number: "1090", icon: "alert-circle", color: "#DC2626" },
-  { title: "WASA", number: "16162", icon: "phone", color: "#2563EB" },
+  { title: "বন্যা হটলাইন", number: "1090", icon: "alert-circle", color: "#DA2F2F" },
+  { title: "WASA", number: "16162", icon: "phone", color: "#2E96EF" },
 ];
 
 export default function WaterServicesScreen() {
@@ -45,7 +46,7 @@ export default function WaterServicesScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <LinearGradient
-        colors={isDark ? ["#0c4a6e", "#1f2937"] : ["#e0f2fe", "#f0f9ff"]}
+        colors={isDark ? ["#0c4a6e", "#202936"] : ["#e0f2fe", "#f0f9ff"]}
         style={styles.headerGradient}
       >
         <View style={styles.emergencyRow}>
@@ -129,15 +130,15 @@ export default function WaterServicesScreen() {
               <Animated.View key={pro.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <View style={[styles.proCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={styles.proHeader}>
-                    <View style={[styles.proIcon, { backgroundColor: "#2563EB20" }]}>
-                      <Feather name="droplet" size={24} color="#2563EB" />
+                    <View style={[styles.proIcon, { backgroundColor: "#2E96EF20" }]}>
+                      <Feather name="droplet" size={24} color="#2E96EF" />
                     </View>
                     <View style={styles.proInfo}>
                       <ThemedText style={[styles.proName, { color: theme.text }]}>{pro.name}</ThemedText>
                       <ThemedText style={[styles.proSpecialty, { color: theme.primary }]}>{pro.specialty}</ThemedText>
                       <View style={styles.proMeta}>
                         <View style={styles.metaItem}>
-                          <Feather name="star" size={12} color="#EA8A0C" />
+                          <Feather name="star" size={12} color="#B25E09" />
                           <ThemedText style={[styles.metaText, { color: theme.text }]}>{pro.rating}</ThemedText>
                         </View>
                         <View style={styles.metaItem}>
@@ -193,7 +194,7 @@ export default function WaterServicesScreen() {
               <Animated.View key={discussion.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <Pressable style={[styles.discussionCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
                   <View style={styles.discussionHeader}>
-                    <View style={[styles.authorAvatar, { backgroundColor: "#2563EB" }]}>
+                    <View style={[styles.authorAvatar, { backgroundColor: "#2E96EF" }]}>
                       <ThemedText style={styles.authorInitial}>{discussion.author.charAt(0)}</ThemedText>
                     </View>
                     <View style={styles.discussionMeta}>
@@ -201,9 +202,9 @@ export default function WaterServicesScreen() {
                       <ThemedText style={[styles.postTime, { color: theme.textSecondary }]}>{discussion.time}</ThemedText>
                     </View>
                     {discussion.solved ? (
-                      <View style={[styles.solvedBadge, { backgroundColor: "#16A34A20" }]}>
-                        <Feather name="check-circle" size={14} color="#16A34A" />
-                        <ThemedText style={[styles.solvedText, { color: "#16A34A" }]}>সমাধান</ThemedText>
+                      <View style={[styles.solvedBadge, { backgroundColor: "#00BB7720" }]}>
+                        <Feather name="check-circle" size={14} color="#00BB77" />
+                        <ThemedText style={[styles.solvedText, { color: "#00BB77" }]}>সমাধান</ThemedText>
                       </View>
                     ) : null}
                   </View>
@@ -213,8 +214,8 @@ export default function WaterServicesScreen() {
                   </ThemedText>
                   <View style={styles.tagsRow}>
                     {discussion.tags.map((tag: string, i: number) => (
-                      <View key={i} style={[styles.tag, { backgroundColor: "#2563EB20" }]}>
-                        <ThemedText style={[styles.tagText, { color: "#2563EB" }]}>{tag}</ThemedText>
+                      <View key={i} style={[styles.tag, { backgroundColor: "#2E96EF20" }]}>
+                        <ThemedText style={[styles.tagText, { color: "#2E96EF" }]}>{tag}</ThemedText>
                       </View>
                     ))}
                   </View>

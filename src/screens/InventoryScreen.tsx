@@ -1,17 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  Modal,
-  TextInput,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, RefreshControl, Modal, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -60,11 +52,11 @@ export default function InventoryScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "in_stock":
-        return "#2FA36B";
+        return "#2E96EF";
       case "low_stock":
-        return "#EA8A0C";
+        return "#B25E09";
       case "out_of_stock":
-        return "#DC2626";
+        return "#DA2F2F";
       default:
         return theme.textSecondary;
     }
@@ -248,13 +240,13 @@ export default function InventoryScreen() {
                 মোট মূল্য
               </ThemedText>
             </View>
-            <View style={[styles.statCard, { backgroundColor: "#EA8A0C" + "15" }]}>
-              <Feather name="alert-triangle" size={22} color="#EA8A0C" />
+            <View style={[styles.statCard, { backgroundColor: "#B25E09" + "15" }]}>
+              <Feather name="alert-triangle" size={22} color="#B25E09" />
               <ThemedText style={[styles.statValue, { color: theme.text }]}>{lowStockCount}</ThemedText>
               <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>কম স্টক</ThemedText>
             </View>
-            <View style={[styles.statCard, { backgroundColor: "#DC2626" + "15" }]}>
-              <Feather name="x-circle" size={22} color="#DC2626" />
+            <View style={[styles.statCard, { backgroundColor: "#DA2F2F" + "15" }]}>
+              <Feather name="x-circle" size={22} color="#DA2F2F" />
               <ThemedText style={[styles.statValue, { color: theme.text }]}>{outOfStockCount}</ThemedText>
               <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>স্টক নেই</ThemedText>
             </View>

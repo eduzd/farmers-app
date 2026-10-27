@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  Pressable,
-  Alert,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Platform, ActivityIndicator } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import * as WebBrowser from "expo-web-browser";
@@ -277,7 +269,7 @@ export default function InternationalFishSummitScreen() {
       ]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.headerCard, { backgroundColor: "#0D47A1" }]}>
+      <View style={[styles.headerCard, { backgroundColor: "#202936" }]}>
         <LinearGradient
           colors={["rgba(255,255,255,0.15)", "transparent"]}
           style={styles.headerGradient}
@@ -379,7 +371,7 @@ export default function InternationalFishSummitScreen() {
               {
                 backgroundColor: theme.backgroundRoot,
                 color: theme.text,
-                borderColor: errors.name ? "#DC2626" : theme.inputBorder,
+                borderColor: errors.name ? "#DA2F2F" : theme.inputBorder,
               },
             ]}
             placeholder={isBn ? "আপনার পূর্ণ নাম লিখুন" : "Enter your full name"}
@@ -405,7 +397,7 @@ export default function InternationalFishSummitScreen() {
               {
                 backgroundColor: theme.backgroundRoot,
                 color: theme.text,
-                borderColor: errors.phone ? "#DC2626" : theme.inputBorder,
+                borderColor: errors.phone ? "#DA2F2F" : theme.inputBorder,
               },
             ]}
             placeholder="01XXXXXXXXX"
@@ -433,7 +425,7 @@ export default function InternationalFishSummitScreen() {
               {
                 backgroundColor: theme.backgroundRoot,
                 color: theme.text,
-                borderColor: errors.email ? "#DC2626" : theme.inputBorder,
+                borderColor: errors.email ? "#DA2F2F" : theme.inputBorder,
               },
             ]}
             placeholder={isBn ? "আপনার ইমেইল" : "Your email"}
@@ -481,7 +473,7 @@ export default function InternationalFishSummitScreen() {
               {
                 backgroundColor: theme.backgroundRoot,
                 color: theme.text,
-                borderColor: errors.nidNumber ? "#DC2626" : theme.inputBorder,
+                borderColor: errors.nidNumber ? "#DA2F2F" : theme.inputBorder,
               },
             ]}
             placeholder={isBn ? "আপনার NID নম্বর লিখুন" : "Enter your NID number"}
@@ -513,7 +505,7 @@ export default function InternationalFishSummitScreen() {
               styles.uploadBox,
               {
                 backgroundColor: theme.backgroundRoot,
-                borderColor: errors.photo ? "#DC2626" : theme.inputBorder,
+                borderColor: errors.photo ? "#DA2F2F" : theme.inputBorder,
               },
             ]}
             onPress={() => pickImage("photo")}
@@ -544,7 +536,7 @@ export default function InternationalFishSummitScreen() {
               styles.nidUploadBox,
               {
                 backgroundColor: theme.backgroundRoot,
-                borderColor: errors.nid ? "#DC2626" : theme.inputBorder,
+                borderColor: errors.nid ? "#DA2F2F" : theme.inputBorder,
               },
             ]}
             onPress={() => pickImage("nid")}
@@ -618,8 +610,8 @@ export default function InternationalFishSummitScreen() {
         {[
           { id: "bkash", name: "bKash", color: "#E2136E" },
           { id: "nagad", name: "Nagad", color: "#F6921E" },
-          { id: "rocket", name: "Rocket", color: "#8C3494" },
-          { id: "bank", name: isBn ? "ব্যাংক ট্রান্সফার" : "Bank Transfer", color: "#1D4ED8" },
+          { id: "rocket", name: "Rocket", color: "#3D38D0" },
+          { id: "bank", name: isBn ? "ব্যাংক ট্রান্সফার" : "Bank Transfer", color: "#3D38D0" },
         ].map((method) => (
           <Pressable
             key={method.id}
@@ -717,7 +709,7 @@ export default function InternationalFishSummitScreen() {
             <AppIcon
               name={submissionProgress >= 30 ? "check-circle" : "circle"}
               size={18}
-              color={submissionProgress >= 30 ? "#16A34A" : theme.textSecondary}
+              color={submissionProgress >= 30 ? "#00BB77" : theme.textSecondary}
             />
             <ThemedText style={[styles.verifyStepText, { color: submissionProgress >= 30 ? theme.text : theme.textSecondary }]}>
               {isBn ? "পেমেন্ট গ্রহণ করা হয়েছে" : "Payment received"}
@@ -727,7 +719,7 @@ export default function InternationalFishSummitScreen() {
             <AppIcon
               name={submissionProgress >= 60 ? "check-circle" : "circle"}
               size={18}
-              color={submissionProgress >= 60 ? "#16A34A" : theme.textSecondary}
+              color={submissionProgress >= 60 ? "#00BB77" : theme.textSecondary}
             />
             <ThemedText style={[styles.verifyStepText, { color: submissionProgress >= 60 ? theme.text : theme.textSecondary }]}>
               {isBn ? "তথ্য যাচাই করা হচ্ছে" : "Verifying information"}
@@ -737,7 +729,7 @@ export default function InternationalFishSummitScreen() {
             <AppIcon
               name={submissionProgress >= 100 ? "check-circle" : "circle"}
               size={18}
-              color={submissionProgress >= 100 ? "#16A34A" : theme.textSecondary}
+              color={submissionProgress >= 100 ? "#00BB77" : theme.textSecondary}
             />
             <ThemedText style={[styles.verifyStepText, { color: submissionProgress >= 100 ? theme.text : theme.textSecondary }]}>
               {isBn ? "আবেদন জমা হচ্ছে" : "Submitting application"}
@@ -751,8 +743,8 @@ export default function InternationalFishSummitScreen() {
   const renderSuccessStep = () => (
     <View style={[styles.successContainer, { backgroundColor: theme.backgroundRoot }]}>
       <View style={[styles.successCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        <View style={[styles.successIcon, { backgroundColor: "#16A34A10" }]}>
-          <Feather name="check-circle" size={60} color="#16A34A" />
+        <View style={[styles.successIcon, { backgroundColor: "#00BB7710" }]}>
+          <Feather name="check-circle" size={60} color="#00BB77" />
         </View>
         <ThemedText style={[styles.successTitle, { color: theme.text }]}>
           {isBn ? "আবেদন জমা হয়েছে!" : "Application Submitted!"}
@@ -762,19 +754,19 @@ export default function InternationalFishSummitScreen() {
             ? "আপনার আবেদন সফলভাবে জমা হয়েছে। এডমিন রিভিউ করার পর আপনার রেজিস্ট্রেশন সক্রিয় হবে এবং প্রোফাইলে ব্যাজ দেখা যাবে।"
             : "Your application has been submitted successfully. After admin review, your registration will be activated and a badge will appear on your profile."}
         </ThemedText>
-        <View style={[styles.membershipCard, { backgroundColor: "#EA8A0C10" }]}>
+        <View style={[styles.membershipCard, { backgroundColor: "#B25E0910" }]}>
           <View style={styles.badgePreview}>
-            <View style={[styles.pendingBadge, { backgroundColor: "#EA8A0C" }]}>
+            <View style={[styles.pendingBadge, { backgroundColor: "#B25E09" }]}>
               <Feather name="clock" size={16} color="#FFFFFF" />
             </View>
-            <ThemedText style={[styles.badgeText, { color: "#EA8A0C" }]}>
+            <ThemedText style={[styles.badgeText, { color: "#B25E09" }]}>
               {isBn ? "রিভিউ অপেক্ষমান" : "Pending Review"}
             </ThemedText>
           </View>
           <ThemedText style={[styles.membershipLabel, { color: theme.textSecondary }]}>
             {isBn ? "আবেদন নম্বর" : "Application Number"}
           </ThemedText>
-          <ThemedText style={[styles.membershipNumber, { color: "#EA8A0C" }]}>
+          <ThemedText style={[styles.membershipNumber, { color: "#B25E09" }]}>
             {applicationNumber}
           </ThemedText>
         </View>
@@ -834,14 +826,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     marginTop: Spacing.md,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     textAlign: "center",
   },
   headerSubtitle: {
     color: "rgba(255,255,255,0.85)",
     fontSize: 14,
     marginTop: Spacing.xs,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   dateBadge: {
     flexDirection: "row",
@@ -857,7 +849,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   infoCard: {
     padding: Spacing.lg,
@@ -875,12 +867,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginBottom: Spacing.md,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   descriptionText: {
     fontSize: 14,
     lineHeight: 22,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   benefitItem: {
     flexDirection: "row",
@@ -904,12 +896,12 @@ const styles = StyleSheet.create({
   benefitTitle: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   benefitDesc: {
     fontSize: 13,
     marginTop: 2,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   priceCard: {
     padding: Spacing.lg,
@@ -919,17 +911,17 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   priceAmount: {
     fontSize: 36,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   priceNote: {
     fontSize: 12,
     marginTop: Spacing.xs,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   inputGroup: {
     marginBottom: Spacing.md,
@@ -938,7 +930,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     marginBottom: Spacing.xs,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   input: {
     height: 50,
@@ -946,10 +938,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: Spacing.md,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   errorText: {
-    color: "#DC2626",
+    color: "#DA2F2F",
     fontSize: 12,
     marginTop: Spacing.xs,
   },
@@ -974,7 +966,7 @@ const styles = StyleSheet.create({
   },
   uploadText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   uploadedImage: {
     width: "100%",
@@ -997,7 +989,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   buttonRow: {
     flexDirection: "row",
@@ -1016,7 +1008,7 @@ const styles = StyleSheet.create({
   backButtonText: {
     fontSize: 16,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   nextButton: {
     flex: 2,
@@ -1032,7 +1024,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   feeCard: {
     padding: Spacing.lg,
@@ -1042,12 +1034,12 @@ const styles = StyleSheet.create({
   feeAmount: {
     fontSize: 32,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   feeLabel: {
     fontSize: 14,
     marginTop: Spacing.xs,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   paymentOption: {
     flexDirection: "row",
@@ -1073,7 +1065,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   payButton: {
     flex: 2,
@@ -1089,7 +1081,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   successContainer: {
     flex: 1,
@@ -1138,7 +1130,7 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   verifyingSteps: {
     width: "100%",
@@ -1152,7 +1144,7 @@ const styles = StyleSheet.create({
   },
   verifyStepText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   badgePreview: {
     flexDirection: "row",
@@ -1177,19 +1169,19 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   successTitle: {
     fontSize: 24,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   successMessage: {
     fontSize: 15,
     textAlign: "center",
     marginTop: Spacing.sm,
     lineHeight: 22,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   membershipCard: {
     marginTop: Spacing.lg,
@@ -1200,13 +1192,13 @@ const styles = StyleSheet.create({
   },
   membershipLabel: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   membershipNumber: {
     fontSize: 20,
     fontWeight: "700",
     marginTop: Spacing.xs,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   doneButton: {
     marginTop: Spacing.xl,
@@ -1220,6 +1212,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

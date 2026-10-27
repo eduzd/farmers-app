@@ -1,16 +1,10 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-  RefreshControl,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, RefreshControl } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -317,18 +311,18 @@ export const FISH_DATA: Fish[] = [
 
 const getDifficultyConfig = (difficulty: string) => {
   const configs: Record<string, { color: string; label: string }> = {
-    easy: { color: "#2FA36B", label: "সহজ" },
-    medium: { color: "#EA8A0C", label: "মাঝারি" },
-    hard: { color: "#DC2626", label: "কঠিন" },
+    easy: { color: "#2E96EF", label: "সহজ" },
+    medium: { color: "#B25E09", label: "মাঝারি" },
+    hard: { color: "#DA2F2F", label: "কঠিন" },
   };
   return configs[difficulty] || configs.easy;
 };
 
 const getProfitabilityConfig = (profitability: string) => {
   const configs: Record<string, { color: string; label: string }> = {
-    low: { color: "#9E9E9E", label: "কম" },
-    medium: { color: "#EA8A0C", label: "মাঝারি" },
-    high: { color: "#2FA36B", label: "বেশি" },
+    low: { color: "#7A8CA3", label: "কম" },
+    medium: { color: "#B25E09", label: "মাঝারি" },
+    high: { color: "#2E96EF", label: "বেশি" },
   };
   return configs[profitability] || configs.medium;
 };
@@ -512,7 +506,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   categoriesContainer: {
     paddingHorizontal: Spacing.lg,
@@ -534,7 +528,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   listContent: {
     paddingHorizontal: Spacing.lg,
@@ -563,11 +557,11 @@ const styles = StyleSheet.create({
   },
   fishName: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   scientificName: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     fontStyle: "italic",
   },
   difficultyBadge: {
@@ -577,7 +571,7 @@ const styles = StyleSheet.create({
   },
   difficultyText: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   fishMeta: {
     flexDirection: "row",
@@ -591,7 +585,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   fishFooter: {
     flexDirection: "row",
@@ -601,7 +595,7 @@ const styles = StyleSheet.create({
   },
   priceText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   profitBadge: {
     paddingHorizontal: Spacing.sm,
@@ -610,7 +604,7 @@ const styles = StyleSheet.create({
   },
   profitText: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   emptyState: {
     alignItems: "center",
@@ -620,6 +614,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
 });

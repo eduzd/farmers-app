@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TextInput, ScrollView, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { Text, TextInput } from '@/components/MayaText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 

@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
@@ -41,9 +41,9 @@ const UPCOMING_CHALLENGES: Challenge[] = [];
 
 const getDifficultyConfig = (difficulty: string) => {
   const configs: Record<string, { color: string; label: string }> = {
-    easy: { color: "#2FA36B", label: "সহজ" },
-    medium: { color: "#EA8A0C", label: "মাঝারি" },
-    hard: { color: "#DC2626", label: "কঠিন" },
+    easy: { color: "#2E96EF", label: "সহজ" },
+    medium: { color: "#B25E09", label: "মাঝারি" },
+    hard: { color: "#DA2F2F", label: "কঠিন" },
   };
   return configs[difficulty] || configs.easy;
 };
@@ -84,7 +84,7 @@ export default function ChallengesScreen() {
               <View style={[styles.difficultyBadge, { backgroundColor: difficulty.color }]}>
                 <ThemedText style={styles.difficultyText}>{difficulty.label}</ThemedText>
               </View>
-              <View style={[styles.daysBadge, { backgroundColor: item.daysLeft <= 3 ? "#DC2626" : theme.card }]}>
+              <View style={[styles.daysBadge, { backgroundColor: item.daysLeft <= 3 ? "#DA2F2F" : theme.card }]}>
                 <Feather name="clock" size={10} color={item.daysLeft <= 3 ? "#fff" : theme.text} />
                 <ThemedText style={[styles.daysText, { color: item.daysLeft <= 3 ? "#fff" : theme.text }]}>
                   {item.daysLeft} দিন
@@ -133,9 +133,9 @@ export default function ChallengesScreen() {
                   <ThemedText style={styles.joinButtonText}>যোগ দিন</ThemedText>
                 </Pressable>
               ) : (
-                <View style={[styles.joinedBadge, { backgroundColor: "#2FA36B15" }]}>
-                  <Feather name="check" size={14} color="#2FA36B" />
-                  <ThemedText style={[styles.joinedText, { color: "#2FA36B" }]}>যোগ দিয়েছেন</ThemedText>
+                <View style={[styles.joinedBadge, { backgroundColor: "#2E96EF15" }]}>
+                  <Feather name="check" size={14} color="#2E96EF" />
+                  <ThemedText style={[styles.joinedText, { color: "#2E96EF" }]}>যোগ দিয়েছেন</ThemedText>
                 </View>
               )}
             </View>
@@ -169,7 +169,7 @@ export default function ChallengesScreen() {
                   <ThemedText style={styles.statLabel}>সক্রিয় চ্যালেঞ্জ</ThemedText>
                 </View>
               </View>
-              <View style={[styles.statCard, { backgroundColor: "#EA8A0C" }]}>
+              <View style={[styles.statCard, { backgroundColor: "#B25E09" }]}>
                 <Feather name="star" size={24} color="#fff" />
                 <View>
                   <ThemedText style={styles.statValue}>{totalPoints}</ThemedText>

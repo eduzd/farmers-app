@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
@@ -120,7 +120,7 @@ export default function FeaturedFarmersScreen() {
               style={[styles.followButton, item.isFollowing && styles.followingButton]}
               onPress={() => handleFollow(item.id)}
             >
-              <ThemedText style={[styles.followButtonText, item.isFollowing && { color: "#2FA36B" }]}>
+              <ThemedText style={[styles.followButtonText, item.isFollowing && { color: "#2E96EF" }]}>
                 {item.isFollowing ? "ফলো করছেন" : "ফলো করুন"}
               </ThemedText>
             </Pressable>
@@ -140,9 +140,9 @@ export default function FeaturedFarmersScreen() {
         <View style={styles.risingInfo}>
           <ThemedText style={[styles.risingName, { color: theme.text }]}>{item.name}</ThemedText>
           <ThemedText style={[styles.risingSpecialty, { color: theme.textSecondary }]}>{item.specialty}</ThemedText>
-          <View style={[styles.risingBadge, { backgroundColor: "#2FA36B15" }]}>
-            <Feather name="trending-up" size={10} color="#2FA36B" />
-            <ThemedText style={[styles.risingBadgeText, { color: "#2FA36B" }]}>{item.featuredFor}</ThemedText>
+          <View style={[styles.risingBadge, { backgroundColor: "#2E96EF15" }]}>
+            <Feather name="trending-up" size={10} color="#2E96EF" />
+            <ThemedText style={[styles.risingBadgeText, { color: "#2E96EF" }]}>{item.featuredFor}</ThemedText>
           </View>
         </View>
         <Pressable
@@ -177,7 +177,7 @@ export default function FeaturedFarmersScreen() {
         <View style={styles.risingSection}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleRow}>
-              <Feather name="trending-up" size={18} color="#2FA36B" />
+              <Feather name="trending-up" size={18} color="#2E96EF" />
               <ThemedText style={[styles.sectionTitle, { color: theme.text }]}>উদীয়মান তারকা</ThemedText>
             </View>
             <ThemedText style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   locationText: { color: "rgba(255,255,255,0.8)", fontSize: 12 },
   ratingBadge: { flexDirection: "row", alignItems: "center", backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: Spacing.sm, paddingVertical: 4, borderRadius: BorderRadius.full, gap: 4 },
   ratingText: { color: "#fff", fontSize: 12, fontWeight: "600" },
-  specialty: { color: "#2FA36B", fontSize: 13, fontWeight: "500", marginBottom: 4 },
+  specialty: { color: "#2E96EF", fontSize: 13, fontWeight: "500", marginBottom: 4 },
   story: { color: "rgba(255,255,255,0.9)", fontSize: 13, lineHeight: 18, marginBottom: Spacing.sm },
   achievementsRow: { flexDirection: "row", gap: Spacing.xs, marginBottom: Spacing.md },
   achievementBadge: { backgroundColor: "rgba(255,255,255,0.2)", paddingHorizontal: Spacing.sm, paddingVertical: 2, borderRadius: BorderRadius.full },
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   statValue: { color: "#fff", fontSize: 16, fontWeight: "700" },
   statLabel: { color: "rgba(255,255,255,0.7)", fontSize: 10 },
   followButton: { backgroundColor: "#fff", paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm, borderRadius: BorderRadius.full },
-  followingButton: { backgroundColor: "transparent", borderWidth: 1, borderColor: "#2FA36B" },
+  followingButton: { backgroundColor: "transparent", borderWidth: 1, borderColor: "#2E96EF" },
   followButtonText: { color: "#000", fontSize: 13, fontWeight: "600" },
   risingSection: { marginTop: Spacing.xl },
   sectionHeader: { marginBottom: Spacing.md },

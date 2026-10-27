@@ -71,7 +71,7 @@ export default function CartScreen() {
           {totalContentText(cartRule(item), item.quantity, bn) ? ` · ${totalContentText(cartRule(item), item.quantity, bn)}` : ""}
         </ThemedText>
         <View style={styles.itemFooter}>
-          <ThemedText style={[styles.itemPrice, { color: theme.primary }]}>
+          <ThemedText style={[styles.itemPrice, { color: theme.accent }]}>
             {item.currency}{item.price} {perUnitText(cartRule(item), bn)}
           </ThemedText>
           <View style={[styles.quantityControl, { backgroundColor: theme.primarySoft }]}>
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   itemSeller: {
     fontSize: 13,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   checkoutText: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   emptyWrapper: {
     flex: 1,

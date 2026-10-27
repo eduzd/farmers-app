@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CatalogFormModal } from "@/components/CatalogFormModal";
-import { View, StyleSheet, ScrollView, Pressable, TextInput } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { CustomSwitch } from "@/components/CustomSwitch";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -99,10 +100,10 @@ export default function PriceAlertScreen() {
       >
         <Animated.View entering={FadeInUp.duration(400)}>
           <LinearGradient
-            colors={isDark ? ["#1e3a5f", "#0f172a"] : ["#dbeafe", "#eff6ff"]}
+            colors={isDark ? ["#202936", "#202936"] : ["#E3F4FF", "#eff6ff"]}
             style={styles.infoCard}
           >
-            <Feather name="bell" size={32} color={isDark ? "#60a5fa" : "#2563EB"} />
+            <Feather name="bell" size={32} color={isDark ? "#60a5fa" : "#2E96EF"} />
             <View style={styles.infoContent}>
               <ThemedText style={[styles.infoTitle, { color: theme.text }]}>
                 {tr("মূল্য সতর্কতা")}
@@ -129,13 +130,13 @@ export default function PriceAlertScreen() {
                   styles.alertCard,
                   {
                     backgroundColor: theme.card,
-                    borderColor: alert.triggered ? "#16A34A" : theme.cardBorder,
+                    borderColor: alert.triggered ? "#00BB77" : theme.cardBorder,
                     borderWidth: alert.triggered ? 2 : 1,
                   },
                 ]}
               >
                 {alert.triggered ? (
-                  <View style={[styles.triggeredBadge, { backgroundColor: "#16A34A" }]}>
+                  <View style={[styles.triggeredBadge, { backgroundColor: "#00BB77" }]}>
                     <Feather name="check" size={12} color="#fff" />
                     <ThemedText style={styles.triggeredText}>সক্রিয়!</ThemedText>
                   </View>
@@ -148,7 +149,7 @@ export default function PriceAlertScreen() {
                       <AppIcon
                         name={alert.condition === "উপরে" ? "arrow-up" : "arrow-down"}
                         size={14}
-                        color={alert.condition === "উপরে" ? "#16A34A" : "#DC2626"}
+                        color={alert.condition === "উপরে" ? "#00BB77" : "#DA2F2F"}
                       />
                       <ThemedText style={[styles.alertConditionText, { color: theme.textSecondary }]}>
                         ৳{alert.price}/{alert.unit} {alert.condition}
@@ -167,10 +168,10 @@ export default function PriceAlertScreen() {
                     <ThemedText style={[styles.editText, { color: theme.primary }]}>সম্পাদনা</ThemedText>
                   </Pressable>
                   <Pressable
-                    style={[styles.deleteButton, { backgroundColor: "#DC262615" }]}
+                    style={[styles.deleteButton, { backgroundColor: "#DA2F2F15" }]}
                     onPress={() => deleteAlert(alert.id)}
                   >
-                    <Feather name="trash-2" size={16} color="#DC2626" />
+                    <Feather name="trash-2" size={16} color="#DA2F2F" />
                   </Pressable>
                 </View>
               </View>
@@ -200,20 +201,20 @@ export default function PriceAlertScreen() {
                     styles.trendBadge,
                     {
                       backgroundColor:
-                        product.trend === "up" ? "#16A34A20" : product.trend === "down" ? "#DC262620" : "#71717a20",
+                        product.trend === "up" ? "#00BB7720" : product.trend === "down" ? "#DA2F2F20" : "#71717a20",
                     },
                   ]}
                 >
                   <AppIcon
                     name={product.trend === "up" ? "trending-up" : product.trend === "down" ? "trending-down" : "minus"}
                     size={12}
-                    color={product.trend === "up" ? "#16A34A" : product.trend === "down" ? "#DC2626" : "#71717a"}
+                    color={product.trend === "up" ? "#00BB77" : product.trend === "down" ? "#DA2F2F" : "#71717a"}
                   />
                   <ThemedText
                     style={[
                       styles.trendText,
                       {
-                        color: product.trend === "up" ? "#16A34A" : product.trend === "down" ? "#DC2626" : "#71717a",
+                        color: product.trend === "up" ? "#00BB77" : product.trend === "down" ? "#DA2F2F" : "#71717a",
                       },
                     ]}
                   >

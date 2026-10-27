@@ -33,9 +33,8 @@ export function HeaderTitle({ title, useCommunity = false }: HeaderTitleProps) {
   };
 
   const displayTitle = useCommunity ? getCommunityName() : title;
-  const primaryColor = useCommunity && activeCommunity?.theme
-    ? (isDark ? activeCommunity.theme.dark.primary : activeCommunity.theme.light.primary)
-    : theme.primary;
+  // Every community uses the Maya colours, so the badge follows the app theme.
+  const primaryColor = theme.primary;
 
   return (
     <View style={styles.container}>
@@ -75,11 +74,11 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   title: {
     fontSize: 17,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

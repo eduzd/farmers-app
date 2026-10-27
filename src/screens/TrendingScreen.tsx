@@ -10,7 +10,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import Animated, { FadeIn, FadeInUp, FadeInRight } from "react-native-reanimated";
@@ -103,13 +103,13 @@ export default function TrendingScreen() {
           </ThemedText>
         </View>
         {item.growth === null ? (
-          <View style={[styles.growthBadge, { backgroundColor: "#2FA36B15" }]}>
-            <ThemedText style={[styles.growthText, { color: "#2FA36B" }]}>{bn ? "নতুন" : "New"}</ThemedText>
+          <View style={[styles.growthBadge, { backgroundColor: "#2E96EF15" }]}>
+            <ThemedText style={[styles.growthText, { color: "#2E96EF" }]}>{bn ? "নতুন" : "New"}</ThemedText>
           </View>
         ) : item.growth > 0 ? (
-          <View style={[styles.growthBadge, { backgroundColor: "#2FA36B15" }]}>
-            <Feather name="trending-up" size={12} color="#2FA36B" />
-            <ThemedText style={[styles.growthText, { color: "#2FA36B" }]}>+{item.growth}%</ThemedText>
+          <View style={[styles.growthBadge, { backgroundColor: "#2E96EF15" }]}>
+            <Feather name="trending-up" size={12} color="#2E96EF" />
+            <ThemedText style={[styles.growthText, { color: "#2E96EF" }]}>+{item.growth}%</ThemedText>
           </View>
         ) : null}
       </Pressable>
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 12, fontWeight: "500" },
   listContent: { paddingHorizontal: Spacing.lg },
   hashtagCard: { flexDirection: "row", alignItems: "center", padding: Spacing.md, borderRadius: BorderRadius.lg, borderWidth: 1, marginBottom: Spacing.sm },
-  hashtagRank: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#f5f5f5", alignItems: "center", justifyContent: "center" },
+  hashtagRank: { width: 32, height: 32, borderRadius: 16, backgroundColor: "#F3FAFF", alignItems: "center", justifyContent: "center" },
   rankNumber: { fontSize: 14, fontWeight: "700" },
   hashtagInfo: { flex: 1, marginLeft: Spacing.md },
   hashtagText: { fontSize: 16, fontWeight: "600" },

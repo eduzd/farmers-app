@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from "react";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { View, StyleSheet, FlatList, Pressable, RefreshControl, Modal, TextInput, Alert } from "react-native";
+import { View, StyleSheet, FlatList, Pressable, RefreshControl, Modal, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -56,7 +57,7 @@ export default function FarmDiaryScreen() {
   const filteredEntries = entries.filter((e) => selectedCategory === "সব" || e.category === selectedCategory);
 
   const getCategoryColor = (cat: string) => {
-    const colors: Record<string, string> = { ফসল: "#2FA36B", সার: "#7C3AED", সমস্যা: "#DC2626", রোপণ: "#2563EB", সেচ: "#0D9488", বিক্রি: "#EA8A0C" };
+    const colors: Record<string, string> = { ফসল: "#2E96EF", সার: "#3D38D0", সমস্যা: "#DA2F2F", রোপণ: "#2E96EF", সেচ: "#00BB77", বিক্রি: "#B25E09" };
     return colors[cat] || theme.primary;
   };
 

@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -124,7 +124,7 @@ export default function EquipmentRentalScreen() {
               <ThemedText style={[styles.priceLabel, { color: theme.textSecondary }]}>
                 সাপ্তাহিক
               </ThemedText>
-              <ThemedText style={[styles.price, { color: "#2FA36B" }]}>
+              <ThemedText style={[styles.price, { color: "#2E96EF" }]}>
                 ৳{item.weeklyRate.toLocaleString()}
               </ThemedText>
             </View>
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: Spacing.sm,
     right: Spacing.sm,
-    backgroundColor: "#DC2626",
+    backgroundColor: "#DA2F2F",
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: BorderRadius.sm,

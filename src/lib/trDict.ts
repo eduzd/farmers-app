@@ -1,5 +1,13 @@
 /** English -> Bangla phrases for tr() (src/lib/tr.ts). Bangla text is translated back with the reverse map. */
 export const BN_OF_EN: Record<string, string> = {
+  "Saved": "সংরক্ষিত হয়েছে",
+  "New calculation": "নতুন হিসাব",
+  "Update": "আপডেট করুন",
+  "Edit": "এডিট করুন",
+  "Entries": "হিসাবের তালিকা",
+  "Calculation": "হিসাব",
+  "This same calculation will be updated, no copy is made.": "একই হিসাব আপডেট হবে, নতুন কপি হবে না।",
+  "Kept encrypted on your phone. Works without internet.": "ফোনে এনক্রিপ্ট করে রাখা হয়, ইন্টারনেট ছাড়াও কাজ করে।",
   "Could not save. Please try again.": "সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।",
   "Save on phone": "ফোনে সংরক্ষণ করুন",
   "Saved on phone": "ফোনে সংরক্ষিত",
@@ -141,6 +149,7 @@ export const BN_OF_EN: Record<string, string> = {
   "Fish": "মাছ",
   "Rate": "দর",
   "Saved records": "সংরক্ষিত হিসাব",
+  "Close": "বন্ধ",
   "No saved records": "কোন হিসাব সংরক্ষিত নেই",
   "Bepari account": "ব্যাপারী হিসাব",
   "Pcs": "পিস",

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Pressable, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -31,7 +31,7 @@ export default function QRScannerScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <Animated.View entering={FadeInUp.duration(400)} style={styles.scannerSection}>
         <LinearGradient
-          colors={isDark ? ["#1a1a2e", "#0f0f1a"] : ["#f0f0f0", "#e0e0e0"]}
+          colors={isDark ? ["#202936", "#0f0f1a"] : ["#f0f0f0", "#D6EAF8"]}
           style={styles.scannerFrame}
         >
           <View style={[styles.scannerBox, { borderColor: theme.primary }]}>

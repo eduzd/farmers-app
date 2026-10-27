@@ -1,6 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator, BottomTabNavigationOptions } from "@react-navigation/bottom-tabs";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { BlurView } from "expo-blur";
 import { Platform, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

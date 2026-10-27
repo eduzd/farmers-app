@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { apiGet, apiPut } from "@/lib/api";
 import {
@@ -16,7 +16,7 @@ import {
  * sent back in full unless the admin taps Show (that is logged).
  */
 
-export const ROCKET_COLOR = "#8C3494";
+export const ROCKET_COLOR = "#3D38D0";
 type RType = "personal" | "merchant" | "agent";
 type Cfg = {
   cod: { enabled: boolean };
@@ -112,7 +112,7 @@ export function PaymentSettings() {
             <Text style={{ color: theme.text, fontWeight: "800", fontSize: 15 }}>Rocket</Text>
             <Text style={{ color: theme.textSecondary, fontSize: 12.5 }}>{L("Dutch-Bangla Bank mobile banking", "ডাচ্‌-বাংলা ব্যাংক মোবাইল ব্যাংকিং")}</Text>
           </View>
-          <Pill label={d.rocket.enabled ? L("On", "চালু") : L("Off", "বন্ধ")} color={d.rocket.enabled ? "#047857" : "#6B7280"} />
+          <Pill label={d.rocket.enabled ? L("On", "চালু") : L("Off", "বন্ধ")} color={d.rocket.enabled ? "#00875A" : "#7A8CA3"} />
         </View>
         {d.rocket.accountNumberSet ? (
           <KV testID="pay-rocket-saved" icon="lock" k={L("Saved number", "সংরক্ষিত নম্বর")} v={shown || d.rocket.accountNumberMasked} />
@@ -150,18 +150,18 @@ export function PaymentSettings() {
         {rocketOn ? (
           <KV icon="smartphone" k="Rocket" v={`${typeLabel(type)} · ${num.trim() ? num.trim() : d.rocket.accountNumberMasked || "—"}${name.trim() ? ` · ${name.trim()}` : ""}`} />
         ) : null}
-        {!codOn && !rocketOn ? <Text style={{ color: "#DC2626", fontSize: 13 }}>{L("No method is on. Buyers can't place orders.", "কোনো পদ্ধতি চালু নেই। ক্রেতারা অর্ডার করতে পারবেন না।")}</Text> : null}
+        {!codOn && !rocketOn ? <Text style={{ color: "#DA2F2F", fontSize: 13 }}>{L("No method is on. Buyers can't place orders.", "কোনো পদ্ধতি চালু নেই। ক্রেতারা অর্ডার করতে পারবেন না।")}</Text> : null}
         <Text style={{ color: theme.textSecondary, fontSize: 12.5, lineHeight: 18, marginTop: 8 }}>
           {L("Rocket payments aren't checked automatically. Open each Rocket order, match the TrxID and amount in your Rocket app, then tap Verified or Rejected.", "রকেট পেমেন্ট স্বয়ংক্রিয়ভাবে যাচাই হয় না। প্রতিটি রকেট অর্ডার খুলে আপনার রকেট অ্যাপে TrxID ও টাকার পরিমাণ মিলিয়ে যাচাই হয়েছে বা বাতিল চাপুন।")}
         </Text>
       </Card>
 
       {errors.length ? (
-        <Card style={{ borderColor: "#DC262640" }}>
-          {errors.map((e) => <Text key={e} style={{ color: "#DC2626", fontSize: 13, marginBottom: 4 }}>• {e}</Text>)}
+        <Card style={{ borderColor: "#DA2F2F40" }}>
+          {errors.map((e) => <Text key={e} style={{ color: "#DA2F2F", fontSize: 13, marginBottom: 4 }}>• {e}</Text>)}
         </Card>
       ) : null}
-      {msg ? <Text testID="pay-msg" style={{ color: msg.ok ? "#047857" : "#DC2626", fontWeight: "600", marginVertical: 8 }}>{msg.text}</Text> : null}
+      {msg ? <Text testID="pay-msg" style={{ color: msg.ok ? "#00875A" : "#DA2F2F", fontWeight: "600", marginVertical: 8 }}>{msg.text}</Text> : null}
       <View style={[st.row, { gap: 10, marginTop: 6, flexWrap: "wrap" }]}>
         <Btn testID="pay-save" icon="check" label={L("Save payment settings", "পেমেন্ট সেটিং সংরক্ষণ")} onPress={save} busy={busy} disabled={!changed || errors.length > 0} />
         {changed ? <Btn kind="ghost" label={L("Undo changes", "পরিবর্তন বাতিল")} onPress={() => { reset(d); setMsg(null); }} testID="pay-undo" /> : null}
@@ -184,7 +184,7 @@ export function RocketPaymentCheck({ order, onChanged }: { order: any; onChanged
   const p = order.payment;
   if (!p || p.method !== "rocket") return null;
   const label = p.status === "verified" ? L("Verified", "যাচাই হয়েছে") : p.status === "rejected" ? L("Rejected", "বাতিল") : L("Waiting for check", "যাচাইয়ের অপেক্ষায়");
-  const color = p.status === "verified" ? "#047857" : p.status === "rejected" ? "#DC2626" : "#B45309";
+  const color = p.status === "verified" ? "#00875A" : p.status === "rejected" ? "#DA2F2F" : "#B25E09";
   const set = async (status: string) => {
     if (status === "rejected") {
       const ok = await confirmAsk(L("Reject this payment?", "এই পেমেন্ট বাতিল করবেন?"), L("The buyer gets a notification that the payment wasn't found.", "ক্রেতা নোটিফিকেশন পাবেন যে পেমেন্ট পাওয়া যায়নি।"), L("Reject", "বাতিল"), L("Cancel", "ফিরে যান"));
@@ -220,7 +220,7 @@ export function RocketPaymentCheck({ order, onChanged }: { order: any; onChanged
         {p.status !== "rejected" ? <Btn small kind="dangerSoft" icon="x" label={L("Rejected", "বাতিল")} onPress={() => set("rejected")} busy={busy === "rejected"} testID="rocket-reject" /> : null}
         {p.status !== "awaiting" ? <Btn small kind="ghost" icon="rotate-ccw" label={L("Check again", "আবার যাচাই")} onPress={() => set("awaiting")} busy={busy === "awaiting"} testID="rocket-reset" /> : null}
       </View>
-      {err ? <Text style={{ color: "#DC2626", fontSize: 12.5, marginTop: 6 }}>{err}</Text> : null}
+      {err ? <Text style={{ color: "#DA2F2F", fontSize: 12.5, marginTop: 6 }}>{err}</Text> : null}
     </Card>
   );
 }

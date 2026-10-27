@@ -22,7 +22,8 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { tr } from "@/lib/tr";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -377,7 +378,7 @@ export default function ProfileScreen() {
             </View>
           ) : null}
           {isWelfareMember ? (
-            <View style={[styles.verifiedBadge, { backgroundColor: "#1D4ED8" }]}>
+            <View style={[styles.verifiedBadge, { backgroundColor: "#3D38D0" }]}>
               <Feather name="award" size={12} color="#FFFFFF" />
               <ThemedText style={[styles.verifiedText, { color: "#FFFFFF" }]}>
                 {language === "bn" ? "কল্যাণ সদস্য" : "Welfare Member"}
@@ -385,7 +386,7 @@ export default function ProfileScreen() {
             </View>
           ) : null}
           {isSummitMember ? (
-            <View style={[styles.verifiedBadge, { backgroundColor: "#0D47A1" }]}>
+            <View style={[styles.verifiedBadge, { backgroundColor: "#202936" }]}>
               <Feather name="globe" size={12} color="#FFFFFF" />
               <ThemedText style={[styles.verifiedText, { color: "#FFFFFF" }]}>
                 {language === "bn" ? "সামিট সদস্য" : "Summit Member"}
@@ -613,7 +614,7 @@ export default function ProfileScreen() {
                         ) : null}
                         <View style={[styles.savedPostContent, !post.image && { flex: 1 }]}>
                           <View style={styles.savedPostAuthorRow}>
-                            <View style={[styles.savedPostAuthorAvatar, { backgroundColor: "#D1FAE5" }]}>
+                            <View style={[styles.savedPostAuthorAvatar, { backgroundColor: "#D8FFF2" }]}>
                               <ThemedText style={styles.savedPostAuthorInitials}>
                                 {post.author.initials}
                               </ThemedText>
@@ -631,7 +632,7 @@ export default function ProfileScreen() {
                             style={[styles.savedPostActionBtn, { backgroundColor: "#E0E7FF" }]}
                             onPress={() => handleViewPost(post)}
                           >
-                            <Feather name="eye" size={18} color="#4F46E5" />
+                            <Feather name="eye" size={18} color="#3D38D0" />
                           </Pressable>
                           <Pressable 
                             style={[styles.savedPostActionBtn, { backgroundColor: "#FFE4E6" }]}
@@ -712,7 +713,7 @@ export default function ProfileScreen() {
         ]}
         onPress={handleLogout}
       >
-        <Feather name="log-out" size={18} color="#DC2626" />
+        <Feather name="log-out" size={18} color="#DA2F2F" />
         <ThemedText style={styles.logoutText}>{t("auth.signOut")}</ThemedText>
       </Pressable>
 
@@ -776,7 +777,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 28,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   profileName: {
     marginBottom: Spacing.xs,
@@ -799,7 +800,7 @@ const styles = StyleSheet.create({
   sectorBadgeText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   verifiedBadge: {
     flexDirection: "row",
@@ -812,7 +813,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     fontSize: 12,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   statsRow: {
     flexDirection: "row",
@@ -882,7 +883,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     letterSpacing: 0.5,
     marginBottom: Spacing.sm,
     marginLeft: Spacing.xs,
@@ -925,7 +926,7 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 16,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   communitySwitcherInline: {
     marginLeft: "auto",
@@ -941,7 +942,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   savedPostsMenuRight: {
     flexDirection: "row",
@@ -985,13 +986,13 @@ const styles = StyleSheet.create({
   savedPostAuthorInitials: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#059669",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    color: "#00875A",
+    fontFamily: "DMSans_600SemiBold",
   },
   savedPostAuthorName: {
     fontSize: 13,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   savedPostText: {
     fontSize: 13,
@@ -1023,9 +1024,9 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontSize: 16,
-    color: "#DC2626",
+    color: "#DA2F2F",
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   versionText: {
     textAlign: "center",
@@ -1064,7 +1065,7 @@ const styles = StyleSheet.create({
   shopNameText: {
     fontSize: 11,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   vendorDashboardSublabel: {
     fontSize: 13,
@@ -1111,7 +1112,7 @@ const styles = StyleSheet.create({
   addressTitle: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   addressText: {
     fontSize: 13,

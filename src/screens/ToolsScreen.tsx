@@ -1,15 +1,9 @@
 import React, { useState, useMemo } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Dimensions,
-  TextInput,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -103,7 +97,7 @@ export default function ToolsScreen() {
           <View
             style={[
               styles.badge,
-              { backgroundColor: tool.badgeColor || "#DC2626" },
+              { backgroundColor: tool.badgeColor || "#DA2F2F" },
             ]}
           >
             <ThemedText style={styles.badgeText}>{tool.badge}</ThemedText>
@@ -115,7 +109,7 @@ export default function ToolsScreen() {
 
   return (
     <LinearGradient
-      colors={isDark ? ["#1a1a2e", "#16213e"] : ["#f8f9fa", "#e9ecef"]}
+      colors={isDark ? ["#202936", "#202936"] : ["#F3FAFF", "#e9ecef"]}
       style={styles.container}
     >
       <ScrollView
@@ -162,7 +156,7 @@ export default function ToolsScreen() {
           <>
             <View style={styles.categorySeparator}>
               <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-              <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#1a1a2e" : "#f8f9fa" }]}>
+              <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
                 {isBn ? `অনুসন্ধান ফলাফল (${filteredTools.length})` : `Search Results (${filteredTools.length})`}
               </ThemedText>
               <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
@@ -186,7 +180,7 @@ export default function ToolsScreen() {
             <View key={category.id}>
               <View style={styles.categorySeparator}>
                 <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
-                <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#1a1a2e" : "#f8f9fa" }]}>
+                <ThemedText style={[styles.categoryLabel, { color: theme.textSecondary, backgroundColor: isDark ? "#202936" : "#F3FAFF" }]}>
                   {getCategoryTitle(category)}
                 </ThemedText>
                 <View style={[styles.separatorLine, { backgroundColor: theme.cardBorder }]} />
@@ -227,7 +221,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: Spacing.xs,
   },
   headerSubtitle: {
@@ -297,7 +291,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: 4,
   },
   cardSubtitle: {

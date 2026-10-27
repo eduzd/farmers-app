@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -60,16 +60,16 @@ export default function MentorshipScreen() {
           <View style={styles.mentorInfo}>
             <View style={styles.mentorNameRow}>
               <ThemedText style={[styles.mentorName, { color: theme.text }]}>{item.name}</ThemedText>
-              <Feather name="check-circle" size={14} color="#2FA36B" />
+              <Feather name="check-circle" size={14} color="#2E96EF" />
             </View>
             <ThemedText style={[styles.mentorSpecialty, { color: theme.primary }]}>{item.specialty}</ThemedText>
             <ThemedText style={[styles.mentorExperience, { color: theme.textSecondary }]}>
               {item.experience} অভিজ্ঞতা
             </ThemedText>
           </View>
-          <View style={[styles.availabilityBadge, { backgroundColor: item.isAvailable ? "#2FA36B15" : "#DC262615" }]}>
-            <View style={[styles.availabilityDot, { backgroundColor: item.isAvailable ? "#2FA36B" : "#DC2626" }]} />
-            <ThemedText style={[styles.availabilityText, { color: item.isAvailable ? "#2FA36B" : "#DC2626" }]}>
+          <View style={[styles.availabilityBadge, { backgroundColor: item.isAvailable ? "#2E96EF15" : "#DA2F2F15" }]}>
+            <View style={[styles.availabilityDot, { backgroundColor: item.isAvailable ? "#2E96EF" : "#DA2F2F" }]} />
+            <ThemedText style={[styles.availabilityText, { color: item.isAvailable ? "#2E96EF" : "#DA2F2F" }]}>
               {item.isAvailable ? "উপলব্ধ" : "ব্যস্ত"}
             </ThemedText>
           </View>
@@ -168,15 +168,15 @@ export default function MentorshipScreen() {
           />
 
           <Animated.View entering={FadeInUp.delay(200)} style={styles.becomeMentorSection}>
-            <View style={[styles.becomeMentorCard, { backgroundColor: "#EA8A0C10", borderColor: "#EA8A0C" }]}>
-              <Feather name="award" size={32} color="#EA8A0C" />
+            <View style={[styles.becomeMentorCard, { backgroundColor: "#B25E0910", borderColor: "#B25E09" }]}>
+              <Feather name="award" size={32} color="#B25E09" />
               <View style={styles.becomeMentorContent}>
                 <ThemedText style={[styles.becomeMentorTitle, { color: theme.text }]}>মেন্টর হতে চান?</ThemedText>
                 <ThemedText style={[styles.becomeMentorDescription, { color: theme.textSecondary }]}>
                   আপনার অভিজ্ঞতা শেয়ার করুন এবং নতুনদের সাহায্য করুন
                 </ThemedText>
               </View>
-              <Pressable style={[styles.applyBtn, { backgroundColor: "#EA8A0C" }]}>
+              <Pressable style={[styles.applyBtn, { backgroundColor: "#B25E09" }]}>
                 <ThemedText style={styles.applyBtnText}>আবেদন করুন</ThemedText>
               </Pressable>
             </View>

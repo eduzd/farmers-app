@@ -1,5 +1,5 @@
 import React from "react";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { ConfirmSheet, type ConfirmTone } from "@/components/ConfirmSheet";
 
 interface ConfirmModalProps {
@@ -32,7 +32,7 @@ export function ConfirmModal({
   onCancel,
 }: ConfirmModalProps) {
   // Older callers pass a colour: green means a positive action, anything else (default red) a destructive one.
-  const green = confirmColor && /^#(16A34A|22C55E|1E7F4F|2FA36B)/i.test(confirmColor);
+  const green = confirmColor && /^#(16A34A|22C55E|1E7F4F|2FA36B|00BB77|00875A|2E96EF|39B1FE)/i.test(confirmColor);
   const resolvedTone: ConfirmTone = tone || (green ? "primary" : "danger");
   return (
     <ConfirmSheet

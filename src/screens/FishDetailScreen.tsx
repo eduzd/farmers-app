@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoute, RouteProp } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -24,27 +24,27 @@ type FishDetailRouteProp = RouteProp<RootStackParamList, "FishDetail">;
 
 const getDifficultyConfig = (difficulty: string) => {
   const configs: Record<string, { color: string; label: string; description: string }> = {
-    easy: { color: "#2FA36B", label: "সহজ", description: "নতুন চাষিদের জন্য উপযুক্ত" },
-    medium: { color: "#EA8A0C", label: "মাঝারি", description: "কিছু অভিজ্ঞতা প্রয়োজন" },
-    hard: { color: "#DC2626", label: "কঠিন", description: "অভিজ্ঞ চাষিদের জন্য" },
+    easy: { color: "#2E96EF", label: "সহজ", description: "নতুন চাষিদের জন্য উপযুক্ত" },
+    medium: { color: "#B25E09", label: "মাঝারি", description: "কিছু অভিজ্ঞতা প্রয়োজন" },
+    hard: { color: "#DA2F2F", label: "কঠিন", description: "অভিজ্ঞ চাষিদের জন্য" },
   };
   return configs[difficulty] || configs.easy;
 };
 
 const getProfitabilityConfig = (profitability: string) => {
   const configs: Record<string, { color: string; label: string }> = {
-    low: { color: "#9E9E9E", label: "কম লাভজনক" },
-    medium: { color: "#EA8A0C", label: "মাঝারি লাভজনক" },
-    high: { color: "#2FA36B", label: "অত্যন্ত লাভজনক" },
+    low: { color: "#7A8CA3", label: "কম লাভজনক" },
+    medium: { color: "#B25E09", label: "মাঝারি লাভজনক" },
+    high: { color: "#2E96EF", label: "অত্যন্ত লাভজনক" },
   };
   return configs[profitability] || configs.medium;
 };
 
 const getTypeConfig = (type: string) => {
   const configs: Record<string, { color: string; label: string; icon: keyof typeof Feather.glyphMap }> = {
-    freshwater: { color: "#2563EB", label: "মিঠা পানি", icon: "droplet" },
-    marine: { color: "#0D9488", label: "সমুদ্রের পানি", icon: "navigation" },
-    brackish: { color: "#009688", label: "লোনা পানি", icon: "anchor" },
+    freshwater: { color: "#2E96EF", label: "মিঠা পানি", icon: "droplet" },
+    marine: { color: "#00BB77", label: "সমুদ্রের পানি", icon: "navigation" },
+    brackish: { color: "#00BB77", label: "লোনা পানি", icon: "anchor" },
   };
   return configs[type] || configs.freshwater;
 };
@@ -159,19 +159,19 @@ export default function FishDetailScreen() {
 
         {activeTab === "overview" ? (
           <View style={styles.content}>
-            <Section title="বিবরণ" icon="file-text" iconColor="#2563EB" delay={100}>
+            <Section title="বিবরণ" icon="file-text" iconColor="#2E96EF" delay={100}>
               <ThemedText style={[styles.sectionContent, { color: theme.text }]}>
                 {fish.description}
               </ThemedText>
             </Section>
 
-            <Section title="বাসস্থান" icon="home" iconColor="#2FA36B" delay={150}>
+            <Section title="বাসস্থান" icon="home" iconColor="#2E96EF" delay={150}>
               <ThemedText style={[styles.sectionContent, { color: theme.text }]}>
                 {fish.habitat}
               </ThemedText>
             </Section>
 
-            <Section title="বাজার দর" icon="dollar-sign" iconColor="#EA8A0C" delay={200}>
+            <Section title="বাজার দর" icon="dollar-sign" iconColor="#B25E09" delay={200}>
               <View style={styles.priceContainer}>
                 <ThemedText style={[styles.priceValue, { color: theme.primary }]}>
                   {fish.marketPrice}
@@ -179,7 +179,7 @@ export default function FishDetailScreen() {
               </View>
             </Section>
 
-            <Section title="মূল তথ্য" icon="list" iconColor="#7C3AED" delay={250}>
+            <Section title="মূল তথ্য" icon="list" iconColor="#3D38D0" delay={250}>
               <View style={styles.infoGrid}>
                 <View style={[styles.infoItem, { backgroundColor: theme.surface }]}>
                   <Feather name="clock" size={20} color={theme.primary} />
@@ -208,19 +208,19 @@ export default function FishDetailScreen() {
 
         {activeTab === "care" ? (
           <View style={styles.content}>
-            <Section title="প্রজনন" icon="heart" iconColor="#DB2777" delay={100}>
+            <Section title="প্রজনন" icon="heart" iconColor="#FF4BB7" delay={100}>
               <ThemedText style={[styles.sectionContent, { color: theme.text }]}>
                 {fish.breeding}
               </ThemedText>
             </Section>
 
-            <Section title="খাদ্য ব্যবস্থাপনা" icon="box" iconColor="#FF5722" delay={150}>
+            <Section title="খাদ্য ব্যবস্থাপনা" icon="box" iconColor="#B25E09" delay={150}>
               <ThemedText style={[styles.sectionContent, { color: theme.text }]}>
                 {fish.feeding}
               </ThemedText>
             </Section>
 
-            <Section title="পানির গুণাগুণ" icon="droplet" iconColor="#03A9F4" delay={200}>
+            <Section title="পানির গুণাগুণ" icon="droplet" iconColor="#39B1FE" delay={200}>
               <ThemedText style={[styles.sectionContent, { color: theme.text }]}>
                 {fish.waterQuality}
               </ThemedText>
@@ -243,15 +243,15 @@ export default function FishDetailScreen() {
 
         {activeTab === "disease" ? (
           <View style={styles.content}>
-            <Section title="সাধারণ রোগসমূহ" icon="alert-circle" iconColor="#DC2626" delay={100}>
+            <Section title="সাধারণ রোগসমূহ" icon="alert-circle" iconColor="#DA2F2F" delay={100}>
               <View style={styles.diseaseList}>
                 {fish.diseases.map((disease, index) => (
                   <View 
                     key={index} 
                     style={[styles.diseaseItem, { backgroundColor: theme.surface }]}
                   >
-                    <View style={[styles.diseaseIcon, { backgroundColor: "#DC262620" }]}>
-                      <Feather name="alert-triangle" size={16} color="#DC2626" />
+                    <View style={[styles.diseaseIcon, { backgroundColor: "#DA2F2F20" }]}>
+                      <Feather name="alert-triangle" size={16} color="#DA2F2F" />
                     </View>
                     <ThemedText style={[styles.diseaseText, { color: theme.text }]}>
                       {disease}
@@ -261,34 +261,34 @@ export default function FishDetailScreen() {
               </View>
             </Section>
 
-            <Section title="রোগ প্রতিরোধ টিপস" icon="shield" iconColor="#2FA36B" delay={150}>
+            <Section title="রোগ প্রতিরোধ টিপস" icon="shield" iconColor="#2E96EF" delay={150}>
               <View style={styles.tipsList}>
                 <View style={styles.tipItem}>
-                  <Feather name="check-circle" size={16} color="#2FA36B" />
+                  <Feather name="check-circle" size={16} color="#2E96EF" />
                   <ThemedText style={[styles.tipText, { color: theme.text }]}>
                     নিয়মিত পানির গুণাগুণ পরীক্ষা করুন
                   </ThemedText>
                 </View>
                 <View style={styles.tipItem}>
-                  <Feather name="check-circle" size={16} color="#2FA36B" />
+                  <Feather name="check-circle" size={16} color="#2E96EF" />
                   <ThemedText style={[styles.tipText, { color: theme.text }]}>
                     মাছের খাবারের পরিমাণ সঠিক রাখুন
                   </ThemedText>
                 </View>
                 <View style={styles.tipItem}>
-                  <Feather name="check-circle" size={16} color="#2FA36B" />
+                  <Feather name="check-circle" size={16} color="#2E96EF" />
                   <ThemedText style={[styles.tipText, { color: theme.text }]}>
                     পুকুরে অতিরিক্ত মাছ রাখবেন না
                   </ThemedText>
                 </View>
                 <View style={styles.tipItem}>
-                  <Feather name="check-circle" size={16} color="#2FA36B" />
+                  <Feather name="check-circle" size={16} color="#2E96EF" />
                   <ThemedText style={[styles.tipText, { color: theme.text }]}>
                     নতুন মাছ ছাড়ার আগে পৃথকীকরণ করুন
                   </ThemedText>
                 </View>
                 <View style={styles.tipItem}>
-                  <Feather name="check-circle" size={16} color="#2FA36B" />
+                  <Feather name="check-circle" size={16} color="#2E96EF" />
                   <ThemedText style={[styles.tipText, { color: theme.text }]}>
                     প্রয়োজনে পশু চিকিৎসকের পরামর্শ নিন
                   </ThemedText>
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   heroName: {
     fontSize: 28,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     textShadowColor: "rgba(0,0,0,0.5)",
     textShadowOffset: { width: 0, height: 1 },
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   },
   heroScientific: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     color: "#FFFFFF",
     fontStyle: "italic",
     opacity: 0.9,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   tabsContainer: {
     flexDirection: "row",
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   content: {
     padding: Spacing.lg,
@@ -401,11 +401,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   sectionContent: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     lineHeight: 22,
   },
   priceContainer: {
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
   },
   priceValue: {
     fontSize: 24,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   infoGrid: {
     flexDirection: "row",
@@ -430,11 +430,11 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   infoValue: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     textAlign: "center",
   },
   difficultyContainer: {
@@ -449,11 +449,11 @@ const styles = StyleSheet.create({
   },
   difficultyBadgeText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   difficultyDesc: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   diseaseList: {
     gap: Spacing.sm,
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   },
   diseaseText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   tipsList: {
     gap: Spacing.sm,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     flex: 1,
   },
 });

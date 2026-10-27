@@ -6,7 +6,7 @@ import {
   Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -97,7 +97,7 @@ export default function TrustScoreScreen() {
                 </View>
                 {isVerified ? (
                   <View style={styles.verifiedBadge}>
-                    <Feather name="check-circle" size={14} color="#2FA36B" />
+                    <Feather name="check-circle" size={14} color="#2E96EF" />
                     <ThemedText style={styles.verifiedText}>
                       {isBn ? "পরিচয় যাচাইকৃত" : "Identity Verified"}
                     </ThemedText>
@@ -140,7 +140,7 @@ export default function TrustScoreScreen() {
                           styles.progressFill,
                           {
                             width: `${percentage}%`,
-                            backgroundColor: percentage >= 80 ? "#2FA36B" : percentage >= 50 ? "#EA8A0C" : "#DC2626",
+                            backgroundColor: percentage >= 80 ? "#2E96EF" : percentage >= 50 ? "#B25E09" : "#DA2F2F",
                           },
                         ]}
                       />
@@ -181,7 +181,7 @@ export default function TrustScoreScreen() {
                     </ThemedText>
                   </View>
                   {isUnlocked ? (
-                    <Feather name="check-circle" size={20} color="#2FA36B" />
+                    <Feather name="check-circle" size={20} color="#2E96EF" />
                   ) : (
                     <Feather name="lock" size={20} color={theme.textSecondary} />
                   )}
@@ -229,12 +229,12 @@ const styles = StyleSheet.create({
   },
   scoreValue: {
     fontSize: 48,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   scoreLabel: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     color: "rgba(255,255,255,0.7)",
   },
   levelInfo: {
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   },
   levelName: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFF",
   },
   verifiedBadge: {
@@ -266,8 +266,8 @@ const styles = StyleSheet.create({
   },
   verifiedText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_600SemiBold",
-    color: "#2FA36B",
+    fontFamily: "DMSans_600SemiBold",
+    color: "#2E96EF",
   },
   sectionCard: {
     borderRadius: BorderRadius.lg,
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: Spacing.md,
   },
   factorItem: {
@@ -301,15 +301,15 @@ const styles = StyleSheet.create({
   },
   factorName: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   factorWeight: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   factorScore: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   progressBar: {
     height: 6,
@@ -340,11 +340,11 @@ const styles = StyleSheet.create({
   },
   levelItemName: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   levelRequirement: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   tipsCard: {
     flexDirection: "row",
@@ -358,12 +358,12 @@ const styles = StyleSheet.create({
   },
   tipsTitle: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: Spacing.xs,
   },
   tipsText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     lineHeight: 20,
   },
 });

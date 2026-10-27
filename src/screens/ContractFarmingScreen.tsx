@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -69,11 +69,11 @@ export default function ContractFarmingScreen() {
                     <View
                       style={[
                         styles.statusBadge,
-                        { backgroundColor: contract.status === "active" ? "#16A34A20" : "#EA8A0C20" },
+                        { backgroundColor: contract.status === "active" ? "#00BB7720" : "#B25E0920" },
                       ]}
                     >
                       <ThemedText
-                        style={[styles.statusText, { color: contract.status === "active" ? "#16A34A" : "#EA8A0C" }]}
+                        style={[styles.statusText, { color: contract.status === "active" ? "#00BB77" : "#B25E09" }]}
                       >
                         {contract.status === "active" ? "চলমান" : "অপেক্ষমান"}
                       </ThemedText>
@@ -102,7 +102,7 @@ export default function ContractFarmingScreen() {
                     <View style={styles.termsList}>
                       {contract.terms.map((term: string, i: number) => (
                         <View key={i} style={styles.termItem}>
-                          <Feather name="check" size={14} color="#16A34A" />
+                          <Feather name="check" size={14} color="#00BB77" />
                           <ThemedText style={[styles.termText, { color: theme.text }]}>{term}</ThemedText>
                         </View>
                       ))}
@@ -129,7 +129,7 @@ export default function ContractFarmingScreen() {
             {AVAILABLE_CONTRACTS.map((contract, index) => (
               <Animated.View key={contract.id} entering={FadeInUp.delay(index * 80).duration(400)}>
                 <LinearGradient
-                  colors={isDark ? ["#1e293b", "#0f172a"] : ["#ffffff", "#f8fafc"]}
+                  colors={isDark ? ["#202936", "#202936"] : ["#ffffff", "#f8fafc"]}
                   style={[styles.availableCard, { borderColor: theme.cardBorder }]}
                 >
                   <View style={styles.availableHeader}>
@@ -137,8 +137,8 @@ export default function ContractFarmingScreen() {
                       <ThemedText style={[styles.companyName, { color: theme.text }]}>{contract.company}</ThemedText>
                       <ThemedText style={[styles.cropName, { color: theme.primary }]}>{contract.crop}</ThemedText>
                     </View>
-                    <View style={[styles.priceBadge, { backgroundColor: "#16A34A20" }]}>
-                      <ThemedText style={[styles.priceText, { color: "#16A34A" }]}>{contract.price}</ThemedText>
+                    <View style={[styles.priceBadge, { backgroundColor: "#00BB7720" }]}>
+                      <ThemedText style={[styles.priceText, { color: "#00BB77" }]}>{contract.price}</ThemedText>
                     </View>
                   </View>
 

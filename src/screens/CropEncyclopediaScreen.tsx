@@ -1,14 +1,8 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-  RefreshControl,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, RefreshControl } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -110,9 +104,9 @@ const CROPS: Crop[] = [
 
 const getDifficultyConfig = (difficulty: string) => {
   const configs: Record<string, { color: string; label: string }> = {
-    easy: { color: "#2FA36B", label: "সহজ" },
-    medium: { color: "#EA8A0C", label: "মাঝারি" },
-    hard: { color: "#DC2626", label: "কঠিন" },
+    easy: { color: "#2E96EF", label: "সহজ" },
+    medium: { color: "#B25E09", label: "মাঝারি" },
+    hard: { color: "#DA2F2F", label: "কঠিন" },
   };
   return configs[difficulty] || configs.easy;
 };

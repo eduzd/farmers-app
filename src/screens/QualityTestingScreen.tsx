@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -125,9 +125,9 @@ export default function QualityTestingScreen() {
                       </View>
                     </View>
                     {lab.accredited ? (
-                      <View style={[styles.accreditedBadge, { backgroundColor: "#16A34A20" }]}>
-                        <Feather name="check-circle" size={14} color="#16A34A" />
-                        <ThemedText style={[styles.accreditedText, { color: "#16A34A" }]}>স্বীকৃত</ThemedText>
+                      <View style={[styles.accreditedBadge, { backgroundColor: "#00BB7720" }]}>
+                        <Feather name="check-circle" size={14} color="#00BB77" />
+                        <ThemedText style={[styles.accreditedText, { color: "#00BB77" }]}>স্বীকৃত</ThemedText>
                       </View>
                     ) : null}
                   </View>
@@ -143,7 +143,7 @@ export default function QualityTestingScreen() {
                   </View>
                   <View style={styles.labFooter}>
                     <View style={styles.labRating}>
-                      <Feather name="star" size={16} color="#EA8A0C" />
+                      <Feather name="star" size={16} color="#B25E09" />
                       <ThemedText style={[styles.labRatingText, { color: theme.text }]}>{lab.rating}</ThemedText>
                     </View>
                     <Pressable style={[styles.viewButton, { backgroundColor: theme.primary }]}>
@@ -170,11 +170,11 @@ export default function QualityTestingScreen() {
                   <View
                     style={[
                       styles.statusBadge,
-                      { backgroundColor: test.status === "completed" ? "#16A34A20" : "#EA8A0C20" },
+                      { backgroundColor: test.status === "completed" ? "#00BB7720" : "#B25E0920" },
                     ]}
                   >
                     <ThemedText
-                      style={[styles.statusText, { color: test.status === "completed" ? "#16A34A" : "#EA8A0C" }]}
+                      style={[styles.statusText, { color: test.status === "completed" ? "#00BB77" : "#B25E09" }]}
                     >
                       {test.status === "completed" ? "সম্পন্ন" : "চলমান"}
                     </ThemedText>
@@ -191,8 +191,8 @@ export default function QualityTestingScreen() {
                   </View>
                   {test.result ? (
                     <View style={styles.myTestDetail}>
-                      <Feather name="check-circle" size={14} color="#16A34A" />
-                      <ThemedText style={[styles.myTestDetailText, { color: "#16A34A" }]}>ফলাফল: {test.result}</ThemedText>
+                      <Feather name="check-circle" size={14} color="#00BB77" />
+                      <ThemedText style={[styles.myTestDetailText, { color: "#00BB77" }]}>ফলাফল: {test.result}</ThemedText>
                     </View>
                   ) : null}
                 </View>

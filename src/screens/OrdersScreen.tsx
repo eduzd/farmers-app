@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   orderId: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   orderDate: {
     fontSize: 13,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   orderItems: {
     flexDirection: "row",
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 18,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   trackButton: {
     flexDirection: "row",
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   trackButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   separator: {
     height: Spacing.md,
@@ -416,6 +416,6 @@ const styles = StyleSheet.create({
   shopButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

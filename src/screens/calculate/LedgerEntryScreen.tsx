@@ -4,7 +4,7 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { InputRow } from '@/offline/components/calculate/InputRow';
 import { ResultCard, ResultRow } from '@/offline/components/calculate/ResultCard';

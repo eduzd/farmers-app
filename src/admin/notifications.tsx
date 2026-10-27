@@ -21,8 +21,8 @@ import { Page, Text, Btn, Empty, ErrorBox, Loading, Segmented, shadow, st, useAd
 type N = { id: string; type: string; title: string; body: string; data: any; read: boolean; createdAt: string };
 
 const COLOR: Record<string, string> = {
-  support: "#16A34A", message: "#2563EB", order: "#B45309", moderation: "#B91C1C", official: "#0E7490", admin: "#EA580C",
-  follow: "#7C3AED", like: "#DB2777", comment: "#2563EB", new_post: "#0891B2", store: "#7C3AED", review: "#CA8A04",
+  support: "#00BB77", message: "#2E96EF", order: "#B25E09", moderation: "#DA2F2F", official: "#1F86DB", admin: "#B25E09",
+  follow: "#3D38D0", like: "#FF4BB7", comment: "#2E96EF", new_post: "#39B1FE", store: "#3D38D0", review: "#B25E09",
 };
 const ICON: Record<string, string> = {
   order: "package", moderation: "shield", official: "award", admin: "bell", follow: "user-plus", like: "heart",

@@ -53,9 +53,9 @@ const SIZES = {
   },
 };
 
-function VerifiedBadge({ size, color = "#00A86B" }: { size: number; color?: string }) {
-  const darkerColor = "#008F5B";
-  const lighterColor = "#4CD494";
+function VerifiedBadge({ size, color = "#00BB77" }: { size: number; color?: string }) {
+  const darkerColor = "#00875A";
+  const lighterColor = "#22D193";
   
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
@@ -177,7 +177,7 @@ export function UserAvatar({
       {/* Corners never shared: profile badge bottom-left, online dot bottom-right, welfare tick top-right. */}
       {isWelfareMember ? (
         <View style={[styles.badgeContainer, styles.welfareTopRight]}>
-          <VerifiedBadge size={Math.max(14, Math.round(sizeConfig.avatar * 0.34))} color="#00A86B" />
+          <VerifiedBadge size={Math.max(14, Math.round(sizeConfig.avatar * 0.34))} color="#00BB77" />
         </View>
       ) : null}
       {presence ? (
@@ -187,7 +187,7 @@ export function UserAvatar({
           style={[
             styles.onlineDot,
             {
-              backgroundColor: presence === "online" ? "#22C55E" : "#9CA3AF",
+              backgroundColor: presence === "online" ? "#00BB77" : "#9CA3AF",
               width: onlineSize,
               height: onlineSize,
               borderRadius: onlineSize / 2,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   avatarText: {
     color: "#FFFFFF",
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   profileBadge: {
     alignItems: "center",
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 0,
     bottom: 0,
-    backgroundColor: "#22C55E",
+    backgroundColor: "#00BB77",
   },
   badgeContainer: {
     position: "absolute",

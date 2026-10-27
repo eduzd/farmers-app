@@ -2,7 +2,7 @@ import React from "react";
 import { View, StyleSheet, ImageBackground, Pressable, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as Haptics from "expo-haptics";
@@ -78,7 +78,7 @@ export default function LandingScreen() {
         resizeMode="cover"
       />
       <LinearGradient
-        colors={["rgba(6,24,14,0.35)", "rgba(6,24,14,0.55)", "rgba(6,24,14,0.96)"]}
+        colors={["rgba(20, 27, 38,0.35)", "rgba(20, 27, 38,0.55)", "rgba(20, 27, 38,0.96)"]}
         locations={[0, 0.45, 0.85]}
         style={StyleSheet.absoluteFill}
       />
@@ -214,7 +214,7 @@ export default function LandingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#06180E" },
+  container: { flex: 1, backgroundColor: "#141B26" },
   content: {
     flexGrow: 1,
     paddingHorizontal: Spacing["2xl"],
@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   langBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: BorderRadius.full },
   langBtnActive: { backgroundColor: "#FFFFFF" },
   langText: { color: "rgba(255,255,255,0.85)", fontSize: 12, lineHeight: 16, fontFamily: FontFamily.semibold },
-  langTextActive: { color: "#0F1A14" },
+  langTextActive: { color: "#202936" },
   spacer: { flex: 1, minHeight: 120 },
   headline: {
     color: "#FFFFFF",
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     paddingLeft: Spacing.xl,
     paddingRight: 8,
   },
-  primaryText: { color: "#0F1A14", fontSize: 16, lineHeight: 22, fontFamily: FontFamily.bold },
+  primaryText: { color: "#202936", fontSize: 16, lineHeight: 22, fontFamily: FontFamily.bold },
   primaryArrow: {
     width: 40,
     height: 40,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: "#06180E",
+    borderColor: "#141B26",
   },
   trustText: { color: "rgba(255,255,255,0.7)", fontSize: 12, lineHeight: 16, fontFamily: FontFamily.medium },
 });

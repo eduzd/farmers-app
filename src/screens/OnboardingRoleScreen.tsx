@@ -8,7 +8,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { PROFILE_BADGES } from "@/constants/profileBadges";
 import * as Haptics from "expo-haptics";
 
@@ -156,14 +157,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     marginBottom: Spacing.sm,
   },
   subtitle: {
     fontSize: 16,
     color: "rgba(255,255,255,0.8)",
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   rolesContainer: {
     flex: 1,
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontSize: 17,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: 4,
   },
   roleDesc: {
@@ -231,6 +232,6 @@ const styles = StyleSheet.create({
   continueButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

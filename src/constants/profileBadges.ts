@@ -20,19 +20,19 @@ export interface ProfileBadge {
 }
 
 export const PROFILE_BADGES: Record<string, ProfileBadge> = {
-  expert: { icon: "school", color: "#7C3AED", label: "Farming expert", labelBn: "কৃষি বিশেষজ্ঞ", shape: "square" },
-  crops: { icon: "rice", color: "#CA8A04", label: "Crops farming", labelBn: "ফসল চাষ", shape: "circle" },
-  vegetables: { icon: "carrot", color: "#EA580C", label: "Vegetables", labelBn: "সবজি চাষ", shape: "circle" },
-  fruits: { icon: "food-apple", color: "#DC2626", label: "Fruits", labelBn: "ফল চাষ", shape: "circle" },
-  dairy: { icon: "cow", color: "#2563EB", label: "Dairy farming", labelBn: "দুগ্ধ খামার", shape: "circle" },
-  poultry: { icon: "egg", color: "#DB2777", label: "Poultry", labelBn: "পোল্ট্রি", shape: "circle" },
-  fish: { icon: "fish", color: "#0891B2", label: "Fish farming", labelBn: "মৎস্য চাষ", shape: "circle" },
-  livestock: { icon: "sheep", color: "#92400E", label: "Livestock", labelBn: "পশুপালন", shape: "circle" },
-  organic: { icon: "leaf", color: "#16A34A", label: "Organic farming", labelBn: "জৈব চাষ", shape: "circle" },
-  mixed: { icon: "barn", color: "#4F46E5", label: "Mixed farming", labelBn: "মিশ্র চাষ", shape: "circle" },
-  farmer: { icon: "sprout", color: "#14583A", label: "Farmer", labelBn: "কৃষক", shape: "circle" },
-  buyer: { icon: "cart", color: "#0D9488", label: "Buyer", labelBn: "ক্রেতা", shape: "square" },
-  company: { icon: "office-building", color: "#475569", label: "Company", labelBn: "প্রতিষ্ঠান", shape: "square" },
+  expert: { icon: "school", color: "#3D38D0", label: "Farming expert", labelBn: "কৃষি বিশেষজ্ঞ", shape: "square" },
+  crops: { icon: "rice", color: "#B25E09", label: "Crops farming", labelBn: "ফসল চাষ", shape: "circle" },
+  vegetables: { icon: "carrot", color: "#B25E09", label: "Vegetables", labelBn: "সবজি চাষ", shape: "circle" },
+  fruits: { icon: "food-apple", color: "#DA2F2F", label: "Fruits", labelBn: "ফল চাষ", shape: "circle" },
+  dairy: { icon: "cow", color: "#2E96EF", label: "Dairy farming", labelBn: "দুগ্ধ খামার", shape: "circle" },
+  poultry: { icon: "egg", color: "#FF4BB7", label: "Poultry", labelBn: "পোল্ট্রি", shape: "circle" },
+  fish: { icon: "fish", color: "#39B1FE", label: "Fish farming", labelBn: "মৎস্য চাষ", shape: "circle" },
+  livestock: { icon: "sheep", color: "#B25E09", label: "Livestock", labelBn: "পশুপালন", shape: "circle" },
+  organic: { icon: "leaf", color: "#00BB77", label: "Organic farming", labelBn: "জৈব চাষ", shape: "circle" },
+  mixed: { icon: "barn", color: "#3D38D0", label: "Mixed farming", labelBn: "মিশ্র চাষ", shape: "circle" },
+  farmer: { icon: "sprout", color: "#202936", label: "Farmer", labelBn: "কৃষক", shape: "circle" },
+  buyer: { icon: "cart", color: "#00BB77", label: "Buyer", labelBn: "ক্রেতা", shape: "square" },
+  company: { icon: "office-building", color: "#4A5568", label: "Company", labelBn: "প্রতিষ্ঠান", shape: "square" },
 };
 
 /** Badge key for a user: an expert shows the expert badge, otherwise the farming category, otherwise the role. */

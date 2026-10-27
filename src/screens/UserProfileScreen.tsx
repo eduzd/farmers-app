@@ -9,7 +9,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
@@ -363,15 +363,15 @@ export default function UserProfileScreen() {
           >
             <View style={[
               styles.actionIconCircle,
-              likedPosts.has(item.id) && { backgroundColor: "#DC262620" }
+              likedPosts.has(item.id) && { backgroundColor: "#DA2F2F20" }
             ]}>
               <Feather 
                 name="heart"
                 size={18} 
-                color={likedPosts.has(item.id) ? "#DC2626" : theme.textSecondary} 
+                color={likedPosts.has(item.id) ? "#DA2F2F" : theme.textSecondary} 
               />
             </View>
-            <ThemedText style={[styles.postActionText, { color: likedPosts.has(item.id) ? "#DC2626" : theme.textSecondary }]}>
+            <ThemedText style={[styles.postActionText, { color: likedPosts.has(item.id) ? "#DA2F2F" : theme.textSecondary }]}>
               {item.likes}
             </ThemedText>
           </Pressable>
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 32,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   nameContainer: {
     flexDirection: "row",
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   sectorText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   locationRow: {
     flexDirection: "row",
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
   followButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   messageButton: {
     flex: 1,
@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
   messageButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   buttonPressed: {
     opacity: 0.8,
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   postsTitle: {
     fontSize: 18,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   postCard: {
     borderRadius: BorderRadius.xl,
@@ -612,7 +612,7 @@ const styles = StyleSheet.create({
   postAuthor: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   postTime: {
     fontSize: 12,

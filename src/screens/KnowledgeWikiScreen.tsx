@@ -1,14 +1,8 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-  ScrollView,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, ScrollView } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -39,12 +33,12 @@ interface WikiArticle {
 }
 
 const CATEGORIES: WikiCategory[] = [
-  { id: "1", title: "ফসল চাষ", icon: "sun", color: "#2FA36B", articlesCount: 156 },
-  { id: "2", title: "মাছ চাষ", icon: "droplet", color: "#2563EB", articlesCount: 89 },
-  { id: "3", title: "পশুপালন", icon: "heart", color: "#EA8A0C", articlesCount: 67 },
-  { id: "4", title: "সার ও কীটনাশক", icon: "shield", color: "#7C3AED", articlesCount: 134 },
-  { id: "5", title: "কৃষি যন্ত্রপাতি", icon: "settings", color: "#475569", articlesCount: 45 },
-  { id: "6", title: "রোগ ও পোকা", icon: "alert-circle", color: "#DC2626", articlesCount: 178 },
+  { id: "1", title: "ফসল চাষ", icon: "sun", color: "#2E96EF", articlesCount: 156 },
+  { id: "2", title: "মাছ চাষ", icon: "droplet", color: "#2E96EF", articlesCount: 89 },
+  { id: "3", title: "পশুপালন", icon: "heart", color: "#B25E09", articlesCount: 67 },
+  { id: "4", title: "সার ও কীটনাশক", icon: "shield", color: "#3D38D0", articlesCount: 134 },
+  { id: "5", title: "কৃষি যন্ত্রপাতি", icon: "settings", color: "#4A5568", articlesCount: 45 },
+  { id: "6", title: "রোগ ও পোকা", icon: "alert-circle", color: "#DA2F2F", articlesCount: 178 },
 ];
 
 const POPULAR_ARTICLES: WikiArticle[] = [

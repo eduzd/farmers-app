@@ -69,7 +69,7 @@ export async function ensureNotificationChannels(): Promise<void> {
       name: 'Farmers App',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#2E7D32',
+      lightColor: '#2E96EF',
       sound: 'default',
     });
     // No vibrationPattern here: setting a pattern turns vibration back on in Android.
@@ -77,7 +77,7 @@ export async function ensureNotificationChannels(): Promise<void> {
       name: 'Farmers App (no vibration)',
       importance: Notifications.AndroidImportance.MAX,
       enableVibrate: false,
-      lightColor: '#2E7D32',
+      lightColor: '#2E96EF',
       sound: 'default',
     });
   } catch (e) {

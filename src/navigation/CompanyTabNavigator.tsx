@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View, Platform } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -62,7 +62,7 @@ export default function CompanyTabNavigator() {
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontFamily: "PlusJakartaSans_500Medium",
+          fontFamily: "DMSans_500Medium",
           marginTop: -2,
         },
         tabBarStyle: {

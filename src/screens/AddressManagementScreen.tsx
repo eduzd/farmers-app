@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Alert,
-  Modal,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Alert, Modal, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -218,7 +210,7 @@ export default function AddressManagementScreen() {
                     </ThemedText>
                   </View>
                   {address.isDefault ? (
-                    <View style={[styles.defaultBadge, { backgroundColor: "#16A34A" }]}>
+                    <View style={[styles.defaultBadge, { backgroundColor: "#00BB77" }]}>
                       <ThemedText style={styles.defaultText}>{tr("ডিফল্ট")}</ThemedText>
                     </View>
                   ) : null}
@@ -234,7 +226,7 @@ export default function AddressManagementScreen() {
                     style={styles.actionButton} 
                     onPress={() => handleDeleteAddress(address.id)}
                   >
-                    <Feather name="trash-2" size={18} color="#DC2626" />
+                    <Feather name="trash-2" size={18} color="#DA2F2F" />
                   </Pressable>
                 </View>
               </View>

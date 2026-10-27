@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, Pressable, StyleSheet, Animated } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { useI18n } from "@/lib/i18n";
@@ -49,7 +49,7 @@ export function BuyerPreviewBar({ info, onClose, topInset = 0 }: { info: BuyerPr
       </View>
       {reasons.length ? (
         <View testID="buyer-preview-warning" style={styles.warn}>
-          <Feather name="alert-triangle" size={13} color="#92400E" />
+          <Feather name="alert-triangle" size={13} color="#B25E09" />
           <ThemedText style={styles.warnText}>
             {bn
               ? `ক্রেতারা এখন এটা দেখতে পাচ্ছেন না: ${reasons.map((r) => reasonText(r, true)).join(", ")}।`
@@ -58,7 +58,7 @@ export function BuyerPreviewBar({ info, onClose, topInset = 0 }: { info: BuyerPr
         </View>
       ) : info.leftOut ? (
         <View testID="buyer-preview-leftout" style={styles.warn}>
-          <Feather name="eye-off" size={13} color="#92400E" />
+          <Feather name="eye-off" size={13} color="#B25E09" />
           <ThemedText style={styles.warnText}>
             {bn ? `${info.leftOut}টি লুকানো বা বন্ধ পণ্য ক্রেতারা দেখেন না, তাই এখানে নেই।` : `${info.leftOut} hidden or switched-off product${info.leftOut === 1 ? "" : "s"} not shown, as buyers don't see them.`}
           </ThemedText>
@@ -101,8 +101,8 @@ const styles = StyleSheet.create({
   sub: { color: "rgba(255,255,255,0.92)", fontSize: 12, lineHeight: 16 },
   close: { backgroundColor: "#fff", borderRadius: 16, paddingHorizontal: 14, height: 32, alignItems: "center", justifyContent: "center" },
   closeText: { fontWeight: "800", fontSize: 13 },
-  warn: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, backgroundColor: "#FEF3C7", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, width: "100%", maxWidth: 920, alignSelf: "center" },
-  warnText: { color: "#92400E", fontSize: 12, fontWeight: "600", flex: 1, lineHeight: 16 },
+  warn: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, backgroundColor: "#FFF1DE", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, width: "100%", maxWidth: 920, alignSelf: "center" },
+  warnText: { color: "#B25E09", fontSize: 12, fontWeight: "600", flex: 1, lineHeight: 16 },
   note: { position: "absolute", left: 16, right: 16, alignSelf: "center", maxWidth: 480, marginHorizontal: "auto" as any, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "rgba(15,23,42,0.92)", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, zIndex: 50 },
   noteText: { color: "#fff", fontSize: 13, fontWeight: "600", flexShrink: 1 },
 });

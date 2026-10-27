@@ -8,7 +8,7 @@ import {
   Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Location from "expo-location";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -217,7 +217,7 @@ export default function WeatherScreen() {
       showsVerticalScrollIndicator={false}
     >
       <LinearGradient
-        colors={weather.current.isDay ? ["#5B9BD5", "#87CEEB"] : ["#1a1a2e", "#16213e"]}
+        colors={weather.current.isDay ? ["#5B9BD5", "#87CEEB"] : ["#202936", "#202936"]}
         style={styles.currentWeatherCard}
       >
         <View style={styles.locationRow}>
@@ -283,7 +283,7 @@ export default function WeatherScreen() {
                 <AppIcon name={dayWeather.icon} size={24} color={theme.primary} />
                 {day.precipitation > 0 ? (
                   <View style={styles.precipitationBadge}>
-                    <Feather name="droplet" size={10} color="#2563EB" />
+                    <Feather name="droplet" size={10} color="#2E96EF" />
                     <ThemedText style={styles.precipitationText}>
                       {Math.round(day.precipitation)}mm
                     </ThemedText>
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: Spacing.md,
   },
   forecastCard: {
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   },
   precipitationText: {
     fontSize: 10,
-    color: "#2563EB",
+    color: "#2E96EF",
   },
   forecastTemps: {
     flexDirection: "row",

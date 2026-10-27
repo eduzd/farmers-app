@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Pressable, Platform } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/hooks/useTheme";
 import { apiGet, apiPost, apiPut, apiDelete, api } from "@/lib/api";
@@ -58,7 +58,7 @@ export function ModerationPanel({ user, onChanged }: { user: any; onChanged: () 
   if (d.isSuperAdmin)
     return (
       <Card>
-        <ListRow icon="shield" color="#2563EB" label={L("This is an admin account", "এটি একটি অ্যাডমিন অ্যাকাউন্ট")} sub={L("Remove admin rights first to limit, ban or delete it.", "সীমিত, নিষিদ্ধ বা মুছতে আগে অ্যাডমিন অধিকার সরান।")} last />
+        <ListRow icon="shield" color="#2E96EF" label={L("This is an admin account", "এটি একটি অ্যাডমিন অ্যাকাউন্ট")} sub={L("Remove admin rights first to limit, ban or delete it.", "সীমিত, নিষিদ্ধ বা মুছতে আগে অ্যাডমিন অধিকার সরান।")} last />
       </Card>
     );
 
@@ -83,7 +83,7 @@ export function ModerationPanel({ user, onChanged }: { user: any; onChanged: () 
     { value: "0", label: L("Until I lift it", "আমি না তোলা পর্যন্ত") },
   ];
   const status = d.banned ? "banned" : d.restricted ? "restricted" : "active";
-  const statusColor = status === "banned" ? "#B91C1C" : status === "restricted" ? "#B45309" : "#15803D";
+  const statusColor = status === "banned" ? "#DA2F2F" : status === "restricted" ? "#B25E09" : "#2E96EF";
   const confirmName = String(user.username || user.email || "");
 
   return (
@@ -107,17 +107,17 @@ export function ModerationPanel({ user, onChanged }: { user: any; onChanged: () 
           </View>
         </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-          <Pill icon="file-text" label={`${d.counts.posts} ${L("posts", "পোস্ট")}`} color="#2563EB" />
-          <Pill icon="message-square" label={`${d.counts.comments} ${L("comments", "মন্তব্য")}`} color="#0E7490" />
-          <Pill icon="tag" label={`${d.counts.listings} ${L("listings", "লিস্টিং")}`} color="#7C3AED" />
-          <Pill icon="send" label={`${d.counts.messagesSent} ${L("messages sent", "মেসেজ পাঠানো")}`} color="#475569" />
-          {d.counts.reportsAgainst ? <Pill icon="flag" label={`${d.counts.reportsAgainst} ${L("reports", "রিপোর্ট")}`} color="#DC2626" /> : null}
+          <Pill icon="file-text" label={`${d.counts.posts} ${L("posts", "পোস্ট")}`} color="#2E96EF" />
+          <Pill icon="message-square" label={`${d.counts.comments} ${L("comments", "মন্তব্য")}`} color="#1F86DB" />
+          <Pill icon="tag" label={`${d.counts.listings} ${L("listings", "লিস্টিং")}`} color="#3D38D0" />
+          <Pill icon="send" label={`${d.counts.messagesSent} ${L("messages sent", "মেসেজ পাঠানো")}`} color="#4A5568" />
+          {d.counts.reportsAgainst ? <Pill icon="flag" label={`${d.counts.reportsAgainst} ${L("reports", "রিপোর্ট")}`} color="#DA2F2F" /> : null}
         </View>
       </Card>
       {msg ? (
-        <View testID="moderation-msg" style={{ flexDirection: "row", gap: 8, alignItems: "center", padding: 12, borderRadius: 14, marginBottom: 12, backgroundColor: msg.ok ? "#ECFDF5" : "#FEF2F2" }}>
-          <Feather name={msg.ok ? "check-circle" : "alert-circle"} size={17} color={msg.ok ? "#047857" : "#B91C1C"} />
-          <Text style={{ flex: 1, color: msg.ok ? "#065F46" : "#991B1B", fontSize: 13.5 }}>{msg.text}</Text>
+        <View testID="moderation-msg" style={{ flexDirection: "row", gap: 8, alignItems: "center", padding: 12, borderRadius: 14, marginBottom: 12, backgroundColor: msg.ok ? "#D8FFF2" : "#FEF2F2" }}>
+          <Feather name={msg.ok ? "check-circle" : "alert-circle"} size={17} color={msg.ok ? "#00875A" : "#DA2F2F"} />
+          <Text style={{ flex: 1, color: msg.ok ? "#00875A" : "#DA2F2F", fontSize: 13.5 }}>{msg.text}</Text>
         </View>
       ) : null}
 
@@ -178,7 +178,7 @@ export function ModerationPanel({ user, onChanged }: { user: any; onChanged: () 
 
       <SectionTitle title={L("Message", "মেসেজ")} />
       <Card>
-        <ListRow testID="mod-official" icon="send" color="#2563EB" label={L("Send an official message", "অফিসিয়াল মেসেজ পাঠান")} sub={L("Shows in their Chats from Farmers Official", "তাদের চ্যাটে Farmers Official থেকে দেখাবে")} onPress={() => nav.push({ name: "official", target: user.id, targetName: user.name || user.username } as any)} last />
+        <ListRow testID="mod-official" icon="send" color="#2E96EF" label={L("Send an official message", "অফিসিয়াল মেসেজ পাঠান")} sub={L("Shows in their Chats from Farmers Official", "তাদের চ্যাটে Farmers Official থেকে দেখাবে")} onPress={() => nav.push({ name: "official", target: user.id, targetName: user.name || user.username } as any)} last />
       </Card>
 
       <SectionTitle title={L("Danger zone", "বিপজ্জনক")} />
@@ -237,7 +237,7 @@ export function SearchScreen() {
                   <Text style={{ color: theme.text, fontWeight: "700" }} numberOfLines={1}>{u.name}</Text>
                   <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>@{u.username}{u.email ? ` · ${u.email}` : ""}</Text>
                 </View>
-                {u.isSuperAdmin ? <Pill label="Admin" color="#2563EB" /> : u.banned ? <Pill label={L("Banned", "নিষিদ্ধ")} color="#B91C1C" /> : u.restricted ? <Pill label={L("Limited", "সীমিত")} color="#B45309" /> : null}
+                {u.isSuperAdmin ? <Pill label="Admin" color="#2E96EF" /> : u.banned ? <Pill label={L("Banned", "নিষিদ্ধ")} color="#DA2F2F" /> : u.restricted ? <Pill label={L("Limited", "সীমিত")} color="#B25E09" /> : null}
               </Pressable>
             ))}
           </Card>
@@ -254,7 +254,7 @@ export function SearchScreen() {
                   <Text style={{ color: theme.text, fontWeight: "700" }} numberOfLines={1}>{p.name}</Text>
                   <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>{taka(p.price)}{p.unit ? `/${p.unit}` : ""}{p.seller ? ` · ${p.seller}` : ""}</Text>
                 </View>
-                {p.hidden ? <Pill label={L("Hidden", "লুকানো")} color="#64748B" /> : null}
+                {p.hidden ? <Pill label={L("Hidden", "লুকানো")} color="#7A8CA3" /> : null}
               </Pressable>
             ))}
           </Card>
@@ -287,7 +287,7 @@ export function SearchScreen() {
                   <Text style={{ color: theme.text, fontWeight: "700" }} numberOfLines={1}>#{String(o.id).slice(-8).toUpperCase()} · {taka(o.total)}</Text>
                   <Text style={{ color: theme.textSecondary, fontSize: 12.5 }} numberOfLines={1}>{o.buyerName} · {fmtDate(o.createdAt)}</Text>
                 </View>
-                <Pill label={statusLabel(o.status, L)} color={STATUS_COLOR[o.status] || "#64748B"} />
+                <Pill label={statusLabel(o.status, L)} color={STATUS_COLOR[o.status] || "#7A8CA3"} />
               </Pressable>
             ))}
           </Card>
@@ -332,7 +332,7 @@ export function OfficialScreen({ target, targetName, from: initialFrom }: { targ
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const active = (accounts.data || []).filter((a: any) => a.active);
-  const acct = active.find((a: any) => a.id === from) || active[0] || { id: "farmers-official", nameEn: "Farmers Official", nameBn: "ফার্মার্স অফিসিয়াল", icon: "check-circle", color: "#2563EB", aboutEn: "", aboutBn: "" };
+  const acct = active.find((a: any) => a.id === from) || active[0] || { id: "farmers-official", nameEn: "Farmers Official", nameBn: "ফার্মার্স অফিসিয়াল", icon: "check-circle", color: "#2E96EF", aboutEn: "", aboutBn: "" };
   const acctName = L(acct.nameEn, acct.nameBn);
   const send = async () => {
     const sendTo = to === "all" ? "all" : who.trim();
@@ -361,9 +361,9 @@ export function OfficialScreen({ target, targetName, from: initialFrom }: { targ
   };
   return (
     <Page testID="admin-official" onRefresh={() => { list.load(); accounts.load(); }}>
-      <LinearGradient colors={[acct.color || "#2563EB", "#0E7490"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 22, padding: 18, marginBottom: 16, flexDirection: "row", alignItems: "center", gap: 14 }}>
+      <LinearGradient colors={[acct.color || "#2E96EF", "#1F86DB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 22, padding: 18, marginBottom: 16, flexDirection: "row", alignItems: "center", gap: 14 }}>
         <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}>
-          <Feather name={(acct.icon in Feather.glyphMap ? acct.icon : "check-circle") as any} size={26} color={acct.color || "#2563EB"} />
+          <Feather name={(acct.icon in Feather.glyphMap ? acct.icon : "check-circle") as any} size={26} color={acct.color || "#2E96EF"} />
         </View>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
@@ -400,7 +400,7 @@ export function OfficialScreen({ target, targetName, from: initialFrom }: { targ
         <Field label={L("Message", "মেসেজ")} value={body} onChange={setBody} testID="official-body" multiline maxLength={2000} placeholder={L("Write the message people will read in Chats", "চ্যাটে মানুষ যে মেসেজ পড়বে তা লিখুন")} />
         <ToggleRow testID="official-push" icon="bell" label={L("Also notify", "নোটিফিকেশনও দিন")} sub={L("Adds it to the bell, and sends a phone push where push is turned on", "বেলে যোগ হবে, আর পুশ চালু থাকলে ফোনে পুশ যাবে")} value={push} onChange={setPush} />
         <View style={{ height: 14 }} />
-        {msg ? <Text testID="official-result" style={{ color: msg.ok ? "#047857" : "#B91C1C", fontWeight: "700", marginBottom: 10 }}>{msg.text}</Text> : null}
+        {msg ? <Text testID="official-result" style={{ color: msg.ok ? "#00875A" : "#DA2F2F", fontWeight: "700", marginBottom: 10 }}>{msg.text}</Text> : null}
         <Btn testID="official-send" icon="send" label={L(`Send as ${acct.nameEn}`, `${acct.nameBn} হিসেবে পাঠান`)} busy={busy} disabled={!body.trim() || (to === "one" && !who.trim())} onPress={send} />
       </Card>
       <SectionTitle title={L("Sent", "পাঠানো হয়েছে")} />
@@ -412,8 +412,8 @@ export function OfficialScreen({ target, targetName, from: initialFrom }: { targ
           <View style={[st.row, { alignItems: "flex-start" }]}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={{ flexDirection: "row", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 6 }}>
-                <Pill icon="check-circle" label={m.accountName || "Farmers Official"} color={m.accountColor || "#2563EB"} />
-                <Pill icon={m.toAll ? "users" : "user"} label={m.toAll ? L("Everyone", "সবাই") : m.targetName || L("One person", "একজন")} color={m.toAll ? "#2563EB" : "#7C3AED"} />
+                <Pill icon="check-circle" label={m.accountName || "Farmers Official"} color={m.accountColor || "#2E96EF"} />
+                <Pill icon={m.toAll ? "users" : "user"} label={m.toAll ? L("Everyone", "সবাই") : m.targetName || L("One person", "একজন")} color={m.toAll ? "#2E96EF" : "#3D38D0"} />
                 <Text style={{ color: theme.textTertiary, fontSize: 12 }}>{fmtDate(m.createdAt)}{m.adminName ? ` · ${m.adminName}` : ""}</Text>
               </View>
               {m.title ? <Text style={{ color: theme.text, fontWeight: "800", fontSize: 14.5 }}>{m.title}</Text> : null}
@@ -441,19 +441,19 @@ const PLACE = (L: ReturnType<typeof useL>) => [
   { value: "home", label: L("Home", "হোম") },
   { value: "market", label: L("Market", "মার্কেট") },
 ];
-const SWATCHES: [string, string][] = [["#16A34A", "#0E7490"], ["#2563EB", "#7C3AED"], ["#EA580C", "#DB2777"], ["#0F766E", "#15803D"], ["#B45309", "#EA580C"], ["#334155", "#0F172A"]];
+const SWATCHES: [string, string][] = [["#00BB77", "#1F86DB"], ["#2E96EF", "#3D38D0"], ["#B25E09", "#FF4BB7"], ["#3D38D0", "#2E96EF"], ["#B25E09", "#B25E09"], ["#202936", "#202936"]];
 
 function AdPreview({ ad, L }: { ad: any; L: ReturnType<typeof useL> }) {
   const { Image } = require("expo-image");
   const { mediaUrl } = require("@/lib/api");
   return (
-    <LinearGradient colors={[ad.color1 || "#16A34A", ad.color2 || "#0E7490"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 18, padding: 16, minHeight: 120, flexDirection: "row", alignItems: "center", gap: 12, overflow: "hidden" }}>
+    <LinearGradient colors={[ad.color1 || "#00BB77", ad.color2 || "#1F86DB"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: 18, padding: 16, minHeight: 120, flexDirection: "row", alignItems: "center", gap: 12, overflow: "hidden" }}>
       <View style={{ flex: 1 }}>
         <Text style={{ color: "#fff", fontWeight: "800", fontSize: 17 }} numberOfLines={2}>{L(ad.titleEn || "Title", ad.titleBn || ad.titleEn || "শিরোনাম")}</Text>
         {ad.subtitleEn || ad.subtitleBn ? <Text style={{ color: "rgba(255,255,255,.88)", fontSize: 13, marginTop: 4 }} numberOfLines={2}>{L(ad.subtitleEn, ad.subtitleBn || ad.subtitleEn)}</Text> : null}
         {ad.ctaEn || ad.ctaBn ? (
           <View style={{ alignSelf: "flex-start", marginTop: 10, backgroundColor: "#fff", borderRadius: 14, paddingHorizontal: 12, height: 28, justifyContent: "center" }}>
-            <Text style={{ color: ad.color1 || "#16A34A", fontWeight: "800", fontSize: 12.5 }}>{L(ad.ctaEn, ad.ctaBn || ad.ctaEn)}</Text>
+            <Text style={{ color: ad.color1 || "#00BB77", fontWeight: "800", fontSize: 12.5 }}>{L(ad.ctaEn, ad.ctaBn || ad.ctaEn)}</Text>
           </View>
         ) : null}
       </View>
@@ -493,8 +493,8 @@ export function AdsScreen() {
             <AdPreview ad={a} L={L} />
           </Pressable>
           <View style={[st.row, { marginTop: 10, flexWrap: "wrap", gap: 8 }]}>
-            <Pill label={PLACE(L).find((p) => p.value === a.placement)?.label || a.placement} color="#2563EB" icon="map-pin" />
-            {!a.active ? <Pill label={L("Hidden", "লুকানো")} color="#64748B" /> : a.endsAt && new Date(a.endsAt) < new Date() ? <Pill label={L("Ended", "শেষ")} color="#B45309" /> : <Pill label={L("Live", "চালু")} color="#15803D" />}
+            <Pill label={PLACE(L).find((p) => p.value === a.placement)?.label || a.placement} color="#2E96EF" icon="map-pin" />
+            {!a.active ? <Pill label={L("Hidden", "লুকানো")} color="#7A8CA3" /> : a.endsAt && new Date(a.endsAt) < new Date() ? <Pill label={L("Ended", "শেষ")} color="#B25E09" /> : <Pill label={L("Live", "চালু")} color="#2E96EF" />}
             <View style={{ flex: 1 }} />
             <Pressable testID={`ad-up-${a.id}`} disabled={i === 0} onPress={() => move(i, -1)} hitSlop={6} style={{ padding: 6, opacity: i === 0 ? 0.3 : 1 }}><Feather name="arrow-up" size={18} color={theme.text} /></Pressable>
             <Pressable testID={`ad-down-${a.id}`} disabled={i === ads.length - 1} onPress={() => move(i, 1)} hitSlop={6} style={{ padding: 6, opacity: i === ads.length - 1 ? 0.3 : 1 }}><Feather name="arrow-down" size={18} color={theme.text} /></Pressable>
@@ -511,7 +511,7 @@ export function AdForm({ id }: { id?: string }) {
   const L = useL();
   const nav = useAdminNav();
   const existing = useLoader<any[]>(() => (id ? apiGet("/api/admin/manage/ads") : Promise.resolve([])), [id]);
-  const [f, setF] = useState<any>({ titleEn: "", titleBn: "", subtitleEn: "", subtitleBn: "", ctaEn: "", ctaBn: "", icon: "tag", color1: "#16A34A", color2: "#0E7490", image: "", placement: "all", linkType: "none", linkTarget: "", active: true, endsAt: "" });
+  const [f, setF] = useState<any>({ titleEn: "", titleBn: "", subtitleEn: "", subtitleBn: "", ctaEn: "", ctaBn: "", icon: "tag", color1: "#00BB77", color2: "#1F86DB", image: "", placement: "all", linkType: "none", linkTarget: "", active: true, endsAt: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   useEffect(() => {

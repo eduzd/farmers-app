@@ -1,14 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -327,7 +322,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     textAlignVertical: "center",
   },
   listContent: {
@@ -353,7 +348,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 20,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   expertInfo: {
     flex: 1,
@@ -368,7 +363,7 @@ const styles = StyleSheet.create({
   expertName: {
     fontSize: 17,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   availableBadge: {
     flexDirection: "row",
@@ -379,17 +374,17 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#16A34A",
+    backgroundColor: "#00BB77",
   },
   availableText: {
     fontSize: 12,
-    color: "#16A34A",
+    color: "#00BB77",
     fontWeight: "500",
   },
   specialty: {
     fontSize: 14,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
     marginBottom: 2,
   },
   credentials: {
@@ -417,7 +412,7 @@ const styles = StyleSheet.create({
   feeText: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   feeLabel: {
     fontSize: 12,
@@ -449,7 +444,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   separator: {
     height: Spacing.md,

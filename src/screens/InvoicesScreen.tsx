@@ -9,7 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
@@ -26,9 +26,9 @@ import { useI18n } from "@/lib/i18n";
 import { AppIcon } from "@/components/icons/AppIcon";
 const getPaymentStatusConfig = (status: Invoice["paymentStatus"]) => {
   const configs: Record<string, { color: string; labelBn: string; labelEn: string; icon: string }> = {
-    paid: { color: "#2FA36B", labelBn: "পেইড", labelEn: "Paid", icon: "check-circle" },
-    unpaid: { color: "#DC2626", labelBn: "আনপেইড", labelEn: "Unpaid", icon: "alert-circle" },
-    partial: { color: "#EA8A0C", labelBn: "আংশিক", labelEn: "Partial", icon: "clock" },
+    paid: { color: "#2E96EF", labelBn: "পেইড", labelEn: "Paid", icon: "check-circle" },
+    unpaid: { color: "#DA2F2F", labelBn: "আনপেইড", labelEn: "Unpaid", icon: "alert-circle" },
+    partial: { color: "#B25E09", labelBn: "আংশিক", labelEn: "Partial", icon: "clock" },
   };
   return configs[status] || configs.unpaid;
 };
@@ -56,7 +56,7 @@ export default function InvoicesScreen() {
       .map((i) => `<tr><td>${esc(i.name)}</td><td>${i.quantity} ${esc(i.unit)}</td><td>${c}${i.unitPrice}</td><td>${c}${i.total}</td></tr>`)
       .join("");
     return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(invoice.invoiceNumber)}</title>
-<style>body{font-family:system-ui,'Noto Sans Bengali',sans-serif;padding:24px;color:#1A2B22}h1{color:#1E7F4F;margin:0}
+<style>body{font-family:system-ui,'Noto Sans Bengali',sans-serif;padding:24px;color:#1A2B22}h1{color:#2E96EF;margin:0}
 table{width:100%;border-collapse:collapse;margin-top:16px}td,th{border-bottom:1px solid #ddd;padding:8px;text-align:left}
 .row{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-top:16px}.tot{text-align:right;margin-top:12px}</style></head>
 <body><h1>${isBn ? "ইনভয়েস" : "Invoice"} ${esc(invoice.invoiceNumber)}</h1>
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   list: {
     padding: Spacing.lg,
@@ -320,11 +320,11 @@ const styles = StyleSheet.create({
   },
   invoiceNumber: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   invoiceDate: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   statusBadge: {
     flexDirection: "row",
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   partyInfo: {
     marginBottom: Spacing.md,
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   },
   partyName: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   itemsSummary: {
     borderRadius: BorderRadius.md,
@@ -363,15 +363,15 @@ const styles = StyleSheet.create({
   itemName: {
     flex: 1,
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   itemTotal: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   moreItems: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     fontStyle: "italic",
   },
   totalRow: {
@@ -382,11 +382,11 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   totalAmount: {
     fontSize: 20,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   actionsRow: {
     flexDirection: "row",
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   emptyState: {
     alignItems: "center",
@@ -412,11 +412,11 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   emptyText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     textAlign: "center",
     paddingHorizontal: Spacing.xl,
   },

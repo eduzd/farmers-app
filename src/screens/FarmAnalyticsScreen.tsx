@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Pressable, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -70,10 +70,10 @@ export default function FarmAnalyticsScreen() {
                 <AppIcon
                   name={stat.change.startsWith("+") ? "arrow-up" : "arrow-down"}
                   size={12}
-                  color={stat.change.startsWith("+") ? "#16A34A" : "#DC2626"}
+                  color={stat.change.startsWith("+") ? "#00BB77" : "#DA2F2F"}
                 />
                 <ThemedText
-                  style={[styles.statChangeText, { color: stat.change.startsWith("+") ? "#16A34A" : "#DC2626" }]}
+                  style={[styles.statChangeText, { color: stat.change.startsWith("+") ? "#00BB77" : "#DA2F2F" }]}
                 >
                   {stat.change}
                 </ThemedText>

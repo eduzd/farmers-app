@@ -1,19 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  TextInput,
-  Modal,
-  Alert,
-  Dimensions,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, Modal, Alert, Dimensions, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -238,7 +229,7 @@ export default function FarmNotesScreen() {
           <AppIcon
             name={item.isPinned ? "bookmark" : "bookmark"}
             size={16}
-            color={item.isPinned ? "#FF6B6B" : "#999"}
+            color={item.isPinned ? "#DA2F2F" : "#999"}
           />
         </Pressable>
       </View>

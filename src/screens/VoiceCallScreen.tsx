@@ -10,7 +10,7 @@ import {
   ImageBackground,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import * as ExpoFileSystem from "expo-file-system/legacy";
 import { Audio } from "expo-av";
@@ -423,9 +423,9 @@ export default function VoiceCallScreen() {
 
   if (Platform.OS === "web") {
     return (
-      <View style={[styles.container, { backgroundColor: isDark ? "#0a1628" : "#f0f7ff" }]}>
+      <View style={[styles.container, { backgroundColor: isDark ? "#141B26" : "#f0f7ff" }]}>
         <LinearGradient
-          colors={isDark ? ["#0a1628", "#1a365d", "#0a1628"] : ["#e0f2ff", "#bae6fd", "#e0f2ff"]}
+          colors={isDark ? ["#141B26", "#1a365d", "#141B26"] : ["#E3F4FF", "#CFEBFF", "#E3F4FF"]}
           style={StyleSheet.absoluteFill}
         />
         <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
@@ -449,11 +449,11 @@ export default function VoiceCallScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? "#0a1628" : "#f0f7ff" }]}>
+    <View style={[styles.container, { backgroundColor: isDark ? "#141B26" : "#f0f7ff" }]}>
       <LinearGradient
         colors={isDark 
-          ? ["#0a1628", "#1e3a5f", "#0a1628"] 
-          : ["#e0f2ff", "#bae6fd", "#e0f2ff"]
+          ? ["#141B26", "#202936", "#141B26"] 
+          : ["#E3F4FF", "#CFEBFF", "#E3F4FF"]
         }
         style={StyleSheet.absoluteFill}
       />
@@ -481,7 +481,7 @@ export default function VoiceCallScreen() {
             <Animated.View style={[
               styles.pulseRing,
               {
-                backgroundColor: callState === "listening" ? "#DC2626" : theme.primary,
+                backgroundColor: callState === "listening" ? "#DA2F2F" : theme.primary,
                 opacity: 0.15,
                 transform: [{ scale: pulseAnim }],
               },
@@ -489,14 +489,14 @@ export default function VoiceCallScreen() {
           ) : null}
           <View style={[styles.avatarOuter, { 
             backgroundColor: isCallActive 
-              ? (callState === "listening" ? "#DC262620" : theme.primary + "20")
+              ? (callState === "listening" ? "#DA2F2F20" : theme.primary + "20")
               : theme.primary + "15"
           }]}>
             <View style={[
               styles.avatar,
               { 
                 backgroundColor: isCallActive 
-                  ? (callState === "listening" ? "#DC2626" : theme.primary)
+                  ? (callState === "listening" ? "#DA2F2F" : theme.primary)
                   : theme.primary 
               },
             ]}>
@@ -533,14 +533,14 @@ export default function VoiceCallScreen() {
 
         <View style={[styles.statusPill, { 
           backgroundColor: callState === "listening" 
-            ? "#DC262615" 
+            ? "#DA2F2F15" 
             : callState === "speaking" 
               ? theme.primary + "15"
               : theme.textSecondary + "15"
         }]}>
           <ThemedText style={[styles.statusText, { 
             color: callState === "listening" 
-              ? "#DC2626" 
+              ? "#DA2F2F" 
               : callState === "speaking"
                 ? theme.primary
                 : theme.textSecondary
@@ -596,7 +596,7 @@ export default function VoiceCallScreen() {
                 style={({ pressed }) => [
                   styles.micButton, 
                   { 
-                    backgroundColor: callState === "listening" ? "#DC2626" : theme.primary,
+                    backgroundColor: callState === "listening" ? "#DA2F2F" : theme.primary,
                     transform: [{ scale: pressed ? 0.95 : 1 }]
                   }
                 ]} 
@@ -616,7 +616,7 @@ export default function VoiceCallScreen() {
             <Pressable 
               style={({ pressed }) => [
                 styles.endCallButton, 
-                { backgroundColor: "#DC2626", transform: [{ scale: pressed ? 0.95 : 1 }] }
+                { backgroundColor: "#DA2F2F", transform: [{ scale: pressed ? 0.95 : 1 }] }
               ]} 
               onPress={endCall}
             >

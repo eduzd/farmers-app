@@ -7,7 +7,7 @@ import {
   FlatList,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -61,10 +61,10 @@ const EARN_METHODS = [
 
 const getCategoryConfig = (category: string) => {
   const configs: Record<string, { color: string; icon: keyof typeof Feather.glyphMap }> = {
-    discount: { color: "#2FA36B", icon: "percent" },
-    product: { color: "#EA8A0C", icon: "package" },
-    service: { color: "#2563EB", icon: "headphones" },
-    premium: { color: "#7C3AED", icon: "award" },
+    discount: { color: "#2E96EF", icon: "percent" },
+    product: { color: "#B25E09", icon: "package" },
+    service: { color: "#2E96EF", icon: "headphones" },
+    premium: { color: "#3D38D0", icon: "award" },
   };
   return configs[category] || configs.discount;
 };
@@ -175,8 +175,8 @@ export default function RewardsScreen() {
                       </Pressable>
                     </View>
                     {reward.expiresIn ? (
-                      <View style={[styles.expiresBadge, { backgroundColor: "#EA8A0C20" }]}>
-                        <ThemedText style={[styles.expiresText, { color: "#EA8A0C" }]}>
+                      <View style={[styles.expiresBadge, { backgroundColor: "#B25E0920" }]}>
+                        <ThemedText style={[styles.expiresText, { color: "#B25E09" }]}>
                           {reward.expiresIn} বাকি
                         </ThemedText>
                       </View>
@@ -196,8 +196,8 @@ export default function RewardsScreen() {
                     <AppIcon name={method.icon} size={20} color={theme.primary} />
                   </View>
                   <ThemedText style={[styles.earnAction, { color: theme.text }]}>{method.action}</ThemedText>
-                  <View style={[styles.earnPoints, { backgroundColor: "#2FA36B15" }]}>
-                    <ThemedText style={[styles.earnPointsText, { color: "#2FA36B" }]}>{method.points}</ThemedText>
+                  <View style={[styles.earnPoints, { backgroundColor: "#2E96EF15" }]}>
+                    <ThemedText style={[styles.earnPointsText, { color: "#2E96EF" }]}>{method.points}</ThemedText>
                   </View>
                 </View>
               </Animated.View>
@@ -210,11 +210,11 @@ export default function RewardsScreen() {
             {ACTIVITIES.map((activity, index) => (
               <Animated.View key={activity.id} entering={FadeInUp.delay(150 + index * 50)}>
                 <View style={[styles.activityItem, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-                  <View style={[styles.activityIcon, { backgroundColor: activity.type === "earn" ? "#2FA36B15" : "#DC262615" }]}>
+                  <View style={[styles.activityIcon, { backgroundColor: activity.type === "earn" ? "#2E96EF15" : "#DA2F2F15" }]}>
                     <AppIcon
                       name={activity.type === "earn" ? "plus" : "minus"}
                       size={16}
-                      color={activity.type === "earn" ? "#2FA36B" : "#DC2626"}
+                      color={activity.type === "earn" ? "#2E96EF" : "#DA2F2F"}
                     />
                   </View>
                   <View style={styles.activityInfo}>
@@ -224,7 +224,7 @@ export default function RewardsScreen() {
                     </ThemedText>
                   </View>
                   <ThemedText
-                    style={[styles.activityPoints, { color: activity.type === "earn" ? "#2FA36B" : "#DC2626" }]}
+                    style={[styles.activityPoints, { color: activity.type === "earn" ? "#2E96EF" : "#DA2F2F" }]}
                   >
                     {activity.type === "earn" ? "+" : ""}{activity.points}
                   </ThemedText>

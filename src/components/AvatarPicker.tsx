@@ -8,7 +8,7 @@ import {
   Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, {
   useSharedValue,
@@ -38,10 +38,10 @@ export interface AvatarOption {
 }
 
 const BACKGROUNDS = [
-  "#FEF3C7", "#DBEAFE", "#FCE7F3", "#D1FAE5", "#FEE2E2", 
-  "#E0E7FF", "#CFFAFE", "#FDE68A", "#C7D2FE", "#A7F3D0",
-  "#FBCFE8", "#BAE6FD", "#FED7AA", "#DDD6FE", "#BBF7D0",
-  "#F5D0FE", "#99F6E4", "#FECACA", "#C4B5FD", "#6EE7B7",
+  "#FFF1DE", "#E3F4FF", "#FCE7F3", "#D8FFF2", "#FEE2E2", 
+  "#E0E7FF", "#CFFAFE", "#FDE68A", "#C7D2FE", "#B0FFE2",
+  "#FBCFE8", "#CFEBFF", "#FED7AA", "#DDD6FE", "#B0FFE2",
+  "#F5D0FE", "#D8FFF2", "#FECACA", "#C4B5FD", "#6EE7B7",
 ];
 
 export const AVATAR_OPTIONS: AvatarOption[] = Array.from({ length: 30 }, (_, i) => ({
@@ -575,11 +575,11 @@ const styles = StyleSheet.create({
   triggerTitle: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   triggerSubtitle: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     marginTop: 2,
   },
   modalContainer: {
@@ -598,11 +598,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   modalSubtitle: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     marginTop: Spacing.xs,
   },
   closeButton: {

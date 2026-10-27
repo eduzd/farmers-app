@@ -7,7 +7,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -23,9 +23,9 @@ import { useI18n } from "@/lib/i18n";
 import { AppIcon } from "@/components/icons/AppIcon";
 const getStatusConfig = (status: Subscription["status"]) => {
   const configs: Record<string, { color: string; labelBn: string; labelEn: string; icon: string }> = {
-    active: { color: "#2FA36B", labelBn: "সক্রিয়", labelEn: "Active", icon: "check-circle" },
-    paused: { color: "#EA8A0C", labelBn: "বিরতি", labelEn: "Paused", icon: "pause-circle" },
-    cancelled: { color: "#9E9E9E", labelBn: "বাতিল", labelEn: "Cancelled", icon: "x-circle" },
+    active: { color: "#2E96EF", labelBn: "সক্রিয়", labelEn: "Active", icon: "check-circle" },
+    paused: { color: "#B25E09", labelBn: "বিরতি", labelEn: "Paused", icon: "pause-circle" },
+    cancelled: { color: "#7A8CA3", labelBn: "বাতিল", labelEn: "Cancelled", icon: "x-circle" },
   };
   return configs[status] || configs.active;
 };
@@ -198,7 +198,7 @@ export default function SubscriptionsScreen() {
                     style={[styles.actionButton, { backgroundColor: theme.backgroundRoot }]}
                     onPress={() => handlePause(sub)}
                   >
-                    <Feather name="pause" size={16} color="#EA8A0C" />
+                    <Feather name="pause" size={16} color="#B25E09" />
                     <ThemedText style={[styles.actionText, { color: theme.text }]}>
                       {isBn ? "বিরতি" : "Pause"}
                     </ThemedText>
@@ -216,11 +216,11 @@ export default function SubscriptionsScreen() {
                 </Pressable>
               )}
               <Pressable
-                style={[styles.actionButton, { backgroundColor: "#DC262615" }]}
+                style={[styles.actionButton, { backgroundColor: "#DA2F2F15" }]}
                 onPress={() => handleCancel(sub)}
               >
-                <Feather name="x" size={16} color="#DC2626" />
-                <ThemedText style={[styles.actionText, { color: "#DC2626" }]}>
+                <Feather name="x" size={16} color="#DA2F2F" />
+                <ThemedText style={[styles.actionText, { color: "#DA2F2F" }]}>
                   {isBn ? "বাতিল" : "Cancel"}
                 </ThemedText>
               </Pressable>
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   list: {
     padding: Spacing.lg,
@@ -330,11 +330,11 @@ const styles = StyleSheet.create({
   },
   sellerName: {
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   frequency: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   statusBadge: {
     flexDirection: "row",
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   itemsList: {
     gap: Spacing.sm,
@@ -367,11 +367,11 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   itemQty: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   totalRow: {
     flexDirection: "row",
@@ -383,11 +383,11 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   totalAmount: {
     fontSize: 20,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   nextDelivery: {
     flexDirection: "row",
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   },
   nextDeliveryText: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   statsRow: {
     flexDirection: "row",
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   actionsRow: {
     flexDirection: "row",
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   emptyState: {
     alignItems: "center",
@@ -436,11 +436,11 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   emptyText: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     textAlign: "center",
     paddingHorizontal: Spacing.xl,
   },

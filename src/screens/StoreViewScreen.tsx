@@ -1,18 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { MayaRadius } from "@/constants/mayaTheme";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  FlatList,
-  ActivityIndicator,
-  Dimensions,
-  Animated,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, FlatList, ActivityIndicator, Dimensions, Animated, NativeScrollEvent, NativeSyntheticEvent } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -222,7 +211,7 @@ export default function StoreViewScreen() {
           ৳{item.price.toLocaleString()}/{item.unit}
         </ThemedText>
         <View style={styles.productMeta}>
-          <View style={[styles.stockBadge, { backgroundColor: item.quantity > 0 ? "#16A34A15" : "#DA2F2F15" }]}>
+          <View style={[styles.stockBadge, { backgroundColor: item.quantity > 0 ? "#00BB7715" : "#DA2F2F15" }]}>
             <ThemedText style={[styles.stockText, { color: item.quantity > 0 ? "#00BB77" : "#DA2F2F" }]}>
               {item.quantity > 0 ? "স্টকে আছে" : "স্টক আউট"}
             </ThemedText>
@@ -536,7 +525,7 @@ export default function StoreViewScreen() {
             <View style={[styles.aboutCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
               <ThemedText type="h4" style={styles.aboutTitle}>{tr("স্টোর পলিসি")}</ThemedText>
               <View style={styles.policyItem}>
-                <View style={[styles.policyIcon, { backgroundColor: "#16A34A20" }]}>
+                <View style={[styles.policyIcon, { backgroundColor: "#00BB7720" }]}>
                   <AppIcon name="refresh-cw" size={16} color="#00BB77" />
                 </View>
                 <View style={styles.policyInfo}>
@@ -547,7 +536,7 @@ export default function StoreViewScreen() {
                 </View>
               </View>
               <View style={styles.policyItem}>
-                <View style={[styles.policyIcon, { backgroundColor: "#2563EB20" }]}>
+                <View style={[styles.policyIcon, { backgroundColor: "#2E96EF20" }]}>
                   <AppIcon name="truck" size={16} color="#37B1FF" />
                 </View>
                 <View style={styles.policyInfo}>
@@ -669,7 +658,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: "#FFFFFF",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   headerSection: {
     paddingHorizontal: Spacing.lg,
@@ -712,7 +701,7 @@ const styles = StyleSheet.create({
   cartBadgeText: {
     color: "#FFFFFF",
     fontSize: 10,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   storeHeader: {
     flexDirection: "row",
@@ -728,7 +717,7 @@ const styles = StyleSheet.create({
   },
   logoText: {
     fontSize: 26,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   storeInfo: {
     flex: 1,
@@ -741,7 +730,7 @@ const styles = StyleSheet.create({
   },
   storeName: {
     fontSize: 20,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
   },
   verifiedBadge: {
@@ -788,7 +777,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   followButtonText: {
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     fontSize: 14,
   },
   messageButton: {
@@ -803,7 +792,7 @@ const styles = StyleSheet.create({
   },
   messageButtonText: {
     color: "#FFFFFF",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     fontSize: 14,
   },
   statsRow: {
@@ -820,7 +809,7 @@ const styles = StyleSheet.create({
   statValue: {
     color: "#FFFFFF",
     fontSize: 18,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   statLabel: {
     color: "rgba(255,255,255,0.7)",
@@ -856,7 +845,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   productsSection: {
     paddingHorizontal: Spacing.lg,
@@ -874,7 +863,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Spacing.sm,
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   categoriesContainer: {
     paddingBottom: Spacing.md,
@@ -921,13 +910,13 @@ const styles = StyleSheet.create({
   },
   productName: {
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
     lineHeight: 18,
     marginBottom: Spacing.xs,
   },
   productPrice: {
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   productMeta: {
     marginTop: Spacing.sm,
@@ -940,7 +929,7 @@ const styles = StyleSheet.create({
   },
   stockText: {
     fontSize: 10,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   addToCartButton: {
     flexDirection: "row",
@@ -954,7 +943,7 @@ const styles = StyleSheet.create({
   addToCartText: {
     color: "#FFFFFF",
     fontSize: 11,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   emptyProducts: {
     alignItems: "center",
@@ -1007,7 +996,7 @@ const styles = StyleSheet.create({
   },
   policyLabel: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   policyText: {
     fontSize: 13,
@@ -1028,7 +1017,7 @@ const styles = StyleSheet.create({
   },
   paymentText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   reviewsSection: {
     paddingHorizontal: Spacing.lg,
@@ -1045,7 +1034,7 @@ const styles = StyleSheet.create({
   },
   bigRating: {
     fontSize: 48,
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   starsContainer: {
     flexDirection: "row",

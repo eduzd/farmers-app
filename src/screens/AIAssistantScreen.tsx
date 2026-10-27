@@ -1,20 +1,12 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-  Platform,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, ActivityIndicator, Platform, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated from "react-native-reanimated";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { HeaderButton } from "@react-navigation/elements";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import * as Speech from "expo-speech";
 import * as FileSystem from "expo-file-system";
@@ -434,7 +426,7 @@ const styles = StyleSheet.create({
   messageText: {
     fontSize: 15,
     lineHeight: 22,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   speakButton: {
     marginTop: Spacing.sm,
@@ -482,7 +474,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   sendButton: {
     width: 44,

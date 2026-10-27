@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet, Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -45,19 +45,19 @@ export function StatCard({
             style={[
               styles.trendBadge,
               {
-                backgroundColor: trend.isPositive ? "#16A34A15" : "#DC262615",
+                backgroundColor: trend.isPositive ? "#00BB7715" : "#DA2F2F15",
               },
             ]}
           >
             <AppIcon
               name={trend.isPositive ? "trending-up" : "trending-down"}
               size={12}
-              color={trend.isPositive ? "#16A34A" : "#DC2626"}
+              color={trend.isPositive ? "#00BB77" : "#DA2F2F"}
             />
             <ThemedText
               style={[
                 styles.trendText,
-                { color: trend.isPositive ? "#16A34A" : "#DC2626" },
+                { color: trend.isPositive ? "#00BB77" : "#DA2F2F" },
               ]}
             >
               {trend.value}%

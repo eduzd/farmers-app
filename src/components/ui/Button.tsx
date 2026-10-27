@@ -1,6 +1,6 @@
 import React from "react";
 import { ActivityIndicator, Pressable, StyleSheet, View, ViewStyle, StyleProp } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -9,7 +9,7 @@ import { BorderRadius, FontFamily, Spacing } from "@/constants/theme";
 
 import { AppIcon } from "@/components/icons/AppIcon";
 import { useThemeScope } from "@/contexts/ThemeScope";
-import { MayaFontFamily, MayaRadius } from "@/constants/mayaTheme";
+import { MayaFontFamily, MayaPalette, MayaRadius } from "@/constants/mayaTheme";
 export type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 
@@ -47,14 +47,18 @@ export function Button({
   testID,
   accessibilityLabel,
 }: ButtonProps) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const maya = useThemeScope() === "maya";
   const isDisabled = disabled || loading;
 
   const palette: Record<ButtonVariant, { bg: string; fg: string; border?: string }> = maya
     ? {
         // Maya buttons: solid navy primary, white with a dark 1px outline as secondary.
-        primary: { bg: theme.primary, fg: theme.buttonText, border: theme.primary },
+        // Light: Maya's solid navy "Sign Up" button. Dark: navy would vanish on the navy
+        // background, so it switches to Maya sky blue.
+        primary: isDark
+          ? { bg: theme.primary, fg: theme.buttonText, border: theme.primary }
+          : { bg: MayaPalette.ink, fg: "#FFFFFF", border: MayaPalette.ink },
         secondary: { bg: theme.backgroundDefault, fg: theme.text, border: theme.text },
         outline: { bg: theme.backgroundDefault, fg: theme.text, border: theme.border },
         ghost: { bg: "transparent", fg: theme.link },

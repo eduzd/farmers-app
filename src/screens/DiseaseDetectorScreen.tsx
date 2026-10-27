@@ -1,16 +1,9 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  Pressable,
-  TextInput,
-  ActivityIndicator,
-  Alert,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator, Alert, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
@@ -297,7 +290,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   cardSubtitle: {
     fontSize: 13,
@@ -310,7 +303,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: Spacing.md,
   },
   imageContainer: {
@@ -347,7 +340,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     color: "#FFFFFF",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   descriptionInput: {
     minHeight: 80,
@@ -355,7 +348,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   analyzeButton: {
     flexDirection: "row",
@@ -373,7 +366,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#FFFFFF",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   resultCard: {
     borderRadius: BorderRadius["2xl"],
@@ -391,11 +384,11 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   resultText: {
     fontSize: 14,
     lineHeight: 22,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
 });

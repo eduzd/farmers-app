@@ -1,13 +1,8 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -35,12 +30,12 @@ interface FAQ {
 }
 
 const HELP_CATEGORIES: HelpCategory[] = [
-  { id: "1", title: "অ্যাকাউন্ট", icon: "user", color: "#2563EB", articlesCount: 12 },
-  { id: "2", title: "মার্কেটপ্লেস", icon: "shopping-bag", color: "#2FA36B", articlesCount: 18 },
-  { id: "3", title: "পেমেন্ট", icon: "credit-card", color: "#EA8A0C", articlesCount: 15 },
-  { id: "4", title: "ডেলিভারি", icon: "truck", color: "#7C3AED", articlesCount: 8 },
-  { id: "5", title: "কমিউনিটি", icon: "users", color: "#DC2626", articlesCount: 10 },
-  { id: "6", title: "প্রযুক্তি", icon: "settings", color: "#475569", articlesCount: 7 },
+  { id: "1", title: "অ্যাকাউন্ট", icon: "user", color: "#2E96EF", articlesCount: 12 },
+  { id: "2", title: "মার্কেটপ্লেস", icon: "shopping-bag", color: "#2E96EF", articlesCount: 18 },
+  { id: "3", title: "পেমেন্ট", icon: "credit-card", color: "#B25E09", articlesCount: 15 },
+  { id: "4", title: "ডেলিভারি", icon: "truck", color: "#3D38D0", articlesCount: 8 },
+  { id: "5", title: "কমিউনিটি", icon: "users", color: "#DA2F2F", articlesCount: 10 },
+  { id: "6", title: "প্রযুক্তি", icon: "settings", color: "#4A5568", articlesCount: 7 },
 ];
 
 const FAQS: FAQ[] = [
@@ -124,11 +119,11 @@ export default function HelpCenterScreen() {
               <ThemedText style={[styles.quickActionText, { color: theme.text }]}>{tr("চ্যাট সাপোর্ট")}</ThemedText>
             </Pressable>
             <Pressable style={[styles.quickAction, { backgroundColor: theme.card }]}>
-              <Feather name="phone" size={20} color="#2FA36B" />
+              <Feather name="phone" size={20} color="#2E96EF" />
               <ThemedText style={[styles.quickActionText, { color: theme.text }]}>{tr("কল করুন")}</ThemedText>
             </Pressable>
             <Pressable style={[styles.quickAction, { backgroundColor: theme.card }]}>
-              <Feather name="mail" size={20} color="#EA8A0C" />
+              <Feather name="mail" size={20} color="#B25E09" />
               <ThemedText style={[styles.quickActionText, { color: theme.text }]}>{tr("ইমেইল")}</ThemedText>
             </Pressable>
           </View>

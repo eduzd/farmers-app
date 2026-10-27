@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useTheme } from "@/hooks/useTheme";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import {

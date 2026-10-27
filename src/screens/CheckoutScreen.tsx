@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { MayaRadius } from "@/constants/mayaTheme";
-import { View, StyleSheet, TextInput, Pressable, Modal, ActivityIndicator, Alert, ScrollView, Image } from "react-native";
+import { View, StyleSheet, Pressable, Modal, ActivityIndicator, Alert, ScrollView, Image } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -30,7 +31,7 @@ type Method = "home" | "express" | "pickup";
 type Payment = "cod" | "rocket";
 /** Methods the admin turned on (admin > More > Payment settings). Server: GET /api/checkout/payment-methods. */
 type PayMethod = { id: Payment; accountNumber?: string; accountName?: string; accountType?: "personal" | "merchant" | "agent"; instructionsEn?: string; instructionsBn?: string };
-const ROCKET_COLOR = "#8C3494";
+const ROCKET_COLOR = "#3D38D0";
 const rocketNum = (v: string) => {
   const m = v.replace(/[\s\-()]/g, "").match(/^(?:\+?88)?(01[3-9]\d{8}\d?)$/);
   return m ? m[1] : null;

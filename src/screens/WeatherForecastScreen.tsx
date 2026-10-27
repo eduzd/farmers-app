@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 
@@ -189,19 +189,19 @@ export default function WeatherForecastScreen() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return { bg: '#FEE2E2', text: '#991B1B', icon: '#DC2626' };
+        return { bg: '#FEE2E2', text: '#DA2F2F', icon: '#DA2F2F' };
       case 'medium':
-        return { bg: '#FEF3C7', text: '#92400E', icon: '#EA8A0C' };
+        return { bg: '#FFF1DE', text: '#B25E09', icon: '#B25E09' };
       default:
-        return { bg: '#D1FAE5', text: '#065F46', icon: '#16A34A' };
+        return { bg: '#D8FFF2', text: '#00875A', icon: '#00BB77' };
     }
   };
 
   const getWeatherGradient = (): [string, string] => {
     const hour = new Date().getHours();
-    if (hour >= 6 && hour < 12) return ['#FCD34D', '#EA8A0C'];
-    if (hour >= 12 && hour < 17) return ['#38BDF8', '#0EA5E9'];
-    if (hour >= 17 && hour < 20) return ['#FB923C', '#DC2626'];
+    if (hour >= 6 && hour < 12) return ['#FCD34D', '#B25E09'];
+    if (hour >= 12 && hour < 17) return ['#38BDF8', '#39B1FE'];
+    if (hour >= 17 && hour < 20) return ['#FB923C', '#DA2F2F'];
     return ['#1E3A8A', '#312E81'];
   };
 
@@ -312,11 +312,11 @@ export default function WeatherForecastScreen() {
                 <AppIcon
                   name={hour.icon}
                   size={24}
-                  color={hour.icon === 'cloud-rain' ? '#2563EB' : '#EA8A0C'}
+                  color={hour.icon === 'cloud-rain' ? '#2E96EF' : '#B25E09'}
                 />
                 <ThemedText style={styles.hourlyTemp}>{hour.temp}°</ThemedText>
                 <View style={styles.rainChance}>
-                  <Feather name="droplet" size={10} color="#2563EB" />
+                  <Feather name="droplet" size={10} color="#2E96EF" />
                   <ThemedText style={styles.rainChanceText}>
                     {hour.rainChance}%
                   </ThemedText>
@@ -341,7 +341,7 @@ export default function WeatherForecastScreen() {
                 <View style={styles.dailyLeft}>
                   <ThemedText style={styles.dailyDay}>{day.dayBn}</ThemedText>
                   <View style={styles.rainChance}>
-                    <Feather name="droplet" size={12} color="#2563EB" />
+                    <Feather name="droplet" size={12} color="#2E96EF" />
                     <ThemedText style={[styles.rainChanceText, { color: theme.textSecondary }]}>
                       {day.rainChance}%
                     </ThemedText>
@@ -350,7 +350,7 @@ export default function WeatherForecastScreen() {
                 <AppIcon
                   name={day.icon}
                   size={24}
-                  color={day.icon === 'sun' ? '#EA8A0C' : day.icon === 'cloud-rain' ? '#2563EB' : '#9CA3AF'}
+                  color={day.icon === 'sun' ? '#B25E09' : day.icon === 'cloud-rain' ? '#2E96EF' : '#9CA3AF'}
                 />
                 <View style={styles.dailyRight}>
                   <ThemedText style={styles.dailyHigh}>{day.high}°</ThemedText>
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
   },
   rainChanceText: {
     fontSize: 10,
-    color: '#2563EB',
+    color: '#2E96EF',
   },
   dailyContainer: {
     borderRadius: BorderRadius.lg,

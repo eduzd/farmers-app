@@ -6,7 +6,7 @@ import {
   Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, {
   useSharedValue,
@@ -43,11 +43,11 @@ interface Level {
 }
 
 const LEVELS: Level[] = [
-  { level: 1, name: "নতুন কৃষক", minPoints: 0, maxPoints: 100, color: "#9E9E9E" },
-  { level: 2, name: "উদীয়মান কৃষক", minPoints: 100, maxPoints: 300, color: "#2FA36B" },
-  { level: 3, name: "অভিজ্ঞ কৃষক", minPoints: 300, maxPoints: 600, color: "#2563EB" },
-  { level: 4, name: "মাস্টার কৃষক", minPoints: 600, maxPoints: 1000, color: "#7C3AED" },
-  { level: 5, name: "কৃষি গুরু", minPoints: 1000, maxPoints: 2000, color: "#EA8A0C" },
+  { level: 1, name: "নতুন কৃষক", minPoints: 0, maxPoints: 100, color: "#7A8CA3" },
+  { level: 2, name: "উদীয়মান কৃষক", minPoints: 100, maxPoints: 300, color: "#2E96EF" },
+  { level: 3, name: "অভিজ্ঞ কৃষক", minPoints: 300, maxPoints: 600, color: "#2E96EF" },
+  { level: 4, name: "মাস্টার কৃষক", minPoints: 600, maxPoints: 1000, color: "#3D38D0" },
+  { level: 5, name: "কৃষি গুরু", minPoints: 1000, maxPoints: 2000, color: "#B25E09" },
   { level: 6, name: "কৃষি সম্রাট", minPoints: 2000, maxPoints: 999999, color: "#F5B700" },
 ];
 
@@ -57,7 +57,7 @@ const BADGES: Badge[] = [
     name: "প্রথম পোস্ট",
     description: "কমিউনিটিতে প্রথম পোস্ট করুন",
     icon: "edit-3",
-    color: "#2FA36B",
+    color: "#2E96EF",
     earned: true,
     earnedAt: "১০ দিন আগে",
     requirement: "১টি পোস্ট করুন",
@@ -68,7 +68,7 @@ const BADGES: Badge[] = [
     name: "সক্রিয় সদস্য",
     description: "৭ দিন পরপর অ্যাপ ব্যবহার করুন",
     icon: "calendar",
-    color: "#2563EB",
+    color: "#2E96EF",
     earned: true,
     earnedAt: "৫ দিন আগে",
     requirement: "৭ দিন পরপর লগইন",
@@ -79,7 +79,7 @@ const BADGES: Badge[] = [
     name: "জনপ্রিয় পোস্টার",
     description: "একটি পোস্টে ৫০+ লাইক পান",
     icon: "heart",
-    color: "#DB2777",
+    color: "#FF4BB7",
     earned: false,
     progress: 68,
     requirement: "৫০ লাইক পান",
@@ -90,7 +90,7 @@ const BADGES: Badge[] = [
     name: "হেল্পিং হ্যান্ড",
     description: "১০টি প্রশ্নের উত্তর দিন",
     icon: "help-circle",
-    color: "#EA8A0C",
+    color: "#B25E09",
     earned: true,
     earnedAt: "গতকাল",
     requirement: "১০টি উত্তর দিন",
@@ -101,7 +101,7 @@ const BADGES: Badge[] = [
     name: "বিশ্বস্ত ক্রেতা",
     description: "৫টি অর্ডার সম্পন্ন করুন",
     icon: "shopping-bag",
-    color: "#7C3AED",
+    color: "#3D38D0",
     earned: false,
     progress: 40,
     requirement: "৫টি অর্ডার করুন",
@@ -123,7 +123,7 @@ const BADGES: Badge[] = [
     name: "ফটোগ্রাফার",
     description: "১০টি ছবি সহ পোস্ট করুন",
     icon: "camera",
-    color: "#0D9488",
+    color: "#00BB77",
     earned: true,
     earnedAt: "১ সপ্তাহ আগে",
     requirement: "১০টি ছবি পোস্ট করুন",
@@ -134,7 +134,7 @@ const BADGES: Badge[] = [
     name: "নেটওয়ার্কার",
     description: "৫০ জন ফলো করুন",
     icon: "users",
-    color: "#3F51B5",
+    color: "#3D38D0",
     earned: false,
     progress: 56,
     requirement: "৫০ জন ফলো করুন",
@@ -145,7 +145,7 @@ const BADGES: Badge[] = [
     name: "AI এক্সপ্লোরার",
     description: "AI টুলস ১০ বার ব্যবহার করুন",
     icon: "cpu",
-    color: "#673AB7",
+    color: "#3D38D0",
     earned: true,
     earnedAt: "৩ দিন আগে",
     requirement: "১০ বার AI ব্যবহার",
@@ -156,7 +156,7 @@ const BADGES: Badge[] = [
     name: "সুপার ফার্মার",
     description: "সব ব্যাজ অর্জন করুন",
     icon: "award",
-    color: "#FF5722",
+    color: "#B25E09",
     earned: false,
     progress: 50,
     requirement: "সব ব্যাজ পান",
@@ -314,7 +314,7 @@ export default function BadgesScreen() {
           </ThemedText>
         </View>
         <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-          <ThemedText style={[styles.statNumber, { color: "#EA8A0C" }]}>
+          <ThemedText style={[styles.statNumber, { color: "#B25E09" }]}>
             {inProgressBadges.length}
           </ThemedText>
           <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>
@@ -322,7 +322,7 @@ export default function BadgesScreen() {
           </ThemedText>
         </View>
         <View style={[styles.statCard, { backgroundColor: theme.card }]}>
-          <ThemedText style={[styles.statNumber, { color: "#7C3AED" }]}>
+          <ThemedText style={[styles.statNumber, { color: "#3D38D0" }]}>
             {BADGES.length}
           </ThemedText>
           <ThemedText style={[styles.statLabel, { color: theme.textSecondary }]}>

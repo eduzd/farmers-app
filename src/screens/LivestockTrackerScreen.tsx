@@ -1,17 +1,9 @@
 import React, { useState, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Modal,
-  Alert,
-  Dimensions,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Modal, Alert, Dimensions } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp, SlideInRight } from "react-native-reanimated";
@@ -57,19 +49,19 @@ const ANIMAL_TYPES = [
   { id: "cow", name: "Cow", nameBn: "গরু", icon: "heart", color: "#795548" },
   { id: "goat", name: "Goat", nameBn: "ছাগল", icon: "heart", color: "#8D6E63" },
   { id: "sheep", name: "Sheep", nameBn: "ভেড়া", icon: "heart", color: "#A1887F" },
-  { id: "chicken", name: "Chicken", nameBn: "মুরগি", icon: "heart", color: "#EA8A0C" },
-  { id: "duck", name: "Duck", nameBn: "হাঁস", icon: "heart", color: "#2563EB" },
-  { id: "fish", name: "Fish", nameBn: "মাছ", icon: "heart", color: "#0D9488" },
-  { id: "buffalo", name: "Buffalo", nameBn: "মহিষ", icon: "heart", color: "#475569" },
+  { id: "chicken", name: "Chicken", nameBn: "মুরগি", icon: "heart", color: "#B25E09" },
+  { id: "duck", name: "Duck", nameBn: "হাঁস", icon: "heart", color: "#2E96EF" },
+  { id: "fish", name: "Fish", nameBn: "মাছ", icon: "heart", color: "#00BB77" },
+  { id: "buffalo", name: "Buffalo", nameBn: "মহিষ", icon: "heart", color: "#4A5568" },
 ];
 
 const INITIAL_ANIMALS: Animal[] = [];
 
 const STATUS_CONFIG = {
-  healthy: { label: "সুস্থ", color: "#2FA36B" },
-  sick: { label: "অসুস্থ", color: "#DC2626" },
-  pregnant: { label: "গর্ভবতী", color: "#7C3AED" },
-  sold: { label: "বিক্রি", color: "#475569" },
+  healthy: { label: "সুস্থ", color: "#2E96EF" },
+  sick: { label: "অসুস্থ", color: "#DA2F2F" },
+  pregnant: { label: "গর্ভবতী", color: "#3D38D0" },
+  sold: { label: "বিক্রি", color: "#4A5568" },
 };
 
 export default function LivestockTrackerScreen() {
@@ -217,10 +209,10 @@ export default function LivestockTrackerScreen() {
 
   const renderHealthRecord = (record: HealthRecord, index: number) => {
     const typeConfig = {
-      vaccination: { icon: "shield" as const, color: "#2FA36B", label: "টিকা" },
-      treatment: { icon: "activity" as const, color: "#DC2626", label: "চিকিৎসা" },
-      checkup: { icon: "eye" as const, color: "#2563EB", label: "পরীক্ষা" },
-      weight: { icon: "trending-up" as const, color: "#EA8A0C", label: "ওজন" },
+      vaccination: { icon: "shield" as const, color: "#2E96EF", label: "টিকা" },
+      treatment: { icon: "activity" as const, color: "#DA2F2F", label: "চিকিৎসা" },
+      checkup: { icon: "eye" as const, color: "#2E96EF", label: "পরীক্ষা" },
+      weight: { icon: "trending-up" as const, color: "#B25E09", label: "ওজন" },
     }[record.type];
 
     return (
@@ -309,10 +301,10 @@ export default function LivestockTrackerScreen() {
         {sickAnimals > 0 && (
           <Animated.View entering={FadeInUp.delay(100)}>
             <View style={[styles.alertCard, { backgroundColor: "#FFEBEE" }]}>
-              <Feather name="alert-circle" size={20} color="#DC2626" />
+              <Feather name="alert-circle" size={20} color="#DA2F2F" />
               <View style={styles.alertContent}>
-                <ThemedText style={[styles.alertTitle, { color: "#C62828" }]}>স্বাস্থ্য সতর্কতা</ThemedText>
-                <ThemedText style={[styles.alertText, { color: "#C62828" }]}>
+                <ThemedText style={[styles.alertTitle, { color: "#DA2F2F" }]}>স্বাস্থ্য সতর্কতা</ThemedText>
+                <ThemedText style={[styles.alertText, { color: "#DA2F2F" }]}>
                   {sickAnimals} টি পশু অসুস্থ
                 </ThemedText>
               </View>

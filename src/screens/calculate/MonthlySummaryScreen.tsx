@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { ResultCard, ResultRow, MoneyDisplay } from '@/offline/components/calculate/ResultCard';
 import { useTheme } from '@/hooks/useTheme';
 import { ThemedText } from '@/components/ThemedText';
@@ -165,18 +165,18 @@ export function MonthlySummaryScreen() {
         </ResultCard>
 
         <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { backgroundColor: '#16A34A20' }]}>
-            <Feather name="trending-up" size={24} color="#16A34A" />
-            <ThemedText style={[styles.statValue, { color: '#16A34A' }]}>
+          <View style={[styles.statCard, { backgroundColor: '#00BB7720' }]}>
+            <Feather name="trending-up" size={24} color="#00BB77" />
+            <ThemedText style={[styles.statValue, { color: '#00BB77' }]}>
               {fmtCurrency(summary.totalSales)}
             </ThemedText>
             <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>
               {tr("মোট বিক্রি")}
             </ThemedText>
           </View>
-          <View style={[styles.statCard, { backgroundColor: '#DC262620' }]}>
-            <Feather name="trending-down" size={24} color="#DC2626" />
-            <ThemedText style={[styles.statValue, { color: '#DC2626' }]}>
+          <View style={[styles.statCard, { backgroundColor: '#DA2F2F20' }]}>
+            <Feather name="trending-down" size={24} color="#DA2F2F" />
+            <ThemedText style={[styles.statValue, { color: '#DA2F2F' }]}>
               {fmtCurrency(summary.totalDue)}
             </ThemedText>
             <ThemedText style={[styles.statLabel, { color: colors.textSecondary }]}>

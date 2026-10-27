@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
   orderId: {
     fontSize: 18,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   orderDate: {
     fontSize: 13,
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
   trackingNumber: {
     fontSize: 12,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   cancelledBanner: {
     flexDirection: "row",
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 15,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   itemQuantity: {
     fontSize: 13,
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   itemPrice: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   totalRow: {
     flexDirection: "row",
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 20,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
   },
   addressInfo: {
     flexDirection: "row",
@@ -644,7 +644,7 @@ const styles = StyleSheet.create({
   addressName: {
     fontSize: 15,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: 4,
   },
   addressLine: {
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   paymentText: {
     fontSize: 15,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   cancelButton: {
     flexDirection: "row",
@@ -675,6 +675,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#DA2F2F",
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

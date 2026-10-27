@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet, Modal, Pressable } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/ThemedText";
 import { AppIcon } from "@/components/icons/AppIcon";

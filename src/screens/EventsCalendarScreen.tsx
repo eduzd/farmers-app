@@ -8,7 +8,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -115,10 +115,10 @@ export default function EventsCalendarScreen() {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case "মেলা": return "#2FA36B";
-      case "প্রশিক্ষণ": return "#2563EB";
-      case "সেমিনার": return "#7C3AED";
-      case "ওয়ার্কশপ": return "#EA8A0C";
+      case "মেলা": return "#2E96EF";
+      case "প্রশিক্ষণ": return "#2E96EF";
+      case "সেমিনার": return "#3D38D0";
+      case "ওয়ার্কশপ": return "#B25E09";
       default: return theme.primary;
     }
   };
@@ -179,7 +179,7 @@ export default function EventsCalendarScreen() {
               </ThemedText>
             </View>
             {item.isFree ? (
-              <View style={[styles.freeBadge, { backgroundColor: "#2FA36B" }]}>
+              <View style={[styles.freeBadge, { backgroundColor: "#2E96EF" }]}>
                 <ThemedText style={styles.freeText}>{t("events.free")}</ThemedText>
               </View>
             ) : null}
@@ -222,7 +222,7 @@ export default function EventsCalendarScreen() {
           <View style={styles.actionRow}>
             <View style={styles.spotsContainer}>
               {item.spotsLeft < 50 ? (
-                <ThemedText style={[styles.spotsText, { color: "#EA8A0C" }]}>
+                <ThemedText style={[styles.spotsText, { color: "#B25E09" }]}>
                   {t("events.spotsLeft").replace("{n}", String(item.spotsLeft))}
                 </ThemedText>
               ) : null}
@@ -230,7 +230,7 @@ export default function EventsCalendarScreen() {
             <Pressable
               style={[
                 styles.registerButton,
-                { backgroundColor: item.registered ? "#2FA36B" : theme.primary },
+                { backgroundColor: item.registered ? "#2E96EF" : theme.primary },
               ]}
               onPress={() => handleRegister(item)}
             >

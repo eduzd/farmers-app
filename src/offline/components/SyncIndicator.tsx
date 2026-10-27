@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { View, StyleSheet, Pressable } from 'react-native';
+import { Text } from '@/components/MayaText';
+import { Feather } from '@/components/icons/Feather';
 import { useSyncContext } from '@/offline/providers/SyncProvider';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, Typography, BorderRadius } from '@/constants/theme';
@@ -43,7 +44,7 @@ export function SyncIndicator() {
       case 'error':
         return theme.error;
       case 'offline':
-        return theme.warning || '#EA8A0C';
+        return theme.warning || '#B25E09';
       default:
         return theme.textSecondary;
     }
@@ -109,7 +110,7 @@ export function CompactSyncIndicator() {
   }
 
   const getColor = () => {
-    if (!isOnline) return theme.warning || '#EA8A0C';
+    if (!isOnline) return theme.warning || '#B25E09';
     switch (syncState) {
       case 'syncing':
         return theme.primary;

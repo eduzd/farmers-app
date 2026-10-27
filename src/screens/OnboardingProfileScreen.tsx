@@ -1,19 +1,12 @@
 import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-  ScrollView,
-  Alert,
-  Platform,
-} from "react-native";
+import { View, StyleSheet, Pressable, ActivityIndicator, ScrollView, Alert, Platform } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { PROFILE_BADGES } from "@/constants/profileBadges";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -403,7 +396,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   scrollView: {
     flex: 1,
@@ -418,14 +411,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     color: "#FFFFFF",
     marginBottom: Spacing.xs,
   },
   subtitle: {
     fontSize: 15,
     color: "rgba(255,255,255,0.8)",
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   card: {
     borderRadius: BorderRadius.lg,
@@ -471,11 +464,11 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     fontSize: 14,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   sectionLabel: {
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: Spacing.md,
     fontSize: 14,
   },
@@ -498,14 +491,14 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
     marginBottom: Spacing.sm,
   },
   input: {
     height: 48,
     paddingHorizontal: Spacing.lg,
     fontSize: 16,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     borderWidth: 1,
     borderRadius: BorderRadius.md,
     textAlignVertical: "center",
@@ -537,7 +530,7 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 13,
     fontWeight: "500",
-    fontFamily: "PlusJakartaSans_500Medium",
+    fontFamily: "DMSans_500Medium",
   },
   completeButton: {
     flexDirection: "row",
@@ -558,6 +551,6 @@ const styles = StyleSheet.create({
   completeButtonText: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

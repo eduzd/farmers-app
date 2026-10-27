@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { View, ScrollView, Pressable, StyleSheet, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useIsFocused } from "@react-navigation/native";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
@@ -140,7 +140,7 @@ export function AdCarousel({ cards, testID = "ad-carousel", loading = false }: {
                 {c.cta ? (
                   <View style={styles.cta}>
                     <ThemedText style={styles.ctaText} numberOfLines={1}>{c.cta}</ThemedText>
-                    {c.onPress ? <Feather name="arrow-right" size={14} color="#0F1A14" /> : null}
+                    {c.onPress ? <Feather name="arrow-right" size={14} color="#202936" /> : null}
                   </View>
                 ) : null}
               </LinearGradient>
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     position: "absolute", right: Spacing.lg, top: Spacing.lg, maxWidth: "55%", flexDirection: "row", alignItems: "center", gap: 4,
     backgroundColor: "#FFFFFF", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
   },
-  ctaText: { color: "#0F1A14", fontSize: 12, lineHeight: 16, fontWeight: "700" },
+  ctaText: { color: "#202936", fontSize: 12, lineHeight: 16, fontWeight: "700" },
   dots: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: Spacing.sm },
   dot: { height: 6, borderRadius: 3 },
   image: { position: "absolute", right: Spacing.lg, bottom: Spacing.lg, width: 84, height: 84, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.15)" },

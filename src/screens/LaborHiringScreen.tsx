@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { View, StyleSheet, FlatList, Pressable, RefreshControl, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
@@ -83,11 +83,11 @@ export default function LaborHiringScreen() {
             </View>
           </View>
           {item.available ? (
-            <View style={[styles.availableBadge, { backgroundColor: "#2FA36B" }]}>
+            <View style={[styles.availableBadge, { backgroundColor: "#2E96EF" }]}>
               <ThemedText style={styles.availableText}>উপলব্ধ</ThemedText>
             </View>
           ) : (
-            <View style={[styles.availableBadge, { backgroundColor: "#DC2626" }]}>
+            <View style={[styles.availableBadge, { backgroundColor: "#DA2F2F" }]}>
               <ThemedText style={styles.availableText}>ব্যস্ত</ThemedText>
             </View>
           )}

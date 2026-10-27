@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeInUp } from "react-native-reanimated";
@@ -83,9 +83,9 @@ export default function SuccessStoriesScreen() {
           </ThemedText>
 
           <View style={styles.achievementRow}>
-            <View style={[styles.achievementCard, { backgroundColor: "#2FA36B" + "15" }]}>
-              <Feather name="award" size={14} color="#2FA36B" />
-              <ThemedText style={[styles.achievementText, { color: "#2FA36B" }]}>
+            <View style={[styles.achievementCard, { backgroundColor: "#2E96EF" + "15" }]}>
+              <Feather name="award" size={14} color="#2E96EF" />
+              <ThemedText style={[styles.achievementText, { color: "#2E96EF" }]}>
                 {item.achievement}
               </ThemedText>
             </View>
@@ -106,7 +106,7 @@ export default function SuccessStoriesScreen() {
               </ThemedText>
             </View>
             <View style={styles.statItem}>
-              <Feather name="heart" size={14} color="#DC2626" />
+              <Feather name="heart" size={14} color="#DA2F2F" />
               <ThemedText style={[styles.statText, { color: theme.textSecondary }]}>
                 {item.likes}
               </ThemedText>

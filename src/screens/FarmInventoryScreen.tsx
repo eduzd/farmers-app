@@ -1,17 +1,9 @@
 import React, { useState, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  TextInput,
-  Modal,
-  FlatList,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Modal, FlatList, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp, SlideInRight } from "react-native-reanimated";
@@ -54,7 +46,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     name: "Seeds",
     nameBn: "বীজ",
     icon: "sun",
-    color: "#2FA36B",
+    color: "#2E96EF",
     items: [],
   },
   {
@@ -70,7 +62,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     name: "Pesticides",
     nameBn: "কীটনাশক",
     icon: "shield",
-    color: "#DC2626",
+    color: "#DA2F2F",
     items: [],
   },
   {
@@ -78,7 +70,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     name: "Equipment",
     nameBn: "যন্ত্রপাতি",
     icon: "tool",
-    color: "#475569",
+    color: "#4A5568",
     items: [],
   },
   {
@@ -86,7 +78,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     name: "Harvest",
     nameBn: "ফসল",
     icon: "box",
-    color: "#EA8A0C",
+    color: "#B25E09",
     items: [],
   },
   {
@@ -94,7 +86,7 @@ const INITIAL_CATEGORIES: InventoryCategory[] = [
     name: "Animal Feed",
     nameBn: "পশু খাদ্য",
     icon: "heart",
-    color: "#DB2777",
+    color: "#FF4BB7",
     items: [],
   },
 ];
@@ -263,9 +255,9 @@ export default function FarmInventoryScreen() {
             <View style={styles.itemTitleRow}>
               <ThemedText style={styles.itemName}>{item.nameBn}</ThemedText>
               {isLowStock && (
-                <View style={[styles.lowStockBadge, { backgroundColor: "#DC2626" + "20" }]}>
-                  <Feather name="alert-triangle" size={12} color="#DC2626" />
-                  <ThemedText style={[styles.lowStockText, { color: "#DC2626" }]}>কম স্টক</ThemedText>
+                <View style={[styles.lowStockBadge, { backgroundColor: "#DA2F2F" + "20" }]}>
+                  <Feather name="alert-triangle" size={12} color="#DA2F2F" />
+                  <ThemedText style={[styles.lowStockText, { color: "#DA2F2F" }]}>কম স্টক</ThemedText>
                 </View>
               )}
             </View>
@@ -326,10 +318,10 @@ export default function FarmInventoryScreen() {
                 <Feather name="edit-2" size={14} color={theme.primary} />
               </Pressable>
               <Pressable
-                style={[styles.actionBtn, { backgroundColor: "#DC2626" + "20" }]}
+                style={[styles.actionBtn, { backgroundColor: "#DA2F2F" + "20" }]}
                 onPress={() => handleDeleteItem(item.id)}
               >
-                <Feather name="trash-2" size={14} color="#DC2626" />
+                <Feather name="trash-2" size={14} color="#DA2F2F" />
               </Pressable>
             </View>
           </View>
@@ -350,7 +342,7 @@ export default function FarmInventoryScreen() {
       >
         <Animated.View entering={FadeIn.duration(400)}>
           <LinearGradient
-            colors={["#2FA36B", "#2E7D32"]}
+            colors={["#2E96EF", "#2E96EF"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.summaryCard}
@@ -401,10 +393,10 @@ export default function FarmInventoryScreen() {
         {lowStockItems.length > 0 && (
           <Animated.View entering={FadeInUp.delay(100)}>
             <View style={[styles.alertCard, { backgroundColor: "#FFF3E0" }]}>
-              <Feather name="alert-circle" size={20} color="#EA8A0C" />
+              <Feather name="alert-circle" size={20} color="#B25E09" />
               <View style={styles.alertContent}>
-                <ThemedText style={[styles.alertTitle, { color: "#E65100" }]}>স্টক সতর্কতা</ThemedText>
-                <ThemedText style={[styles.alertText, { color: "#E65100" }]}>
+                <ThemedText style={[styles.alertTitle, { color: "#B25E09" }]}>স্টক সতর্কতা</ThemedText>
+                <ThemedText style={[styles.alertText, { color: "#B25E09" }]}>
                   {lowStockItems.length} টি আইটেম কম স্টকে আছে
                 </ThemedText>
               </View>

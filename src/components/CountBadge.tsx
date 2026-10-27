@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import { View, StyleSheet, StyleProp, ViewStyle } from "react-native";
+import { Text } from "@/components/MayaText";
 import { useTheme } from "@/hooks/useTheme";
 import { badgeText } from "@/lib/liveStatus";
 
@@ -31,7 +32,7 @@ const styles = StyleSheet.create({
     height: 19,
     borderRadius: 10,
     borderWidth: 1.5,
-    backgroundColor: "#E53935",
+    backgroundColor: "#DA2F2F",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 2,

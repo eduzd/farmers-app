@@ -1,12 +1,6 @@
 import React, { useEffect, useRef, useState, ReactNode } from "react";
-import {
-  FlatList,
-  Keyboard,
-  StyleSheet,
-  TextInput,
-  View,
-  ListRenderItem,
-} from "react-native";
+import { FlatList, Keyboard, StyleSheet, View, ListRenderItem } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import Animated from "react-native-reanimated";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";

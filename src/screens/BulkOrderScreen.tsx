@@ -1,17 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { MayaRadius } from "@/constants/mayaTheme";
 import { AppIcon } from "@/components/icons/AppIcon";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  Modal,
-  TextInput,
-  ScrollView,
-  Alert,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, RefreshControl, Modal, ScrollView, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";

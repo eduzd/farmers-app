@@ -1,9 +1,10 @@
 // New voice room: name, description, category, the people on stage, schedule, seats, privacy.
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator, Modal, Platform, KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Modal, Platform, KeyboardAvoidingView } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { ThemedText } from "@/components/ThemedText";

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Modal, View, Pressable, StyleSheet, FlatList, useWindowDimensions, StyleProp, ViewStyle } from "react-native";
 import { Image } from "expo-image";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";

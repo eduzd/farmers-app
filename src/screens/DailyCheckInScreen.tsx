@@ -6,7 +6,7 @@ import {
   Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeIn, FadeInUp, ZoomIn } from "react-native-reanimated";
@@ -75,7 +75,7 @@ export default function DailyCheckInScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(50)}>
-          <LinearGradient colors={[theme.primary, "#7C3AED"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.streakCard}>
+          <LinearGradient colors={[theme.primary, "#3D38D0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.streakCard}>
             <View style={styles.streakInfo}>
               <View style={styles.streakMain}>
                 <Feather name="zap" size={32} color="#F5B700" />
@@ -110,7 +110,7 @@ export default function DailyCheckInScreen() {
 
         <Animated.View entering={FadeInUp.delay(100)} style={styles.checkInSection}>
           <Pressable
-            style={[styles.checkInButton, checkedIn && styles.checkInButtonDone, { backgroundColor: checkedIn ? "#2FA36B" : theme.primary }]}
+            style={[styles.checkInButton, checkedIn && styles.checkInButtonDone, { backgroundColor: checkedIn ? "#2E96EF" : theme.primary }]}
             onPress={handleCheckIn}
             disabled={checkedIn}
           >
@@ -142,19 +142,19 @@ export default function DailyCheckInScreen() {
           <View style={[styles.tasksCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             {tasks.map((task, index) => (
               <View key={task.id} style={[styles.taskRow, index < tasks.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.cardBorder }]}>
-                <View style={[styles.taskIcon, { backgroundColor: task.completed ? "#2FA36B15" : theme.primary + "15" }]}>
-                  <AppIcon name={task.icon} size={16} color={task.completed ? "#2FA36B" : theme.primary} />
+                <View style={[styles.taskIcon, { backgroundColor: task.completed ? "#2E96EF15" : theme.primary + "15" }]}>
+                  <AppIcon name={task.icon} size={16} color={task.completed ? "#2E96EF" : theme.primary} />
                 </View>
                 <ThemedText style={[styles.taskTitle, { color: theme.text, textDecorationLine: task.completed ? "line-through" : "none" }]}>
                   {task.title}
                 </ThemedText>
-                <View style={[styles.taskPoints, { backgroundColor: task.completed ? "#2FA36B15" : "#F5B70015" }]}>
-                  <ThemedText style={[styles.taskPointsText, { color: task.completed ? "#2FA36B" : "#F5B700" }]}>
+                <View style={[styles.taskPoints, { backgroundColor: task.completed ? "#2E96EF15" : "#F5B70015" }]}>
+                  <ThemedText style={[styles.taskPointsText, { color: task.completed ? "#2E96EF" : "#F5B700" }]}>
                     +{task.points}
                   </ThemedText>
                 </View>
                 {task.completed ? (
-                  <Feather name="check-circle" size={20} color="#2FA36B" />
+                  <Feather name="check-circle" size={20} color="#2E96EF" />
                 ) : (
                   <Feather name="circle" size={20} color={theme.textSecondary} />
                 )}
@@ -168,15 +168,15 @@ export default function DailyCheckInScreen() {
           <View style={[styles.milestonesCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
             {STREAK_MILESTONES.map((milestone, index) => (
               <View key={index} style={[styles.milestoneRow, index < STREAK_MILESTONES.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.cardBorder }]}>
-                <View style={[styles.milestoneDays, { backgroundColor: milestone.achieved ? "#2FA36B15" : theme.primary + "15" }]}>
-                  <ThemedText style={[styles.milestoneDaysText, { color: milestone.achieved ? "#2FA36B" : theme.primary }]}>
+                <View style={[styles.milestoneDays, { backgroundColor: milestone.achieved ? "#2E96EF15" : theme.primary + "15" }]}>
+                  <ThemedText style={[styles.milestoneDaysText, { color: milestone.achieved ? "#2E96EF" : theme.primary }]}>
                     {milestone.days}
                   </ThemedText>
-                  <ThemedText style={[styles.milestoneDaysLabel, { color: milestone.achieved ? "#2FA36B" : theme.primary }]}>দিন</ThemedText>
+                  <ThemedText style={[styles.milestoneDaysLabel, { color: milestone.achieved ? "#2E96EF" : theme.primary }]}>দিন</ThemedText>
                 </View>
                 <View style={styles.milestoneInfo}>
                   <ThemedText style={[styles.milestoneReward, { color: theme.text }]}>{milestone.reward}</ThemedText>
-                  <ThemedText style={[styles.milestoneStatus, { color: milestone.achieved ? "#2FA36B" : theme.textSecondary }]}>
+                  <ThemedText style={[styles.milestoneStatus, { color: milestone.achieved ? "#2E96EF" : theme.textSecondary }]}>
                     {milestone.achieved ? "অর্জিত!" : `${milestone.days - CURRENT_STREAK} দিন বাকি`}
                   </ThemedText>
                 </View>
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   dayItem: { alignItems: "center" },
   dayName: { color: "rgba(255,255,255,0.7)", fontSize: 10, marginBottom: 4 },
   dayCircle: { width: 32, height: 32, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" },
-  dayCircleChecked: { backgroundColor: "#2FA36B" },
+  dayCircleChecked: { backgroundColor: "#2E96EF" },
   dayCircleToday: { borderWidth: 2, borderColor: "#F5B700" },
   dayDate: { color: "#fff", fontSize: 12, fontWeight: "600" },
   dayPoints: { color: "rgba(255,255,255,0.7)", fontSize: 9, marginTop: 4 },

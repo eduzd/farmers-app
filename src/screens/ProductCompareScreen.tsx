@@ -7,7 +7,7 @@ import {
   Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
@@ -211,14 +211,14 @@ export default function ProductCompareScreen() {
                           styles.organicBadge,
                           {
                             backgroundColor:
-                              value === "হ্যাঁ" ? theme.primary + "15" : "#DC262615",
+                              value === "হ্যাঁ" ? theme.primary + "15" : "#DA2F2F15",
                           },
                         ]}
                       >
                         <AppIcon
                           name={value === "হ্যাঁ" ? "check" : "x"}
                           size={14}
-                          color={value === "হ্যাঁ" ? theme.primary : "#DC2626"}
+                          color={value === "হ্যাঁ" ? theme.primary : "#DA2F2F"}
                         />
                       </View>
                     ) : (

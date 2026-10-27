@@ -11,7 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -64,7 +64,7 @@ const TONES: Record<ConfirmTone, { colors: [string, string]; solid: string; icon
   primary: { colors: [Palette.leafLight, Palette.leafDark], solid: Palette.leaf, icon: "check-circle" },
   send: { colors: [Palette.leafLight, Palette.leafDark], solid: Palette.leaf, icon: "send" },
   warning: { colors: ["#F6A93B", Palette.sun], solid: Palette.sun, icon: "alert-circle" },
-  danger: { colors: ["#F05252", "#B91C1C"], solid: Palette.clay, icon: "alert-triangle" },
+  danger: { colors: ["#F05252", "#DA2F2F"], solid: Palette.clay, icon: "alert-triangle" },
 };
 
 const DANGER_WORDS = /(delete|remove|ban|reject|suspend|turn off|cancel this|end|kick|block|disable|মুছ|সরান|নিষিদ্ধ|ব্যান|বাতিল|স্থগিত|বন্ধ|শেষ)/i;
@@ -169,7 +169,7 @@ export function ConfirmSheet({
       <View style={styles.root} testID={testID}>
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: fade }]}>
           <Pressable
-            style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(0,0,0,0.62)" : "rgba(9,20,14,0.48)" }]}
+            style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(0,0,0,0.62)" : "rgba(20, 27, 38,0.48)" }]}
             onPress={requestClose}
             accessibilityRole="button"
             accessibilityLabel={buttons.find((b) => b.style === "cancel")?.text || "Close"}
@@ -185,7 +185,7 @@ export function ConfirmSheet({
               backgroundColor: theme.backgroundDefault,
               paddingBottom: Math.max(insets.bottom, 14) + 12 + 24,
               transform: [{ translateY }],
-              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(15,26,20,0.06)",
+              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(32, 41, 54,0.06)",
             },
           ]}
         >

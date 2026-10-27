@@ -1,27 +1,16 @@
 import { useMarketCategories, categoryLabel } from "@/lib/marketCategories";
 import { MayaRadius } from "@/constants/mayaTheme";
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Pressable,
-  Dimensions,
-  Animated,
-  FlatList,
-  Platform,
-  Share,
-  Linking,
-  Alert,
-  TextInput,
-} from "react-native";
+import { View, StyleSheet, ScrollView, Pressable, Dimensions, Animated, FlatList, Platform, Share, Linking, Alert } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Reanimated from "react-native-reanimated";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Image } from "expo-image";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -329,7 +318,7 @@ export default function ProductDetailScreen() {
     { icon: "check-circle", label: "তাজা পণ্য", color: "#00BB77" },
     { icon: "sun", label: "অর্গানিক", color: "#00BB77" },
     { icon: "shield", label: "গুণমান নিশ্চিত", color: "#37B1FF" },
-    { icon: "truck", label: "দ্রুত ডেলিভারি", color: "#EA8A0C" },
+    { icon: "truck", label: "দ্রুত ডেলিভারি", color: "#B25E09" },
   ];
 
   const specs = [
@@ -481,7 +470,7 @@ export default function ProductDetailScreen() {
                   <ThemedText style={[styles.currency, { color: theme.primary }]}>
                     {product.currency}
                   </ThemedText>
-                  <ThemedText style={[styles.price, { color: theme.primary }]}>
+                  <ThemedText style={[styles.price, { color: theme.accent }]}>
                     {product.price}
                   </ThemedText>
                   <ThemedText testID="product-per-unit" style={[styles.unit, { color: theme.textSecondary }]}>
@@ -806,7 +795,7 @@ export default function ProductDetailScreen() {
                 >
                   <Image source={{ uri: p.image }} style={styles.relatedImage} contentFit="cover" />
                   <ThemedText style={[styles.relatedName, { color: theme.text }]} numberOfLines={1}>{p.name}</ThemedText>
-                  <ThemedText style={[styles.relatedPrice, { color: theme.primary }]} numberOfLines={1}>
+                  <ThemedText style={[styles.relatedPrice, { color: theme.accent }]} numberOfLines={1}>
                     {p.currency || "৳"}{p.price}{p.unit ? `/${p.unit}` : ""}
                   </ThemedText>
                 </Pressable>

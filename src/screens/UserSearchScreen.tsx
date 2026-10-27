@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, StyleSheet, FlatList, Pressable, TextInput, ActivityIndicator } from "react-native";
+import { View, StyleSheet, FlatList, Pressable, ActivityIndicator } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
 
@@ -124,7 +125,7 @@ export default function UserSearchScreen() {
         <View style={styles.userInfo}>
           <View style={styles.userNameRow}>
             <ThemedText style={[styles.userName, { color: theme.text }]} numberOfLines={1}>{item.name}</ThemedText>
-            {item.verified ? <Feather name="check-circle" size={14} color="#2FA36B" /> : null}
+            {item.verified ? <Feather name="check-circle" size={14} color="#2E96EF" /> : null}
           </View>
           <ThemedText style={[styles.userMeta, { color: theme.textSecondary }]}>{metaOf(item)}</ThemedText>
         </View>

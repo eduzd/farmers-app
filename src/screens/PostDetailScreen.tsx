@@ -1,14 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  TextInput,
-  Pressable,
-  Platform,
-  Alert,
-  Share,
-} from "react-native";
+import { View, StyleSheet, FlatList, Pressable, Platform, Alert, Share } from "react-native";
+import { TextInput } from "@/components/MayaText";
 import { KeyboardAvoidingScreen } from "@/components/KeyboardAvoidingScreen";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { useSharedValue, withTiming } from "react-native-reanimated";
@@ -17,7 +9,7 @@ import { MentionText, MentionPerson } from "@/components/MentionText";
 import { useKeyboardAwareBottomPadding } from "@/hooks/useKeyboardAwareBottomPadding";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
@@ -651,15 +643,15 @@ export default function PostDetailScreen() {
           <Pressable style={styles.iconActionButton} onPress={handleLike}>
             <View style={[
               styles.actionIconCircle,
-              isLiked && { backgroundColor: "#DC262620" }
+              isLiked && { backgroundColor: "#DA2F2F20" }
             ]}>
               <Feather
                 name="heart"
                 size={18}
-                color={isLiked ? "#DC2626" : theme.textSecondary}
+                color={isLiked ? "#DA2F2F" : theme.textSecondary}
               />
             </View>
-            <ThemedText style={[styles.iconActionCount, { color: isLiked ? "#DC2626" : theme.textSecondary }]}>
+            <ThemedText style={[styles.iconActionCount, { color: isLiked ? "#DA2F2F" : theme.textSecondary }]}>
               {likesCount}
             </ThemedText>
           </Pressable>
@@ -868,7 +860,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   authorInfo: {
     marginLeft: Spacing.md,
@@ -876,7 +868,7 @@ const styles = StyleSheet.create({
   authorName: {
     fontSize: 17,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   postTime: {
     fontSize: 14,
@@ -952,7 +944,7 @@ const styles = StyleSheet.create({
   commentAuthor: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: 4,
   },
   commentText: {
@@ -1007,7 +999,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   replyContentWrapper: {
     flex: 1,
@@ -1021,7 +1013,7 @@ const styles = StyleSheet.create({
   replyAuthor: {
     fontSize: 13,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     marginBottom: 2,
   },
   replyText: {
@@ -1079,7 +1071,7 @@ const styles = StyleSheet.create({
   commentInput: {
     flex: 1,
     fontSize: 15,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     paddingVertical: Spacing.sm,
     maxHeight: 80,
     textAlignVertical: "center",
@@ -1128,7 +1120,7 @@ const styles = StyleSheet.create({
   iconActionCount: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   actionIconCircle: {
     width: 44,
@@ -1161,7 +1153,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 10,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   likedByText: {
     fontSize: 13,

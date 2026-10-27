@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -32,11 +32,11 @@ export default function ApplicationDetailScreen() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "approved":
-        return "#16A34A";
+        return "#00BB77";
       case "rejected":
-        return "#DC2626";
+        return "#DA2F2F";
       default:
-        return "#EA8A0C";
+        return "#B25E09";
     }
   };
 
@@ -131,7 +131,7 @@ export default function ApplicationDetailScreen() {
             <AppIcon
               name={application.type === "welfare" ? "award" : "globe"}
               size={24}
-              color={application.type === "welfare" ? "#1D4ED8" : "#0D47A1"}
+              color={application.type === "welfare" ? "#3D38D0" : "#202936"}
             />
             <ThemedText style={[styles.cardTitle, { color: theme.text }]}>
               {application.type === "welfare"
@@ -156,7 +156,7 @@ export default function ApplicationDetailScreen() {
               <ThemedText style={[styles.infoLabel, { color: theme.textSecondary }]}>
                 {language === "bn" ? "সদস্য নম্বর" : "Member Number"}
               </ThemedText>
-              <ThemedText style={[styles.infoValue, { color: "#16A34A" }]}>
+              <ThemedText style={[styles.infoValue, { color: "#00BB77" }]}>
                 {application.memberNumber}
               </ThemedText>
             </View>
@@ -278,7 +278,7 @@ export default function ApplicationDetailScreen() {
               <ThemedText style={[styles.infoLabel, { color: theme.textSecondary }]}>
                 {language === "bn" ? "ট্রানজেকশন আইডি" : "Transaction ID"}
               </ThemedText>
-              <ThemedText style={[styles.infoValue, { color: "#16A34A", fontWeight: "600" }]}>
+              <ThemedText style={[styles.infoValue, { color: "#00BB77", fontWeight: "600" }]}>
                 {application.transactionId}
               </ThemedText>
             </View>
@@ -288,13 +288,13 @@ export default function ApplicationDetailScreen() {
             <ThemedText style={[styles.infoLabel, { color: theme.textSecondary }]}>
               {language === "bn" ? "পেমেন্ট যাচাই" : "Payment Verified"}
             </ThemedText>
-            <View style={[styles.verifyBadge, { backgroundColor: application.paymentVerified ? "#16A34A20" : "#EA8A0C20" }]}>
+            <View style={[styles.verifyBadge, { backgroundColor: application.paymentVerified ? "#00BB7720" : "#B25E0920" }]}>
               <AppIcon
                 name={application.paymentVerified ? "check-circle" : "clock"}
                 size={14}
-                color={application.paymentVerified ? "#16A34A" : "#EA8A0C"}
+                color={application.paymentVerified ? "#00BB77" : "#B25E09"}
               />
-              <ThemedText style={[styles.verifyText, { color: application.paymentVerified ? "#16A34A" : "#EA8A0C" }]}>
+              <ThemedText style={[styles.verifyText, { color: application.paymentVerified ? "#00BB77" : "#B25E09" }]}>
                 {application.paymentVerified
                   ? (language === "bn" ? "যাচাই হয়েছে" : "Verified")
                   : (language === "bn" ? "যাচাই বাকি" : "Pending")}
@@ -304,8 +304,8 @@ export default function ApplicationDetailScreen() {
         </View>
 
         {application.status === "pending" ? (
-          <View style={[styles.noteCard, { backgroundColor: "#EA8A0C15", borderColor: "#EA8A0C30" }]}>
-            <Feather name="info" size={20} color="#EA8A0C" />
+          <View style={[styles.noteCard, { backgroundColor: "#B25E0915", borderColor: "#B25E0930" }]}>
+            <Feather name="info" size={20} color="#B25E09" />
             <ThemedText style={[styles.noteText, { color: theme.textSecondary }]}>
               {language === "bn"
                 ? "আপনার আবেদন অ্যাডমিন দ্বারা পর্যালোচনা করা হচ্ছে। অনুমোদনের পর আপনাকে জানানো হবে।"
@@ -368,13 +368,13 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: 20,
     fontWeight: "700",
-    fontFamily: "PlusJakartaSans_700Bold",
+    fontFamily: "DMSans_700Bold",
     marginBottom: Spacing.xs,
   },
   statusDescription: {
     fontSize: 14,
     textAlign: "center",
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   infoCard: {
     borderRadius: BorderRadius.xl,
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
   divider: {
     height: 1,
@@ -405,12 +405,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
   },
   infoValue: {
     fontSize: 14,
     fontWeight: "600",
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
     textAlign: "right",
     flex: 1,
     marginLeft: Spacing.md,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   noteText: {
     flex: 1,
     fontSize: 13,
-    fontFamily: "PlusJakartaSans_400Regular",
+    fontFamily: "DMSans_400Regular",
     lineHeight: 20,
   },
   verifyBadge: {
@@ -439,6 +439,6 @@ const styles = StyleSheet.create({
   },
   verifyText: {
     fontSize: 12,
-    fontFamily: "PlusJakartaSans_600SemiBold",
+    fontFamily: "DMSans_600SemiBold",
   },
 });

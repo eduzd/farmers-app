@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { Text } from '@/components/MayaText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { Feather } from '@expo/vector-icons';
+import { Feather } from '@/components/icons/Feather';
 import { useTheme } from '@/hooks/useTheme';
 import { Spacing, BorderRadius, Typography } from '@/constants/theme';
 
@@ -11,9 +12,9 @@ const MONTHS = ['বৈশাখ', 'জ্যৈষ্ঠ', 'আষাঢ়', '
 const ENGLISH_MONTHS = ['এপ্রিল-মে', 'মে-জুন', 'জুন-জুলাই', 'জুলাই-আগস্ট', 'আগস্ট-সেপ্টে', 'সেপ্টে-অক্টো', 'অক্টো-নভে', 'নভে-ডিসে', 'ডিসে-জানু', 'জানু-ফেব্রু', 'ফেব্রু-মার্চ', 'মার্চ-এপ্রিল'];
 
 const SEASONS = [
-  { id: 'kharif1', name: 'খরিফ-১', months: [0, 1, 2, 3], color: '#16A34A' },
-  { id: 'kharif2', name: 'খরিফ-২', months: [4, 5, 6, 7], color: '#2563EB' },
-  { id: 'rabi', name: 'রবি', months: [8, 9, 10, 11], color: '#EA8A0C' },
+  { id: 'kharif1', name: 'খরিফ-১', months: [0, 1, 2, 3], color: '#00BB77' },
+  { id: 'kharif2', name: 'খরিফ-২', months: [4, 5, 6, 7], color: '#2E96EF' },
+  { id: 'rabi', name: 'রবি', months: [8, 9, 10, 11], color: '#B25E09' },
 ];
 
 const CROPS = [
@@ -23,7 +24,7 @@ const CROPS = [
     category: 'ধান',
     plantingMonths: [0, 1],
     harvestMonths: [3, 4],
-    color: '#16A34A',
+    color: '#00BB77',
     tips: 'বৈশাখ-জ্যৈষ্ঠ মাসে বপন, শ্রাবণ-ভাদ্র মাসে ফসল তোলা',
   },
   {
@@ -32,7 +33,7 @@ const CROPS = [
     category: 'ধান',
     plantingMonths: [2, 3],
     harvestMonths: [6, 7],
-    color: '#2563EB',
+    color: '#2E96EF',
     tips: 'আষাঢ়-শ্রাবণে চারা রোপণ, কার্তিক-অগ্রহায়ণে কাটা',
   },
   {
@@ -41,7 +42,7 @@ const CROPS = [
     category: 'ধান',
     plantingMonths: [8, 9],
     harvestMonths: [11, 0],
-    color: '#7C3AED',
+    color: '#3D38D0',
     tips: 'পৌষ-মাঘে রোপণ, চৈত্র-বৈশাখে ফসল তোলা',
   },
   {
@@ -50,7 +51,7 @@ const CROPS = [
     category: 'শস্য',
     plantingMonths: [7, 8],
     harvestMonths: [10, 11],
-    color: '#EA8A0C',
+    color: '#B25E09',
     tips: 'অগ্রহায়ণ-পৌষে বপন, ফাল্গুন-চৈত্রে ফসল',
   },
   {
@@ -59,7 +60,7 @@ const CROPS = [
     category: 'সবজি',
     plantingMonths: [6, 7],
     harvestMonths: [9, 10],
-    color: '#EC4899',
+    color: '#FF4BB7',
     tips: 'কার্তিক-অগ্রহায়ণে রোপণ, মাঘ-ফাল্গুনে তোলা',
   },
   {
@@ -68,7 +69,7 @@ const CROPS = [
     category: 'আঁশ',
     plantingMonths: [11, 0],
     harvestMonths: [3, 4],
-    color: '#16A34A',
+    color: '#00BB77',
     tips: 'চৈত্র-বৈশাখে বপন, শ্রাবণ-ভাদ্রে কাটা',
   },
   {
@@ -86,7 +87,7 @@ const CROPS = [
     category: 'সবজি',
     plantingMonths: [7, 8],
     harvestMonths: [11, 0],
-    color: '#DC2626',
+    color: '#DA2F2F',
     tips: 'অগ্রহায়ণ-পৌষে রোপণ, চৈত্র-বৈশাখে তোলা',
   },
   {
@@ -95,7 +96,7 @@ const CROPS = [
     category: 'সবজি',
     plantingMonths: [6, 7],
     harvestMonths: [10, 11],
-    color: '#EA8A0C',
+    color: '#B25E09',
     tips: 'কার্তিক-অগ্রহায়ণে রোপণ, ফাল্গুন-চৈত্রে তোলা',
   },
   {
@@ -104,7 +105,7 @@ const CROPS = [
     category: 'সবজি',
     plantingMonths: [5, 6],
     harvestMonths: [8, 9, 10],
-    color: '#DC2626',
+    color: '#DA2F2F',
     tips: 'আশ্বিন-কার্তিকে চারা রোপণ, পৌষ থেকে ফল তোলা',
   },
   {
@@ -261,10 +262,10 @@ export default function CropCalendarScreen() {
       borderRadius: 2,
     },
     monthCellPlanting: {
-      backgroundColor: '#16A34A',
+      backgroundColor: '#00BB77',
     },
     monthCellHarvest: {
-      backgroundColor: '#EA8A0C',
+      backgroundColor: '#B25E09',
     },
     monthCellCurrent: {
       borderWidth: 2,
@@ -380,11 +381,11 @@ export default function CropCalendarScreen() {
                 <Text style={styles.tipText}>{crop.tips}</Text>
                 <View style={styles.legendRow}>
                   <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: '#16A34A' }]} />
+                    <View style={[styles.legendDot, { backgroundColor: '#00BB77' }]} />
                     <Text style={styles.legendText}>রোপণ/বপন</Text>
                   </View>
                   <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: '#EA8A0C' }]} />
+                    <View style={[styles.legendDot, { backgroundColor: '#B25E09' }]} />
                     <Text style={styles.legendText}>ফসল তোলা</Text>
                   </View>
                 </View>
