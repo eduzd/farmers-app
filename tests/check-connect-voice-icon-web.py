@@ -4,8 +4,8 @@
 
 - A plain farmer (not allowed to start rooms) sees the filter icon and no voice room icon.
 - Someone allowed (admin, then a farmer the admin picks) sees a mic icon just left of the filter, same row, same size.
-- The old "Start a room" button under the Voice rooms card is gone (card stays and still opens Voice rooms),
-  and the Voice rooms page has no "New room" button either.
+- The Voice rooms card is gone from Connect (its "Start a room" button went first), and the Voice rooms page
+  has no "New room" button either. The Voice rooms page is reached from Home > Services now.
 - Tapping the icon opens the New room page.
 - From there the room starts like before (Let's start! -> the room).
 - The filter icon still opens the filter sheet. English + Bangla, phone widths and a computer width.
@@ -150,7 +150,7 @@ const { PGlite } = require('@electric-sql/pglite');
             check(key, await visible(fpg.locator(fil_sel)) is not None, "farmer sees the filter icon")
             check(key, await visible(fpg.locator(mic_sel)) is None, "plain farmer has no voice room icon")
             check(key, await width(fpg) <= w, "Connect fits the screen (farmer)")
-            check(key, await visible(fpg.get_by_test_id("connect-voice-rooms")) is not None, "Voice rooms card is still on Connect (farmer)")
+            check(key, await fpg.get_by_test_id("connect-voice-rooms").count() == 0, "Voice rooms card is gone from Connect (farmer)")
             check(key, await fpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room under the card (farmer)")
             await fpg.screenshot(path=f"{SHOTS}/{key}-1-farmer-connect.png")
 
@@ -177,19 +177,11 @@ const { PGlite } = require('@electric-sql/pglite');
             check(key, await width(hpg) <= w, "Connect fits the screen (admin)")
             await hpg.screenshot(path=f"{SHOTS}/{key}-2-admin-connect.png")
 
-            # The old "Start a room" button under the Voice rooms card is gone; the card itself stays
-            card = await visible(hpg.get_by_test_id("connect-voice-rooms"))
-            check(key, card is not None, "Voice rooms card is still on Connect (admin)")
-            check(key, await hpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room button under the card (admin)")
-            if card:
-                ct = await card.inner_text()
-                check(key, "Start a room" not in ct and "\u09a8\u09a4\u09c1\u09a8 \u09b0\u09c1\u09ae \u09b6\u09c1\u09b0\u09c1 \u0995\u09b0\u09c1\u09a8" not in ct, "card has no Start a room text (admin)")
-                cb = await card.bounding_box()
-                check(key, cb["height"] < 90, f"card is one row now ({cb['height']:.0f}px)")
-            await card.screenshot(path=f"{SHOTS}/{key}-2b-admin-card.png") if card else None
-            await hpg.get_by_test_id("connect-voice-rooms-open").first.click()
-            await hpg.wait_for_timeout(1500)
-            check(key, await route(hpg) == "VoiceRooms", "tapping the card still opens Voice rooms")
+            # The Voice rooms card (and its old "Start a room" button) is gone from Connect
+            check(key, await hpg.get_by_test_id("connect-voice-rooms").count() == 0, "Voice rooms card is gone from Connect (admin)")
+            check(key, await hpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room button on Connect (admin)")
+            await go(hpg, "VoiceRooms")
+            check(key, await route(hpg) == "VoiceRooms", "Voice rooms page still opens")
             await hpg.wait_for_timeout(1000)
             check(key, await hpg.get_by_test_id("voice-room-new").count() == 0, "no New room button inside the Voice rooms page (admin)")
             check(key, await width(hpg) <= w, "Voice rooms page fits the screen")

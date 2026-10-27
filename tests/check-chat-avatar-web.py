@@ -94,9 +94,9 @@ async def open_dm(pg, name):
 
 
 async def profile_shown(pg, name, lang):
-    label = "ফলোয়ার্স" if lang == "bn" else "Followers"
+    # The redesigned profile: the centred name in the hero (no separate "Followers" label any more).
     try:
-        await pg.get_by_text(label, exact=True).last.wait_for(state="visible", timeout=10000)
+        await pg.locator('[data-testid="user-profile-screen"] [data-testid="profile-hero-name"]').last.wait_for(state="visible", timeout=10000)
         await pg.wait_for_timeout(600)
     except Exception:
         return False

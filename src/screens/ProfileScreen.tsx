@@ -42,6 +42,11 @@ import { CommunitySwitcher, CommunitySwitcherRef } from "@/components/CommunityS
 import { EmptyState, IconButton } from "@/components/ui";
 import { shareText } from "@/lib/share";
 import { AppIcon } from "@/components/icons/AppIcon";
+import { ProfileHero } from "@/components/profile/ProfileHero";
+import { ProfileFeed, type AboutRow } from "@/components/profile/ProfileFeed";
+import { ProfileSheet, SheetRow } from "@/components/profile/ProfileSheet";
+import { compactCount } from "@/lib/liveDataApi";
+import { fetchAbout, formatJoined } from "@/lib/profileApi";
 import { apiGet } from "@/lib/api";
 import {
   LOADING,
@@ -110,6 +115,14 @@ export default function ProfileScreen() {
   const [follows, setFollows] = useState<Loaded<FollowCounts>>(LOADING);
   const [rating, setRating] = useState<Loaded<RatingSummary>>(LOADING);
   const [statsReload, setStatsReload] = useState(0);
+  // The three-dot menu: every profile option (seller tools, orders, settings, sign out...) lives here now.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [about, setAbout] = useState<{ bio: string; location: string; joinedAt?: string | null }>({ bio: "", location: "" });
+  const [focusCount, setFocusCount] = useState(0);
+  const menuNav = (...args: any[]) => {
+    setMenuOpen(false);
+    (navigation.navigate as any)(...args);
+  };
 
   const toggleSavedPosts = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -123,7 +136,7 @@ export default function ProfileScreen() {
 
   const handleViewPost = (post: FeedPost) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    navigation.navigate("PostDetail", { postId: post.id, post });
+    menuNav("PostDetail", { postId: post.id, post });
   };
 
   const handleRemoveSavedPost = async (postId: string) => {
@@ -193,6 +206,21 @@ export default function ProfileScreen() {
       };
     }, [user?.id, statsReload])
   );
+  // Bio, place and join date, plus a fresh posts list, every time the profile comes into view.
+  useFocusEffect(
+    React.useCallback(() => {
+      setFocusCount((n) => n + 1);
+      if (!user?.id) return;
+      let alive = true;
+      fetchAbout().then((a) => {
+        if (alive && a) setAbout({ bio: a.bio || "", location: a.location || "", joinedAt: a.joinedAt ?? null });
+      });
+      return () => {
+        alive = false;
+        setMenuOpen(false);
+      };
+    }, [user?.id])
+  );
   const statsFailed = follows.state === "error" || rating.state === "error";
   const retryStats = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -222,52 +250,47 @@ export default function ProfileScreen() {
     }, [user?.id, language])
   );
 
-  // Edit (pencil) and Share sit in the title bar, top right, instead of a button under the name.
+  // Like the reference design: only a three-dot button in the title bar. It opens every profile option.
   const isBnHeader = language === "bn";
+  const shareProfile = () => {
+    if (!user) return;
+    shareText(
+      user.name || "Farmers",
+      isBnHeader
+        ? `কৃষক বন্ধু অ্যাপে ${user.name}${user.username ? ` (@${user.username})` : ""}-কে খুঁজুন`
+        : `Find ${user.name}${user.username ? ` (@${user.username})` : ""} on Farmers`,
+    );
+  };
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () =>
         user ? (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginRight: Spacing.lg }}>
-            {/* Same share button as on posts: the round "upload" icon button, no label. */}
-            <Pressable
-              testID="profile-share-button"
-              accessibilityRole="button"
-              accessibilityLabel={isBnHeader ? "প্রোফাইল শেয়ার করুন" : "Share profile"}
-              hitSlop={4}
-              onPress={() =>
-                shareText(
-                  user.name || "Farmers",
-                  isBnHeader
-                    ? `কৃষক বন্ধু অ্যাপে ${user.name}${user.username ? ` (@${user.username})` : ""}-কে খুঁজুন`
-                    : `Find ${user.name}${user.username ? ` (@${user.username})` : ""} on Farmers`,
-                )
-              }
-              style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: theme.card, borderWidth: 1, borderColor: theme.cardBorder, opacity: pressed ? 0.7 : 1 })}
-            >
-              <Feather name="upload" size={20} color={theme.text} />
-            </Pressable>
-            <View testID="profile-edit-button">
-              <IconButton
-                icon="edit-2"
-                tone="header"
-                accessibilityLabel={isBnHeader ? "প্রোফাইল এডিট করুন" : "Edit profile"}
-                onPress={() => navigation.navigate("Settings", { openEditProfile: true })}
-              />
-            </View>
+          // The redesign's three-dot menu (Share, Edit profile, Settings and the rest), drawn as the
+          // shared title-bar icon button so it matches the Market bell and cart.
+          <View testID="profile-more-button" style={{ marginRight: Spacing.lg }}>
+            <IconButton
+              icon="more-vertical"
+              tone="header"
+              accessibilityLabel={isBnHeader ? "আরও অপশন" : "More options"}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                setMenuOpen(true);
+              }}
+            />
           </View>
         ) : null,
     } as any);
-  }, [navigation, user?.id, user?.name, user?.username, isBnHeader, theme]);
+  }, [navigation, user?.id, isBnHeader, theme]);
 
   const handleMenuPress = (item: typeof MENU_ITEMS[0]) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (item.screen) {
-      navigation.navigate(item.screen as any);
+      menuNav(item.screen as any);
     }
   };
 
   const handleLogout = async () => {
+    setMenuOpen(false);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await logout();
     navigation.reset({
@@ -314,149 +337,116 @@ export default function ProfileScreen() {
       contentContainerStyle={[
         styles.contentContainer,
         {
-          paddingTop: Spacing.xl,
+          paddingTop: 0,
           paddingBottom: tabBarHeight + Spacing.xl,
         },
       ]}
       scrollIndicatorInsets={{ bottom: insets.bottom }}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.profileHeader}>
-        <Pressable onPress={handleAvatarTap}>
-          <UserAvatar
-            initials={user?.initials || "JD"}
-            avatar={user?.avatar}
-            avatarId={user?.avatarId}
-            avatarColor={user?.avatarColor}
-            size="large"
-            isWelfareMember={isWelfareMember}
-            badge={badgeKeyFor(user)}
-          />
-          {user ? (
-            <Pressable
-              onPress={() => navigation.navigate("Settings", { openEditProfile: true })}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Change profile picture"
-              style={[styles.cameraBadge, { backgroundColor: theme.primary, borderColor: theme.backgroundRoot }]}
-            >
-              <Feather name="camera" size={14} color="#fff" />
-            </Pressable>
-          ) : null}
-        </Pressable>
-        <ThemedText type="h3" style={styles.profileName}>
-          {user?.name || tr("অতিথি")}
-        </ThemedText>
-        <ThemedText type="body" style={[styles.profileEmail, { color: theme.textSecondary }]}>
-          {user?.email || ""}
-        </ThemedText>
-        <View style={styles.badgeContainer}>
-          {(() => {
-            // Same icon, colour and shape as the badge on the avatar, so each category looks different.
-            const b = PROFILE_BADGES[badgeKeyFor(user) || "farmer"];
-            const tone = darkTone(b.color, isDark);
-            return (
-              <View
-                testID="profile-category-badge"
-                style={[
-                  styles.sectorBadge,
-                  { backgroundColor: tone + (isDark ? "26" : "1F"), borderColor: tone + "55", borderWidth: 1 },
-                  b.shape === "square" ? { borderRadius: 8 } : null,
-                ]}
-              >
-                <MaterialCommunityIcons name={b.icon} size={15} color={tone} />
-                <ThemedText style={[styles.sectorBadgeText, { color: tone }]}>
-                  {language === "bn" ? b.labelBn : b.label}
-                </ThemedText>
-              </View>
-            );
-          })()}
-          {user?.verified ? (
-            <View style={[styles.verifiedBadge, { backgroundColor: "#1DA1F2" }]}>
-              <Feather name="check" size={12} color="#FFFFFF" />
-              <ThemedText style={[styles.verifiedText, { color: "#FFFFFF" }]}>
-                {t("profile.verified")}
-              </ThemedText>
-            </View>
-          ) : null}
-          {isWelfareMember ? (
-            <View style={[styles.verifiedBadge, { backgroundColor: "#3D38D0" }]}>
-              <Feather name="award" size={12} color="#FFFFFF" />
-              <ThemedText style={[styles.verifiedText, { color: "#FFFFFF" }]}>
-                {language === "bn" ? "কল্যাণ সদস্য" : "Welfare Member"}
-              </ThemedText>
-            </View>
-          ) : null}
-          {isSummitMember ? (
-            <View style={[styles.verifiedBadge, { backgroundColor: "#202936" }]}>
-              <Feather name="globe" size={12} color="#FFFFFF" />
-              <ThemedText style={[styles.verifiedText, { color: "#FFFFFF" }]}>
-                {language === "bn" ? "সামিট সদস্য" : "Summit Member"}
-              </ThemedText>
-            </View>
-          ) : null}
-        </View>
-      </View>
+      {(() => {
+        const bn = language === "bn";
+        const b = PROFILE_BADGES[badgeKeyFor(user) || "farmer"];
+        const tone = darkTone(b.color, isDark);
+        const followersN = pick(follows, "followers");
+        const followingN = pick(follows, "following");
+        const fmt = (n: Loaded<number>) => (n.state === "ok" ? compactCount(n.value) : countText(n));
+        const joined = formatJoined(about.joinedAt, bn);
+        const aboutRows: AboutRow[] = [
+          { icon: "tag", label: bn ? "ক্যাটাগরি" : "Category", value: bn ? b.labelBn : b.label, testID: "profile-about-category" },
+          { icon: "star", label: ratingBox.label, value: ratingBox.value, testID: "profile-stat-rating" },
+          ...(about.location ? [{ icon: "map-pin", label: bn ? "এলাকা" : "Location", value: about.location }] : []),
+          ...(joined ? [{ icon: "calendar", label: bn ? "সদস্য" : "Member since", value: joined.replace(/^Joined |^যোগ দিয়েছেন /, "") }] : []),
+          ...(user?.email ? [{ icon: "mail", label: bn ? "ইমেইল (শুধু আপনি দেখেন)" : "Email (only you see this)", value: user.email }] : []),
+        ];
+        return (
+          <>
+            <ProfileHero
+              userId={user?.id}
+              name={user?.name || tr("অতিথি")}
+              initials={user?.initials || "JD"}
+              avatar={user?.avatar}
+              avatarId={user?.avatarId}
+              avatarColor={user?.avatarColor}
+              badge={badgeKeyFor(user)}
+              isWelfareMember={isWelfareMember}
+              verified={!!user?.verified}
+              subtitle={user?.username ? `@${user.username}` : getSectorLabel()}
+              onAvatarPress={handleAvatarTap}
+              chips={
+                <>
+                  <View
+                    testID="profile-category-badge"
+                    style={[
+                      styles.sectorBadge,
+                      { backgroundColor: tone + (isDark ? "26" : "1F"), borderColor: tone + "55", borderWidth: 1 },
+                      b.shape === "square" ? { borderRadius: 8 } : null,
+                    ]}
+                  >
+                    <MaterialCommunityIcons name={b.icon} size={15} color={tone} />
+                    <ThemedText style={[styles.sectorBadgeText, { color: tone }]}>{bn ? b.labelBn : b.label}</ThemedText>
+                  </View>
+                  {isWelfareMember ? (
+                    <View style={[styles.verifiedBadge, { backgroundColor: "#3D38D0" }]}>
+                      <Feather name="award" size={12} color="#FFFFFF" />
+                      <ThemedText style={[styles.verifiedText, { color: "#FFFFFF" }]}>{bn ? "কল্যাণ সদস্য" : "Welfare Member"}</ThemedText>
+                    </View>
+                  ) : null}
+                  {isSummitMember ? (
+                    <View style={[styles.verifiedBadge, { backgroundColor: "#202936" }]}>
+                      <Feather name="globe" size={12} color="#FFFFFF" />
+                      <ThemedText style={[styles.verifiedText, { color: "#FFFFFF" }]}>{bn ? "সামিট সদস্য" : "Summit Member"}</ThemedText>
+                    </View>
+                  ) : null}
+                </>
+              }
+              bio={about.bio}
+              location={about.location}
+              joined={joined}
+              followers={fmt(followersN)}
+              following={fmt(followingN)}
+              onFollowers={() => navigation.navigate("Followers", { userId: user?.id || "", userName: user?.name || "" })}
+              onFollowing={() => navigation.navigate("Following", { userId: user?.id || "", userName: user?.name || "" })}
+              bn={bn}
+              primary={
+                user
+                  ? { label: bn ? "প্রোফাইল এডিট" : "Edit profile", icon: "edit-2", solid: true, testID: "profile-edit-button", onPress: () => navigation.navigate("Settings", { openEditProfile: true }) }
+                  : undefined
+              }
+              secondary={user ? { label: bn ? "শেয়ার" : "Share profile", icon: "share-2", testID: "profile-share-button", onPress: shareProfile } : undefined}
+              footer={
+                statsFailed ? (
+                  <Pressable
+                    testID="profile-stats-retry"
+                    accessibilityRole="button"
+                    onPress={retryStats}
+                    style={({ pressed }) => [styles.statsRetry, pressed && { opacity: 0.6 }]}
+                  >
+                    <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
+                    <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                      {bn ? "সংখ্যা লোড হয়নি · আবার চেষ্টা করতে চাপুন" : "Couldn't load these numbers · Tap to retry"}
+                    </ThemedText>
+                  </Pressable>
+                ) : null
+              }
+            />
+            <ProfileFeed
+              userId={user?.id}
+              author={{ id: user?.id, name: user?.name || "", initials: user?.initials, avatar: user?.avatar, avatarId: user?.avatarId, avatarColor: user?.avatarColor, verified: !!user?.verified }}
+              bn={bn}
+              aboutRows={aboutRows}
+              reloadKey={focusCount}
+              emptyPosts={{
+                title: bn ? "আপনি এখনো কিছু পোস্ট করেননি" : "You haven't posted yet",
+                message: bn ? "কমিউনিটিতে পোস্ট করলে এখানে দেখা যাবে।" : "Posts you share in Community show up here.",
+              }}
+            />
+          </>
+        );
+      })()}
 
-      <View style={styles.statsRow}>
-        <Pressable 
-          style={({ pressed }) => [
-            styles.statItem, 
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.statPressed,
-          ]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            navigation.navigate("Followers", { userId: user?.id || "", userName: user?.name || "" });
-          }}
-        >
-          <ThemedText type="h4" testID="profile-stat-followers">{countText(pick(follows, "followers"))}</ThemedText>
-          <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
-            {t("profile.followers")}
-          </ThemedText>
-        </Pressable>
-        <Pressable 
-          style={({ pressed }) => [
-            styles.statItem, 
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.statPressed,
-          ]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            navigation.navigate("Following", { userId: user?.id || "", userName: user?.name || "" });
-          }}
-        >
-          <ThemedText type="h4" testID="profile-stat-following">{countText(pick(follows, "following"))}</ThemedText>
-          <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
-            {t("profile.following")}
-          </ThemedText>
-        </Pressable>
-        <View style={[styles.statItem, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-          <ThemedText type="h4" testID="profile-stat-rating">{ratingBox.value}</ThemedText>
-          <ThemedText
-            type="small"
-            testID="profile-stat-rating-label"
-            numberOfLines={1}
-            style={[styles.statLabel, { color: theme.textSecondary }]}
-          >
-            {ratingBox.label}
-          </ThemedText>
-        </View>
-      </View>
-      {statsFailed ? (
-        <Pressable
-          testID="profile-stats-retry"
-          accessibilityRole="button"
-          onPress={retryStats}
-          style={({ pressed }) => [styles.statsRetry, pressed && { opacity: 0.6 }]}
-        >
-          <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {language === "bn" ? "সংখ্যা লোড হয়নি · আবার চেষ্টা করতে চাপুন" : "Couldn't load these numbers · Tap to retry"}
-          </ThemedText>
-        </Pressable>
-      ) : null}
-
+      <ProfileSheet visible={menuOpen} onClose={() => setMenuOpen(false)} title={language === "bn" ? "প্রোফাইল অপশন" : "Profile options"} testID="profile-options-sheet">
+      <View style={styles.sheetBody}>
       {/* Quick Settings Section */}
       <View style={[styles.menuSection, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
         {/* Seller/Vendor Dashboard */}
@@ -469,9 +459,9 @@ export default function ProfileScreen() {
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             if (user?.verified) {
-              navigation.navigate("CompanyDashboard");
+              menuNav("CompanyDashboard");
             } else {
-              navigation.navigate("SellerOnboarding" as any);
+              menuNav("SellerOnboarding" as any);
             }
           }}
         >
@@ -492,7 +482,7 @@ export default function ProfileScreen() {
           style={({ pressed }) => [styles.menuItem, pressed && styles.menuPressed]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            navigation.navigate("SellerApp" as any);
+            menuNav("SellerApp" as any);
           }}
         >
           <View style={styles.menuLeft}>
@@ -512,7 +502,7 @@ export default function ProfileScreen() {
               style={({ pressed }) => [styles.menuItem, pressed && styles.menuPressed]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigation.navigate("AdminApp");
+                menuNav("AdminApp");
               }}
             >
               <View style={styles.menuLeft}>
@@ -536,7 +526,7 @@ export default function ProfileScreen() {
           ]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            navigation.navigate("AddressManagement" as any);
+            menuNav("AddressManagement" as any);
           }}
         >
           <View style={styles.menuLeft}>
@@ -689,7 +679,7 @@ export default function ProfileScreen() {
               ]}
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                navigation.navigate(item.screen as any);
+                menuNav(item.screen as any);
               }}
             >
               <View style={styles.menuLeft}>
@@ -722,6 +712,8 @@ export default function ProfileScreen() {
       <ThemedText type="small" style={[styles.versionText, { color: theme.textSecondary }]}>
         {t("profile.version")} 1.0.0
       </ThemedText>
+      </View>
+      </ProfileSheet>
     </ScrollView>
   );
 }
@@ -752,7 +744,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: 0,
+  },
+  sheetBody: {
+    paddingHorizontal: Spacing.sm,
+    paddingTop: Spacing.xs,
   },
   profileHeader: {
     alignItems: "center",

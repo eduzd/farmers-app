@@ -11,7 +11,6 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { AdCarousel, AdCard } from "@/components/AdCarousel";
 import { useCarouselAds, adsToCards } from "@/lib/carouselAds";
 import { HelpFab } from "@/components/HelpButton";
-import { VoiceRoomConnectCard } from "@/components/VoiceRoomConnectCard";
 import { fetchVoicePermission } from "@/lib/voiceRoomApi";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 import { useTheme } from "@/hooks/useTheme";
@@ -24,6 +23,7 @@ import { useAuthStore } from "@/lib/authStore";
 import { ChatIcon } from "@/components/icons/ChatIcon";
 import { useIsOnline, useOnlineSet } from "@/lib/liveStatus";
 import { IconButton } from "@/components/ui";
+import { openUserProfile } from "@/lib/openProfile";
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 interface Field {
@@ -190,19 +190,14 @@ export default function ConnectScreen() {
   };
 
   const openProfile = (p: Professional) => {
-    navigation.navigate("UserProfile", {
-      user: {
-        id: p.id,
-        name: p.name,
-        initials: initialsOf(p.name),
-        avatar: p.avatar || undefined,
-        role: "expert",
-        verified: p.verified,
-        followersCount: 0,
-        followingCount: 0,
-        location: "",
-        bio: p.about || "",
-      } as any,
+    openUserProfile(navigation, {
+      id: p.id,
+      name: p.name,
+      initials: initialsOf(p.name),
+      avatar: p.avatar,
+      role: "expert",
+      verified: p.verified,
+      bio: p.about || "",
     });
   };
 
@@ -287,7 +282,6 @@ export default function ConnectScreen() {
       <View style={{ marginBottom: Spacing.md }}>
         <AdCarousel cards={adCards} loading={adminAds === null} testID="connect-carousel" />
       </View>
-      <VoiceRoomConnectCard />
       <View style={[styles.search, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}>
         <Feather name="search" size={16} color={theme.textSecondary} />
         <TextInput

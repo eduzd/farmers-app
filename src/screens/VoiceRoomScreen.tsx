@@ -19,6 +19,7 @@ import { useI18n } from "@/lib/i18n";
 import { initialsOf } from "@/lib/feedApi";
 import { useVoiceRoom, type FloatingReaction } from "@/lib/voiceRoom/useVoiceRoom";
 import { REACTIONS, onStage, voiceCategoryLabel, voiceReasonText, type VoiceMember, type VoiceRole } from "@/lib/voiceRoomApi";
+import { openUserProfile } from "@/lib/openProfile";
 
 const ROLE_ORDER: Record<VoiceRole, number> = { host: 0, moderator: 1, speaker: 2, audience: 3 };
 
@@ -157,9 +158,7 @@ export default function VoiceRoomScreen() {
 
   const openProfile = (m: VoiceMember) => {
     setPerson(null);
-    navigation.navigate("UserProfile", {
-      user: { id: m.userId, name: m.name, initials: initialsOf(m.name), avatar: m.avatar || undefined, role: m.profileRole || "farmer", verified: false, followersCount: 0, followingCount: 0, location: "", bio: "" } as any,
-    });
+    openUserProfile(navigation, { id: m.userId, name: m.name, initials: initialsOf(m.name), avatar: m.avatar, profileRole: m.profileRole });
   };
 
   const roleName = (r: VoiceRole) =>

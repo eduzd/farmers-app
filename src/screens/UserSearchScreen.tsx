@@ -16,6 +16,7 @@ import { isLoggedIn } from "@/lib/api";
 import { initialsOf } from "@/lib/feedApi";
 import { searchPeople, toggleFollow, compactCount, type PersonCard } from "@/lib/liveDataApi";
 import { Spacing, BorderRadius } from "@/constants/theme";
+import { openUserProfile } from "@/lib/openProfile";
 
 const CATEGORIES = [
   { id: "all", bn: "সব", en: "All" },
@@ -91,16 +92,15 @@ export default function UserSearchScreen() {
 
   const handleUserPress = (user: PersonCard) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    navigation.navigate("UserProfile", {
-      user: {
-        id: user.id,
-        name: user.name,
-        avatar: user.avatar || "",
-        initials: initialsOf(user.name),
-        followers: user.followerCount,
-        following: user.followingCount,
-        isFollowing: user.isFollowing,
-      },
+    openUserProfile(navigation, {
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar,
+      initials: initialsOf(user.name),
+      profileRole: user.profileRole,
+      farmingCategory: user.farmingCategory,
+      verified: user.verified,
+      isFollowing: user.isFollowing,
     });
   };
 

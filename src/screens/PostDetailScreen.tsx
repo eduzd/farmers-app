@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
 import { UserAvatar } from "@/components/UserAvatar";
+import { openUserProfile } from "@/lib/openProfile";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
@@ -302,19 +303,15 @@ export default function PostDetailScreen() {
   const handleAuthorPress = (author: MentionPerson) => {
     if (!author.id) return; // an old comment without an account behind it
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    navigation.navigate("UserProfile", {
-      user: {
-        id: author.id,
-        name: author.name,
-        initials: author.initials || author.name.charAt(0).toUpperCase(),
-        avatar: author.avatar,
-        role: "farmer",
-        verified: false,
-        followersCount: 0,
-        followingCount: 0,
-        location: "",
-        bio: "",
-      } as any,
+    const a: any = author;
+    openUserProfile(navigation, {
+      id: author.id,
+      name: author.name,
+      initials: author.initials,
+      avatar: author.avatar,
+      avatarId: a.avatarId,
+      avatarColor: a.avatarColor,
+      isWelfareMember: a.isWelfareMember,
     });
   };
 

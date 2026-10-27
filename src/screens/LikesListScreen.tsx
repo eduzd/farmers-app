@@ -24,6 +24,7 @@ import { initialsOf } from "@/lib/feedApi";
 import { fetchLikers, toggleFollow, compactCount, type PersonCard } from "@/lib/liveDataApi";
 
 import { ChatIcon } from "@/components/icons/ChatIcon";
+import { openUserProfile } from "@/lib/openProfile";
 interface LikedUser {
   id: string;
   name: string;
@@ -130,19 +131,15 @@ export default function LikesListScreen() {
   };
 
   const handleUserPress = (user: LikedUser) => {
-    const publicUser: PublicUser = {
+    openUserProfile(navigation, {
       id: user.id,
       name: user.name,
       avatar: user.avatar,
       initials: user.initials,
-      role: "farmer" as const,
       location: user.location,
       verified: user.verified,
-      followersCount: user.followerCount,
-      followingCount: user.followingCount,
       isFollowing: user.isFollowing,
-    };
-    navigation.navigate("UserProfile", { user: publicUser });
+    });
   };
 
   const renderUser = ({ item }: { item: LikedUser }) => (

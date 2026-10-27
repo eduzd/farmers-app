@@ -1,41 +1,29 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Pressable,
-  Alert,
-} from "react-native";
+import React, { useState, useEffect, useLayoutEffect } from "react";
+import { View, StyleSheet, ScrollView, Pressable, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@/components/icons/Feather";
-import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 
 import { ThemedText } from "@/components/ThemedText";
-import { UserAvatar } from "@/components/UserAvatar";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
+import { Spacing } from "@/constants/theme";
+import { IconButton } from "@/components/ui";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { PublicUser } from "@/lib/storage";
 
 import { tr, useTr } from "@/lib/tr";
-import { apiGet, apiPost, isLoggedIn } from "@/lib/api";
-import { ChatIcon } from "@/components/icons/ChatIcon";
+import { apiGet, apiPost, isLoggedIn, currentUserId } from "@/lib/api";
+import { useI18n } from "@/lib/i18n";
+import { useAuthStore } from "@/lib/authStore";
 import { AppIcon } from "@/components/icons/AppIcon";
 import { LOADING, FAILED, countText, parseFollowCounts, pick, type FollowCounts, type Loaded } from "@/lib/profileStats";
-interface UserPost {
-  id: string;
-  content: string;
-  image?: string;
-  likes: number;
-  comments: number;
-  createdAt: string;
-  isLiked: boolean;
-}
-
-const SAMPLE_POSTS: UserPost[] = [];
+import { compactCount } from "@/lib/liveDataApi";
+import { formatJoined } from "@/lib/profileApi";
+import { ProfileHero } from "@/components/profile/ProfileHero";
+import { ProfileFeed, type AboutRow } from "@/components/profile/ProfileFeed";
+import { VisitorProfileMenu } from "@/components/profile/VisitorProfileMenu";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 type UserProfileRouteProp = RouteProp<RootStackParamList, "UserProfile">;
@@ -62,17 +50,50 @@ export default function UserProfileScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<UserProfileRouteProp>();
-  const { user } = route.params;
+  const passed = route.params.user;
+  const { language } = useI18n();
+  const bn = language === "bn";
+  const token = useAuthStore((st: any) => st.token);
+
+  // The person as the server has them now: their real photo, name and role, whatever screen
+  // opened this page. Until it loads, what that screen already knew (photo included) shows.
+  const [user, setUser] = useState<PublicUser>(passed);
+  const [missing, setMissing] = useState(false);
+  const isMe = !!passed.id && passed.id === currentUserId();
+  useEffect(() => {
+    setUser(passed);
+    setMissing(false);
+    let alive = true;
+    apiGet<any>(`/api/users/${encodeURIComponent(passed.id)}/profile`)
+      .then((p) => {
+        if (!alive || !p?.id) return;
+        const roleRaw = String(p.profileRole || p.role || "");
+        setUser((u) => ({
+          ...u,
+          name: p.name || u.name,
+          username: p.username || u.username,
+          initials: p.initials || u.initials,
+          // An uploaded photo wins. With none on the server, there is no photo: show the face/initials.
+          avatar: p.avatar || undefined,
+          verified: !!p.verified,
+          role: (["farmer", "buyer", "company", "expert"].includes(roleRaw) ? roleRaw : u.role) as PublicUser["role"],
+          farmingCategory: p.farmingCategory || u.farmingCategory,
+        }));
+      })
+      .catch((e: any) => {
+        if (alive && /isn't available|doesn't exist|404/i.test(String(e?.message || ""))) setMissing(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [passed.id]);
 
   const [isFollowing, setIsFollowing] = useState(user.isFollowing || false);
   // Followers / following as the server has them: "…" while loading, "—" if the load fails (never a fake 0).
   const [counts, setCounts] = useState<Loaded<FollowCounts>>(LOADING);
   const [countsReload, setCountsReload] = useState(0);
-  const [posts, setPosts] = useState<UserPost[]>(SAMPLE_POSTS);
-  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set(SAMPLE_POSTS.filter(p => p.isLiked).map(p => p.id)));
-
   // Real numbers from the server: followers, following, whether I follow them, and their about.
-  const [about, setAbout] = useState<{ bio: string; location: string }>({ bio: user.bio || "", location: user.location || "" });
+  const [about, setAbout] = useState<{ bio: string; location: string; joinedAt?: string | null }>({ bio: user.bio || "", location: user.location || "" });
   useEffect(() => {
     let alive = true;
     apiGet<any>(`/api/follows/${encodeURIComponent(user.id)}`)
@@ -94,7 +115,7 @@ export default function UserProfileScreen() {
   useEffect(() => {
     let alive = true;
     apiGet<any>(`/api/users/${encodeURIComponent(user.id)}/about`)
-      .then((a) => alive && a && setAbout({ bio: a.bio || "", location: a.location || "" }))
+      .then((a) => alive && a && setAbout({ bio: a.bio || "", location: a.location || "", joinedAt: a.joinedAt ?? null }))
       .catch(() => {});
     return () => {
       alive = false;
@@ -138,6 +159,7 @@ export default function UserProfileScreen() {
       conversationId: user.id,
       userName: user.name,
       userInitials: user.initials,
+      userAvatar: user.avatar,
       isWelfareMember: user.isWelfareMember,
     });
   };
@@ -159,515 +181,138 @@ export default function UserProfileScreen() {
     return SECTOR_LABELS[user.role] || user.role;
   };
 
-  const handleLikePost = (postId: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const newLiked = new Set(likedPosts);
-    if (newLiked.has(postId)) {
-      newLiked.delete(postId);
-      setPosts(posts.map(p => p.id === postId ? { ...p, likes: p.likes - 1 } : p));
-    } else {
-      newLiked.add(postId);
-      setPosts(posts.map(p => p.id === postId ? { ...p, likes: p.likes + 1 } : p));
-    }
-    setLikedPosts(newLiked);
-  };
-
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      <View style={styles.profileHeader}>
-        <UserAvatar 
-          initials={user.initials}
-          avatar={user.avatar}
-          avatarId={user.avatarId}
-          avatarColor={user.avatarColor}
-          size="large" 
-          isWelfareMember={user.isWelfareMember}
-          userId={user.id}
-        />
-
-        <View style={styles.nameContainer}>
-          <ThemedText type="h3" style={styles.profileName}>
-            {user.name}
-          </ThemedText>
-          {user.verified ? (
-            <View style={[styles.verifiedIcon, { backgroundColor: "#1DA1F2" }]}>
-              <Feather name="check" size={12} color="#FFFFFF" />
-            </View>
-          ) : null}
-        </View>
-
-        {user.username ? (
-          <ThemedText type="body" style={[styles.username, { color: theme.textSecondary }]}>
-            @{user.username}
-          </ThemedText>
-        ) : null}
-
-        <View style={[styles.sectorBadge, { backgroundColor: theme.primary + "20" }]}>
-          <AppIcon 
-            name={user.farmingCategory === "fish" ? "droplet" : user.role === "expert" ? "award" : "user"} 
-            size={14} 
-            color={theme.primary} 
-          />
-          <ThemedText style={[styles.sectorText, { color: theme.primary }]}>
-            {getSectorLabel()}
-          </ThemedText>
-        </View>
-
-        {about.location ? (
-          <View style={styles.locationRow}>
-            <Feather name="map-pin" size={14} color={theme.textSecondary} />
-            <ThemedText style={[styles.locationText, { color: theme.textSecondary }]}>
-              {about.location}
-            </ThemedText>
+  // Like the reference design: the title bar has only the three-dot button, which opens
+  // share, mute, block and report. (Your own profile opened this way gets no menu.)
+  const [menuOpen, setMenuOpen] = useState(false);
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () =>
+        isMe || missing ? null : (
+          <View testID="user-profile-more" style={{ marginRight: Spacing.lg }}>
+            <IconButton
+              icon="more-vertical"
+              tone="header"
+              accessibilityLabel={bn ? "আরও অপশন" : "More options"}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                setMenuOpen(true);
+              }}
+            />
           </View>
-        ) : null}
+        ),
+    } as any);
+  }, [navigation, isMe, missing, bn, theme]);
 
-        {about.bio ? (
-          <ThemedText style={[styles.bio, { color: theme.text }]}>
-            {about.bio}
-          </ThemedText>
-        ) : null}
-      </View>
-
-      <View style={styles.statsRow}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.statItem,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.statPressed,
-          ]}
-          onPress={handleFollowers}
-        >
-          <ThemedText type="h4">{posts.length}</ThemedText>
-          <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
-            {tr("পোস্ট")}
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.statItem,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.statPressed,
-          ]}
-          onPress={handleFollowers}
-        >
-          <ThemedText type="h4" testID="user-stat-followers">{countText(pick(counts, "followers"))}</ThemedText>
-          <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
-            {tr("ফলোয়ার্স")}
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.statItem,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.statPressed,
-          ]}
-          onPress={handleFollowing}
-        >
-          <ThemedText type="h4" testID="user-stat-following">{countText(pick(counts, "following"))}</ThemedText>
-          <ThemedText type="small" style={[styles.statLabel, { color: theme.textSecondary }]}>
-            {tr("ফলোয়িং")}
-          </ThemedText>
-        </Pressable>
-      </View>
-      {counts.state === "error" ? (
-        <Pressable
-          testID="user-stats-retry"
-          accessibilityRole="button"
-          onPress={retryCounts}
-          style={({ pressed }) => [styles.statsRetry, pressed && { opacity: 0.6 }]}
-        >
-          <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {tr("Couldn't load these numbers · Tap to retry")}
-          </ThemedText>
-        </Pressable>
-      ) : null}
-
-      <View style={styles.actionButtons}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.followButton,
-            isFollowing 
-              ? { backgroundColor: theme.card, borderColor: theme.cardBorder, borderWidth: 1 }
-              : { backgroundColor: theme.primary },
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleFollow}
-        >
-          <AppIcon 
-            name={isFollowing ? "user-check" : "user-plus"} 
-            size={18} 
-            color={isFollowing ? theme.text : "#FFFFFF"} 
-          />
-          <ThemedText style={[
-            styles.followButtonText,
-            { color: isFollowing ? theme.text : "#FFFFFF" },
-          ]}>
-            {isFollowing ? tr("Following") : tr("Follow")}
-          </ThemedText>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.messageButton,
-            { backgroundColor: theme.card, borderColor: theme.cardBorder },
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleMessage}
-        >
-          <ChatIcon size={18} color={theme.text} />
-          <ThemedText style={[styles.messageButtonText, { color: theme.text }]}>
-            {tr("মেসেজ")}
-          </ThemedText>
-        </Pressable>
-      </View>
-
-      <View style={[styles.postsHeader, { borderTopColor: theme.divider }]}>
-        <ThemedText style={[styles.postsTitle, { color: theme.text }]}>
-          {tr("পোস্টসমূহ")}
-        </ThemedText>
-      </View>
-    </View>
-  );
-
-  const renderPost = ({ item }: { item: UserPost }) => (
-    <View style={[styles.postCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-      <View style={styles.postHeader}>
-        <View style={[styles.postAvatar, { backgroundColor: theme.primary }]}>
-          <ThemedText style={styles.postAvatarText}>{user.initials}</ThemedText>
-        </View>
-        <View style={styles.postHeaderInfo}>
-          <ThemedText style={[styles.postAuthor, { color: theme.text }]}>{user.name}</ThemedText>
-          <ThemedText style={[styles.postTime, { color: theme.textSecondary }]}>{item.createdAt}</ThemedText>
-        </View>
-      </View>
-
-      <ThemedText style={[styles.postContent, { color: theme.text }]}>
-        {item.content}
-      </ThemedText>
-
-      {item.image ? (
-        <Image
-          source={{ uri: item.image }}
-          style={styles.postImage}
-          contentFit="cover"
-        />
-      ) : null}
-
-      <View style={[styles.postActions, { borderTopColor: theme.divider }]}>
-        <View style={styles.leftActions}>
-          <Pressable 
-            style={styles.postAction}
-            onPress={() => handleLikePost(item.id)}
-          >
-            <View style={[
-              styles.actionIconCircle,
-              likedPosts.has(item.id) && { backgroundColor: "#DA2F2F20" }
-            ]}>
-              <Feather 
-                name="heart"
-                size={18} 
-                color={likedPosts.has(item.id) ? "#DA2F2F" : theme.textSecondary} 
-              />
-            </View>
-            <ThemedText style={[styles.postActionText, { color: likedPosts.has(item.id) ? "#DA2F2F" : theme.textSecondary }]}>
-              {item.likes}
-            </ThemedText>
-          </Pressable>
-
-          <Pressable style={styles.postAction}>
-            <View style={styles.actionIconCircle}>
-              <ChatIcon size={18} color={theme.textSecondary} />
-            </View>
-            <ThemedText style={[styles.postActionText, { color: theme.textSecondary }]}>
-              {item.comments}
-            </ThemedText>
-          </Pressable>
-        </View>
-
-        <View style={styles.rightActions}>
-          <Pressable style={styles.actionIconCircle}>
-            <Feather name="bookmark" size={18} color={theme.textSecondary} />
-          </Pressable>
-          <Pressable style={styles.actionIconCircle}>
-            <Feather name="upload" size={18} color={theme.textSecondary} />
-          </Pressable>
-        </View>
-      </View>
-    </View>
-  );
+  const fmt = (n: Loaded<number>) => (n.state === "ok" ? compactCount(n.value) : countText(n));
+  const joined = formatJoined(about.joinedAt, bn);
+  const sector = tr(getSectorLabel());
+  const aboutRows: AboutRow[] = [
+    { icon: user.role === "expert" ? "award" : user.farmingCategory === "fish" ? "droplet" : "user", label: bn ? "ক্যাটাগরি" : "Category", value: sector, testID: "user-about-category" },
+    ...(about.location ? [{ icon: "map-pin", label: bn ? "এলাকা" : "Location", value: about.location }] : []),
+    ...(joined ? [{ icon: "calendar", label: bn ? "সদস্য" : "Member since", value: joined.replace(/^Joined |^যোগ দিয়েছেন /, "") }] : []),
+  ];
 
   return (
-    <FlatList
+    <ScrollView
       style={[styles.container, { backgroundColor: theme.backgroundRoot }]}
-      data={posts}
-      keyExtractor={(item) => item.id}
-      renderItem={renderPost}
-      ListHeaderComponent={renderHeader}
-      contentContainerStyle={[
-        styles.contentContainer,
-        {
-          paddingTop: Spacing.xl,
-          paddingBottom: insets.bottom + Spacing.xl,
-        },
-      ]}
+      contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
       scrollIndicatorInsets={{ bottom: insets.bottom }}
       showsVerticalScrollIndicator={false}
-      ListEmptyComponent={
-        <View style={styles.emptyContainer}>
-          <Feather name="file-text" size={48} color={theme.textSecondary} />
-          <ThemedText style={[styles.emptyText, { color: theme.textSecondary }]}>
-            {tr("এখনো কোনো পোস্ট নেই")}
-          </ThemedText>
-        </View>
-      }
-    />
+      testID="user-profile-screen"
+    >
+      <ProfileHero
+        userId={user.id}
+        name={user.name}
+        initials={user.initials}
+        avatar={user.avatar}
+        avatarId={user.avatarId}
+        avatarColor={user.avatarColor}
+        isWelfareMember={user.isWelfareMember}
+        verified={!!user.verified}
+        subtitle={user.username ? `@${user.username}` : undefined}
+        chips={
+          <View style={[styles.sectorBadge, { backgroundColor: theme.backgroundSecondary, borderColor: theme.cardBorder }]} testID="user-profile-sector">
+            <AppIcon name={user.farmingCategory === "fish" ? "droplet" : user.role === "expert" ? "award" : "user"} size={14} color={theme.link} />
+            <ThemedText style={[styles.sectorText, { color: theme.link }]}>{sector}</ThemedText>
+          </View>
+        }
+        bio={about.bio}
+        location={about.location}
+        joined={joined}
+        followers={fmt(pick(counts, "followers"))}
+        following={fmt(pick(counts, "following"))}
+        onFollowers={handleFollowers}
+        onFollowing={handleFollowing}
+        bn={bn}
+        statIdPrefix="user"
+        primary={
+          missing
+            ? undefined
+            : isMe
+              ? { label: bn ? "প্রোফাইল এডিট" : "Edit profile", icon: "edit-2", solid: true, onPress: () => navigation.navigate("Settings", { openEditProfile: true }) }
+              : isFollowing
+                ? { label: bn ? "ফলোয়িং" : "Following", icon: "user-check", solid: false, onPress: handleFollow, testID: "user-follow" }
+                : { label: bn ? "ফলো করুন" : "Follow", icon: "user-plus", solid: true, onPress: handleFollow, testID: "user-follow" }
+        }
+        secondary={missing || isMe ? undefined : { label: bn ? "মেসেজ" : "Message", icon: "chat", onPress: handleMessage, testID: "user-message" }}
+        footer={
+          <>
+            {counts.state === "error" ? (
+              <Pressable
+                testID="user-stats-retry"
+                accessibilityRole="button"
+                onPress={retryCounts}
+                style={({ pressed }) => [styles.statsRetry, pressed && { opacity: 0.6 }]}
+              >
+                <Feather name="refresh-cw" size={13} color={theme.textSecondary} />
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {tr("Couldn't load these numbers · Tap to retry")}
+                </ThemedText>
+              </Pressable>
+            ) : null}
+            {missing ? (
+              <View testID="user-profile-missing" style={styles.statsRetry}>
+                <Feather name="slash" size={13} color={theme.textSecondary} />
+                <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                  {tr("This account isn't available")}
+                </ThemedText>
+              </View>
+            ) : null}
+          </>
+        }
+      />
+
+      {missing ? null : (
+        <ProfileFeed
+          userId={user.id}
+          author={{ id: user.id, name: user.name, initials: user.initials, avatar: user.avatar, avatarId: user.avatarId, avatarColor: user.avatarColor, verified: !!user.verified }}
+          bn={bn}
+          aboutRows={aboutRows}
+          emptyPosts={{
+            title: bn ? "এখনো কোনো পোস্ট নেই" : "No posts yet",
+            message: bn ? `${user.name} এখনো কিছু পোস্ট করেননি।` : `${user.name} hasn't posted anything yet.`,
+          }}
+        />
+      )}
+
+      {isMe || missing ? null : (
+        <VisitorProfileMenu
+          visible={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          user={{ id: user.id, name: user.name, username: user.username }}
+          bn={bn}
+          onBlocked={() => {
+            if (navigation.canGoBack()) navigation.goBack();
+          }}
+        />
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: Spacing.lg,
-  },
-  profileHeader: {
-    alignItems: "center",
-    marginBottom: Spacing.xl,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.lg,
-    ...Shadows.medium,
-  },
-  avatarText: {
-    color: "#FFFFFF",
-    fontSize: 32,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  nameContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    marginBottom: Spacing.xs,
-  },
-  profileName: {
-    textAlign: "center",
-  },
-  verifiedIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  username: {
-    marginBottom: Spacing.md,
-  },
-  sectorBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    gap: Spacing.xs,
-    marginBottom: Spacing.md,
-  },
-  sectorText: {
-    fontSize: 14,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.xs,
-    marginBottom: Spacing.md,
-  },
-  locationText: {
-    fontSize: 14,
-  },
-  bio: {
-    textAlign: "center",
-    fontSize: 15,
-    lineHeight: 22,
-    paddingHorizontal: Spacing.lg,
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  statsRetry: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.xs,
-    marginTop: -Spacing.md,
-    marginBottom: Spacing.lg,
-    paddingVertical: Spacing.xs,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    ...Shadows.small,
-  },
-  statPressed: {
-    opacity: 0.8,
-  },
-  statLabel: {
-    marginTop: Spacing.xs,
-  },
-  actionButtons: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-  followButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.xl,
-    gap: Spacing.sm,
-    ...Shadows.small,
-  },
-  followButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  messageButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    gap: Spacing.sm,
-    ...Shadows.small,
-  },
-  messageButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  buttonPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
-  },
-  headerContainer: {
-    marginBottom: Spacing.md,
-  },
-  postsHeader: {
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.md,
-    borderTopWidth: 1,
-    marginTop: Spacing.xl,
-  },
-  postsTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  postCard: {
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderWidth: 1,
-    ...Shadows.small,
-  },
-  postHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.md,
-  },
-  postAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.sm,
-  },
-  postAvatarText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  postHeaderInfo: {
-    flex: 1,
-  },
-  postAuthor: {
-    fontSize: 15,
-    fontWeight: "600",
-    fontFamily: "DMSans_600SemiBold",
-  },
-  postTime: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  postContent: {
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: Spacing.md,
-  },
-  postImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.md,
-  },
-  postActions: {
-    flexDirection: "row",
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  leftActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-  },
-  rightActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  actionIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "transparent",
-  },
-  postAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  postActionText: {
-    fontSize: 13,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    paddingVertical: Spacing["2xl"],
-    gap: Spacing.md,
-  },
-  emptyText: {
-    fontSize: 15,
-  },
+  container: { flex: 1 },
+  sectorBadge: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 999, borderWidth: 1 },
+  sectorText: { fontSize: 13, lineHeight: 18, fontWeight: "600" },
+  statsRetry: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: Spacing.md, paddingVertical: Spacing.xs },
 });
