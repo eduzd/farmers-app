@@ -288,6 +288,9 @@ export default function UserProfileScreen() {
           author={{ id: user.id, name: user.name, initials: user.initials, avatar: user.avatar, avatarId: user.avatarId, avatarColor: user.avatarColor, verified: !!user.verified }}
           bn={bn}
           aboutRows={aboutRows}
+          followers={counts.state === "ok" ? counts.value.followers : undefined}
+          joinedAt={about.joinedAt}
+          isMe={isMe}
           emptyPosts={{
             title: bn ? "এখনো কোনো পোস্ট নেই" : "No posts yet",
             message: bn ? `${user.name} এখনো কিছু পোস্ট করেননি।` : `${user.name} hasn't posted anything yet.`,

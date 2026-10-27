@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { View, StyleSheet, Pressable, ActivityIndicator, Alert } from "react-native";
-import { Image } from "expo-image";
 import { useNavigation } from "@react-navigation/native";
 import * as Haptics from "expo-haptics";
 
@@ -9,6 +8,8 @@ import { AppIcon } from "@/components/icons/AppIcon";
 import { EmptyState } from "@/components/ui";
 import { ProfileTabs, ProfileTab } from "@/components/profile/ProfileTabs";
 import { ProfilePostCard } from "@/components/profile/ProfilePostCard";
+import { ProfileReviews, fetchSellerReviews, type SellerReviews } from "@/components/profile/ProfileReviews";
+import { ProfileAchievements, earnedCount, type AchievementInput } from "@/components/profile/ProfileAchievements";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/lib/authStore";
 import { fetchUserPosts } from "@/lib/liveDataApi";
@@ -22,7 +23,7 @@ export interface AboutRow {
   testID?: string;
 }
 
-type TabKey = "posts" | "photos" | "about";
+type TabKey = "posts" | "reviews" | "about" | "achievements";
 
 interface Props {
   userId?: string;
@@ -33,14 +34,21 @@ interface Props {
   reloadKey?: number | string;
   /** Words for an empty Posts tab. */
   emptyPosts: { title: string; message: string };
+  /** Follower count once loaded (for Achievements); undefined while loading or if it failed. */
+  followers?: number;
+  /** When they joined (for the one-year achievement). */
+  joinedAt?: string | null;
+  /** True on your own profile (changes the empty Reviews words). */
+  isMe?: boolean;
 }
 
 /**
  * Tabs and their content under a profile's header: Posts (their real posts from the server),
- * Photos (the pictures from those posts, in a grid) and About (details). Used on your own
+ * Reviews (what buyers wrote about their products), About (details) and Achievements (badges worked out from their real posts, followers,
+ * verified tick and join date). Used on your own
  * profile and on everyone else's, so both look the same.
  */
-export function ProfileFeed({ userId, author, bn, aboutRows, reloadKey, emptyPosts }: Props) {
+export function ProfileFeed({ userId, author, bn, aboutRows, reloadKey, emptyPosts, followers, joinedAt, isMe }: Props) {
   const { theme } = useTheme();
   const navigation = useNavigation<any>();
   const [tab, setTab] = useState<TabKey>("posts");
@@ -70,12 +78,43 @@ export function ProfileFeed({ userId, author, bn, aboutRows, reloadKey, emptyPos
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, bn, reloadKey, retry]);
 
-  const photos = useMemo(() => posts.filter((p) => !!p.image), [posts]);
+  // Reviews buyers left on this person's products, loaded with the posts so the tab shows its count.
+  const [reviews, setReviews] = useState<SellerReviews | undefined>(undefined);
+  const [reviewsState, setReviewsState] = useState<"loading" | "ok" | "error">("loading");
+  const [reviewsRetry, setReviewsRetry] = useState(0);
+  useEffect(() => {
+    if (!userId) {
+      setReviews({ reviews: [], count: 0, average: 0 });
+      setReviewsState("ok");
+      return;
+    }
+    let alive = true;
+    setReviewsState((s) => (s === "ok" ? "ok" : "loading"));
+    fetchSellerReviews(userId)
+      .then((r) => {
+        if (!alive) return;
+        setReviews(r);
+        setReviewsState("ok");
+      })
+      .catch(() => alive && setReviewsState("error"));
+    return () => {
+      alive = false;
+    };
+  }, [userId, reloadKey, reviewsRetry]);
+
+  const achieveInput: AchievementInput = {
+    posts: state === "ok" ? posts : undefined,
+    followers,
+    verified: !!author.verified,
+    joinedAt,
+  };
+  const earned = earnedCount(achieveInput);
 
   const tabs: ProfileTab<TabKey>[] = [
     { key: "posts", label: L("Posts", "পোস্ট"), icon: "file-text", count: state === "ok" ? posts.length : undefined },
-    { key: "photos", label: L("Photos", "ছবি"), icon: "image", count: state === "ok" ? photos.length : undefined },
+    { key: "reviews", label: L("Reviews", "রিভিউ"), icon: "star", count: reviewsState === "ok" && reviews ? reviews.reviews.length : undefined },
     { key: "about", label: L("About", "পরিচিতি"), icon: "info" },
+    { key: "achievements", label: L("Achievements", "অর্জন"), icon: "award", count: earned },
   ];
 
   // Open the post as the server has it now (full details), falling back to what this list has.
@@ -146,22 +185,18 @@ export function ProfileFeed({ userId, author, bn, aboutRows, reloadKey, emptyPos
           )
         ) : null}
 
-        {tab === "photos" ? (
-          state !== "ok" ? (
-            loadingOrError
-          ) : photos.length === 0 ? (
-            <View testID="user-photos-empty">
-              <EmptyState icon="image" title={L("No photos yet", "এখনো কোনো ছবি নেই")} message={L("Photos from posts show up here.", "পোস্টের ছবি এখানে দেখা যাবে।")} />
-            </View>
-          ) : (
-            <View style={styles.grid} testID="user-photos-grid">
-              {photos.map((p) => (
-                <Pressable key={p.id} onPress={() => openPost(p)} style={styles.cell} testID={`user-photo-${p.id}`}>
-                  <Image source={{ uri: p.image }} style={[styles.cellImg, { backgroundColor: theme.backgroundSecondary }]} contentFit="cover" />
-                </Pressable>
-              ))}
-            </View>
-          )
+        {tab === "reviews" ? (
+          <ProfileReviews
+            state={reviewsState}
+            data={reviews}
+            bn={bn}
+            name={author.name}
+            isMe={isMe}
+            onRetry={() => {
+              setReviewsState("loading");
+              setReviewsRetry((n) => n + 1);
+            }}
+          />
         ) : null}
 
         {tab === "about" ? (
@@ -183,6 +218,13 @@ export function ProfileFeed({ userId, author, bn, aboutRows, reloadKey, emptyPos
             )}
           </View>
         ) : null}
+
+        {tab === "achievements" ? (
+          <>
+            {state === "error" ? loadingOrError : null}
+            <ProfileAchievements input={achieveInput} bn={bn} />
+          </>
+        ) : null}
       </View>
     </View>
   );
@@ -192,9 +234,6 @@ const styles = StyleSheet.create({
   body: { paddingTop: Spacing.lg },
   center: { alignItems: "center", paddingVertical: Spacing["2xl"] },
   retry: { flexDirection: "row", alignItems: "center", gap: 6, padding: Spacing.sm },
-  grid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: Spacing.lg, gap: 4 },
-  cell: { width: "32.6%", aspectRatio: 1, borderRadius: 8, overflow: "hidden" },
-  cellImg: { width: "100%", height: "100%" },
   aboutCard: { marginHorizontal: Spacing.lg, borderWidth: 1, borderRadius: 12, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.xs },
   aboutRow: { flexDirection: "row", alignItems: "center", gap: Spacing.md, paddingVertical: Spacing.md },
   aboutIcon: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center" },
