@@ -87,9 +87,10 @@ export const MayaColors: { light: ThemeColors; dark: ThemeColors } = {
   // Darker, low-glare surfaces in clear steps (page < card < raised), softened white text so it is
   // easy on the eyes, and every text/icon tone at 4.5:1 or more on the surfaces it sits on.
   dark: {
-    primary: MayaPalette.skyStrong,
+    // A touch deeper than the light-mode blue: less glare, and white button text reads clearly on it.
+    primary: "#2186DF",
     primaryTint: MayaPalette.sky,
-    primaryDark: "#1F86DB",
+    primaryDark: "#1A75C4",
     primarySoft: "#132A40",
     accent: "#FF6EC4",
     accentSoft: "#3D1631",

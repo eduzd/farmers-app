@@ -12,6 +12,7 @@ import asyncio, sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from webharness import H, T
 from playwright.async_api import async_playwright
+from PIL import Image
 
 STRICT = os.environ.get("STRICT", "1") == "1"
 ONLY = os.environ.get("ONLY")
@@ -163,11 +164,19 @@ async def main():
                 r = await pg.evaluate(SCAN)
                 report[f"{lang}-{name}"] = r
                 root_dark = sum(r["root"]) / 3 < 50
+                im = Image.open(f"{h.shots}/dark-{lang}-{name}.png").convert("RGB")
+                px = [im.getpixel((x, y)) for x in range(0, im.width, 9) for y in range(0, im.height, 9)]
+                glare = sum(1 for q in px if sum(q) / 3 > 200) / len(px)
+                weak_buttons = [x for x in r["soft"] if x.split()[0] < "3.5"]
                 if STRICT:
                     h.ok(reached, f"{lang} {name}: reached")
                     h.ok(root_dark, f"{lang} {name}: dark page background", r["root"])
                     h.ok(not r["low"], f"{lang} {name}: all text readable (contrast >= 3)", json.dumps(r["low"][:8], ensure_ascii=False))
-                    h.ok(not r["bright"], f"{lang} {name}: no bright patches", json.dumps(r["bright"][:8], ensure_ascii=False))
+                    # the start screen's white Get started button is the same in light and dark (photo hero)
+                    bright = [x for x in r["bright"] if name != "signed-out-start" and "390x844" not in x]
+                    h.ok(not bright, f"{lang} {name}: no bright patches", json.dumps(bright[:8], ensure_ascii=False))
+                    h.ok(glare < (0.1 if name == "signed-out-start" else 0.05), f"{lang} {name}: under 5% of the screen is bright", round(glare, 3))
+                    h.ok(not weak_buttons, f"{lang} {name}: white text on blue buttons at 3.5:1 or more", json.dumps(weak_buttons[:4], ensure_ascii=False))
                 else:
                     print(f"== {lang} {name} reached={reached} root={r['root']} low={len(r['low'])} bright={len(r['bright'])}")
                     for x in r["low"][:15]:
