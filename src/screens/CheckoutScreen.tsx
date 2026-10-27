@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, TextInput, Pressable, Modal, ActivityIndicator, Alert, ScrollView } from "react-native";
+import { View, StyleSheet, TextInput, Pressable, Modal, ActivityIndicator, Alert, ScrollView, Image } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -10,7 +11,7 @@ import * as Clipboard from "expo-clipboard";
 import { ThemedText } from "@/components/ThemedText";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
+import { Spacing, BorderRadius, Shadows } from "@/constants/theme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useCartStore, cartRule, nextQty, canStepUp } from "@/lib/cartStore";
 import { amountText, perUnitText, totalContentText } from "@shared/selling";
@@ -418,19 +419,59 @@ export default function CheckoutScreen() {
   const money = (n: number) => `৳${(Math.round(n * 100) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
   const freeLeft = method === "home" && quote.deliveryFee > 0 ? quote.freeDeliveryOver - quote.subtotal : 0;
 
-  const card = [styles.section, { backgroundColor: theme.white, borderColor: theme.cardBorder }];
-  const input = [styles.input, { backgroundColor: theme.backgroundRoot, color: theme.text, borderColor: theme.inputBorder }];
+  // ---------- progress (redesign: numbered steps + live progress bar) ----------
+  const addrDone = items.length > 0 && formValid && contactOk;
+  const deliveryDone = addrDone && zoneOk;
+  const payDone = deliveryDone && payOk;
+  const reviewDone = canPlace;
+  const STEPS = [
+    { key: "address", en: "Address", bn: "ঠিকানা", done: addrDone },
+    { key: "delivery", en: "Delivery", bn: "ডেলিভারি", done: deliveryDone },
+    { key: "payment", en: "Payment", bn: "পেমেন্ট", done: payDone },
+    { key: "review", en: "Review", bn: "যাচাই", done: reviewDone },
+  ];
+  const currentStep = Math.max(0, STEPS.findIndex((x) => !x.done));
+  const itemCount = items.length;
+  const missing: { testHint: boolean; text: string } | null =
+    items.length === 0
+      ? { testHint: false, text: isBn ? "কার্ট খালি" : "Your cart is empty" }
+      : !formValid
+        ? { testHint: false, text: isBn ? "ডেলিভারির ঠিকানা লিখুন" : "Add your delivery address" }
+        : !contactOk
+          ? { testHint: true, text: tr("Add a valid contact number") }
+          : !zoneOk
+            ? { testHint: false, text: isBn ? "ডেলিভারি এলাকা বেছে নিন" : "Choose your delivery area" }
+            : !payOk
+              ? { testHint: false, text: payment === "rocket" ? (isBn ? "রকেট নম্বর আর TrxID লিখুন" : "Add your Rocket number and TrxID") : isBn ? "পেমেন্ট পদ্ধতি বেছে নিন" : "Choose a payment method" }
+              : quote.stockErrors.length || (quote.itemErrors || []).length
+                ? { testHint: false, text: isBn ? "কিছু পণ্যে সমস্যা আছে, নিচে দেখুন" : "Some items need a fix, see below" }
+                : null;
+
+  const card = [styles.section, { backgroundColor: theme.white }, Shadows.small];
+  const input = [styles.input, { backgroundColor: theme.backgroundSecondary, color: theme.text, borderColor: "transparent" }];
   const chip = (active: boolean, disabled = false) => [
     styles.chip,
-    { backgroundColor: active ? theme.primary : theme.card, borderColor: active ? theme.primary : theme.cardBorder, opacity: disabled ? 0.5 : 1 },
+    { backgroundColor: active ? theme.primary : theme.backgroundSecondary, borderColor: active ? theme.primary : "transparent", opacity: disabled ? 0.5 : 1 },
   ];
-  const chipText = (active: boolean) => [styles.chipText, { color: active ? "#FFFFFF" : theme.text }];
-  const Header = ({ icon, title }: { icon: any; title: string }) => (
+  const chipText = (active: boolean) => [styles.chipText, { color: active ? "#FFFFFF" : theme.text, fontWeight: active ? ("700" as const) : ("500" as const) }];
+  const Header = ({ icon, title, step, done, sub }: { icon: any; title: string; step?: number; done?: boolean; sub?: string }) => (
     <View style={styles.sectionHeader}>
-      <AppIcon name={icon} size={18} color={theme.primary} />
-      <ThemedText type="h4" style={{ color: theme.text, flex: 1 }}>
-        {title}
-      </ThemedText>
+      {step ? (
+        <View style={[styles.stepBadge, { backgroundColor: done ? theme.primary : theme.primarySoft }]}>
+          {done ? <Feather name="check" size={14} color="#FFFFFF" /> : <ThemedText style={{ color: theme.primary, fontWeight: "800", fontSize: 13 }}>{isBn ? "০১২৩৪৫৬৭৮৯"[step] : step}</ThemedText>}
+        </View>
+      ) : (
+        <View style={[styles.iconBadge, { backgroundColor: theme.primarySoft }]}>
+          <AppIcon name={icon} size={15} color={theme.primary} />
+        </View>
+      )}
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <ThemedText type="h4" style={{ color: theme.text }}>
+          {title}
+        </ThemedText>
+        {sub ? <ThemedText style={{ color: theme.textSecondary, fontSize: 12, marginTop: 1 }}>{sub}</ThemedText> : null}
+      </View>
+      {step ? <AppIcon name={icon} size={18} color={done ? theme.primary : theme.textTertiary} /> : null}
     </View>
   );
 
@@ -438,8 +479,64 @@ export default function CheckoutScreen() {
     <View style={[styles.container, { backgroundColor: theme.backgroundRoot }]}>
       <KeyboardAwareScrollViewCompat contentContainerStyle={[styles.scrollContent, { paddingTop: Spacing.md, paddingBottom: 140 + insets.bottom }]} showsVerticalScrollIndicator={false}>
         <View style={styles.inner}>
+          {/* Progress */}
+          <View testID="checkout-progress" style={[styles.progressCard, { backgroundColor: theme.white }, Shadows.small]}>
+            <View style={styles.progressTop}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <ThemedText style={{ color: theme.textSecondary, fontSize: 12, fontWeight: "600", letterSpacing: 0.3 }}>
+                  {isBn ? `ধাপ ${"০১২৩৪৫৬৭৮৯"[Math.min(currentStep + 1, 4)]} / ৪` : `STEP ${Math.min(currentStep + 1, 4)} OF 4`}
+                </ThemedText>
+                <ThemedText type="h3" style={{ color: theme.text }}>{isBn ? "অর্ডার সম্পূর্ণ করুন" : "Complete your order"}</ThemedText>
+              </View>
+              <View style={[styles.totalPill, { backgroundColor: theme.primarySoft }]}>
+                <Feather name="shopping-bag" size={13} color={theme.primary} />
+                <ThemedText style={{ color: theme.primary, fontWeight: "800", fontSize: 13 }}>{quoting ? "…" : money(quote.total)}</ThemedText>
+              </View>
+            </View>
+            <View style={styles.stepsRow}>
+              {STEPS.map((st, idx) => {
+                const active = idx === currentStep && !st.done;
+                return (
+                  <View key={st.key} style={styles.stepCol} testID={`checkout-step-${st.key}${st.done ? "-done" : ""}`}>
+                    <View style={[styles.stepBar, { backgroundColor: st.done ? theme.primary : active ? theme.accent : theme.backgroundTertiary }]} />
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                      {st.done ? <Feather name="check-circle" size={12} color={theme.primary} /> : null}
+                      <ThemedText numberOfLines={1} style={{ fontSize: 12, fontWeight: st.done || active ? "700" : "500", color: st.done ? theme.primary : active ? theme.text : theme.textTertiary }}>
+                        {isBn ? st.bn : st.en}
+                      </ThemedText>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+            {items.length ? (
+              <Pressable testID="checkout-items-strip" onPress={() => navigation.navigate("Cart" as any)} style={[styles.itemsStrip, { backgroundColor: theme.backgroundRoot }]}>
+                <View style={{ flexDirection: "row" }}>
+                  {items.slice(0, 4).map((i, idx) => (
+                    <View key={i.id} style={[styles.thumbStack, { marginLeft: idx ? -12 : 0, borderColor: theme.white, backgroundColor: theme.primarySoft, zIndex: 10 - idx }]}>
+                      {i.image ? <Image source={{ uri: i.image }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : <Feather name="package" size={16} color={theme.primary} />}
+                    </View>
+                  ))}
+                  {items.length > 4 ? (
+                    <View style={[styles.thumbStack, { marginLeft: -12, borderColor: theme.white, backgroundColor: theme.primary }]}>
+                      <ThemedText style={{ color: "#FFFFFF", fontWeight: "800", fontSize: 12 }}>+{items.length - 4}</ThemedText>
+                    </View>
+                  ) : null}
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <ThemedText style={{ color: theme.text, fontWeight: "700", fontSize: 14 }} numberOfLines={1}>
+                    {isBn ? `${itemCount.toLocaleString("bn-BD")}টি পণ্য` : `${itemCount} ${itemCount === 1 ? "item" : "items"}`}
+                  </ThemedText>
+                  <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={1}>{items.map((i) => i.name).join(", ")}</ThemedText>
+                </View>
+                <ThemedText style={{ color: theme.primary, fontWeight: "700", fontSize: 13 }}>{isBn ? "কার্ট" : "Cart"}</ThemedText>
+                <Feather name="chevron-right" size={16} color={theme.primary} />
+              </Pressable>
+            ) : null}
+          </View>
+
           {!loggedIn ? (
-            <View testID="checkout-guest-note" style={[card, { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: theme.primarySoft, borderColor: theme.primarySoft }]}>
+            <View testID="checkout-guest-note" style={[styles.section, { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: theme.primarySoft }]}>
               <Feather name="user-check" size={18} color={theme.primary} />
               <ThemedText style={{ color: theme.text, flex: 1, fontSize: 13 }}>
                 {isBn ? "অ্যাকাউন্ট ছাড়াই অর্ডার করছেন। শুধু নাম, ফোন নম্বর আর ঠিকানা দিন।" : "You're ordering without an account. Just add your name, phone and address."}
@@ -451,7 +548,7 @@ export default function CheckoutScreen() {
           ) : null}
           {/* Address */}
           <View style={card}>
-            <Header icon="map-pin" title={tr("Delivery address")} />
+            <Header icon="map-pin" step={1} done={formValid && items.length > 0} title={tr("Delivery address")} sub={isBn ? "কোথায় পৌঁছে দেব" : "Where should we bring it?"} />
             {savedAddrs.length > 0 ? (
               <View style={styles.rowWrap}>
                 <Pressable style={chip(!useNew)} onPress={() => setUseNew(false)}>
@@ -466,7 +563,7 @@ export default function CheckoutScreen() {
             ) : null}
 
             {usingSaved && selectedAddr ? (
-              <Pressable style={[styles.savedCard, { borderColor: theme.primary, backgroundColor: theme.backgroundRoot }]} onPress={() => setAddrModal(true)}>
+              <Pressable style={[styles.savedCard, { borderColor: theme.primary, backgroundColor: theme.primarySoft }]} onPress={() => setAddrModal(true)}>
                 <View style={{ flex: 1, minWidth: 0 }}>
                   <ThemedText style={[styles.bold, { color: theme.text }]}>
                     {selectedAddr.fullName} · {selectedAddr.phone}
@@ -523,7 +620,7 @@ export default function CheckoutScreen() {
 
           {/* Contact for this order */}
           <View style={card} testID="checkout-contact">
-            <Header icon="phone" title={tr("Contact number")} />
+            <Header icon="phone" step={2} done={contactOk} title={tr("Contact number")} />
             <ThemedText style={{ color: theme.textSecondary, fontSize: 12, marginBottom: Spacing.sm }}>
               {tr("The seller and delivery person will call this number.")}
             </ThemedText>
@@ -583,7 +680,7 @@ export default function CheckoutScreen() {
 
           {/* Delivery method */}
           <View style={card}>
-            <Header icon="truck" title={tr("Delivery method")} />
+            <Header icon="truck" step={3} done={deliveryDone} title={tr("Delivery method")} />
             {quote.methods.map((m) => {
               const active = method === m.id;
               return (
@@ -608,9 +705,22 @@ export default function CheckoutScreen() {
               );
             })}
             {freeLeft > 0 ? (
-              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>
-                {tr("Add")} {money(freeLeft)} {tr("more for free home delivery")}
-              </ThemedText>
+              <View testID="free-delivery-meter" style={[styles.freeMeter, { backgroundColor: theme.accentSoft }]}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Feather name="gift" size={14} color={theme.accent} />
+                  <ThemedText style={{ color: theme.text, fontSize: 12.5, flex: 1 }}>
+                    {tr("Add")} <ThemedText style={{ color: theme.text, fontWeight: "800", fontSize: 12.5 }}>{money(freeLeft)}</ThemedText> {tr("more for free home delivery")}
+                  </ThemedText>
+                </View>
+                <View style={[styles.meterTrack, { backgroundColor: theme.white }]}>
+                  <LinearGradient
+                    colors={[theme.accent, theme.primary]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.meterFill, { width: `${Math.max(6, Math.min(100, (quote.subtotal / Math.max(1, quote.freeDeliveryOver)) * 100))}%` as any }]}
+                  />
+                </View>
+              </View>
             ) : null}
           </View>
 
@@ -691,7 +801,7 @@ export default function CheckoutScreen() {
 
           {/* Payment */}
           <View style={card}>
-            <Header icon="credit-card" title={tr("Payment Method")} />
+            <Header icon="credit-card" step={4} done={payDone} title={tr("Payment Method")} />
             {payMethods === null ? <ActivityIndicator color={theme.primary} style={{ marginVertical: Spacing.sm }} /> : null}
             {payMethods && payMethods.length === 0 ? (
               <ThemedText style={{ color: "#DC2626", fontSize: 13 }}>
@@ -800,14 +910,17 @@ export default function CheckoutScreen() {
 
           {/* Summary */}
           <View style={card}>
-            <Header icon="shopping-bag" title={tr("Order Summary")} />
+            <Header icon="shopping-bag" step={5} done={reviewDone} title={tr("Order Summary")} sub={isBn ? "অর্ডার দেওয়ার আগে একবার দেখে নিন" : "Check everything before you place the order"} />
             {items.map((i) => {
               const err = quote.stockErrors.find((e) => e.productId === i.productId);
               const itemErr = (quote.itemErrors || []).find((e) => e.productId === i.productId);
               return (
-                <View key={i.id} style={styles.summaryItem} testID={`summary-item-${i.productId}`}>
+                <View key={i.id} style={[styles.summaryItem, { borderBottomColor: theme.divider }]} testID={`summary-item-${i.productId}`}>
+                  <View style={[styles.summaryThumb, { backgroundColor: theme.primarySoft }]}>
+                    {i.image ? <Image source={{ uri: i.image }} style={StyleSheet.absoluteFill} resizeMode="cover" /> : <Feather name="package" size={18} color={theme.primary} />}
+                  </View>
                   <View style={{ flex: 1, minWidth: 0 }}>
-                    <ThemedText style={{ color: theme.text, fontSize: 14 }} numberOfLines={1}>{i.name}</ThemedText>
+                    <ThemedText style={{ color: theme.text, fontSize: 14, fontWeight: "600" }} numberOfLines={2}>{i.name}</ThemedText>
                     {i.options && Object.keys(i.options).length ? (
                       <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={2}>
                         {Object.entries(i.options).map(([k, v]) => `${k}: ${v}`).join(" · ")}
@@ -826,7 +939,7 @@ export default function CheckoutScreen() {
                   </View>
                   <View style={{ alignItems: "flex-end", gap: 6 }}>
                     <ThemedText style={{ color: theme.text, fontWeight: "600" }}>{money(i.price * i.quantity)}</ThemedText>
-                    <View style={[styles.stepper, { borderColor: theme.inputBorder }]}>
+                    <View style={[styles.stepper, { borderColor: "transparent", backgroundColor: theme.backgroundSecondary }]}>
                       <Pressable testID={`qty-minus-${i.productId}`} hitSlop={6} style={styles.stepBtn} onPress={() => (nextQty(i, -1) === 0 ? removeItem(i.id) : updateQuantity(i.id, nextQty(i, -1)))}>
                         <AppIcon name={nextQty(i, -1) === 0 ? "trash-2" : "minus"} size={14} color={nextQty(i, -1) === 0 ? "#DC2626" : theme.text} />
                       </Pressable>
@@ -854,38 +967,60 @@ export default function CheckoutScreen() {
                 <ThemedText style={{ color: theme.success || theme.primary }}>−{money(quote.discount)}</ThemedText>
               </View>
             ) : null}
-            <View style={[styles.summaryRow, { marginTop: Spacing.xs }]}>
+            <View style={[styles.summaryRow, styles.totalRow, { backgroundColor: theme.primarySoft }]}>
               <ThemedText type="h4" style={{ color: theme.text }}>{tr("Total")}</ThemedText>
-              <ThemedText type="h4" style={{ color: theme.primary }}>{money(quote.total)}</ThemedText>
+              <ThemedText type="h3" style={{ color: theme.primary }}>{money(quote.total)}</ThemedText>
             </View>
           </View>
         </View>
       </KeyboardAwareScrollViewCompat>
 
-      <View style={[styles.footer, { backgroundColor: theme.white, borderTopColor: theme.cardBorder, paddingBottom: insets.bottom + Spacing.md }]}>
-        <View style={[styles.inner, styles.footerInner]}>
-          <View style={{ flexShrink: 1, minWidth: 0 }}>
-            {!contactOk && items.length > 0 ? (
-              <ThemedText testID="checkout-hint" style={{ color: "#DC2626", fontSize: 11 }} numberOfLines={1}>{tr("Add a valid contact number")}</ThemedText>
-            ) : null}
-            <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>{tr("Total")}</ThemedText>
-            <ThemedText type="h4" style={{ color: theme.text }}>{quoting ? "…" : money(quote.total)}</ThemedText>
+      <View style={[styles.footer, { backgroundColor: theme.white, paddingBottom: insets.bottom + Spacing.md }, Shadows.large]}>
+        <View style={styles.inner}>
+          {missing ? (
+            <View style={[styles.hintRow, { backgroundColor: theme.accentSoft }]}>
+              <Feather name="info" size={13} color={theme.warning} />
+              <ThemedText testID={missing.testHint ? "checkout-hint" : "checkout-next"} style={{ color: theme.text, fontSize: 12, flex: 1 }} numberOfLines={1}>{missing.text}</ThemedText>
+            </View>
+          ) : null}
+          <View style={styles.footerInner}>
+            <View style={{ flexShrink: 1, minWidth: 0 }}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 12 }}>
+                {tr("Total")} · {isBn ? `${itemCount.toLocaleString("bn-BD")}টি পণ্য` : `${itemCount} ${itemCount === 1 ? "item" : "items"}`}
+              </ThemedText>
+              <ThemedText type="h3" style={{ color: theme.text }}>{quoting ? "…" : money(quote.total)}</ThemedText>
+              {quote.discount > 0 ? (
+                <ThemedText style={{ color: theme.success, fontSize: 11, fontWeight: "700" }}>{isBn ? `${money(quote.discount)} সাশ্রয়` : `You save ${money(quote.discount)}`}</ThemedText>
+              ) : quote.deliveryFee === 0 && method !== "pickup" ? (
+                <ThemedText style={{ color: theme.success, fontSize: 11, fontWeight: "700" }}>{isBn ? "ফ্রি ডেলিভারি" : "Free delivery"}</ThemedText>
+              ) : null}
+            </View>
+            <Pressable testID="button-place-order" disabled={!canPlace} onPress={handlePlaceOrder} style={({ pressed }) => [styles.placeBtnWrap, { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}>
+              <LinearGradient
+                colors={canPlace ? [theme.primary, theme.primaryTint] : [theme.textTertiary, theme.textTertiary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.placeBtn}
+              >
+                {isProcessing ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                    <Feather name={payment === "rocket" ? "smartphone" : "lock"} size={16} color="#FFFFFF" />
+                    <ThemedText style={styles.placeText} numberOfLines={1}>{tr("Place Order")}</ThemedText>
+                  </View>
+                )}
+              </LinearGradient>
+            </Pressable>
           </View>
-          <Pressable
-            testID="button-place-order"
-            style={[styles.placeBtn, { backgroundColor: canPlace ? theme.primary : theme.textSecondary }]}
-            disabled={!canPlace}
-            onPress={handlePlaceOrder}
-          >
-            {isProcessing ? <ActivityIndicator color="#FFFFFF" /> : <ThemedText style={styles.placeText} numberOfLines={1}>{tr("Place Order")}</ThemedText>}
-          </Pressable>
         </View>
       </View>
 
       {/* Saved address picker */}
-      <Modal visible={addrModal} transparent animationType="fade" onRequestClose={() => setAddrModal(false)}>
-        <Pressable style={styles.overlay} onPress={() => setAddrModal(false)}>
-          <Pressable style={[styles.modalCard, { backgroundColor: theme.white }]} onPress={() => {}}>
+      <Modal visible={addrModal} transparent animationType="slide" onRequestClose={() => setAddrModal(false)}>
+        <Pressable style={[styles.overlay, styles.sheetOverlay]} onPress={() => setAddrModal(false)}>
+          <Pressable style={[styles.sheet, { backgroundColor: theme.white, paddingBottom: insets.bottom + Spacing.lg }]} onPress={() => {}}>
+            <View style={[styles.sheetHandle, { backgroundColor: theme.backgroundTertiary }]} />
             <ThemedText type="h4" style={{ color: theme.text, marginBottom: Spacing.md }}>{tr("Choose an address")}</ThemedText>
             <ScrollView style={{ maxHeight: 420 }}>
               {savedAddrs.map((a) => (
@@ -912,13 +1047,17 @@ export default function CheckoutScreen() {
       <Modal visible={!!placed} transparent animationType="fade">
         <View style={styles.overlay}>
           <View style={[styles.modalCard, { backgroundColor: theme.white, alignItems: "center" }]}>
-            <View style={[styles.successIcon, { backgroundColor: `${theme.primary}20` }]}>
-              <Feather name="check" size={40} color={theme.primary} />
+            <View style={[styles.successRing, { backgroundColor: theme.primarySoft }]}>
+              <LinearGradient colors={[theme.primary, theme.primaryTint]} style={styles.successIcon}>
+                <Feather name="check" size={40} color="#FFFFFF" />
+              </LinearGradient>
             </View>
             <ThemedText type="h3" style={{ color: theme.text, textAlign: "center" }}>{tr("Order placed!")}</ThemedText>
-            <ThemedText style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs }}>
-              {tr("Order")} {placed?.id} · {placed ? money(placed.total) : ""}
-            </ThemedText>
+            <View style={[styles.orderChip, { backgroundColor: theme.backgroundSecondary }]}>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>
+                {tr("Order")} <ThemedText style={{ color: theme.text, fontWeight: "700", fontSize: 13 }}>{placed?.id}</ThemedText> · <ThemedText style={{ color: theme.primary, fontWeight: "800", fontSize: 13 }}>{placed ? money(placed.total) : ""}</ThemedText>
+              </ThemedText>
+            </View>
             <ThemedText style={{ color: theme.textSecondary, textAlign: "center", marginTop: Spacing.xs, fontSize: 13 }}>
               {method === "pickup"
                 ? tr("The seller will tell you when it's ready to pick up.")
@@ -937,7 +1076,7 @@ export default function CheckoutScreen() {
                   : "Ordered without an account. The shop may call you to confirm. Tap Track order to see its status any time."}
             </ThemedText>
             <Pressable
-              style={[styles.placeBtn, { backgroundColor: theme.primary, alignSelf: "stretch", marginTop: Spacing.lg }]}
+              style={[styles.modalBtn, { backgroundColor: theme.primary, marginTop: Spacing.lg }]}
               onPress={() => {
                 const id = placed!.id;
                 setPlaced(null);
@@ -948,7 +1087,7 @@ export default function CheckoutScreen() {
               <ThemedText style={styles.placeText}>{tr("Track order")}</ThemedText>
             </Pressable>
             <Pressable
-              style={[styles.placeBtn, { borderColor: theme.primary, borderWidth: 1, alignSelf: "stretch", marginTop: Spacing.sm }]}
+              style={[styles.modalBtn, { backgroundColor: theme.primarySoft, marginTop: Spacing.sm }]}
               onPress={() => {
                 setPlaced(null);
                 if (!loggedIn) navigation.navigate("ShopPage", undefined as any);
@@ -968,8 +1107,31 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { paddingHorizontal: Spacing.lg },
   inner: { width: "100%", maxWidth: 760, alignSelf: "center" },
-  section: { borderRadius: BorderRadius.md, padding: Spacing.lg, marginBottom: Spacing.md, borderWidth: 1 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginBottom: Spacing.md },
+  section: { borderRadius: BorderRadius.xl, padding: Spacing.lg, marginBottom: Spacing.md },
+  sectionHeader: { flexDirection: "row", alignItems: "center", gap: Spacing.md, marginBottom: Spacing.md },
+  stepBadge: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  iconBadge: { width: 28, height: 28, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+  progressCard: { borderRadius: BorderRadius["2xl"], padding: Spacing.lg, marginBottom: Spacing.md, gap: Spacing.md },
+  progressTop: { flexDirection: "row", alignItems: "center", gap: Spacing.md },
+  totalPill: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: BorderRadius.full },
+  stepsRow: { flexDirection: "row", gap: 6 },
+  stepCol: { flex: 1, minWidth: 0, gap: 6 },
+  stepBar: { height: 5, borderRadius: 3 },
+  itemsStrip: { flexDirection: "row", alignItems: "center", gap: Spacing.md, padding: Spacing.sm, paddingRight: Spacing.md, borderRadius: BorderRadius.lg },
+  thumbStack: { width: 40, height: 40, borderRadius: 12, borderWidth: 2, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  summaryThumb: { width: 54, height: 54, borderRadius: 14, overflow: "hidden", alignItems: "center", justifyContent: "center" },
+  totalRow: { marginTop: Spacing.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.md, borderRadius: BorderRadius.lg, marginBottom: 0 },
+  hintRow: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: BorderRadius.sm, marginBottom: Spacing.sm },
+  placeBtnWrap: { borderRadius: BorderRadius.full, overflow: "hidden", minWidth: 170 },
+  modalBtn: { height: 50, borderRadius: BorderRadius.full, alignItems: "center", justifyContent: "center", alignSelf: "stretch" },
+  freeMeter: { borderRadius: BorderRadius.md, padding: Spacing.md, gap: 8, marginTop: Spacing.xs },
+  meterTrack: { height: 8, borderRadius: 4, overflow: "hidden" },
+  meterFill: { height: 8, borderRadius: 4 },
+  sheetOverlay: { justifyContent: "flex-end", padding: 0 },
+  sheet: { width: "100%", maxWidth: 760, alignSelf: "center", borderTopLeftRadius: BorderRadius["2xl"], borderTopRightRadius: BorderRadius["2xl"], padding: Spacing.lg, paddingTop: Spacing.sm },
+  sheetHandle: { width: 44, height: 5, borderRadius: 3, alignSelf: "center", marginBottom: Spacing.md },
+  successRing: { width: 104, height: 104, borderRadius: 52, alignItems: "center", justifyContent: "center", marginBottom: Spacing.md },
+  orderChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: BorderRadius.full, marginTop: Spacing.sm },
   rowWrap: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.sm },
   chip: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: Spacing.md, paddingVertical: 8, borderRadius: BorderRadius.full, borderWidth: 1,
     // Uniform tab size: never squeezed by its neighbours or its label length.
@@ -979,30 +1141,30 @@ const styles = StyleSheet.create({
     justifyContent: "center",
  },
   chipText: { fontSize: 13, fontWeight: "500" },
-  savedCard: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, padding: Spacing.md, borderRadius: BorderRadius.md, borderWidth: 1.5, marginTop: Spacing.md },
+  savedCard: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, padding: Spacing.md, borderRadius: BorderRadius.lg, borderWidth: 1.5, marginTop: Spacing.md },
   bold: { fontWeight: "600", fontSize: 14 },
   formRow: { flexDirection: "row", flexWrap: "wrap", gap: Spacing.md },
   formCol: { flexGrow: 1, flexBasis: 220, minWidth: 0, marginBottom: Spacing.md },
   label: { fontSize: 13, fontWeight: "500", marginBottom: Spacing.xs },
-  input: { height: 46, paddingHorizontal: Spacing.md, fontSize: 15, borderWidth: 1, borderRadius: BorderRadius.sm },
+  input: { height: 48, paddingHorizontal: Spacing.md, fontSize: 15, borderWidth: 1.5, borderRadius: BorderRadius.md },
   textArea: { height: 80, paddingTop: Spacing.sm },
   checkRow: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginTop: Spacing.sm },
-  option: { flexDirection: "row", alignItems: "center", gap: Spacing.md, padding: Spacing.md, borderRadius: BorderRadius.md, borderWidth: 1.5, marginBottom: Spacing.sm },
+  option: { flexDirection: "row", alignItems: "center", gap: Spacing.md, padding: Spacing.md, borderRadius: BorderRadius.lg, borderWidth: 1.5, marginBottom: Spacing.sm },
   radioOuter: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   radioInner: { width: 10, height: 10, borderRadius: 5 },
   couponRow: { flexDirection: "row", gap: Spacing.sm, alignItems: "center" },
-  applyBtn: { height: 46, paddingHorizontal: Spacing.lg, borderRadius: BorderRadius.sm, alignItems: "center", justifyContent: "center" },
+  applyBtn: { height: 48, paddingHorizontal: Spacing.lg, borderRadius: BorderRadius.md, alignItems: "center", justifyContent: "center" },
   couponChip: { borderWidth: 1, borderStyle: "dashed", borderRadius: BorderRadius.sm, paddingHorizontal: Spacing.sm, paddingVertical: 6, flexBasis: 150, flexGrow: 1, minWidth: 0 },
-  summaryItem: { flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginBottom: Spacing.sm },
+  summaryItem: { flexDirection: "row", alignItems: "center", gap: Spacing.md, paddingVertical: Spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth },
   stepper: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: BorderRadius.full, paddingHorizontal: 4, paddingVertical: 2 },
   stepBtn: { width: 26, height: 26, alignItems: "center", justifyContent: "center" },
   summaryRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6, gap: Spacing.sm },
   divider: { height: 1, marginVertical: Spacing.sm },
-  footer: { position: "absolute", left: 0, right: 0, bottom: 0, borderTopWidth: 1, paddingTop: Spacing.md, paddingHorizontal: Spacing.lg },
+  footer: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: Spacing.md, paddingHorizontal: Spacing.lg, borderTopLeftRadius: BorderRadius.xl, borderTopRightRadius: BorderRadius.xl },
   footerInner: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: Spacing.md },
-  placeBtn: { height: 50, paddingHorizontal: Spacing.xl, borderRadius: BorderRadius.full, alignItems: "center", justifyContent: "center", minWidth: 150 },
+  placeBtn: { height: 52, paddingHorizontal: Spacing.xl, borderRadius: BorderRadius.full, alignItems: "center", justifyContent: "center" },
   placeText: { color: "#FFFFFF", fontWeight: "700", fontSize: 16 },
   overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", alignItems: "center", justifyContent: "center", padding: Spacing.lg },
-  modalCard: { width: "100%", maxWidth: 420, borderRadius: BorderRadius.lg, padding: Spacing.xl },
+  modalCard: { width: "100%", maxWidth: 420, borderRadius: BorderRadius["2xl"], padding: Spacing.xl },
   successIcon: { width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center", marginBottom: Spacing.md },
 });
