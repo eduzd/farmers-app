@@ -4,7 +4,8 @@
 
 - A plain farmer (not allowed to start rooms) sees the filter icon and no voice room icon.
 - Someone allowed (admin, then a farmer the admin picks) sees a mic icon just left of the filter, same row, same size.
-- Tapping it opens the New room page, the same page and title as the card's "Start a room" button.
+- The old "Start a room" button under the Voice rooms card is gone (card stays and still opens Voice rooms).
+- Tapping the icon opens the New room page.
 - From there the room starts like before (Let's start! -> the room).
 - The filter icon still opens the filter sheet. English + Bangla, phone widths and a computer width.
 - No page errors and nothing wider than the screen.
@@ -148,6 +149,8 @@ const { PGlite } = require('@electric-sql/pglite');
             check(key, await visible(fpg.locator(fil_sel)) is not None, "farmer sees the filter icon")
             check(key, await visible(fpg.locator(mic_sel)) is None, "plain farmer has no voice room icon")
             check(key, await width(fpg) <= w, "Connect fits the screen (farmer)")
+            check(key, await visible(fpg.get_by_test_id("connect-voice-rooms")) is not None, "Voice rooms card is still on Connect (farmer)")
+            check(key, await fpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room under the card (farmer)")
             await fpg.screenshot(path=f"{SHOTS}/{key}-1-farmer-connect.png")
 
             # Admin: icon next to the filter
@@ -173,12 +176,23 @@ const { PGlite } = require('@electric-sql/pglite');
             check(key, await width(hpg) <= w, "Connect fits the screen (admin)")
             await hpg.screenshot(path=f"{SHOTS}/{key}-2-admin-connect.png")
 
-            # Card's "Start a room" -> reference page
-            await hpg.get_by_test_id("connect-voice-room-create").first.click()
+            # The old "Start a room" button under the Voice rooms card is gone; the card itself stays
+            card = await visible(hpg.get_by_test_id("connect-voice-rooms"))
+            check(key, card is not None, "Voice rooms card is still on Connect (admin)")
+            check(key, await hpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room button under the card (admin)")
+            if card:
+                ct = await card.inner_text()
+                check(key, "Start a room" not in ct and "\u09a8\u09a4\u09c1\u09a8 \u09b0\u09c1\u09ae \u09b6\u09c1\u09b0\u09c1 \u0995\u09b0\u09c1\u09a8" not in ct, "card has no Start a room text (admin)")
+                cb = await card.bounding_box()
+                check(key, cb["height"] < 90, f"card is one row now ({cb['height']:.0f}px)")
+            await card.screenshot(path=f"{SHOTS}/{key}-2b-admin-card.png") if card else None
+            await hpg.get_by_test_id("connect-voice-rooms-open").first.click()
             await hpg.wait_for_timeout(1500)
-            ref_route, ref_title = await route(hpg), await header_title(hpg)
+            check(key, await route(hpg) == "VoiceRooms", "tapping the card still opens Voice rooms")
             await hpg.evaluate("()=>window.__nav.goBack()")
             await hpg.wait_for_timeout(1500)
+            ref_route, ref_title = "VoiceRoomCreate", ("\u09a8\u09a4\u09c1\u09a8 \u09b0\u09c1\u09ae" if lang == "bn" else "New room")
+            mic = await visible(hpg.locator(mic_sel))
 
             # New icon -> same page
             if mic:
@@ -187,7 +201,7 @@ const { PGlite } = require('@electric-sql/pglite');
                 r = await route(hpg)
                 t = await header_title(hpg)
                 check(key, r == "VoiceRoomCreate" and r == ref_route, f"icon opens the New room page ({r}, card: {ref_route})")
-                check(key, t == ref_title and bool(t), f"same page title as Start a room ({t!r} vs {ref_title!r})")
+                check(key, bool(t), f"New room page has its title ({t!r})")
                 check(key, await hpg.get_by_test_id("voice-room-title").count() > 0, "New room form is there")
                 await hpg.screenshot(path=f"{SHOTS}/{key}-3-new-room-from-icon.png")
                 if w == 390:
@@ -220,6 +234,7 @@ const { PGlite } = require('@electric-sql/pglite');
             await go(fpg, "Main", {"screen": "Connect"})
             fm = await visible(fpg.locator(mic_sel))
             check(key, fm is not None, "picked farmer sees the voice room icon")
+            check(key, await fpg.get_by_test_id("connect-voice-room-create").count() == 0, "picked farmer has no Start a room under the card")
             if fm:
                 await fm.click()
                 await fpg.wait_for_timeout(1500)

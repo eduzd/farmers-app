@@ -85,7 +85,7 @@ export default function ConnectScreen() {
   const onlineSet = useOnlineSet();
   const activeFilters = (field ? 1 : 0) + (onlineOnly ? 1 : 0);
 
-  // Same rule as the Voice rooms card's "Start a room": the server decides who may start a room
+  // The only Connect entry point for starting a room. The server decides who may start a room
   // (admin > Voice rooms). People who can't start one don't see the mic icon at all.
   const [canCreateRoom, setCanCreateRoom] = useState(false);
   useFocusEffect(
@@ -104,7 +104,7 @@ export default function ConnectScreen() {
     }, [signedInId]),
   );
 
-  // Title bar, top right: the new voice room icon (opens the same New room page as "Start a room"),
+  // Title bar, top right: the voice room icon (opens the New room page),
   // then the filter icon (specialty + "online now").
   useLayoutEffect(() => {
     navigation.setOptions({
