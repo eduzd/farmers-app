@@ -11,6 +11,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { AdCarousel, AdCard } from "@/components/AdCarousel";
 import { useCarouselAds, adsToCards } from "@/lib/carouselAds";
 import { HelpFab } from "@/components/HelpButton";
+import { VoiceRoomTile } from "@/components/VoiceRoomTile";
 import { fetchVoicePermission } from "@/lib/voiceRoomApi";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 import { useTheme } from "@/hooks/useTheme";
@@ -70,6 +71,7 @@ export default function ConnectScreen() {
   const signedInId = useAuthStore((s) => s.user?.id);
   const adminAds = useCarouselAds("connect");
 
+  const [topRowWidth, setTopRowWidth] = useState(0);
   const [fields, setFields] = useState<Field[]>([]);
   const [field, setField] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -279,8 +281,15 @@ export default function ConnectScreen() {
 
   const header = (
     <View>
-      <View style={{ marginBottom: Spacing.md }}>
-        <AdCarousel cards={adCards} loading={adminAds === null} testID="connect-carousel" />
+      <View
+        style={{ marginBottom: Spacing.md, flexDirection: "row", alignItems: "flex-start", gap: Spacing.sm }}
+        onLayout={(e) => setTopRowWidth(Math.round(e.nativeEvent.layout.width))}
+        testID="connect-top-row"
+      >
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <AdCarousel cards={adCards} loading={adminAds === null} testID="connect-carousel" />
+        </View>
+        {topRowWidth ? <VoiceRoomTile width={Math.max(96, Math.min(176, Math.round(topRowWidth * 0.28)))} /> : null}
       </View>
       <View style={[styles.search, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}>
         <Feather name="search" size={16} color={theme.textSecondary} />
