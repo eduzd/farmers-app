@@ -33,9 +33,8 @@ export function HeaderTitle({ title, useCommunity = false }: HeaderTitleProps) {
   };
 
   const displayTitle = useCommunity ? getCommunityName() : title;
-  const primaryColor = useCommunity && activeCommunity?.theme
-    ? (isDark ? activeCommunity.theme.dark.primary : activeCommunity.theme.light.primary)
-    : theme.primary;
+  // Every community uses the Maya colours, so the badge follows the app theme.
+  const primaryColor = theme.primary;
 
   return (
     <View style={styles.container}>
