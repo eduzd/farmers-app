@@ -397,7 +397,7 @@ export default function MarketScreen() {
             <ThemedText style={styles.stockBadgeText}>{tr("Out of stock")}</ThemedText>
           </View>
         ) : item.quantity !== undefined && item.quantity !== null && Number(item.quantity) > 0 && Number(item.quantity) < 10 ? (
-          <View style={[styles.stockBadge, { backgroundColor: "#EA8A0C" }]}>
+          <View style={[styles.stockBadge, { backgroundColor: "#B25E09" }]}>
             <ThemedText style={styles.stockBadgeText}>{tr("Only")} {item.quantity} {tr("left")}</ThemedText>
           </View>
         ) : null}
@@ -667,7 +667,7 @@ export default function MarketScreen() {
                 <ThemedText style={styles.quickFeatureText}>{isBn ? "নিলাম" : "Auction"}</ThemedText>
               </Pressable>
               <Pressable
-                style={[styles.quickFeatureBtn, { backgroundColor: "#EA8A0C" }]}
+                style={[styles.quickFeatureBtn, { backgroundColor: "#202936" }]}
                 onPress={() => {
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   navigation.navigate("BulkOrder" as any);

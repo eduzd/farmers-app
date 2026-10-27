@@ -79,16 +79,17 @@ export const MayaColors: { light: ThemeColors; dark: ThemeColors } = {
   },
   // maya.net has no dark mode; this keeps the same navy / sky / pink voice on dark surfaces.
   dark: {
-    primary: MayaPalette.sky,
-    primaryTint: "#6CC6FF",
-    primaryDark: "#1E8FD9",
+    // A deeper sky so white button text stays readable.
+    primary: "#1F86DB",
+    primaryTint: MayaPalette.sky,
+    primaryDark: "#166BB3",
     primarySoft: "#132A3D",
     accent: "#FF6EC4",
     accentSoft: "#3A1430",
     text: "#EEF2F7",
     textSecondary: "#A9B1BD",
     textTertiary: "#76808D",
-    buttonText: "#0E131A",
+    buttonText: "#FFFFFF",
     tabIconDefault: "#76808D",
     tabIconSelected: MayaPalette.sky,
     link: "#6CC6FF",

@@ -37,6 +37,30 @@ BG_JS = """(needle) => {
 }"""
 
 
+CONTRAST_JS = """() => {
+  const lum = (c) => { const m = c.match(/[\\d.]+/g); if (!m) return null; const [r,g,b] = m.slice(0,3).map(Number).map(v => { v/=255; return v <= .03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4); }); return .2126*r + .7152*g + .0722*b; };
+  const alpha = (c) => { const m = c.match(/[\\d.]+/g); return m && m.length > 3 ? Number(m[3]) : 1; };
+  const out = [];
+  for (const e of document.querySelectorAll('div, span')) {
+    if (e.childElementCount || !e.textContent.trim() || !e.offsetWidth) continue;
+    const r = e.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) continue;
+    const fg = getComputedStyle(e).color; let p = e, bg = null;
+    while (p) { const b = getComputedStyle(p).backgroundColor; const gi = getComputedStyle(p).backgroundImage; if (gi && gi !== 'none') { bg = 'img'; break; } if (b && alpha(b) > 0.9) { bg = b; break; } p = p.parentElement; }
+    if (!bg || bg === 'img') continue;
+    const L1 = lum(fg), L2 = lum(bg); if (L1 == null || L2 == null) continue;
+    const cr = (Math.max(L1, L2) + .05) / (Math.min(L1, L2) + .05);
+    if (cr < 2.6) out.push(e.textContent.trim().slice(0, 30) + ' ' + fg + ' on ' + bg + ' ' + cr.toFixed(2));
+  }
+  return out.slice(0, 12);
+}"""
+
+
+async def low_contrast(pg, label):
+    bad = await pg.evaluate(CONTRAST_JS)
+    if bad:
+        print("LOWCONTRAST", label, bad)
+
+
 async def go(pg, route, params=None):
     await pg.evaluate("([r,p])=>window.__nav.navigate(r,p)", [route, params])
     await pg.wait_for_timeout(2500)
@@ -83,6 +107,7 @@ async def main():
             await go(pg, "Main", {"screen": "Market"})
             await pg.wait_for_timeout(1500)
             await pg.screenshot(path=f"{h.shots}/{tag}-01-market.png")
+            await low_contrast(pg, f"{tag} market")
             await pg.screenshot(path=f"{h.shots}/{tag}-01-market-full.png", full_page=True)
             title = "Marketplace" if lang == "en" else None
             if title:
@@ -98,11 +123,13 @@ async def main():
             await pg.goto(h.base + f"/shop/{shop['slug']}", wait_until="load")
             await pg.wait_for_timeout(3500)
             await pg.screenshot(path=f"{h.shots}/{tag}-02-shop.png")
+            await low_contrast(pg, f"{tag} shop")
             h.ok(await pg.get_by_text("Floating fish feed").count() > 0, f"{tag}: shop page shows products")
 
             await pg.goto(h.base + f"/product/{prods[0]['id']}", wait_until="load")
             await pg.wait_for_timeout(3500)
             await pg.screenshot(path=f"{h.shots}/{tag}-03-product.png")
+            await low_contrast(pg, f"{tag} product")
             add = pg.locator(T("product-add-to-cart"))
             if await add.count():
                 bg = await add.first.evaluate("e=>{let p=e;for(let i=0;i<4&&p;i++){const b=getComputedStyle(p).backgroundColor;if(b!=='rgba(0, 0, 0, 0)')return b;p=p.firstElementChild}return null}")
@@ -112,8 +139,10 @@ async def main():
                 await pg.wait_for_timeout(1500)
             await go(pg, "Cart")
             await pg.screenshot(path=f"{h.shots}/{tag}-04-cart.png")
+            await low_contrast(pg, f"{tag} cart")
             await go(pg, "Checkout")
             await pg.screenshot(path=f"{h.shots}/{tag}-05-checkout.png")
+            await low_contrast(pg, f"{tag} checkout")
             await pg.screenshot(path=f"{h.shots}/{tag}-05-checkout-full.png", full_page=True)
             h.ok(await h.no_overflow(pg), f"{tag}: checkout has no sideways overflow")
             if lang == "bn":
