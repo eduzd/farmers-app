@@ -264,19 +264,19 @@ export default function ProfileScreen() {
     navigation.setOptions({
       headerRight: () =>
         user ? (
-          <Pressable
-            testID="profile-more-button"
-            accessibilityRole="button"
-            accessibilityLabel={isBnHeader ? "আরও অপশন" : "More options"}
-            hitSlop={6}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-              setMenuOpen(true);
-            }}
-            style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", marginRight: Spacing.sm, backgroundColor: pressed ? theme.backgroundSecondary : "transparent" })}
-          >
-            <AppIcon name="more-vertical" size={22} color={theme.text} />
-          </Pressable>
+          // The redesign's three-dot menu (Share, Edit profile, Settings and the rest), drawn as the
+          // shared title-bar icon button so it matches the Market bell and cart.
+          <View testID="profile-more-button" style={{ marginRight: Spacing.lg }}>
+            <IconButton
+              icon="more-vertical"
+              tone="header"
+              accessibilityLabel={isBnHeader ? "আরও অপশন" : "More options"}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                setMenuOpen(true);
+              }}
+            />
+          </View>
         ) : null,
     } as any);
   }, [navigation, user?.id, isBnHeader, theme]);

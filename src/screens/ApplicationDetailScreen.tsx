@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     textAlign: "center",
-    lineHeight: 30,
+    lineHeight: 24,
     fontWeight: "400",
   },
   placeholder: {

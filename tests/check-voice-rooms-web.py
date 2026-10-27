@@ -136,14 +136,16 @@ const { PGlite } = require('@electric-sql/pglite');
             card = fpg.get_by_test_id("connect-voice-rooms")
             check(key, await card.is_visible(), "Connect shows the Voice rooms card")
             check(key, L["card"] in (await card.inner_text()), "card title")
-            check(key, await fpg.get_by_test_id("connect-voice-room-create").count() == 0, "plain farmer has no Start a room")
+            check(key, await fpg.get_by_test_id("connect-voice-room-create-icon").count() == 0, "plain farmer has no voice room icon")
+            check(key, await fpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room under the card")
             check(key, await width(fpg) <= w, "Connect fits the screen (farmer)")
 
-            # Admin host: Start a room -> New room -> Let's start!
+            # Admin host: voice room icon (title bar) -> New room -> Let's start!
             hctx, hpg, herrs = await open_app(b, boss, lang, w)
             await go(hpg, "Main", {"screen": "Connect"})
-            start_btn = hpg.get_by_test_id("connect-voice-room-create")
-            check(key, await start_btn.is_visible() and L["start"] in (await start_btn.inner_text()), "admin sees Start a room")
+            check(key, await hpg.get_by_test_id("connect-voice-room-create").count() == 0, "no Start a room under the card (admin)")
+            start_btn = hpg.get_by_test_id("connect-voice-room-create-icon").first
+            check(key, await start_btn.is_visible(), "admin sees the voice room icon")
             await hpg.screenshot(path=f"{SHOTS}/{key}-1-connect.png")
             await start_btn.click()
             await hpg.wait_for_timeout(1500)
@@ -235,7 +237,7 @@ const { PGlite } = require('@electric-sql/pglite');
             await fpg.reload(wait_until="networkidle")
             await fpg.wait_for_timeout(2500)
             await go(fpg, "Main", {"screen": "Connect"})
-            check(key, await fpg.get_by_test_id("connect-voice-room-create").count() > 0, "picked farmer sees Start a room")
+            check(key, await fpg.get_by_test_id("connect-voice-room-create-icon").count() > 0, "picked farmer sees the voice room icon")
             # reset for the next round
             api("DELETE", f"/api/admin/manage/voice-rooms/hosts/{farmer['user']['id']}", token=boss["token"])
             api("PUT", "/api/admin/manage/voice-rooms", {"who": "experts"}, boss["token"])

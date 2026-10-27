@@ -9,6 +9,7 @@ import * as Haptics from "expo-haptics";
 import { ThemedText } from "@/components/ThemedText";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing } from "@/constants/theme";
+import { IconButton } from "@/components/ui";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { PublicUser } from "@/lib/storage";
 
@@ -187,19 +188,17 @@ export default function UserProfileScreen() {
     navigation.setOptions({
       headerRight: () =>
         isMe || missing ? null : (
-          <Pressable
-            testID="user-profile-more"
-            accessibilityRole="button"
-            accessibilityLabel={bn ? "আরও অপশন" : "More options"}
-            hitSlop={6}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-              setMenuOpen(true);
-            }}
-            style={({ pressed }) => ({ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", marginRight: Spacing.sm, backgroundColor: pressed ? theme.backgroundSecondary : "transparent" })}
-          >
-            <AppIcon name="more-vertical" size={22} color={theme.text} />
-          </Pressable>
+          <View testID="user-profile-more" style={{ marginRight: Spacing.lg }}>
+            <IconButton
+              icon="more-vertical"
+              tone="header"
+              accessibilityLabel={bn ? "আরও অপশন" : "More options"}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+                setMenuOpen(true);
+              }}
+            />
+          </View>
         ),
     } as any);
   }, [navigation, isMe, missing, bn, theme]);

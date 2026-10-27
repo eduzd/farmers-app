@@ -27,7 +27,7 @@ PAGES = [
     ("community", "/", [("tab", 0)], True),
     ("connect", "/", [("tab", 1)], True),
     ("voice-rooms", "/", [("tab", 1), ("tid", "connect-voice-rooms-open")], True),
-    ("voice-room-new", "/", [("tab", 1), ("tid", "connect-voice-room-create")], True),
+    ("voice-room-new", "/", [("tab", 1), ("tid", "connect-voice-room-create-icon")], True),
     ("market", "/", [("tab", 2)], True),
     ("market-notifications", "/", [("tab", 2), ("tid", "market-bell")], True),
     ("chats", "/", [("tab", 3)], True),

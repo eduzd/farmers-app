@@ -49,6 +49,12 @@ if os.environ.get("ONLY"):
     PAGES = [x for x in PAGES if x[0] in os.environ["ONLY"].split(",") + ["market"]]
 
 results = {}
+buttons = {}
+BTN = """() => [...document.querySelectorAll('[role=button]')].filter(e => { const r = e.getBoundingClientRect();
+  if (!r.width || r.top > 64 || r.bottom < 4 || r.left < 60 || r.width > 60) return false;
+  const at = document.elementFromPoint(r.left + r.width/2, r.top + r.height/2); return at && (e === at || e.contains(at));
+}).map(e => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e);
+  return {label: e.getAttribute('aria-label') || '', w: Math.round(r.width), h: Math.round(r.height), bw: s.borderTopWidth, bg: s.backgroundColor}; })"""
 
 
 async def main():
@@ -81,6 +87,8 @@ async def main():
                 items.sort(key=lambda i: -float(i["size"].replace("px", "")))
                 title = items[0] if items else None
                 results[(lang, name)] = title
+                buttons[(lang, name)] = await pg.evaluate(BTN)
+                print("BTN", lang, name, json.dumps(buttons[(lang, name)], ensure_ascii=False))
                 print(lang, name, json.dumps(title, ensure_ascii=False))
                 await ctx.close()
         await b.close()
@@ -98,6 +106,9 @@ async def main():
             h.ok(t["font"] == m["font"], f"{lang} {name}: same title font as Market", f"{t['font']} vs {m['font']}")
             h.ok(t["color"] == m["color"], f"{lang} {name}: same title colour as Market", f"{t['color']} vs {m['color']}")
             ts, ms = float(t["size"][:-2]), float(m["size"][:-2])
+            want = 40 if name == "calculate" else 44
+            for bt in buttons.get((l, name), []):
+                h.ok(bt["w"] == want and bt["h"] == want and bt["bw"] == "1px", f"{lang} {name}: title-bar button '{bt['label'][:20]}' is the Market style", json.dumps(bt))
             h.ok(abs(ts - ms) <= 2, f"{lang} {name}: title size within 2px of Market", f"{t['size']} vs {m['size']}")
 
 asyncio.run(main())

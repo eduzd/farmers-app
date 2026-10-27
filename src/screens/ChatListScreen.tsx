@@ -250,8 +250,7 @@ export default function ChatListScreen() {
         <View style={{ marginRight: Spacing.lg }} testID="messages-new-button">
           <IconButton
             icon="plus"
-            tone="primary"
-            size={38}
+            tone="header"
             accessibilityLabel={isBn ? "নতুন বার্তা" : "New message"}
             onPress={() => navigation.navigate("UserSearch")}
           />

@@ -1046,7 +1046,7 @@ export default function ChatScreen() {
         </Pressable>
         <View style={styles.headerRightContainer}>
           <Pressable
-            style={styles.headerButton}
+            style={[styles.headerButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
             onPress={handleVoiceCall}
             onLongPress={handlePhoneCall}
             accessibilityRole="button"
@@ -1054,10 +1054,10 @@ export default function ChatScreen() {
             accessibilityHint="Long press for a normal phone call"
             testID="chat-call-button"
           >
-            {calling ? <ActivityIndicator size="small" color={theme.text} /> : <Feather name="phone" size={22} color={theme.text} />}
+            {calling ? <ActivityIndicator size="small" color={theme.text} /> : <Feather name="phone" size={20} color={theme.text} />}
           </Pressable>
-          <Pressable style={styles.headerButton} onPress={() => setShowOptionsMenu(true)} testID="dm-options-button">
-            <Feather name="more-vertical" size={22} color={theme.text} />
+          <Pressable style={[styles.headerButton, { backgroundColor: theme.card, borderColor: theme.cardBorder }]} onPress={() => setShowOptionsMenu(true)} testID="dm-options-button">
+            <Feather name="more-vertical" size={20} color={theme.text} />
           </Pressable>
         </View>
       </View>
@@ -1372,9 +1372,17 @@ const styles = StyleSheet.create({
   headerRightContainer: {
     flexDirection: "row",
     alignItems: "center",
+    gap: Spacing.sm,
+    marginRight: Spacing.sm,
   },
+  // Same title-bar icon button as the Market bell and cart.
   headerButton: {
-    padding: Spacing.sm,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
   },
   listContent: {
     paddingHorizontal: Spacing.lg,

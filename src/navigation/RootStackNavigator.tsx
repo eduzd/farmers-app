@@ -153,7 +153,7 @@ import FishDetailScreen from "@/screens/FishDetailScreen";
 import ProductLinkScreenBase from "@/screens/ProductLinkScreen";
 import GuestOrderScreenBase from "@/screens/GuestOrderScreen";
 import { withMayaScope } from "@/contexts/ThemeScope";
-import { MayaColors, MayaFontFamily } from "@/constants/mayaTheme";
+import { MayaColors, mayaPageTitleFont } from "@/constants/mayaTheme";
 
 // Marketplace screens use the Maya-style theme (colours, DM Sans, buttons, thin icons).
 // Wrapped once here at module level so the screens never remount.
@@ -364,10 +364,8 @@ export default function RootStackNavigator() {
   const mayaHeader = {
     headerStyle: { backgroundColor: maya.backgroundRoot },
     headerTintColor: maya.text,
-    // Anton has no Bengali glyphs, so Bangla titles use Hind Siliguri Bold.
-    headerTitleStyle: language === "bn"
-      ? { fontFamily: "HindSiliguri_700Bold", fontSize: 20, color: maya.text }
-      : { fontFamily: MayaFontFamily.display, fontSize: 22, color: maya.text },
+    // Same page-title style as every other page (Anton; Hind Siliguri Bold for Bangla).
+    headerTitleStyle: { ...mayaPageTitleFont(language, "stack"), color: maya.text },
     headerShadowVisible: false,
   } as const;
 
