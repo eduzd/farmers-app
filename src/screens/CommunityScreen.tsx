@@ -23,6 +23,7 @@ import { useCarouselAds, adsToCards } from "@/lib/carouselAds";
 import { Card, Button, IconButton, SectionHeader, EmptyState, PostSkeleton } from "@/components/ui";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius, FontFamily, Palette, Shadows } from "@/constants/theme";
+import { mayaPageTitleFont } from "@/constants/mayaTheme";
 import { RootStackParamList } from "@/navigation/RootStackNavigator";
 import { useCommunityStore, CommunityType } from "@/lib/communityStore";
 import { badgeKeyFor } from "@/constants/profileBadges";
@@ -475,7 +476,13 @@ export default function CommunityScreen() {
               <ThemedText type="small" muted numberOfLines={1}>
                 {greeting(isBn)}
               </ThemedText>
-              <ThemedText type="h4" numberOfLines={1}>
+              {/* Same title style as the Market page (Anton / Hind Siliguri Bold). */}
+              <ThemedText
+                type="h4"
+                numberOfLines={1}
+                testID="home-title"
+                style={{ ...mayaPageTitleFont(isBn ? "bn" : "en", "tab"), lineHeight: 30, fontWeight: "400" }}
+              >
                 {isBn ? "কৃষক বন্ধু" : "Farmers"}
               </ThemedText>
             </View>

@@ -10,7 +10,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { apiKeyManager } from "./services/apiKeyManager";
 import { db, dbReady } from "./db";
 import { apiUsageLogs, apiKeys, calcRecords } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import jwt from "jsonwebtoken";
 import { config } from "./config";
 import type { Request, Response } from "express";
@@ -658,6 +658,37 @@ Note: For accurate diagnosis, please consult with local agricultural professiona
     } catch (error) {
       console.error("Get calc records error:", error);
       res.status(500).json({ error: "Failed to get records" });
+    }
+  });
+
+  // A calculation deleted on the phone or website: remove this account's copy, matched by the
+  // device's own id (also catches an upload whose reply was lost) or the server id. Deleting
+  // something already gone is fine, so a retry after a dropped connection never fails.
+  app.delete("/api/calc-records/local/:localId", async (req, res) => {
+    try {
+      if (!db) {
+        return res.status(503).json({ error: "Database not available" });
+      }
+
+      const authUserId = calcRecordsUser(req, res);
+      if (!authUserId) return;
+
+      const localId = String(req.params.localId || "").slice(0, 200);
+      if (!localId) return res.status(400).json({ error: "Missing record id" });
+      const serverId = typeof req.query.serverId === "string" ? req.query.serverId.slice(0, 200) : "";
+
+      const match = serverId
+        ? or(eq(calcRecords.localId, localId), eq(calcRecords.id, localId), eq(calcRecords.id, serverId))
+        : or(eq(calcRecords.localId, localId), eq(calcRecords.id, localId));
+      const deleted = await db
+        .delete(calcRecords)
+        .where(and(eq(calcRecords.userId, authUserId), match))
+        .returning({ id: calcRecords.id });
+
+      res.json({ success: true, deleted: deleted.length });
+    } catch (error) {
+      console.error("Delete calc record error:", error);
+      res.status(500).json({ error: "Failed to delete record" });
     }
   });
 

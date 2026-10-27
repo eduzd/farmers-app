@@ -12,6 +12,7 @@ import { AdCarousel, AdCard } from "@/components/AdCarousel";
 import { useCarouselAds, adsToCards } from "@/lib/carouselAds";
 import { HelpFab } from "@/components/HelpButton";
 import { VoiceRoomConnectCard } from "@/components/VoiceRoomConnectCard";
+import { fetchVoicePermission } from "@/lib/voiceRoomApi";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -85,22 +86,55 @@ export default function ConnectScreen() {
   const onlineSet = useOnlineSet();
   const activeFilters = (field ? 1 : 0) + (onlineOnly ? 1 : 0);
 
-  // Filter icon in the title bar, top right: specialty + "online now".
+  // Same rule as the Voice rooms card's "Start a room": the server decides who may start a room
+  // (admin > Voice rooms). People who can't start one don't see the mic icon at all.
+  const [canCreateRoom, setCanCreateRoom] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      if (!isLoggedIn()) {
+        setCanCreateRoom(false);
+        return;
+      }
+      fetchVoicePermission()
+        .then((p) => alive && setCanCreateRoom(!!p.canCreate))
+        .catch(() => alive && setCanCreateRoom(false));
+      return () => {
+        alive = false;
+      };
+    }, [signedInId]),
+  );
+
+  // Title bar, top right: the new voice room icon (opens the same New room page as "Start a room"),
+  // then the filter icon (specialty + "online now").
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <View style={{ marginRight: Spacing.lg }} testID="connect-filter-button">
-          <IconButton
-            icon="sliders"
-            size={38}
-            tone={activeFilters ? "primary" : "surface"}
-            accessibilityLabel={bn ? "ফিল্টার" : "Filter"}
-            onPress={() => setFilterOpen(true)}
-          />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm, marginRight: Spacing.lg }}>
+          {canCreateRoom ? (
+            <View testID="connect-voice-room-create-icon">
+              <IconButton
+                icon="mic"
+                size={38}
+                tone="surface"
+                accessibilityLabel={bn ? "নতুন ভয়েস রুম শুরু করুন" : "Start a voice room"}
+                onPress={() => navigation.navigate("VoiceRoomCreate")}
+              />
+            </View>
+          ) : null}
+          <View testID="connect-filter-button">
+            <IconButton
+              icon="sliders"
+              size={38}
+              tone={activeFilters ? "primary" : "surface"}
+              accessibilityLabel={bn ? "ফিল্টার" : "Filter"}
+              onPress={() => setFilterOpen(true)}
+            />
+          </View>
         </View>
       ),
     } as any);
-  }, [navigation, activeFilters, bn]);
+  }, [navigation, activeFilters, bn, canCreateRoom]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 300);

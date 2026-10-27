@@ -153,8 +153,10 @@ export function SyncProvider({ children }: SyncProviderProps) {
     if (Platform.OS === 'web') {
       const handleOnline = () => {
         setIsOnline(true);
-        updatePendingCount().then(() => {
-          if (pendingCount > 0) triggerSync();
+        // Read the count fresh (the one in this closure can be stale), so saves and deletes
+        // made while offline go to the server as soon as the connection is back.
+        updatePendingCount().then(() => getPendingRecordsCount()).then((n) => {
+          if (n > 0) triggerSync();
         });
       };
       const handleOffline = () => setIsOnline(false);
