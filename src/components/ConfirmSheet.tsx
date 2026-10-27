@@ -169,7 +169,7 @@ export function ConfirmSheet({
       <View style={styles.root} testID={testID}>
         <Animated.View style={[StyleSheet.absoluteFill, { opacity: fade }]}>
           <Pressable
-            style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(0,0,0,0.62)" : "rgba(9,20,14,0.48)" }]}
+            style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(0,0,0,0.62)" : "rgba(20, 27, 38,0.48)" }]}
             onPress={requestClose}
             accessibilityRole="button"
             accessibilityLabel={buttons.find((b) => b.style === "cancel")?.text || "Close"}
@@ -185,7 +185,7 @@ export function ConfirmSheet({
               backgroundColor: theme.backgroundDefault,
               paddingBottom: Math.max(insets.bottom, 14) + 12 + 24,
               transform: [{ translateY }],
-              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(15,26,20,0.06)",
+              borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(32, 41, 54,0.06)",
             },
           ]}
         >

@@ -40,8 +40,8 @@ export interface AvatarOption {
 const BACKGROUNDS = [
   "#FFF1DE", "#E3F4FF", "#FCE7F3", "#D8FFF2", "#FEE2E2", 
   "#E0E7FF", "#CFFAFE", "#FDE68A", "#C7D2FE", "#B0FFE2",
-  "#FBCFE8", "#CFEBFF", "#FED7AA", "#DDD6FE", "#BBF7D0",
-  "#F5D0FE", "#99F6E4", "#FECACA", "#C4B5FD", "#6EE7B7",
+  "#FBCFE8", "#CFEBFF", "#FED7AA", "#DDD6FE", "#B0FFE2",
+  "#F5D0FE", "#D8FFF2", "#FECACA", "#C4B5FD", "#6EE7B7",
 ];
 
 export const AVATAR_OPTIONS: AvatarOption[] = Array.from({ length: 30 }, (_, i) => ({

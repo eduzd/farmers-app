@@ -100,7 +100,7 @@ export default function PriceAlertScreen() {
       >
         <Animated.View entering={FadeInUp.duration(400)}>
           <LinearGradient
-            colors={isDark ? ["#1e3a5f", "#202936"] : ["#E3F4FF", "#eff6ff"]}
+            colors={isDark ? ["#202936", "#202936"] : ["#E3F4FF", "#eff6ff"]}
             style={styles.infoCard}
           >
             <Feather name="bell" size={32} color={isDark ? "#60a5fa" : "#2E96EF"} />

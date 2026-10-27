@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   incomingBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(34, 197, 94, 0.2)",
+    backgroundColor: "rgba(0, 187, 119, 0.2)",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,

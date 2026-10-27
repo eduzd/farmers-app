@@ -452,7 +452,7 @@ export default function VoiceCallScreen() {
     <View style={[styles.container, { backgroundColor: isDark ? "#141B26" : "#f0f7ff" }]}>
       <LinearGradient
         colors={isDark 
-          ? ["#141B26", "#1e3a5f", "#141B26"] 
+          ? ["#141B26", "#202936", "#141B26"] 
           : ["#E3F4FF", "#CFEBFF", "#E3F4FF"]
         }
         style={StyleSheet.absoluteFill}

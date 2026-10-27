@@ -395,8 +395,8 @@ export default function FarmInventoryScreen() {
             <View style={[styles.alertCard, { backgroundColor: "#FFF3E0" }]}>
               <Feather name="alert-circle" size={20} color="#B25E09" />
               <View style={styles.alertContent}>
-                <ThemedText style={[styles.alertTitle, { color: "#E65100" }]}>স্টক সতর্কতা</ThemedText>
-                <ThemedText style={[styles.alertText, { color: "#E65100" }]}>
+                <ThemedText style={[styles.alertTitle, { color: "#B25E09" }]}>স্টক সতর্কতা</ThemedText>
+                <ThemedText style={[styles.alertText, { color: "#B25E09" }]}>
                   {lowStockItems.length} টি আইটেম কম স্টকে আছে
                 </ThemedText>
               </View>

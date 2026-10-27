@@ -44,7 +44,7 @@ const getTypeConfig = (type: string) => {
   const configs: Record<string, { color: string; label: string; icon: keyof typeof Feather.glyphMap }> = {
     freshwater: { color: "#2E96EF", label: "মিঠা পানি", icon: "droplet" },
     marine: { color: "#00BB77", label: "সমুদ্রের পানি", icon: "navigation" },
-    brackish: { color: "#009688", label: "লোনা পানি", icon: "anchor" },
+    brackish: { color: "#00BB77", label: "লোনা পানি", icon: "anchor" },
   };
   return configs[type] || configs.freshwater;
 };
@@ -220,7 +220,7 @@ export default function FishDetailScreen() {
               </ThemedText>
             </Section>
 
-            <Section title="পানির গুণাগুণ" icon="droplet" iconColor="#03A9F4" delay={200}>
+            <Section title="পানির গুণাগুণ" icon="droplet" iconColor="#39B1FE" delay={200}>
               <ThemedText style={[styles.sectionContent, { color: theme.text }]}>
                 {fish.waterQuality}
               </ThemedText>

@@ -86,7 +86,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     title: 'Fish Farming',
     titleBn: 'মাছ চাষ',
     description: 'মাছের তালিকা ও চাষ পদ্ধতি',
-    color: '#0EA5E9',
+    color: '#39B1FE',
     gradient: ['#E0F2FE', '#CFEBFF'],
   },
 ];

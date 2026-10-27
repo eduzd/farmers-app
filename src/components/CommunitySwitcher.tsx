@@ -58,7 +58,7 @@ export const CommunitySwitcher = forwardRef<CommunitySwitcherRef, CommunitySwitc
         ]}
         onPress={() => setModalVisible(true)}
       >
-        <View style={[compact ? styles.communityIconCompact : styles.communityIcon, { backgroundColor: activeCommunity.theme?.light?.primary || theme.primary }]}>
+        <View style={[compact ? styles.communityIconCompact : styles.communityIcon, { backgroundColor: theme.primary }]}>
           <ThemedText style={compact ? styles.communityIconTextCompact : styles.communityIconText}>
             {getCommunityName(activeCommunity)?.charAt(0).toUpperCase()}
           </ThemedText>
@@ -108,7 +108,7 @@ export const CommunitySwitcher = forwardRef<CommunitySwitcherRef, CommunitySwitc
                     <View
                       style={[
                         styles.itemIcon,
-                        { backgroundColor: item.theme?.light?.primary || theme.primary },
+                        { backgroundColor: theme.primary },
                       ]}
                     >
                       <ThemedText style={styles.itemIconText}>

@@ -62,7 +62,7 @@ export const COMMUNITY_TOOLS: Record<CommunityType, CommunityToolCategory[]> = {
       titleBn: "AI ও স্মার্ট টুলস",
       titleEn: "AI & Smart Tools",
       tools: [
-        { id: "smart-farming", titleBn: "স্মার্ট ফার্মিং", titleEn: "Smart Farming", subtitleBn: "AI কৃষি সহায়ক", subtitleEn: "AI Agriculture Assistant", icon: "cpu", colors: ["#00C853", "#00A843"], badge: "NEW", badgeColor: "#00C853", screen: "SmartFarming" },
+        { id: "smart-farming", titleBn: "স্মার্ট ফার্মিং", titleEn: "Smart Farming", subtitleBn: "AI কৃষি সহায়ক", subtitleEn: "AI Agriculture Assistant", icon: "cpu", colors: ["#00BB77", "#00A843"], badge: "NEW", badgeColor: "#00BB77", screen: "SmartFarming" },
         { id: "ai-assistant", titleBn: "AI সহায়ক", titleEn: "AI Assistant", subtitleBn: "কৃষি প্রশ্নের উত্তর পান", subtitleEn: "Get answers to farming questions", icon: "message-square", colors: ["#3D38D0", "#3D38D0"], screen: "AIAssistant" },
         { id: "disease-detector", titleBn: "রোগ শনাক্ত", titleEn: "Disease Detector", subtitleBn: "ছবি দিয়ে রোগ চিহ্নিত করুন", subtitleEn: "Identify diseases with photos", icon: "search", colors: ["#FF4BB7", "#FF4BB7"], badge: "AI", badgeColor: "#FF4BB7", screen: "DiseaseDetector" },
         { id: "weather-forecast", titleBn: "আবহাওয়া পূর্বাভাস", titleEn: "Weather Forecast", subtitleBn: "৭ দিনের আবহাওয়া", subtitleEn: "7-day weather forecast", icon: "cloud", colors: ["#2E96EF", "#2E96EF"], screen: "WeatherForecast" },
@@ -88,7 +88,7 @@ export const COMMUNITY_TOOLS: Record<CommunityType, CommunityToolCategory[]> = {
       tools: [
         { id: "farm-inventory", titleBn: "ইনভেন্টরি", titleEn: "Inventory", subtitleBn: "বীজ, সার, যন্ত্রপাতি ট্র্যাক করুন", subtitleEn: "Track seeds, fertilizers, equipment", icon: "package", colors: ["#2E96EF", "#39B1FE"], badge: "NEW", badgeColor: "#2E96EF", screen: "FarmInventory" },
         { id: "livestock-tracker", titleBn: "পশু ট্র্যাকার", titleEn: "Livestock Tracker", subtitleBn: "গরু, ছাগল, হাঁস-মুরগি ট্র্যাক", subtitleEn: "Track cattle, goats, poultry", icon: "heart", colors: ["#795548", "#5D4037"], badge: "NEW", badgeColor: "#795548", screen: "LivestockTracker" },
-        { id: "product-trace", titleBn: "পণ্য ট্রেসেবিলিটি", titleEn: "Product Traceability", subtitleBn: "QR কোড দিয়ে পণ্যের উৎস জানুন", subtitleEn: "Track product origin with QR code", icon: "box", colors: ["#00875A", "#004D40"], badge: "NEW", badgeColor: "#00875A", screen: "ProductTraceability" },
+        { id: "product-trace", titleBn: "পণ্য ট্রেসেবিলিটি", titleEn: "Product Traceability", subtitleBn: "QR কোড দিয়ে পণ্যের উৎস জানুন", subtitleEn: "Track product origin with QR code", icon: "box", colors: ["#00875A", "#202936"], badge: "NEW", badgeColor: "#00875A", screen: "ProductTraceability" },
         { id: "farm-analytics", titleBn: "বিশ্লেষণ", titleEn: "Analytics", subtitleBn: "খামারের পারফরম্যান্স দেখুন", subtitleEn: "View farm performance", icon: "bar-chart-2", colors: ["#3D38D0", "#3D38D0"], screen: "FarmAnalytics" },
       ],
     },

@@ -13,7 +13,7 @@ export const S = {
   primarySoft: "#EFF6FF",
   success: "#00875A",
   successSoft: "#D8FFF2",
-  warning: "#D97706",
+  warning: "#B25E09",
   warningSoft: "#FFFBEB",
   danger: "#DA2F2F",
   dangerSoft: "#FEF2F2",

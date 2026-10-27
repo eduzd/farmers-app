@@ -67,8 +67,8 @@ export const DEFAULT_COMMUNITIES: Community[] = [
     nameEn: "Education",
     icon: "book",
     theme: {
-      light: { primary: "#2E96EF", accent: "#64B5F6", bg: "#F3FAFF", text: "#202936", card: "#FFFFFF", border: "#D6EAF8" },
-      dark: { primary: "#42A5F5", accent: "#64B5F6", bg: "#121212", text: "#FFFFFF", card: "#1E1E1E", border: "#202936" },
+      light: { primary: "#2E96EF", accent: "#39B1FE", bg: "#F3FAFF", text: "#202936", card: "#FFFFFF", border: "#D6EAF8" },
+      dark: { primary: "#42A5F5", accent: "#39B1FE", bg: "#121212", text: "#FFFFFF", card: "#1E1E1E", border: "#202936" },
     },
     status: "active",
     visibility: "public",

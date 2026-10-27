@@ -78,7 +78,7 @@ export default function LandingScreen() {
         resizeMode="cover"
       />
       <LinearGradient
-        colors={["rgba(6,24,14,0.35)", "rgba(6,24,14,0.55)", "rgba(6,24,14,0.96)"]}
+        colors={["rgba(20, 27, 38,0.35)", "rgba(20, 27, 38,0.55)", "rgba(20, 27, 38,0.96)"]}
         locations={[0, 0.45, 0.85]}
         style={StyleSheet.absoluteFill}
       />
@@ -214,7 +214,7 @@ export default function LandingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#06180E" },
+  container: { flex: 1, backgroundColor: "#141B26" },
   content: {
     flexGrow: 1,
     paddingHorizontal: Spacing["2xl"],
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: "#06180E",
+    borderColor: "#141B26",
   },
   trustText: { color: "rgba(255,255,255,0.7)", fontSize: 12, lineHeight: 16, fontFamily: FontFamily.medium },
 });

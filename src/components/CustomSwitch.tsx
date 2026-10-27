@@ -44,7 +44,7 @@ export function CustomSwitch({
     const backgroundColor = interpolateColor(
       progress.value,
       [0, 1],
-      ["#D4E8D6", "#00897B"]
+      ["#D4E8D6", "#00BB77"]
     );
     return { backgroundColor };
   });

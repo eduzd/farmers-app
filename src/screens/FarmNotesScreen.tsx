@@ -229,7 +229,7 @@ export default function FarmNotesScreen() {
           <AppIcon
             name={item.isPinned ? "bookmark" : "bookmark"}
             size={16}
-            color={item.isPinned ? "#FF6B6B" : "#999"}
+            color={item.isPinned ? "#DA2F2F" : "#999"}
           />
         </Pressable>
       </View>

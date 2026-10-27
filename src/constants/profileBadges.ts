@@ -29,7 +29,7 @@ export const PROFILE_BADGES: Record<string, ProfileBadge> = {
   fish: { icon: "fish", color: "#39B1FE", label: "Fish farming", labelBn: "মৎস্য চাষ", shape: "circle" },
   livestock: { icon: "sheep", color: "#B25E09", label: "Livestock", labelBn: "পশুপালন", shape: "circle" },
   organic: { icon: "leaf", color: "#00BB77", label: "Organic farming", labelBn: "জৈব চাষ", shape: "circle" },
-  mixed: { icon: "barn", color: "#4F46E5", label: "Mixed farming", labelBn: "মিশ্র চাষ", shape: "circle" },
+  mixed: { icon: "barn", color: "#3D38D0", label: "Mixed farming", labelBn: "মিশ্র চাষ", shape: "circle" },
   farmer: { icon: "sprout", color: "#202936", label: "Farmer", labelBn: "কৃষক", shape: "circle" },
   buyer: { icon: "cart", color: "#00BB77", label: "Buyer", labelBn: "ক্রেতা", shape: "square" },
   company: { icon: "office-building", color: "#4A5568", label: "Company", labelBn: "প্রতিষ্ঠান", shape: "square" },

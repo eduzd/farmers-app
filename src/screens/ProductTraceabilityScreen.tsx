@@ -204,7 +204,7 @@ export default function ProductTraceabilityScreen() {
       >
         <Animated.View entering={FadeIn.duration(400)}>
           <LinearGradient
-            colors={["#00875A", "#004D40"]}
+            colors={["#00875A", "#202936"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.headerCard}

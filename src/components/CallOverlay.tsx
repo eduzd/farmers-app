@@ -22,7 +22,7 @@ interface Props {
 
 const GREEN = "#00BB77";
 const RED = "#DA2F2F";
-const BG = "#0F2E1D";
+const BG = "#202936";
 
 function endText(reason?: string): string {
   switch (reason) {
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#1F5133",
+    backgroundColor: "#253247",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",

@@ -200,7 +200,7 @@ export default function WeatherForecastScreen() {
   const getWeatherGradient = (): [string, string] => {
     const hour = new Date().getHours();
     if (hour >= 6 && hour < 12) return ['#FCD34D', '#B25E09'];
-    if (hour >= 12 && hour < 17) return ['#38BDF8', '#0EA5E9'];
+    if (hour >= 12 && hour < 17) return ['#38BDF8', '#39B1FE'];
     if (hour >= 17 && hour < 20) return ['#FB923C', '#DA2F2F'];
     return ['#1E3A8A', '#312E81'];
   };

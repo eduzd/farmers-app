@@ -632,7 +632,7 @@ export default function ProfileScreen() {
                             style={[styles.savedPostActionBtn, { backgroundColor: "#E0E7FF" }]}
                             onPress={() => handleViewPost(post)}
                           >
-                            <Feather name="eye" size={18} color="#4F46E5" />
+                            <Feather name="eye" size={18} color="#3D38D0" />
                           </Pressable>
                           <Pressable 
                             style={[styles.savedPostActionBtn, { backgroundColor: "#FFE4E6" }]}
