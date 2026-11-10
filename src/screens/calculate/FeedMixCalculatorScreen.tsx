@@ -324,8 +324,8 @@ export function FeedMixCalculatorScreen() {
   const selectIngredient = (index: number, name: string, protein: number | undefined, custom: boolean) => {
     const patch: Partial<FeedMixRow> = { name };
     if (protein !== undefined) patch.protein = String(protein);
-    else if (custom) {
-      // A typed name has no reference value: clear a value left from the previous list item.
+    else {
+      // No reference value (typed name, amino acid): clear a value left from the previous list item.
       const prev = rows[index];
       const prevRef = referenceProtein(prev.name);
       if (prevRef !== undefined && prev.protein === String(prevRef)) patch.protein = '';
@@ -493,6 +493,8 @@ export function FeedMixCalculatorScreen() {
         message = L('এআই চেক এখনো চালু হয়নি। অ্যাডমিন AI সেটিংসে একটি AI কী যোগ করে মডেল বাছলে এটি কাজ করবে। আপনার হিসাব ঠিকই আছে।', "The AI check isn't set up yet. It will work once the admin adds an AI key and picks a model in AI settings. Your calculation is fine.");
       } else if (code === 'offline') {
         message = L('ইন্টারনেট নেই। এআই চেকের জন্য ইন্টারনেট লাগে; হিসাব ও সংরক্ষণ ইন্টারনেট ছাড়াই চলে।', 'No internet. The AI check needs internet; the calculation and saving work without it.');
+      } else if (code === 'bad_request' && msg) {
+        message = msg;
       } else if (code === 'rate_limited' || code === 'daily_limit') {
         message = msg || L('এখন অনেক অনুরোধ। একটু পরে আবার চেষ্টা করুন।', 'Too many requests right now. Please try again a little later.');
       } else {
