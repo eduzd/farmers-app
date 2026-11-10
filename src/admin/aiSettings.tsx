@@ -394,7 +394,7 @@ function ModelsSection({ d, setData, flash }: SectionProps) {
                     <Text testID={`ai-feature-${name}-model-value`} style={{ color: v.model ? theme.text : theme.textTertiary, fontWeight: v.model ? "700" : "500", fontSize: 14 }} numberOfLines={1}>
                       {v.model || (borrow ? `${L("Same as help chat", "সহায়ক চ্যাটের মতো")}${f.chat.model ? `: ${f.chat.model}` : ""}` : L("Choose a model", "মডেল বেছে নিন"))}
                     </Text>
-                    <Text style={{ color: theme.textSecondary, fontSize: 11.5 }} numberOfLines={1}>
+                    <Text style={{ color: theme.textSecondary, fontSize: 11.5 }} numberOfLines={2}>
                       {lk ? `${L("From", "উৎস")}: ${keyLabel(L, lk.label)}${list?.models.length ? ` · ${L(String(list.models.length), bnNum(String(list.models.length)))} ${L("models", "মডেল")}` : ""}` : ""}
                     </Text>
                   </View>

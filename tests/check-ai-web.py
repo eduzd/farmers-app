@@ -15,7 +15,9 @@ from webharness import H as Harness, T
 from layout_audit import audit as _audit, report
 # Words the fake AI service answers with (always English); the app's own words are still checked.
 FAKE = ["Check the water", "Add lime", "Stop feeding", "Model: ", "Tilapia", "White spot", "Ichthyophthirius", "Small white spots",
-        "Parasite", "Salt bath", "Quarantine", "Lymphocystis", "My pond is green"]
+        "Parasite", "Salt bath", "Quarantine", "Lymphocystis", "My pond is green",
+        # model names from the fake key's list are product names, the same in both languages
+        "acme/seer-pro", "Seer Pro", "200K", "meta/llama-text", "Llama text", "gpt-4o-mini", "gemini-2.5-flash"]
 audit = lambda pg, lang: _audit(pg, lang, FAKE)
 
 GW_PORT = 8950
@@ -27,7 +29,9 @@ class GW_(BaseHTTPRequestHandler):
     def _json(self, code, o):
         b = json.dumps(o).encode(); self.send_response(code); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b)
     def do_GET(self):
-        if self.path == "/v1/models": return self._json(200, {"data": [{"id": "gpt-4o-mini"}, {"id": "gpt-4o"}, {"id": "gemini-2.5-flash"}]})
+        if self.path == "/v1/models": return self._json(200, {"data": [{"id": "gpt-4o-mini"}, {"id": "gpt-4o"}, {"id": "gemini-2.5-flash"},
+            {"id": "acme/seer-pro", "name": "Seer Pro", "context_length": 200000, "architecture": {"input_modalities": ["text", "image"]}},
+            {"id": "meta/llama-text", "name": "Llama text", "architecture": {"input_modalities": ["text"]}, "pricing": {"prompt": "0", "completion": "0"}}]})
         self._json(404, {})
     def do_POST(self):
         n = int(self.headers.get("Content-Length") or 0); raw = self.rfile.read(n)
@@ -92,6 +96,29 @@ async def admin_flow(b, lang, w, dark):
         await pg.locator(T("ai-vprov-0-edit")).first.click(); await pg.wait_for_timeout(1000)
         if await h.wait_for(pg, "ai-vprov-sheet", 5000):
             report(ok, f"{tag} voice sheet", await audit(pg, lang), dark=dark)
+            if await pg.locator(T("ai-sheet-close")).count(): await pg.locator(T("ai-sheet-close")).first.click(); await pg.wait_for_timeout(600)
+    if await pg.locator(T("ai-feature-disease-pick")).count():
+        await pg.locator(T("ai-feature-disease-pick")).first.click(); await pg.wait_for_timeout(1500)
+        if await h.wait_for(pg, "ai-model-sheet", 5000):
+            ok(await pg.locator(T("ai-model-row")).count() >= 1, f"{tag}: model list sheet opens with models")
+            await pg.screenshot(path=f"/tmp/aiweb-models-{lang}-{w}-{'d' if dark else 'l'}.png")
+            report(ok, f"{tag} model list", await audit(pg, lang), dark=dark)
+    await ctx.close()
+
+async def default_lang(b):
+    """A first visit with nothing saved opens in Bangla; picking English is remembered."""
+    tag = "fresh visit"
+    ctx = await b.new_context(viewport={"width": 390, "height": 860})
+    pg = await ctx.new_page()
+    await pg.goto(h.base + "/"); await pg.wait_for_timeout(6000)
+    body = await pg.inner_text("body")
+    bn = sum(1 for c in body if "\u0980" <= c <= "\u09ff"); en = sum(1 for c in body if c.isascii() and c.isalpha())
+    ok(bn > en, f"{tag}: first screen is in Bangla", f"bn={bn} en={en} :: {body[:160]}")
+    ok((await pg.evaluate("()=>localStorage.getItem('language')")) in (None, "bn"), f"{tag}: nothing forced into storage")
+    await pg.evaluate("()=>localStorage.setItem('language','en')"); await pg.reload(); await pg.wait_for_timeout(5000)
+    body = await pg.inner_text("body")
+    bn = sum(1 for c in body if "\u0980" <= c <= "\u09ff"); en = sum(1 for c in body if c.isascii() and c.isalpha())
+    ok(en > bn, f"{tag}: a saved English choice is kept", f"bn={bn} en={en} :: {body[:160]}")
     await ctx.close()
 
 async def admin_setup(b):
@@ -114,10 +141,33 @@ async def admin_setup(b):
     await pg.locator(T("ai-key-0-test")).first.click(); await pg.wait_for_timeout(2500)
     card = await h.text(pg, "ai-key-0")
     ok(card and ("Working" in card or "Connected" in card), f"{tag}: Test shows the key works", card)
-    # models
-    await pg.locator(T("ai-feature-chat-model")).first.fill("gpt-4o-mini")
-    await pg.locator(T("ai-feature-disease-model")).first.fill("gpt-4o")
-    await pg.locator(T("ai-feature-voice-model")).first.fill("gemini-2.5-flash")
+    # models: picked from the key's own model list
+    async def pick(feature, search, model_id, vision_only=False):
+        await pg.locator(T(f"ai-feature-{feature}-pick")).first.click(); await pg.wait_for_timeout(1500)
+        ok(await h.wait_for(pg, "ai-model-sheet"), f"{tag}: {feature}: model list opens")
+        n = await pg.locator(T("ai-model-row")).count()
+        ok(n >= (2 if vision_only else 5), f"{tag}: {feature}: list shows the key's models", n)
+        if vision_only:
+            names = " ".join(await pg.locator(T("ai-model-row")).all_inner_texts())
+            ok("seer-pro" in names and "llama-text" not in names, f"{tag}: disease opens with only photo-reading models", names[:200])
+        await pg.locator(T("ai-models-search")).first.fill(search); await pg.wait_for_timeout(400)
+        rows = pg.locator(T("ai-model-row"))
+        ok(await rows.count() >= 1, f"{tag}: {feature}: search finds {search}")
+        await rows.filter(has_text=model_id).first.click(); await pg.wait_for_timeout(500)
+        v = await h.text(pg, f"ai-feature-{feature}-model-value")
+        ok(v and model_id in v, f"{tag}: {feature}: chosen model shows on the card", v)
+    await pick("chat", "mini", "gpt-4o-mini")
+    await pick("disease", "seer", "acme/seer-pro", vision_only=True)
+    dv = await h.text(pg, "ai-feature-disease")
+    ok(dv and "Sees photos" in dv, f"{tag}: disease card says the model sees photos", dv)
+    # manual fallback
+    await pg.locator(T("ai-feature-voice-pick")).first.click(); await pg.wait_for_timeout(1200)
+    await pg.locator(T("ai-models-manual")).first.fill("gemini-2.5-flash")
+    await pg.locator(T("ai-models-manual-use")).first.click(); await pg.wait_for_timeout(500)
+    v = await h.text(pg, "ai-feature-voice-model-value")
+    ok(v and "gemini-2.5-flash" in v, f"{tag}: typed model name used", v)
+    fm = await h.text(pg, "ai-feature-feedmix-model-value")
+    ok(fm and "help chat" in fm, f"{tag}: feed mix check uses the help chat model by default", fm)
     await pg.wait_for_timeout(300)
     ok(await pg.locator(T("ai-models-save")).count() == 1, f"{tag}: Save models shows after a change")
     await pg.locator(T("ai-models-save")).first.click(); await pg.wait_for_timeout(1800)
@@ -129,7 +179,7 @@ async def admin_setup(b):
     # voice provider
     await pg.locator(T("ai-voice-add")).first.click(); await pg.wait_for_timeout(900)
     ok(await h.wait_for(pg, "ai-vprov-sheet"), f"{tag}: Add voice provider sheet")
-    for c in ["openai", "elevenlabs", "gemini", "compatible"]:
+    for c in ["openai", "elevenlabs", "gemini", "heygen", "compatible"]:
         ok(await pg.locator(T(f"ai-vprov-company-{c}")).count() == 1, f"{tag}: voice company {c} offered")
     await pg.locator(T("ai-vprov-company-compatible")).first.click(); await pg.wait_for_timeout(300)
     await pg.locator(T("ai-vprov-url")).first.fill(GW)
@@ -206,6 +256,7 @@ async def safe(name, coro):
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        await safe("fresh visit", default_lang(b))
         await safe("admin setup", admin_setup(b))
         for lang in ["en", "bn"]:
             for w in [390, 1280]:
