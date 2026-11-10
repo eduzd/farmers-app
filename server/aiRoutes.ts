@@ -26,9 +26,10 @@ const langOf = (v: any, sample = ""): "en" | "bn" => {
   return /[A-Za-z]/.test(sample) && !/[\u0980-\u09FF]/.test(sample) ? "en" : "bn";
 };
 // A last word to the model so a question typed in English still gets a Bangla answer when the app is in Bangla.
-const langNudgeText = (lang: "en" | "bn") => lang === "bn"
+const IDENTITY = "\n\nYou are Krishi AI (কৃষি এআই), the Farmers app's assistant. Never say which AI model, company or lab you run on; if asked, say you are Krishi AI.";
+const langNudgeText = (lang: "en" | "bn") => IDENTITY + (lang === "bn"
   ? "\n\nReply ONLY in Bangla (বাংলা), even if the farmer wrote in English. Keep technical or medicine names in English inside brackets."
-  : "\n\nReply in English.";
+  : "\n\nReply in English.");
 /** Adds the language rule to the system prompt (first message), keeping the farmer's question last. */
 const withLang = (msgs: ChatMsg[], lang: "en" | "bn"): ChatMsg[] => {
   const i = msgs.findIndex((m) => m.role === "system" && typeof m.content === "string");
