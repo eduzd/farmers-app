@@ -131,7 +131,10 @@ Reply with ONLY a JSON object, no other text, in this shape:
 Set notClear true if the photo isn't a ${kind} or is too unclear. Set seeSpecialist true when confidence is under 70, severity is high, or animals are dying. ${L}`;
   const content: any[] = [{ type: "text", text: prompt }];
   if (img) content.push({ type: "image_url", image_url: { url: `data:${input.mimeType || "image/jpeg"};base64,${img}` } });
-  const r = await runFeatureJson("disease", [{ role: "user", content }], { maxTokens: 2500, timeoutMs: 90000 });
+  let r = await runFeatureJson("disease", [{ role: "user", content }], { maxTokens: 2500, timeoutMs: 90000 });
+  // A router can hand the photo to a model that sends back an empty card; ask once more.
+  const empty = (x: any) => !String(x?.summary || "").trim() && !(x?.symptoms || []).length && !(x?.treatment || []).length && !x?.healthy;
+  if (empty(r.json)) { console.warn("[ai] disease: empty result, asking again"); r = await runFeatureJson("disease", [{ role: "user", content }], { maxTokens: 2500, timeoutMs: 90000 }); }
   const j = r.json;
   const arr = (v: any) => (Array.isArray(v) ? v.map((x) => String(x)).filter(Boolean).slice(0, 8) : []);
   const confidence = Math.max(0, Math.min(100, Math.round(Number(j.confidence) || 0)));

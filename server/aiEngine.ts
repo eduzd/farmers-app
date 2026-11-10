@@ -563,7 +563,12 @@ export async function stt(p: VoiceProvider, audio: Buffer, mime: string, lang: "
       fd.append("model", p.company === "openai" ? "gpt-4o-mini-transcribe" : "whisper-1");
       fd.append("language", lang);
       const r = await fetch(`${base}/audio/transcriptions`, { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: fd, signal: to.signal });
-      if (!r.ok) throw new Error(await readErr(r));
+      if (!r.ok) {
+        const err = await readErr(r);
+        if (p.company !== "compatible") throw new Error(err);
+        // Omni route without OpenAI: let a Gemini model on the same gateway write down the speech instead.
+        return await gatewayAudioStt(base, key, audio, ext, lang, to.signal, err);
+      }
       const j: any = await r.json();
       return String(j?.text || "").trim();
     }
@@ -584,6 +589,28 @@ export async function stt(p: VoiceProvider, audio: Buffer, mime: string, lang: "
   } finally {
     to.done();
   }
+}
+
+/** Speech to text through a gateway's chat endpoint: sends the clip as input_audio to Gemini models. */
+async function gatewayAudioStt(base: string, key: string, audio: Buffer, ext: string, lang: "en" | "bn", signal: AbortSignal, firstErr: string) {
+  let last = firstErr;
+  for (const model of ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-flash-lite"]) {
+    const r = await fetch(`${base}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({ model, temperature: 0, max_tokens: 600, messages: [{ role: "user", content: [
+        { type: "input_audio", input_audio: { data: audio.toString("base64"), format: ext } },
+        { type: "text", text: `Transcribe this ${lang === "bn" ? "Bangla (or mixed Bangla/English)" : "English (or Bangla)"} speech exactly. Reply with only the words spoken, nothing else. If nothing is said, reply with an empty line.` },
+      ] }] }),
+      signal,
+    });
+    if (!r.ok) { last = await readErr(r); continue; }
+    const j: any = await r.json().catch(() => ({}));
+    const t = String(j?.choices?.[0]?.message?.content || "").trim();
+    if (t) return t;
+    last = "empty transcript";
+  }
+  throw new Error(`whisper-1: ${firstErr.slice(0, 90)}; Gemini: ${last.slice(0, 90)}`);
 }
 
 async function geminiStt(key: string, audio: Buffer, mime: string, lang: "en" | "bn", signal?: AbortSignal) {
