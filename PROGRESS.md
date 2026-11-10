@@ -319,3 +319,9 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
 - Regression after merge: check-ai-settings 49/49, voice rooms 90/90, Connect voice card 330/330, notifications 235/235, profile grid + market 113/113, reactions 8/8 sizes, author header 229/229.
 - Live /api/ai/status: all false — no AI keys on the live server yet; admin must add an Omni route key + model.
 - No APK built for this; v1.0.7 / admin v1.0.3 do not have the AI screens.
+
+## 2026-11-10 Feed Making Calculator (live, 8a6e3bc)
+- Calculate > Feed Making Calculator (screen `CalculateFeedMix`, record type `FEED_MIX`, file src/screens/calculate/FeedMixCalculatorScreen.tsx; math in feedMixCalc.ts; ingredient list with typical protein % in feedIngredients.ts).
+- AI protein check: POST /api/ai/feed-mix (server/feedMixAi.ts) uses the admin AI settings' chat model/keys; returns not_configured when no key.
+- Tests: tests/feed-mix-calc.test.ts (54), tests/check-feed-mix-ai.mjs (fake gateway), tests/check-feed-mix-web.py (106).
+- Note: tests/check-calc-save-web.py and tests/check-bepari-save-web.py fail on main before this change too (they look for the old saved list on the page).
