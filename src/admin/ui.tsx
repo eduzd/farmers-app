@@ -213,16 +213,17 @@ export function Pill({ label, color: raw, icon }: { label: string; color: string
 }
 
 /** Filter chip, the main app's rounded chip (filled when on). */
-export function Chip({ label, on, onPress, testID, color, count }: { label: string; on: boolean; onPress: () => void; testID?: string; color?: string; count?: number }) {
+export function Chip({ label, on, onPress, testID, color, count, disabled }: { label: string; on: boolean; onPress: () => void; testID?: string; color?: string; count?: number; disabled?: boolean }) {
   const { theme } = useTheme();
   const c = color || theme.primary;
   return (
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityState={{ selected: on }}
-      onPress={onPress}
-      style={({ pressed }) => [st.chip, { backgroundColor: on ? c : theme.card, borderColor: on ? c : theme.cardBorder, opacity: pressed ? 0.85 : 1 }]}
+      accessibilityState={{ selected: on, disabled: !!disabled }}
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
+      style={({ pressed }) => [st.chip, { backgroundColor: on ? c : theme.card, borderColor: on ? c : theme.cardBorder, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 }]}
     >
       <Text style={{ color: on ? "#fff" : theme.text, fontWeight: on ? "700" : "600", fontSize: 13 }} numberOfLines={1}>{label}</Text>
       {count ? (

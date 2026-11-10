@@ -479,6 +479,7 @@ export function registerAiRoutes(app: Express) {
         const ch = v[lang];
         if (!ch) { c.voice[lang] = null; continue; }
         if (!c.voice.providers.some((p) => p.id === ch.providerId)) return res.status(400).json({ error: "Choose a voice provider first" });
+        if (lang === "bn" && c.voice.providers.find((p) => p.id === ch.providerId)?.company === "heygen") return res.status(400).json({ error: "HeyGen Voice doesn't speak Bangla. Choose it for the English voice, and a Bangla voice from OpenAI, ElevenLabs or Gemini." });
         c.voice[lang] = { providerId: ch.providerId, voiceId: clean(ch.voiceId, 120), voiceName: clean(ch.voiceName || ch.voiceId, 80), model: clean(ch.model, 80) };
       }
     }

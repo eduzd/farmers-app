@@ -48,6 +48,9 @@ const OK = "#00875A";
 const BAD = "#DA2F2F";
 const WARN = "#B25E09";
 const GREY = "#7A8CA3";
+/** Which languages each voice company can speak. HeyGen has no Bangla. */
+const SPEAKS: Record<string, ("bn" | "en")[]> = { openai: ["bn", "en"], elevenlabs: ["bn", "en"], gemini: ["bn", "en"], heygen: ["en"], compatible: ["bn", "en"] };
+const speaks = (company: string, lang: "bn" | "en") => (SPEAKS[company] || ["bn", "en"]).includes(lang);
 const COMPANY_COLOR: Record<string, string> = { openai: "#10A37F", elevenlabs: "#111111", gemini: "#4285F4", heygen: "#7559FF", compatible: "#6C4CF1" };
 const PROVIDER_ICON: Record<string, any> = { omniroute: "git-merge", openrouter: "shuffle", openai: "cpu", gemini: "star", custom: "link" };
 
@@ -539,7 +542,11 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
   const enabled = d.voice.providers.filter((p) => p.enabled);
   const cur = sel[lang];
   const [provId, setProvId] = useState<string | null>(cur?.providerId || enabled[0]?.id || null);
-  useEffect(() => { setProvId(sel[lang]?.providerId || enabled[0]?.id || null); }, [lang, d.voice.providers.length]);
+  useEffect(() => {
+    const keep = sel[lang]?.providerId;
+    const ok = enabled.filter((p) => speaks(p.company, lang));
+    setProvId(keep && ok.some((p) => p.id === keep) ? keep : ok[0]?.id || null);
+  }, [lang, d.voice.providers.length]);
   const prov = d.voice.providers.find((p) => p.id === provId) || null;
   const [voices, setVoices] = useState<{ id: string; name: string; note?: string }[]>([]);
   const [vq, setVq] = useState("");
@@ -612,6 +619,19 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
             <View style={{ flex: 1 }}>
               <Text style={{ color: theme.text, fontWeight: "800", fontSize: 15 }} numberOfLines={1}>{provLabel(L, p.label)}</Text>
               <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{provLabel(L, companyName(p.company))} · ••••{p.keyLast4}{p.usage.today ? ` · ${L("used today", "আজ ব্যবহার")}: ${p.usage.today}` : ""}</Text>
+              <View testID={`ai-vprov-${i}-langs`} style={{ flexDirection: "row", gap: 6, marginTop: 5, flexWrap: "wrap" }}>
+                {(["bn", "en"] as const).map((lg) => {
+                  const yes = speaks(p.company, lg);
+                  const used = (d.voice as any)[lg]?.providerId === p.id;
+                  return (
+                    <View key={lg} style={{ flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999, backgroundColor: yes ? (used ? theme.primary : theme.primary + "14") : theme.border + "55", opacity: yes ? 1 : 0.6 }}>
+                      <Feather name={yes ? (used ? "volume-2" : "check") : "slash"} size={10} color={yes ? (used ? "#fff" : theme.primary) : theme.textTertiary} />
+                      <Text style={{ fontSize: 11, fontWeight: "700", color: yes ? (used ? "#fff" : theme.primary) : theme.textTertiary, textDecorationLine: yes ? "none" : "line-through" }}>{lg === "bn" ? "বাংলা" : "English"}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+              {!speaks(p.company, "bn") ? <Text style={{ color: theme.textTertiary, fontSize: 11, marginTop: 3 }}>{L("Speaks English only: use it for the English voice.", "শুধু ইংরেজি বলে: ইংরেজি কণ্ঠের জন্য ব্যবহার করুন।")}</Text> : null}
             </View>
             {busy === p.id ? <ActivityIndicator size="small" color={theme.primary} /> : <Switch testID={`ai-vprov-${i}-on`} value={p.enabled} onValueChange={(v) => toggleProv(p, v)} />}
           </View>
@@ -641,7 +661,13 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
             <Chip testID="ai-voice-lang-en" label={`English${sel.en ? ` · ${sel.en.voiceName}` : ""}`} on={lang === "en"} onPress={() => setLang("en")} />
           </ChipRow>
           <Text style={[st.label, { color: theme.textSecondary, marginTop: 12, marginBottom: 6 }]}>{L("Company", "কোম্পানি")}</Text>
-          <ChipRow>{enabled.map((p) => <Chip key={p.id} label={provLabel(L, p.label)} on={provId === p.id} onPress={() => setProvId(p.id)} testID="ai-voice-prov" />)}</ChipRow>
+          <ChipRow>{enabled.map((p) => <Chip key={p.id} label={provLabel(L, p.label)} on={provId === p.id} disabled={!speaks(p.company, lang)} onPress={() => setProvId(p.id)} testID="ai-voice-prov" />)}</ChipRow>
+          {enabled.some((p) => !speaks(p.company, lang)) ? (
+            <Text testID="ai-voice-prov-note" style={{ color: theme.textTertiary, fontSize: 11.5, marginTop: -6, marginBottom: 6 }}>{L("Greyed out: doesn't speak Bangla (HeyGen is English only).", "ধূসর: বাংলা বলে না (HeyGen শুধু ইংরেজি)।")}</Text>
+          ) : null}
+          {!enabled.some((p) => speaks(p.company, lang)) ? (
+            <Text testID="ai-voice-no-bn-provider" style={{ color: WARN, fontSize: 12.5, marginBottom: 6 }}>{L("None of your voice companies speak Bangla. Add OpenAI, ElevenLabs, Google Gemini or an Omni route voice for the Bangla voice.", "আপনার কোনো ভয়েস কোম্পানি বাংলা বলে না। বাংলা কণ্ঠের জন্য OpenAI, ElevenLabs, Google Gemini বা Omni route ভয়েস যোগ করুন।")}</Text>
+          ) : null}
           {models.length > 1 ? (
             <>
               <Text style={[st.label, { color: theme.textSecondary, marginTop: 12, marginBottom: 6 }]}>{L("Voice model", "ভয়েস মডেল")}</Text>

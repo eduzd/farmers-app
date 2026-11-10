@@ -215,8 +215,14 @@ try {
   ok(r.status === 200 && Buffer.from(r.data.audioBase64 || "", "base64").toString() === "ID3heygen-hgv-en-1|heygen-voice-1-turbo-free", "HeyGen sample plays (audio downloaded from HeyGen's link)", r.data);
   r = await call("POST", `${A}/voice/preview`, admin.token, { providerId: hgp.id, voiceId: "hgv-en-1", model: "heygen-voice-1-turbo-free", lang: "bn" });
   ok(r.status >= 400 && /Bangla/.test(JSON.stringify(r.data)), "HeyGen asked for Bangla -> clear 'no Bangla' message", r.data);
+  r = await call("PUT", `${A}/settings`, admin.token, { voice: { bn: { providerId: hgp.id, voiceId: "hgv-en-1", voiceName: "Ava", model: "heygen-voice-1-turbo-free" } } });
+  ok(r.status === 400 && /Bangla/.test(r.data?.error || ""), "HeyGen can't be saved as the Bangla voice", r.data);
   r = await call("PUT", `${A}/settings`, admin.token, { voice: { en: { providerId: hgp.id, voiceId: "hgv-en-1", voiceName: "Ava", model: "heygen-voice-1-turbo-free" }, sttProviderId: null } });
   r = await call("POST", "/api/ai/voice/turn", farmer.token, { audioBase64: audio, mimeType: "audio/webm", lang: "en", history: [] });
+  const enTurn = r;
+  r = await call("POST", "/api/ai/voice/turn", farmer.token, { text: "পুকুরে চুন কতটুকু?", lang: "bn", history: [] });
+  ok(r.status === 200 && !/^Ava/.test(r.data.voice || "") && !Buffer.from(r.data.audioBase64 || "", "base64").toString().startsWith("ID3heygen"), "app in Bangla: AI call keeps the Bangla voice, not HeyGen", { voice: r.data.voice });
+  r = enTurn;
   ok(r.status === 200 && r.data.heard && /^Ava/.test(r.data.voice) && Buffer.from(r.data.audioBase64, "base64").toString().startsWith("ID3heygen-hgv-en-1"), "AI call: listens with another provider, answers in the HeyGen English voice", { voice: r.data.voice, t: r.data.transcript });
   await call("PUT", `${A}/settings`, admin.token, { voice: { en: { providerId: vp.id, voiceId: "onyx", voiceName: "Onyx", model: "gpt-4o-mini-tts" } } });
   await call("DELETE", `${A}/voice/providers/${hgp.id}`, admin.token);
