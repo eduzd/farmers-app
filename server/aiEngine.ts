@@ -395,6 +395,16 @@ export function featureReady(c: AiConfig, f: FeatureName) {
 }
 
 /** Run a chat completion for a feature, failing over across its keys. */
+/** True when an answer is one or two words repeated over and over (a stuck model). */
+export function looksStuck(t: string) {
+  const words = String(t || "").replace(/[*#|_\-–—:;,.!?।()\[\]0-9০-৯]/g, " ").split(/\s+/).filter((w) => w.length > 1);
+  if (words.length < 30) return false;
+  const n = new Map<string, number>();
+  for (const w of words) n.set(w, (n.get(w) || 0) + 1);
+  const top = [...n.values()].sort((a, b) => b - a);
+  return (top[0] + (top[1] || 0)) / words.length > 0.45 || n.size / words.length < 0.12;
+}
+
 export async function runFeature(f: FeatureName, messages: ChatMsg[], opts: { maxTokens?: number; temperature?: number; timeoutMs?: number } = {}) {
   const c = await aiConfig();
   if (!c.features[f].enabled || (f === "feedmix" && !c.features.feedmix.model.trim() && !c.features.chat.enabled)) throw new AiError("disabled", "This AI feature is turned off by the admin");
@@ -406,7 +416,15 @@ export async function runFeature(f: FeatureName, messages: ChatMsg[], opts: { ma
     try {
       const o = { temperature: opts.temperature ?? effectiveFeature(c, f).temperature, maxTokens: opts.maxTokens, timeoutMs: opts.timeoutMs };
       let r;
-      try { r = await callChat(target, model, messages, o); }
+      try {
+        r = await callChat(target, model, messages, o);
+        // A routed model sometimes gets stuck repeating one word; ask once more when that happens.
+        if (looksStuck(r.text)) {
+          console.warn(`[ai] ${f} via ${target.label} (${model}): answer repeats itself, trying once more`);
+          const again = await callChat(target, model, messages, { ...o, temperature: Math.min(1, (o.temperature ?? 0.5) + 0.2) });
+          if (!looksStuck(again.text)) r = again; else throw new Error("The AI's answer came out garbled");
+        }
+      }
       catch (e: any) {
         // Routers sometimes hand back an empty answer once; one more try on the same key usually works.
         if (!/empty answer/i.test(e?.message || "")) throw e;
