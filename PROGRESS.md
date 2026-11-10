@@ -311,3 +311,11 @@ saved posts -> Profile Saved section (server), unread badges (bell + Messages ta
   visualViewport, so the sheet doesn't subtract the keyboard twice on web.
 - Checks: tsc 0 errors; tests/check-post-edit-keyboard-web.py (stand-in visualViewport keyboard, en+bn 320x640/360x740/390x844).
 - Not tested on a real phone keyboard (Android/iOS app); no APK built.
+
+## 2026-11-10 — AI work live (main 94de9be)
+- Merged branch ai-settings (Admin → More → AI settings; Krishi AI chat; disease detector; AI call) + origin/apk-106 (compact voice room card, floating bubble) into main; deployed to Render.
+- Fixes from the browser test: Bangla for server-made words on AI settings (key names, test results, provider hints, Try-it timing, dates), darker link blue on soft buttons/section links (contrast), lighter section colours in disease result in dark mode, farmer call screen shows voice name only.
+- tests/check-ai-web.py now runs tests/layout_audit.py on every screen (overlap, cut-off, off-screen, contrast, language, light/dark): 267/267.
+- Regression after merge: check-ai-settings 49/49, voice rooms 90/90, Connect voice card 330/330, notifications 235/235, profile grid + market 113/113, reactions 8/8 sizes, author header 229/229.
+- Live /api/ai/status: all false — no AI keys on the live server yet; admin must add an Omni route key + model.
+- No APK built for this; v1.0.7 / admin v1.0.3 do not have the AI screens.
