@@ -1,819 +1,242 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  Pressable,
-  Platform,
-  Alert,
-  Animated,
-  Linking,
-  ImageBackground,
-} from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { View, StyleSheet, Pressable, Platform, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Feather } from "@/components/icons/Feather";
-import * as Haptics from "expo-haptics";
-import * as ExpoFileSystem from "expo-file-system/legacy";
-import { Audio } from "expo-av";
-import * as Speech from "expo-speech";
 import { useNavigation } from "@react-navigation/native";
+import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Speech from "expo-speech";
+import * as Haptics from "expo-haptics";
+import { Feather } from "@/components/icons/Feather";
+import { Text } from "@/components/MayaText";
+import { AiOrb, SoundBars, useBn } from "@/components/ai/AiKit";
+import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { aiVoiceTurn, aiVoiceGreet, aiErrorText } from "@/lib/aiApi";
+import { playBase64Audio, stopAiAudio } from "@/lib/aiAudio";
 
-import { ThemedText } from "@/components/ThemedText";
-import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius } from "@/constants/theme";
-import { getApiUrl } from "@/lib/query-client";
+/**
+ * AI voice call with Krishi AI.
+ * Tap the mic and talk, tap again to send. The server turns the speech into text, the "AI call brain" model
+ * answers, and the reply is spoken in the voice the admin chose for this language (Admin > More > AI settings).
+ * When no AI voice is set up the phone's own voice reads the answer.
+ */
 
-import { AppIcon } from "@/components/icons/AppIcon";
-type CallState = "idle" | "connecting" | "ready" | "listening" | "processing" | "speaking";
+type Phase = "connecting" | "ready" | "listening" | "thinking" | "speaking" | "ended";
+type Turn = { role: "user" | "assistant"; content: string };
 
-const GREETINGS = [
-  "আসসালামু আলাইকুম ভাই! কৃষি ভাই বলছি। কি সাহায্য করতে পারি?",
-  "সালাম ভাই! বলুন, কি জানতে চান আজ?",
-  "হ্যালো ভাই! কৃষি বিষয়ে কি সাহায্য লাগবে?",
-  "আদাব ভাই! কি নিয়ে কথা বলব আজ?",
-];
-
-const ACKNOWLEDGMENTS = [
-  "হ্যাঁ ভাই",
-  "বলুন ভাই", 
-  "জ্বি",
-  "আচ্ছা ভাই",
-  "হুঁ ভাই",
-  "বুঝলাম ভাই",
-];
+async function fileToBase64(uri: string): Promise<{ base64: string; mime: string }> {
+  if (Platform.OS === "web") {
+    const blob = await (await fetch(uri)).blob();
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onloadend = () => resolve(String(r.result || "").split(",")[1] || "");
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+    try { URL.revokeObjectURL(uri); } catch {}
+    return { base64, mime: (blob.type || "audio/webm").split(";")[0] };
+  }
+  const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => {});
+  return { base64, mime: "audio/mp4" };
+}
 
 export default function VoiceCallScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-  const { theme, isDark } = useTheme();
-  
-  const [callState, setCallState] = useState<CallState>("idle");
-  const [isCallActive, setIsCallActive] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const [aiResponse, setAiResponse] = useState("");
-  const [callDuration, setCallDuration] = useState(0);
-  
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const waveAnim1 = useRef(new Animated.Value(0)).current;
-  const waveAnim2 = useRef(new Animated.Value(0)).current;
-  const waveAnim3 = useRef(new Animated.Value(0)).current;
-  const callTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const recordingRef = useRef<Audio.Recording | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const isCallActiveRef = useRef(false);
-  const conversationCountRef = useRef(0);
+  const navigation = useNavigation<any>();
+  const bn = useBn();
+  const T = (en: string, b: string) => (bn ? b : en);
+  const [phase, setPhase] = useState<Phase>("connecting");
+  const [turns, setTurns] = useState<Turn[]>([]);
+  const [error, setError] = useState("");
+  const [voiceName, setVoiceName] = useState<string | null>(null);
+  const [seconds, setSeconds] = useState(0);
+  const [muted, setMuted] = useState(false);
+  const live = useRef(true);
+  const mutedRef = useRef(false);
+  mutedRef.current = muted;
+  const turnsRef = useRef<Turn[]>([]);
+  turnsRef.current = turns;
+  const scrollRef = useRef<ScrollView>(null);
+  const recorder = useVoiceRecorder((r) => { if (r) handleRecording(r.uri); });
 
+  // call timer
   useEffect(() => {
+    const t = setInterval(() => live.current && setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const say = useCallback(async (text: string, audio: string | null, mime: string | null) => {
+    if (!live.current) return;
+    setPhase("speaking");
+    if (mutedRef.current) { setPhase("ready"); return; }
+    try {
+      if (audio) await playBase64Audio(audio, mime || "audio/mpeg");
+      else {
+        await new Promise<void>((resolve) => {
+          Speech.speak(text, { language: bn ? "bn-BD" : "en-US", rate: 0.95, onDone: () => resolve(), onStopped: () => resolve(), onError: () => resolve() });
+          setTimeout(resolve, Math.min(60_000, 2000 + text.length * 90));
+        });
+      }
+    } catch {}
+    if (live.current) setPhase((p) => (p === "speaking" ? "ready" : p));
+  }, [bn]);
+
+  // greeting
+  useEffect(() => {
+    live.current = true;
+    (async () => {
+      try {
+        const g = await aiVoiceGreet(bn ? "bn" : "en");
+        if (!live.current) return;
+        setVoiceName(g.voice);
+        setTurns([{ role: "assistant", content: g.reply }]);
+        await say(g.reply, g.audioBase64, g.mimeType);
+      } catch (e: any) {
+        if (!live.current) return;
+        setError(aiErrorText(e, bn));
+        setPhase("ready");
+      }
+    })();
     return () => {
-      cleanupAll();
+      live.current = false;
+      stopAiAudio();
+      Speech.stop();
+      recorder.cancel?.();
     };
   }, []);
 
-  useEffect(() => {
-    if (isCallActive && (callState === "listening" || callState === "speaking")) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.2,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
+  useEffect(() => { setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80); }, [turns.length, phase]);
 
-      Animated.loop(
-        Animated.stagger(200, [
-          Animated.sequence([
-            Animated.timing(waveAnim1, { toValue: 1, duration: 400, useNativeDriver: true }),
-            Animated.timing(waveAnim1, { toValue: 0, duration: 400, useNativeDriver: true }),
-          ]),
-          Animated.sequence([
-            Animated.timing(waveAnim2, { toValue: 1, duration: 400, useNativeDriver: true }),
-            Animated.timing(waveAnim2, { toValue: 0, duration: 400, useNativeDriver: true }),
-          ]),
-          Animated.sequence([
-            Animated.timing(waveAnim3, { toValue: 1, duration: 400, useNativeDriver: true }),
-            Animated.timing(waveAnim3, { toValue: 0, duration: 400, useNativeDriver: true }),
-          ]),
-        ])
-      ).start();
-    } else {
-      pulseAnim.setValue(1);
-      waveAnim1.setValue(0);
-      waveAnim2.setValue(0);
-      waveAnim3.setValue(0);
-    }
-  }, [isCallActive, callState]);
-
-  const cleanupAll = useCallback(() => {
-    if (callTimerRef.current) {
-      clearInterval(callTimerRef.current);
-      callTimerRef.current = null;
-    }
-    try { Speech.stop(); } catch (e) {}
-    if (soundRef.current) {
-      try { soundRef.current.stopAsync(); soundRef.current.unloadAsync(); } catch (e) {}
-      soundRef.current = null;
-    }
-    if (recordingRef.current) {
-      try { recordingRef.current.stopAndUnloadAsync(); } catch (e) {}
-      recordingRef.current = null;
-    }
-  }, []);
-
-  const cachedVoiceRef = useRef<{ voice: Speech.Voice | null; checked: boolean }>({ voice: null, checked: false });
-
-  const getMaleVoice = async (): Promise<Speech.Voice | null> => {
-    if (cachedVoiceRef.current.checked) {
-      return cachedVoiceRef.current.voice;
-    }
-    
+  async function handleRecording(uri: string) {
+    if (!live.current) return;
+    setPhase("thinking");
+    setError("");
     try {
-      const voices = await Speech.getAvailableVoicesAsync();
-      
-      const isMale = (v: Speech.Voice) => {
-        const n = (v.name || "").toLowerCase();
-        const id = (v.identifier || "").toLowerCase();
-        return n.includes("male") || n.includes("purus") || n.includes("hemant") || 
-               n.includes("ravi") || id.includes("male") || id.includes("-m-");
-      };
-      
-      let voice = voices.find(v => v.language?.startsWith("bn") && isMale(v));
-      if (!voice) voice = voices.find(v => v.language?.startsWith("bn"));
-      if (!voice) voice = voices.find(v => v.language?.startsWith("hi") && isMale(v));
-      if (!voice) voice = voices.find(v => v.language?.startsWith("hi"));
-      
-      cachedVoiceRef.current = { voice: voice || null, checked: true };
-      console.log("Cached voice:", voice?.name, voice?.language);
-      return voice || null;
-    } catch {
-      cachedVoiceRef.current = { voice: null, checked: true };
-      return null;
+      const { base64, mime } = await fileToBase64(uri);
+      const r = await aiVoiceTurn({ audioBase64: base64, mimeType: mime, history: turnsRef.current.slice(-10), lang: bn ? "bn" : "en" });
+      if (!live.current) return;
+      if (!r.heard) { setError(T("I didn't catch that. Tap the mic and try again.", "ঠিক শুনতে পাইনি। মাইক চেপে আবার বলুন।")); setPhase("ready"); return; }
+      if (r.voice) setVoiceName(r.voice);
+      setTurns((t) => [...t, { role: "user", content: r.transcript }, { role: "assistant", content: r.reply }]);
+      await say(r.reply, r.audioBase64, r.mimeType);
+    } catch (e: any) {
+      if (!live.current) return;
+      setError(aiErrorText(e, bn));
+      setPhase("ready");
     }
-  };
-
-  const speakWithNativeTTS = async (text: string): Promise<void> => {
-    return new Promise(async (resolve) => {
-      try {
-        await Speech.stop();
-      } catch {}
-      
-      const voice = await getMaleVoice();
-      
-      const ttsOptions: Speech.SpeechOptions = {
-        language: voice?.language || "bn-BD",
-        voice: voice?.identifier,
-        pitch: 0.85,
-        rate: 1.15,
-        onDone: () => resolve(),
-        onError: () => resolve(),
-        onStopped: () => resolve(),
-      };
-      
-      try {
-        Speech.speak(text, ttsOptions);
-      } catch {
-        Speech.speak(text, { language: "bn-BD", pitch: 0.85, rate: 1.15, onDone: () => resolve() });
-      }
-      
-      setTimeout(resolve, 12000);
-    });
-  };
-
-  const speakText = async (text: string): Promise<void> => {
-    console.log("Starting TTS for:", text.substring(0, 50));
-    
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      playsInSilentModeIOS: true,
-      staysActiveInBackground: false,
-      playThroughEarpieceAndroid: false,
-    });
-    
-    await speakWithNativeTTS(text);
-    return;
-  };
-
-  const getRandomGreeting = () => {
-    return GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
-  };
-
-  const startCall = async () => {
-    if (Platform.OS === "web") {
-      Alert.alert("মোবাইল প্রয়োজন", "ভয়েস কল শুধুমাত্র মোবাইল ফোনে Expo Go অ্যাপে কাজ করে।");
-      return;
-    }
-
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("মাইক্রোফোন", "ভয়েস কলের জন্য মাইক্রোফোন অনুমতি দিন।", [
-          { text: "বাতিল" },
-          { text: "সেটিংস", onPress: () => { try { Linking.openSettings(); } catch(e){} } },
-        ]);
-        return;
-      }
-    } catch (e) {
-      console.log("Permission error:", e);
-      return;
-    }
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    setIsCallActive(true);
-    isCallActiveRef.current = true;
-    setCallDuration(0);
-    setTranscript("");
-    setAiResponse("");
-    setCallState("connecting");
-    conversationCountRef.current = 0;
-
-    callTimerRef.current = setInterval(() => {
-      setCallDuration(prev => prev + 1);
-    }, 1000);
-
-    const greeting = getRandomGreeting();
-    setAiResponse(greeting);
-    setCallState("speaking");
-    
-    await speakText(greeting);
-    
-    if (isCallActiveRef.current) {
-      setCallState("ready");
-    }
-  };
-
-  const endCall = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsCallActive(false);
-    isCallActiveRef.current = false;
-    setCallState("idle");
-    cleanupAll();
-  }, [cleanupAll]);
-
-  const startListening = async () => {
-    if (!isCallActiveRef.current || callState !== "ready") return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCallState("listening");
-    setTranscript("");
-
-    try {
-      if (recordingRef.current) {
-        try { await recordingRef.current.stopAndUnloadAsync(); } catch (e) {}
-        recordingRef.current = null;
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      console.log("Recording started");
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
-      recordingRef.current = recording;
-
-    } catch (error) {
-      console.log("Recording start error:", error);
-      setCallState("ready");
-    }
-  };
-
-  const stopListening = async () => {
-    if (!recordingRef.current) {
-      setCallState("ready");
-      return;
-    }
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setCallState("processing");
-
-    try {
-      const recording = recordingRef.current;
-      recordingRef.current = null;
-
-      console.log("Stopping recording...");
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-
-      if (!uri) {
-        console.log("No recording URI");
-        setCallState("ready");
-        return;
-      }
-
-      console.log("Reading recorded audio from:", uri);
-      const audioBase64 = await ExpoFileSystem.readAsStringAsync(uri, {
-        encoding: ExpoFileSystem.EncodingType.Base64,
-      });
-      console.log("Audio read success, length:", audioBase64.length);
-
-      if (audioBase64.length < 1000) {
-        console.log("Audio too short");
-        setCallState("ready");
-        return;
-      }
-
-      console.log("Sending to STT API...");
-      const sttResponse = await fetch(
-        new URL("/api/voice-to-text", getApiUrl()).toString(),
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            audioBase64, 
-            mimeType: Platform.OS === "ios" ? "audio/m4a" : "audio/mp4" 
-          }),
-        }
-      );
-
-      if (!sttResponse.ok) {
-        console.log("STT failed with status:", sttResponse.status);
-        setCallState("ready");
-        return;
-      }
-
-      const sttData = await sttResponse.json();
-      const userText = sttData.transcript?.trim();
-      console.log("Transcript:", userText);
-
-      if (!userText) {
-        console.log("No transcript received");
-        setCallState("ready");
-        return;
-      }
-
-      setTranscript(userText);
-      conversationCountRef.current += 1;
-
-      const acknowledgmentsList = ACKNOWLEDGMENTS.join(", ");
-      
-      console.log("Getting AI response...");
-      const chatResponse = await fetch(
-        new URL("/api/ai-chat", getApiUrl()).toString(),
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            message: userText, 
-            context: "voice_call",
-            systemPrompt: `তুমি "কৃষি ভাই" - গ্রামের বড় ভাইয়ের মতো কৃষি বিশেষজ্ঞ।
-- খুব সংক্ষেপে উত্তর দাও, শুধু ১-২ বাক্য
-- "ভাই" সম্বোধন ব্যবহার কর তবে প্রতিবার না
-- উত্তর শুরুতে বিভিন্ন শব্দ ব্যবহার কর যেমন: ${acknowledgmentsList}
-- একই শব্দ বারবার বলো না, পরিবর্তন কর
-- সরাসরি উত্তর দাও, ভূমিকা বা শেষকথা বাদ দাও
-- মাছ চাষ, ধান চাষ, সবজি চাষ, গবাদি পশু পালন সম্পর্কে পরামর্শ দাও`
-          }),
-        }
-      );
-
-      let aiText = "দুঃখিত ভাই, বুঝতে পারলাম না। আবার বলুন।";
-      if (chatResponse.ok) {
-        const chatData = await chatResponse.json();
-        aiText = chatData.response || aiText;
-      }
-
-      console.log("AI Response:", aiText);
-      setAiResponse(aiText);
-      setCallState("speaking");
-      
-      await speakText(aiText);
-      
-      if (isCallActiveRef.current) {
-        setCallState("ready");
-      }
-
-    } catch (error) {
-      console.log("Processing error:", error);
-      setCallState("ready");
-    }
-  };
-
-  const handleMicTap = () => {
-    if (callState === "ready") {
-      startListening();
-    } else if (callState === "listening") {
-      stopListening();
-    }
-  };
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const getStatusText = () => {
-    switch (callState) {
-      case "connecting": return "কানেক্ট হচ্ছে...";
-      case "ready": return "মাইক ট্যাপ করে বলুন";
-      case "listening": return "শুনছি...";
-      case "processing": return "বুঝছি...";
-      case "speaking": return "কৃষি ভাই বলছে...";
-      default: return "কল করুন";
-    }
-  };
-
-  if (Platform.OS === "web") {
-    return (
-      <View style={[styles.container, { backgroundColor: isDark ? "#0B1119" : "#f0f7ff" }]}>
-        <LinearGradient
-          colors={isDark ? ["#0B1119", "#14304F", "#0B1119"] : ["#E3F4FF", "#CFEBFF", "#E3F4FF"]}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-          <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Feather name="arrow-left" size={24} color={theme.text} />
-          </Pressable>
-        </View>
-        <View style={styles.content}>
-          <View style={[styles.avatarOuter, { backgroundColor: theme.primary + "20" }]}>
-            <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
-              <Feather name="smartphone" size={40} color="#FFFFFF" />
-            </View>
-          </View>
-          <ThemedText style={styles.assistantName}>কৃষি ভাই</ThemedText>
-          <ThemedText style={[styles.webMessage, { color: theme.textSecondary }]}>
-            ভয়েস কল শুধুমাত্র মোবাইল ফোনে{'\n'}Expo Go অ্যাপে কাজ করে।
-          </ThemedText>
-        </View>
-      </View>
-    );
   }
 
+  const onMic = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    if (phase === "listening") {
+      const r = await recorder.stop();
+      if (r) handleRecording(r.uri);
+      else { setPhase("ready"); setError(T("That was too short. Hold on a little longer while you talk.", "খুব ছোট হয়েছে। একটু সময় নিয়ে বলুন।")); }
+      return;
+    }
+    if (phase === "speaking") { stopAiAudio(); Speech.stop(); }
+    if (phase === "thinking" || phase === "connecting") return;
+    setError("");
+    const ok = await recorder.start();
+    if (ok) setPhase("listening");
+  };
+
+  const end = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    live.current = false;
+    stopAiAudio();
+    Speech.stop();
+    recorder.cancel?.();
+    navigation.goBack();
+  };
+
+  const mm = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const ss = String(seconds % 60).padStart(2, "0");
+  const label: Record<Phase, string> = {
+    connecting: T("Connecting...", "সংযোগ হচ্ছে..."),
+    ready: T("Tap the mic and talk", "মাইক চেপে কথা বলুন"),
+    listening: T("Listening... tap again when you're done", "শুনছি... শেষ হলে আবার চাপুন"),
+    thinking: T("Thinking...", "ভাবছি..."),
+    speaking: T("Krishi AI is speaking", "কৃষি এআই বলছে"),
+    ended: "",
+  };
+  const lastAi = [...turns].reverse().find((t) => t.role === "assistant");
+  const lastUser = phase !== "listening" ? [...turns].reverse().find((t) => t.role === "user") : null;
+  const recSecs = Math.floor((recorder.durationMs || 0) / 1000);
+
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? "#0B1119" : "#f0f7ff" }]}>
-      <LinearGradient
-        colors={isDark 
-          ? ["#0B1119", "#141C27", "#0B1119"] 
-          : ["#E3F4FF", "#CFEBFF", "#E3F4FF"]
-        }
-        style={StyleSheet.absoluteFill}
-      />
-      
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.md }]}>
-        <Pressable 
-          style={[styles.backButton, { backgroundColor: theme.card + "80" }]} 
-          onPress={() => { endCall(); navigation.goBack(); }}
-        >
-          <Feather name="arrow-left" size={22} color={theme.text} />
+    <LinearGradient testID="ai-call-screen" colors={["#06132E", "#0B1F4D", "#173A8A"]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ flex: 1, paddingTop: insets.top + 8, paddingBottom: insets.bottom + 18 }}>
+      <View style={styles.top}>
+        <Pressable onPress={end} hitSlop={10} style={styles.topBtn} testID="ai-call-back"><Feather name="chevron-down" size={24} color="#fff" /></Pressable>
+        <View style={{ alignItems: "center", flex: 1 }}>
+          <Text style={styles.name}>{T("Krishi AI", "কৃষি এআই")}</Text>
+          <Text style={styles.timer} testID="ai-call-timer">{mm}:{ss}</Text>
+        </View>
+        <View style={styles.topBtn} />
+      </View>
+
+      <View style={{ alignItems: "center", marginTop: 14 }}>
+        <AiOrb size={118} active={phase === "listening" || phase === "speaking"} icon={phase === "listening" ? "mic" : "zap"} color={phase === "listening" ? "#2FBF71" : "#5B9BFF"} />
+        <View style={{ height: 30, marginTop: 4, justifyContent: "center" }}>
+          {phase === "listening" || phase === "speaking" ? <SoundBars active bars={7} color={phase === "listening" ? "#7BE0A8" : "#9CC3FF"} /> : null}
+        </View>
+        <Animated.Text key={phase} entering={FadeIn.duration(250)} testID="ai-call-status" style={styles.status}>
+          {label[phase]}{phase === "listening" ? `  ${recSecs}s` : ""}
+        </Animated.Text>
+        {voiceName ? <Text style={styles.voice}>{T("Voice", "কণ্ঠ")}: {voiceName}</Text> : null}
+      </View>
+
+      <ScrollView ref={scrollRef} style={{ flex: 1, marginTop: 14 }} contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 10, flexGrow: 1, justifyContent: "flex-end" }}>
+        {lastUser ? (
+          <Animated.View key={`u${turns.length}`} entering={FadeInDown.duration(260)} style={styles.youBox}>
+            <Text style={styles.youLabel}>{T("You", "আপনি")}</Text>
+            <Text style={styles.youText}>{lastUser.content}</Text>
+          </Animated.View>
+        ) : null}
+        {lastAi ? (
+          <Animated.View key={`a${turns.length}`} entering={FadeInDown.duration(300)} style={styles.aiBox} testID="ai-call-reply">
+            <Text style={styles.aiText}>{lastAi.content}</Text>
+          </Animated.View>
+        ) : null}
+        {error ? <Animated.View entering={FadeIn} style={styles.err}><Feather name="alert-circle" size={15} color="#FFB4B4" /><Text testID="ai-call-error" style={styles.errText}>{error}</Text></Animated.View> : null}
+      </ScrollView>
+
+      <View style={styles.controls}>
+        <Pressable testID="ai-call-mute" onPress={() => { setMuted((m) => !m); if (!muted) { stopAiAudio(); Speech.stop(); } }} style={[styles.side, muted && { backgroundColor: "#fff" }]}>
+          <Feather name={muted ? "volume-x" : "volume-2"} size={22} color={muted ? "#0B1F4D" : "#fff"} />
+          <Text style={[styles.sideText, muted && { color: "#0B1F4D" }]}>{muted ? T("Muted", "মিউট") : T("Speaker", "স্পিকার")}</Text>
         </Pressable>
-        {isCallActive ? (
-          <View style={[styles.durationBadge, { backgroundColor: theme.success + "20" }]}>
-            <View style={[styles.liveDot, { backgroundColor: theme.success }]} />
-            <ThemedText style={[styles.durationText, { color: theme.success }]}>
-              {formatDuration(callDuration)}
-            </ThemedText>
-          </View>
-        ) : null}
+        <Pressable testID="ai-call-mic" onPress={onMic} disabled={phase === "thinking" || phase === "connecting"}>
+          <LinearGradient colors={phase === "listening" ? ["#2FBF71", "#0E8F52"] : ["#5B9BFF", "#2F6FE4"]} style={[styles.mic, (phase === "thinking" || phase === "connecting") && { opacity: 0.5 }]}>
+            <Feather name={phase === "listening" ? "send" : "mic"} size={30} color="#fff" />
+          </LinearGradient>
+        </Pressable>
+        <Pressable testID="ai-call-end" onPress={end} style={[styles.side, { backgroundColor: "#E5484D" }]}>
+          <Feather name="phone-off" size={22} color="#fff" />
+          <Text style={styles.sideText}>{T("End", "শেষ")}</Text>
+        </Pressable>
       </View>
-
-      <View style={styles.content}>
-        <View style={styles.avatarSection}>
-          {isCallActive && (callState === "listening" || callState === "speaking") ? (
-            <Animated.View style={[
-              styles.pulseRing,
-              {
-                backgroundColor: callState === "listening" ? "#DA2F2F" : theme.primary,
-                opacity: 0.15,
-                transform: [{ scale: pulseAnim }],
-              },
-            ]} />
-          ) : null}
-          <View style={[styles.avatarOuter, { 
-            backgroundColor: isCallActive 
-              ? (callState === "listening" ? "#DA2F2F20" : theme.primary + "20")
-              : theme.primary + "15"
-          }]}>
-            <View style={[
-              styles.avatar,
-              { 
-                backgroundColor: isCallActive 
-                  ? (callState === "listening" ? "#DA2F2F" : theme.primary)
-                  : theme.primary 
-              },
-            ]}>
-              {callState === "listening" ? (
-                <View style={styles.waveContainer}>
-                  <Animated.View style={[styles.waveBar, { 
-                    backgroundColor: "#fff",
-                    transform: [{ scaleY: Animated.add(0.3, Animated.multiply(waveAnim1, 0.7)) }]
-                  }]} />
-                  <Animated.View style={[styles.waveBar, styles.waveBarTall, { 
-                    backgroundColor: "#fff",
-                    transform: [{ scaleY: Animated.add(0.3, Animated.multiply(waveAnim2, 0.7)) }]
-                  }]} />
-                  <Animated.View style={[styles.waveBar, { 
-                    backgroundColor: "#fff",
-                    transform: [{ scaleY: Animated.add(0.3, Animated.multiply(waveAnim3, 0.7)) }]
-                  }]} />
-                </View>
-              ) : callState === "speaking" ? (
-                <Feather name="volume-2" size={44} color="#FFFFFF" />
-              ) : callState === "processing" || callState === "connecting" ? (
-                <Feather name="loader" size={44} color="#FFFFFF" />
-              ) : (
-                <Feather name="headphones" size={44} color="#FFFFFF" />
-              )}
-            </View>
-          </View>
-        </View>
-
-        <ThemedText style={styles.assistantName}>কৃষি ভাই</ThemedText>
-        <ThemedText style={[styles.assistantDesc, { color: theme.textSecondary }]}>
-          আপনার কৃষি পরামর্শদাতা
-        </ThemedText>
-
-        <View style={[styles.statusPill, { 
-          backgroundColor: callState === "listening" 
-            ? "#DA2F2F15" 
-            : callState === "speaking" 
-              ? theme.primary + "15"
-              : theme.textSecondary + "15"
-        }]}>
-          <ThemedText style={[styles.statusText, { 
-            color: callState === "listening" 
-              ? "#DA2F2F" 
-              : callState === "speaking"
-                ? theme.primary
-                : theme.textSecondary
-          }]}>
-            {getStatusText()}
-          </ThemedText>
-        </View>
-
-        {transcript ? (
-          <View style={[styles.messageCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-            <View style={styles.messageHeader}>
-              <View style={[styles.messageAvatar, { backgroundColor: theme.backgroundSecondary }]}>
-                <Feather name="user" size={14} color={theme.textSecondary} />
-              </View>
-              <ThemedText style={[styles.messageLabel, { color: theme.textSecondary }]}>আপনি</ThemedText>
-            </View>
-            <ThemedText style={styles.messageText}>{transcript}</ThemedText>
-          </View>
-        ) : null}
-
-        {aiResponse && (callState === "speaking" || callState === "processing") ? (
-          <View style={[styles.messageCard, styles.aiMessageCard, { 
-            backgroundColor: theme.primary + "10", 
-            borderColor: theme.primary + "30" 
-          }]}>
-            <View style={styles.messageHeader}>
-              <View style={[styles.messageAvatar, { backgroundColor: theme.primary }]}>
-                <Feather name="headphones" size={14} color="#fff" />
-              </View>
-              <ThemedText style={[styles.messageLabel, { color: theme.primary }]}>কৃষি ভাই</ThemedText>
-            </View>
-            <ThemedText style={styles.messageText}>{aiResponse}</ThemedText>
-          </View>
-        ) : null}
-      </View>
-
-      <View style={[styles.controls, { paddingBottom: insets.bottom + Spacing.xl }]}>
-        {!isCallActive ? (
-          <Pressable 
-            style={({ pressed }) => [
-              styles.startCallButton, 
-              { backgroundColor: theme.success, transform: [{ scale: pressed ? 0.95 : 1 }] }
-            ]} 
-            onPress={startCall}
-          >
-            <Feather name="phone" size={28} color="#FFFFFF" />
-            <ThemedText style={styles.startCallText}>কল শুরু করুন</ThemedText>
-          </Pressable>
-        ) : (
-          <View style={styles.activeCallControls}>
-            {(callState === "ready" || callState === "listening") ? (
-              <Pressable 
-                style={({ pressed }) => [
-                  styles.micButton, 
-                  { 
-                    backgroundColor: callState === "listening" ? "#DA2F2F" : theme.primary,
-                    transform: [{ scale: pressed ? 0.95 : 1 }]
-                  }
-                ]} 
-                onPress={handleMicTap}
-              >
-                <AppIcon 
-                  name={callState === "listening" ? "mic-off" : "mic"} 
-                  size={36} 
-                  color="#FFFFFF" 
-                />
-              </Pressable>
-            ) : (
-              <View style={[styles.micButton, { backgroundColor: theme.textSecondary + "40" }]}>
-                <Feather name="loader" size={36} color={theme.textSecondary} />
-              </View>
-            )}
-            <Pressable 
-              style={({ pressed }) => [
-                styles.endCallButton, 
-                { backgroundColor: "#DA2F2F", transform: [{ scale: pressed ? 0.95 : 1 }] }
-              ]} 
-              onPress={endCall}
-            >
-              <Feather name="phone-off" size={22} color="#FFFFFF" />
-            </Pressable>
-          </View>
-        )}
-        
-        <ThemedText style={[styles.callHint, { color: theme.textSecondary }]}>
-          {!isCallActive 
-            ? "কৃষি বিষয়ে যেকোনো প্রশ্ন করুন" 
-            : callState === "listening" 
-              ? "বলা শেষে মাইক ট্যাপ করুন" 
-              : callState === "ready"
-                ? "মাইক ট্যাপ করে কথা বলুন"
-                : ""}
-        </ThemedText>
-      </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-  },
-  backButton: { 
-    width: 44, 
-    height: 44, 
-    borderRadius: 22,
-    alignItems: "center", 
-    justifyContent: "center",
-  },
-  durationBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    gap: Spacing.sm,
-  },
-  liveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  durationText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  content: { 
-    flex: 1, 
-    alignItems: "center", 
-    justifyContent: "center", 
-    paddingHorizontal: Spacing.xl,
-  },
-  avatarSection: {
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.xl,
-  },
-  pulseRing: { 
-    position: "absolute", 
-    width: 180, 
-    height: 180, 
-    borderRadius: 90,
-  },
-  avatarOuter: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatar: { 
-    width: 110, 
-    height: 110, 
-    borderRadius: 55, 
-    alignItems: "center", 
-    justifyContent: "center",
-  },
-  waveContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    height: 40,
-  },
-  waveBar: {
-    width: 6,
-    height: 24,
-    borderRadius: 3,
-  },
-  waveBarTall: {
-    height: 36,
-  },
-  assistantName: { 
-    fontSize: 26, 
-    fontWeight: "700", 
-    marginBottom: Spacing.xs,
-  },
-  assistantDesc: {
-    fontSize: 15,
-    marginBottom: Spacing.lg,
-  },
-  statusPill: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    marginBottom: Spacing.xl,
-  },
-  statusText: { 
-    fontSize: 14, 
-    fontWeight: "500",
-  },
-  messageCard: {
-    width: "100%",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    marginBottom: Spacing.md,
-  },
-  aiMessageCard: {},
-  messageHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  messageAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  messageLabel: { 
-    fontSize: 12, 
-    fontWeight: "600",
-  },
-  messageText: { 
-    fontSize: 15, 
-    lineHeight: 22,
-  },
-  controls: { 
-    alignItems: "center", 
-    paddingTop: Spacing.xl,
-  },
-  startCallButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.md,
-    paddingHorizontal: Spacing["3xl"],
-    paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.full,
-    marginBottom: Spacing.md,
-  },
-  startCallText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  activeCallControls: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    gap: Spacing["2xl"], 
-    marginBottom: Spacing.md,
-  },
-  micButton: { 
-    width: 80, 
-    height: 80, 
-    borderRadius: 40, 
-    alignItems: "center", 
-    justifyContent: "center",
-  },
-  endCallButton: { 
-    width: 56, 
-    height: 56, 
-    borderRadius: 28, 
-    alignItems: "center", 
-    justifyContent: "center",
-  },
-  callHint: { 
-    fontSize: 14,
-    textAlign: "center",
-  },
-  webMessage: { 
-    fontSize: 16, 
-    textAlign: "center", 
-    marginTop: Spacing.lg, 
-    paddingHorizontal: Spacing.xl, 
-    lineHeight: 24,
-  },
+  top: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14 },
+  topBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
+  name: { color: "#fff", fontSize: 19, fontWeight: "800" },
+  timer: { color: "rgba(255,255,255,0.7)", fontSize: 13, marginTop: 2, fontVariant: ["tabular-nums"] },
+  status: { color: "#fff", fontSize: 15.5, fontWeight: "600", marginTop: 6, textAlign: "center", paddingHorizontal: 24 },
+  voice: { color: "rgba(255,255,255,0.55)", fontSize: 12, marginTop: 4 },
+  youBox: { alignSelf: "flex-end", maxWidth: "88%", backgroundColor: "rgba(255,255,255,0.10)", borderRadius: 18, borderTopRightRadius: 6, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 10 },
+  youLabel: { color: "rgba(255,255,255,0.55)", fontSize: 11.5, fontWeight: "700", marginBottom: 2 },
+  youText: { color: "#fff", fontSize: 14.5, lineHeight: 21 },
+  aiBox: { backgroundColor: "rgba(91,155,255,0.16)", borderRadius: 20, borderTopLeftRadius: 6, padding: 16, borderWidth: 1, borderColor: "rgba(156,195,255,0.25)" },
+  aiText: { color: "#fff", fontSize: 16, lineHeight: 25 },
+  err: { flexDirection: "row", gap: 8, alignItems: "flex-start", marginTop: 10, backgroundColor: "rgba(229,72,77,0.16)", borderRadius: 14, padding: 12 },
+  errText: { color: "#FFD6D6", fontSize: 13.5, lineHeight: 19, flex: 1 },
+  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-evenly", paddingHorizontal: 20, marginTop: 8 },
+  side: { width: 72, height: 72, borderRadius: 36, backgroundColor: "rgba(255,255,255,0.14)", alignItems: "center", justifyContent: "center", gap: 2 },
+  sideText: { color: "#fff", fontSize: 10.5, fontWeight: "600" },
+  mic: { width: 92, height: 92, borderRadius: 46, alignItems: "center", justifyContent: "center", shadowColor: "#2F6FE4", shadowOpacity: 0.6, shadowRadius: 18, elevation: 10 },
 });

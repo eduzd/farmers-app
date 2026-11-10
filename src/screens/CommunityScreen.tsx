@@ -589,6 +589,7 @@ export default function CommunityScreen() {
               }}
               accessibilityRole="button"
               accessibilityLabel={a.label}
+              testID={`quick-${a.key}`}
               style={({ pressed }) => [styles.quickItem, { opacity: pressed ? 0.6 : 1 }]}
             >
               <View style={[styles.quickIcon, { backgroundColor: isDark ? a.color + "26" : a.soft }]}>

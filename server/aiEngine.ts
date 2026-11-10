@@ -458,8 +458,13 @@ async function geminiStt(key: string, audio: Buffer, mime: string, lang: "en" | 
 /** Pick the speech-to-text provider: the admin's choice, else the first working voice provider, else the server backup key. */
 export async function transcribe(c: AiConfig, audio: Buffer, mime: string, lang: "en" | "bn"): Promise<string> {
   const ps = c.voice.providers.filter((p) => p.enabled);
-  const chosen = c.voice.sttProviderId ? ps.filter((p) => p.id === c.voice.sttProviderId) : [];
-  const order = [...chosen, ...ps.filter((p) => !chosen.includes(p) && p.company !== "compatible")];
+  // Order: the provider the admin chose for listening, then the one behind this language's voice,
+  // then the big companies, then any other OpenAI-compatible (Omni route) speech address.
+  const first = [c.voice.sttProviderId, c.voice[lang]?.providerId, c.voice[lang === "bn" ? "en" : "bn"]?.providerId].filter(Boolean) as string[];
+  const order: typeof ps = [];
+  for (const id of first) { const p = ps.find((x) => x.id === id); if (p && !order.includes(p)) order.push(p); }
+  for (const p of ps) if (!order.includes(p) && p.company !== "compatible") order.push(p);
+  for (const p of ps) if (!order.includes(p)) order.push(p);
   let last = "";
   for (const p of order) {
     try {
@@ -510,6 +515,6 @@ export function voiceStatus(c: AiConfig) {
     const p = ch && ps.find((x) => x.id === ch.providerId);
     return ch && p ? { voice: ch.voiceName, provider: p.label, company: p.company } : null;
   };
-  const sttReady = ps.some((p) => p.company !== "compatible" || p.id === c.voice.sttProviderId) || (c.useServerBackup && hasServerBackup());
+  const sttReady = ps.length > 0 || (c.useServerBackup && hasServerBackup());
   return { en: pick("en"), bn: pick("bn"), sttReady };
 }
