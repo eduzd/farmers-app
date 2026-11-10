@@ -683,7 +683,7 @@ export default function PostDetailScreen() {
             accessibilityRole="button"
             accessibilityLabel={useI18n.getState().language === "bn" ? "শেয়ার" : "Share"}
           >
-            <Feather name="upload" size={18} color={theme.textSecondary} />
+            <Feather name="share-2" size={18} color={theme.textSecondary} />
           </Pressable>
         </View>
       </View>

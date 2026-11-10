@@ -1,6 +1,7 @@
 import React from "react";
 import { Feather as ExpoFeather } from "@expo/vector-icons";
 import { ThinIcon } from "./AppIcon";
+import { ShareIcon, isShareIconName } from "./ShareIcon";
 import { FEATHER_PATHS } from "./featherPaths";
 import { useThemeScope } from "@/contexts/ThemeScope";
 import { useTheme } from "@/hooks/useTheme";
@@ -19,6 +20,10 @@ function MayaFeather(props: Props) {
   const { isDark } = useTheme();
   // Dark mode: deep red / violet / amber icons made for white cards get their light tone.
   const color = liftForDark((props as any).color, isDark) ?? (props as any).color;
+  // Share buttons everywhere use the app's own solid share icon.
+  if (isShareIconName(name)) {
+    return <ShareIcon size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} />;
+  }
   if (scope === "maya" && typeof name === "string" && FEATHER_PATHS[name]) {
     return (
       <ThinIcon

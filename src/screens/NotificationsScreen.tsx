@@ -6,17 +6,13 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
-  Platform,
-  Linking,
-  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect, useRoute } from "@react-navigation/native";
 import { Feather } from "@/components/icons/Feather";
 import * as Haptics from "expo-haptics";
-import Animated, { FadeIn, FadeInUp } from "react-native-reanimated";
+import Animated, { FadeInUp } from "react-native-reanimated";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -154,9 +150,6 @@ export default function NotificationsScreen() {
   const [filter, setFilter] = useState<"all" | "unread">("all");
   
   const { 
-    permissionStatus, 
-    requestPermission, 
-    sendTestNotification,
     notifications: pushNotifications,
     markAsRead: markPushAsRead,
   } = useNotifications();
@@ -185,35 +178,6 @@ export default function NotificationsScreen() {
     setRefreshing(true);
     await loadServer();
     setRefreshing(false);
-  };
-
-  const handleEnableNotifications = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const granted = await requestPermission();
-    if (granted) {
-      await sendTestNotification();
-      Alert.alert(tr("সফল!"), tr("পুশ নোটিফিকেশন সক্রিয় হয়েছে"));
-    } else {
-      if (Platform.OS !== "web") {
-        Alert.alert(
-          "অনুমতি প্রয়োজন",
-          "নোটিফিকেশন পেতে সেটিংস থেকে অনুমতি দিন",
-          [
-            { text: "বাতিল", style: "cancel" },
-            { 
-              text: "সেটিংস", 
-              onPress: async () => {
-                try {
-                  await Linking.openSettings();
-                } catch (error) {
-                  console.log("Could not open settings");
-                }
-              }
-            },
-          ]
-        );
-      }
-    }
   };
 
   const handleNotificationPress = (notification: Notification) => {
@@ -312,78 +276,75 @@ export default function NotificationsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Animated.View entering={FadeIn} style={styles.header}>
-        <View>
-          <ThemedText style={[styles.title, { color: theme.text }]}>
-            {scope === "market" ? (isBn ? "মার্কেট নোটিফিকেশন" : "Market notifications") : tr("নোটিফিকেশন")}
-          </ThemedText>
-          {unreadCount > 0 ? (
-            <ThemedText style={[styles.subtitle, { color: theme.textSecondary }]}>
-              {unreadCount}টি অপঠিত বার্তা
-            </ThemedText>
-          ) : null}
+      <Animated.View entering={FadeInUp.delay(60)} style={styles.filterRow} testID="notif-filter-row">
+        {/* All / Unread as one segmented pill, Mark all read on the same line at the right. */}
+        <View
+          style={[
+            styles.segment,
+            { backgroundColor: isDark ? theme.backgroundSecondary : theme.card, borderColor: theme.cardBorder },
+          ]}
+        >
+          {(["all", "unread"] as const).map((key) => {
+            const active = filter === key;
+            const count = key === "all" ? allNotifications.length : unreadCount;
+            const activeBg = isDark ? theme.primary : theme.primaryDark;
+            return (
+              <Pressable
+                key={key}
+                testID={`notif-filter-${key}`}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                aria-selected={active}
+                onPress={() => {
+                  if (!active) Haptics.selectionAsync();
+                  setFilter(key);
+                }}
+                style={[styles.segmentItem, active && [styles.segmentItemActive, { backgroundColor: activeBg }]]}
+              >
+                <ThemedText style={[styles.segmentText, { color: active ? "#FFFFFF" : theme.textSecondary }]}>
+                  {key === "all" ? tr("সব") : isBn ? "অপঠিত" : "Unread"}
+                </ThemedText>
+                <View
+                  style={[
+                    styles.countPill,
+                    {
+                      backgroundColor: active
+                        ? isDark ? "rgba(0,0,0,0.28)" : "rgba(255,255,255,0.18)"
+                        : key === "unread" && count > 0
+                          ? theme.primary
+                          : theme.primarySoft,
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    style={[
+                      styles.countText,
+                      { color: active || (key === "unread" && count > 0) ? "#FFFFFF" : theme.primary },
+                    ]}
+                  >
+                    {count > 99 ? "99+" : count}
+                  </ThemedText>
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
         {unreadCount > 0 ? (
           <Pressable
-            style={[styles.markAllButton, { backgroundColor: theme.primary + "15" }]}
+            style={({ pressed }) => [
+              styles.markAllButton,
+              { backgroundColor: theme.primarySoft, borderColor: theme.primary + "33", opacity: pressed ? 0.75 : 1 },
+            ]}
             onPress={handleMarkAllRead}
+            accessibilityRole="button"
+            testID="notif-mark-all"
           >
-            <Feather name="check-circle" size={16} color={theme.primary} />
-            <ThemedText style={[styles.markAllText, { color: theme.primary }]}>{tr("সব পঠিত")}</ThemedText>
+            <Feather name="check-circle" size={15} color={isDark ? theme.primaryTint : theme.primary} />
+            <ThemedText style={[styles.markAllText, { color: isDark ? theme.primaryTint : theme.primaryDark }]} numberOfLines={1}>
+              {tr("সব পঠিত")}
+            </ThemedText>
           </Pressable>
         ) : null}
-      </Animated.View>
-
-      {permissionStatus !== "granted" ? (
-        <Animated.View entering={FadeInUp.delay(50)} style={styles.enableBanner}>
-          <LinearGradient
-            colors={isDark ? ["#14304F", "#132A40"] : ["#2E96EF", "#2E96EF"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.enableGradient, isDark && { borderWidth: 1, borderColor: "#24476B" }]}
-          >
-            <View style={styles.enableContent}>
-              <View style={styles.enableIconContainer}>
-                <Feather name="bell" size={24} color="#fff" />
-              </View>
-              <View style={styles.enableTextContainer}>
-                <ThemedText style={styles.enableTitle}>{tr("পুশ নোটিফিকেশন সক্রিয় করুন")}</ThemedText>
-                <ThemedText style={styles.enableSubtitle}>
-                  {tr("নতুন আপডেট ও বার্তা সাথে সাথে পান")}
-                </ThemedText>
-              </View>
-            </View>
-            <Pressable style={[styles.enableButton, isDark && { backgroundColor: theme.primary }]} onPress={handleEnableNotifications}>
-              <ThemedText style={[styles.enableButtonText, isDark && { color: "#FFFFFF" }]}>{tr("সক্রিয় করুন")}</ThemedText>
-              <Feather name="chevron-right" size={16} color={isDark ? "#FFFFFF" : "#2E96EF"} />
-            </Pressable>
-          </LinearGradient>
-        </Animated.View>
-      ) : null}
-
-      <Animated.View entering={FadeInUp.delay(100)} style={styles.filterRow}>
-        <Pressable
-          style={[
-            styles.filterButton,
-            { backgroundColor: filter === "all" ? theme.primary : theme.card, borderColor: theme.cardBorder },
-          ]}
-          onPress={() => setFilter("all")}
-        >
-          <ThemedText style={[styles.filterText, { color: filter === "all" ? "#fff" : theme.text }]}>
-            {tr("সব")}
-          </ThemedText>
-        </Pressable>
-        <Pressable
-          style={[
-            styles.filterButton,
-            { backgroundColor: filter === "unread" ? theme.primary : theme.card, borderColor: theme.cardBorder },
-          ]}
-          onPress={() => setFilter("unread")}
-        >
-          <ThemedText style={[styles.filterText, { color: filter === "unread" ? "#fff" : theme.text }]}>
-            অপঠিত ({unreadCount})
-          </ThemedText>
-        </Pressable>
       </Animated.View>
 
       <FlatList
@@ -414,38 +375,60 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
+  filterRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
   },
-  title: { fontSize: 22, fontWeight: "700" },
-  subtitle: { fontSize: 13, marginTop: 2 },
-  markAllButton: {
+  segment: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-    gap: Spacing.xs,
-  },
-  markAllText: { fontSize: 13, fontWeight: "500" },
-  filterRow: {
-    flexDirection: "row",
-    paddingHorizontal: Spacing.lg,
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  filterButton: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    padding: 4,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
+    gap: 2,
   },
-  filterText: { fontSize: 13, fontWeight: "500" },
+  segmentItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingLeft: 14,
+    paddingRight: 8,
+    paddingVertical: 7,
+    borderRadius: BorderRadius.full,
+  },
+  segmentItemActive: {
+    shadowColor: "#202936",
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  segmentText: { fontSize: 13, fontWeight: "600" },
+  countPill: {
+    minWidth: 22,
+    height: 20,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  countText: { fontSize: 11, fontWeight: "700", lineHeight: 14 },
+  markAllButton: {
+    marginLeft: "auto",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    gap: 6,
+    flexShrink: 1,
+  },
+  markAllText: { fontSize: 13, fontWeight: "600" },
   listContent: { paddingHorizontal: Spacing.lg },
   notificationItem: {
     flexDirection: "row",
@@ -489,55 +472,4 @@ const styles = StyleSheet.create({
   unreadDot: { width: 8, height: 8, borderRadius: 4, marginLeft: Spacing.sm, alignSelf: "center" },
   emptyState: { alignItems: "center", paddingVertical: Spacing.xl * 2 },
   emptyText: { fontSize: 14, marginTop: Spacing.md },
-  enableBanner: {
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    overflow: "hidden",
-  },
-  enableGradient: {
-    padding: Spacing.md,
-  },
-  enableContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: Spacing.sm,
-  },
-  enableIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: Spacing.md,
-  },
-  enableTextContainer: {
-    flex: 1,
-  },
-  enableTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#fff",
-  },
-  enableSubtitle: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.8)",
-    marginTop: 2,
-  },
-  enableButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#fff",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.full,
-    gap: Spacing.xs,
-  },
-  enableButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#2E96EF",
-  },
 });

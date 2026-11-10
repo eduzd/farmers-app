@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 
 import { ThemedText } from "@/components/ThemedText";
@@ -32,6 +32,7 @@ interface Achievement {
   current?: number;
 }
 
+const GAP = 10;
 const DAY = 24 * 60 * 60 * 1000;
 
 export function buildAchievements({ posts, followers, verified, joinedAt }: AchievementInput): Achievement[] {
@@ -71,6 +72,9 @@ export function ProfileAchievements({ input, bn }: { input: AchievementInput; bn
   const list = buildAchievements(input);
   const earned = list.filter(isEarned).length;
   const accent = theme.link || theme.primary;
+  const [gridW, setGridW] = useState(0);
+  const cols = gridW >= 560 ? 3 : 2;
+  const tileW = gridW ? Math.floor((gridW - GAP * (cols - 1)) / cols) : 0;
 
   return (
     <View testID="profile-achievements">
@@ -88,8 +92,13 @@ export function ProfileAchievements({ input, bn }: { input: AchievementInput; bn
         </View>
       </View>
 
-      <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}>
-        {list.map((a, i) => {
+      {/* Badge grid: equal tiles in rows (2 on a phone, 3 on a wide screen), so nothing overlaps or crowds. */}
+      <View
+        style={styles.grid}
+        onLayout={(e) => setGridW(e.nativeEvent.layout.width)}
+        testID="achievements-grid"
+      >
+        {list.map((a) => {
           const done = isEarned(a);
           const known = a.current !== undefined;
           const pct = known ? Math.min(1, (a.current as number) / a.target) : 0;
@@ -101,32 +110,38 @@ export function ProfileAchievements({ input, bn }: { input: AchievementInput; bn
           return (
             <View
               key={a.key}
-              style={[styles.row, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.divider }]}
+              style={[
+                styles.tile,
+                tileW ? { width: tileW } : styles.tileFallback,
+                { backgroundColor: theme.card, borderColor: done ? accent : theme.cardBorder },
+              ]}
               testID={`achievement-${a.key}`}
               accessibilityLabel={`${L(a.title)}: ${done ? (bn ? "অর্জিত" : "earned") : L(a.desc)}`}
             >
               <View style={[styles.icon, { backgroundColor: done ? accent : theme.backgroundSecondary }]}>
-                <AppIcon name={a.icon as any} size={18} color={done ? theme.buttonText || "#fff" : theme.textSecondary} />
+                <AppIcon name={a.icon as any} size={20} color={done ? theme.buttonText || "#fff" : theme.textSecondary} />
               </View>
-              <View style={{ flex: 1 }}>
-                <ThemedText style={[styles.title, { color: done ? theme.text : theme.textSecondary }]}>{L(a.title)}</ThemedText>
-                <ThemedText style={[styles.desc, { color: theme.textSecondary }]}>{L(a.desc)}</ThemedText>
-                {!done && known && a.key !== "verified" ? (
-                  <View style={[styles.track, styles.rowTrack, { backgroundColor: theme.backgroundSecondary }]}>
-                    <View style={[styles.fill, { backgroundColor: accent, width: `${Math.round(pct * 100)}%` }]} />
+              <ThemedText numberOfLines={2} style={[styles.title, { color: done ? theme.text : theme.textSecondary }]}>{L(a.title)}</ThemedText>
+              <ThemedText numberOfLines={2} style={[styles.desc, { color: theme.textSecondary }]}>{L(a.desc)}</ThemedText>
+              <View style={styles.tileFoot}>
+                {done ? (
+                  <View style={styles.badge} testID={`achievement-${a.key}-earned`}>
+                    <AppIcon name="check" size={14} color={accent} />
+                    <ThemedText style={[styles.badgeText, { color: accent }]}>{bn ? "অর্জিত" : "Earned"}</ThemedText>
                   </View>
-                ) : null}
+                ) : (
+                  <>
+                    <ThemedText numberOfLines={1} style={[styles.progress, { color: theme.textSecondary }]} testID={`achievement-${a.key}-progress`}>
+                      {known ? progressText : "…"}
+                    </ThemedText>
+                    {known && a.key !== "verified" ? (
+                      <View style={[styles.track, styles.rowTrack, { backgroundColor: theme.backgroundSecondary }]}>
+                        <View style={[styles.fill, { backgroundColor: accent, width: `${Math.round(pct * 100)}%` }]} />
+                      </View>
+                    ) : null}
+                  </>
+                )}
               </View>
-              {done ? (
-                <View style={styles.badge} testID={`achievement-${a.key}-earned`}>
-                  <AppIcon name="check" size={14} color={accent} />
-                  <ThemedText style={[styles.badgeText, { color: accent }]}>{bn ? "অর্জিত" : "Earned"}</ThemedText>
-                </View>
-              ) : (
-                <ThemedText style={[styles.progress, { color: theme.textSecondary }]} testID={`achievement-${a.key}-progress`}>
-                  {known ? progressText : "…"}
-                </ThemedText>
-              )}
             </View>
           );
         })}
@@ -142,11 +157,13 @@ const styles = StyleSheet.create({
   track: { height: 6, borderRadius: 3, overflow: "hidden" },
   rowTrack: { height: 4, marginTop: 6 },
   fill: { height: "100%", borderRadius: 3 },
-  card: { marginHorizontal: Spacing.lg, borderWidth: 1, borderRadius: 12, paddingHorizontal: Spacing.lg, paddingVertical: Spacing.xs },
-  row: { flexDirection: "row", alignItems: "center", gap: Spacing.md, paddingVertical: Spacing.md },
-  icon: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 15, lineHeight: 21, fontFamily: FontFamily.medium },
-  desc: { fontSize: 13, lineHeight: 18 },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: GAP, marginHorizontal: Spacing.lg },
+  tile: { borderWidth: 1, borderRadius: 12, padding: Spacing.md, gap: 4, minHeight: 150 },
+  tileFallback: { width: "47%" },
+  tileFoot: { marginTop: "auto", paddingTop: 6 },
+  icon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  title: { fontSize: 14, lineHeight: 20, fontFamily: FontFamily.semibold },
+  desc: { fontSize: 12, lineHeight: 17 },
   badge: { flexDirection: "row", alignItems: "center", gap: 4 },
   badgeText: { fontSize: 13, lineHeight: 18, fontFamily: FontFamily.semibold },
   progress: { fontSize: 13, lineHeight: 18, fontFamily: FontFamily.medium },

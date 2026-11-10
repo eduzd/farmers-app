@@ -162,7 +162,7 @@ export function ProfileFeed({ userId, author, bn, aboutRows, reloadKey, emptyPos
 
   return (
     <View testID="profile-feed">
-      <ProfileTabs tabs={tabs} value={tab} onChange={setTab} />
+      <ProfileTabs tabs={tabs} value={tab} onChange={setTab} fill />
       <View style={styles.body}>
         {tab === "posts" ? (
           state !== "ok" ? (

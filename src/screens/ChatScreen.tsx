@@ -843,7 +843,7 @@ export default function ChatScreen() {
               </View>
             ) : null}
             <View style={[styles.messageContainer, item.isMe ? styles.myMessage : styles.theirMessage]}>
-              <View style={[styles.bubbleWrapper, item.reactions && item.reactions.length > 0 && styles.bubbleWithReaction]}>
+              <View style={[styles.bubbleWrapper, item.isMe ? styles.bubbleWrapperMine : styles.bubbleWrapperTheirs, item.reactions && item.reactions.length > 0 && styles.bubbleWithReaction]}>
                 <View
                   style={[
                     styles.voiceMessageBubble,
@@ -862,7 +862,7 @@ export default function ChatScreen() {
                   />
                 </View>
                 {item.reactions && item.reactions.length > 0 ? (
-                  <View style={[styles.reactionsContainer, isDark && { backgroundColor: theme.backgroundTertiary }, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
+                  <View testID="dm-msg-reactions" style={[styles.reactionsContainer, isDark && { backgroundColor: theme.backgroundTertiary }, item.superReact && styles.reactionsSuper]}>
                     {item.reactions.map((r, i) => (
                       <ThemedText key={i} allowFontScaling={false} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                     ))}
@@ -897,7 +897,7 @@ export default function ChatScreen() {
               </View>
             ) : null}
             <View style={[styles.messageContainer, item.isMe ? styles.myMessage : styles.theirMessage]}>
-              <View style={[styles.bubbleWrapper, item.reactions && item.reactions.length > 0 && styles.bubbleWithReaction]}>
+              <View style={[styles.bubbleWrapper, item.isMe ? styles.bubbleWrapperMine : styles.bubbleWrapperTheirs, item.reactions && item.reactions.length > 0 && styles.bubbleWithReaction]}>
                 <ChatPhoto
                   localUri={item.imageUri}
                   mediaId={item.mediaId}
@@ -907,7 +907,7 @@ export default function ChatScreen() {
                   onLongPress={() => handleLongPress(item)}
                 />
                 {item.reactions && item.reactions.length > 0 ? (
-                  <View style={[styles.reactionsContainer, isDark && { backgroundColor: theme.backgroundTertiary }, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
+                  <View testID="dm-msg-reactions" style={[styles.reactionsContainer, isDark && { backgroundColor: theme.backgroundTertiary }, item.superReact && styles.reactionsSuper]}>
                     {item.reactions.map((r, i) => (
                       <ThemedText key={i} allowFontScaling={false} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                     ))}
@@ -952,7 +952,7 @@ export default function ChatScreen() {
                 </ThemedText>
               </View>
             ) : null}
-            <View style={[styles.bubbleWrapper, item.reactions && item.reactions.length > 0 && styles.bubbleWithReaction]}>
+            <View style={[styles.bubbleWrapper, item.isMe ? styles.bubbleWrapperMine : styles.bubbleWrapperTheirs, item.reactions && item.reactions.length > 0 && styles.bubbleWithReaction]}>
               <View
                 style={[
                   styles.messageBubble,
@@ -966,7 +966,7 @@ export default function ChatScreen() {
                 </ThemedText>
               </View>
               {item.reactions && item.reactions.length > 0 ? (
-                <View style={[styles.reactionsContainer, isDark && { backgroundColor: theme.backgroundTertiary }, item.isMe && styles.reactionsRight, item.superReact && styles.reactionsSuper]}>
+                <View testID="dm-msg-reactions" style={[styles.reactionsContainer, isDark && { backgroundColor: theme.backgroundTertiary }, item.superReact && styles.reactionsSuper]}>
                   {item.reactions.map((r, i) => (
                     <ThemedText key={i} allowFontScaling={false} style={[styles.reactionEmoji, item.superReact && styles.reactionEmojiSuper]}>{r}</ThemedText>
                   ))}
@@ -1454,8 +1454,15 @@ const styles = StyleSheet.create({
   bubbleWrapper: {
     position: "relative",
   },
+  // The bubble keeps to its own side; the reactions sit under it on the right (see reactionsContainer).
+  bubbleWrapperMine: {
+    alignItems: "flex-end",
+  },
+  bubbleWrapperTheirs: {
+    alignItems: "flex-start",
+  },
   bubbleWithReaction: {
-    marginBottom: 16,
+    marginBottom: 2,
   },
   myMessage: {
     alignSelf: "flex-end",
@@ -1515,10 +1522,14 @@ const styles = StyleSheet.create({
   replyText: {
     fontSize: 13,
   },
+  // Reactions always hang off the bottom-RIGHT corner of the bubble, on everyone's messages.
+  // They are laid out under the bubble (pulled up over its edge), not absolutely placed, so a
+  // row of emojis wider than a short bubble grows into the free space instead of off the screen.
   reactionsContainer: {
-    position: "absolute",
-    bottom: -10,
-    left: 6,
+    alignSelf: "flex-end",
+    marginTop: -10,
+    marginRight: 6,
+    marginLeft: 12,
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
@@ -1536,10 +1547,6 @@ const styles = StyleSheet.create({
     elevation: 2,
     zIndex: 10,
   },
-  reactionsRight: {
-    left: "auto",
-    right: 6,
-  },
   reactionEmoji: {
     fontSize: 13,
     lineHeight: 20,
@@ -1551,7 +1558,7 @@ const styles = StyleSheet.create({
     minHeight: 32,
     minWidth: 32,
     borderRadius: 16,
-    bottom: -14,
+    marginTop: -14,
   },
   reactionEmojiSuper: {
     fontSize: 19,

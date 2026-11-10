@@ -18,7 +18,7 @@ def T(tid):
 class H:
     def __init__(self, name):
         self.name = name
-        self.port = 6500 + random.randint(0, 400)
+        self.port = 7100 + random.randint(0, 400)  # avoids ports browsers refuse (6665-6669, 6679, 6697)
         self.base = f"http://127.0.0.1:{self.port}"
         self.shots = sys.argv[1] if len(sys.argv) > 1 else f"/home/sprite/farmers-shots/{name}"
         os.makedirs(self.shots, exist_ok=True)

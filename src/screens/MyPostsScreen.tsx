@@ -279,7 +279,7 @@ export default function MyPostsScreen() {
             style={styles.actionIconCircle}
             onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
           >
-            <Feather name="upload" size={18} color={theme.textSecondary} />
+            <Feather name="share-2" size={18} color={theme.textSecondary} />
           </Pressable>
         </View>
       </View>

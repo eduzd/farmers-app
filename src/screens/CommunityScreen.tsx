@@ -731,7 +731,7 @@ export default function CommunityScreen() {
             hitSlop={4}
             style={({ pressed }) => [styles.shareCircle, { backgroundColor: pressed ? theme.backgroundSecondary : "transparent" }]}
           >
-            <Feather name="upload" size={18} color={theme.textSecondary} />
+            <Feather name="share-2" size={18} color={theme.textSecondary} />
           </Pressable>
         </View>
         <PostAction
@@ -1186,7 +1186,7 @@ const styles = StyleSheet.create({
   },
   actionLabel: { fontSize: 13, lineHeight: 18, fontFamily: FontFamily.semibold },
   shareCell: { flex: 1, alignItems: "center", justifyContent: "center" },
-  // Matches PostDetailScreen's actionIconCircle (44x44 round, "upload" icon, 18px).
+  // Matches PostDetailScreen's actionIconCircle (44x44 round, share icon, 18px).
   shareCircle: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   modalHeader: {
     flexDirection: "row",
