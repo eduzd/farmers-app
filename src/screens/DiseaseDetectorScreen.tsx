@@ -172,8 +172,10 @@ function ScanOverlay() {
 }
 
 function ResultCard({ r, bn, onExpert, onAsk }: { r: Diagnosis; bn: boolean; onExpert: () => void; onAsk: () => void }) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const T = (en: string, b: string) => (bn ? b : en);
+  // Section colours one step lighter in dark mode so the numbers and icons stay readable.
+  const sc = (light: string, dark: string) => (isDark ? dark : light);
   const sev = SEV[r.severity] || SEV.medium;
   const tone = r.healthy ? "#00875A" : sev.c;
   const conf = Math.max(0, Math.min(100, Math.round(r.confidence)));
@@ -215,10 +217,10 @@ function ResultCard({ r, bn, onExpert, onAsk }: { r: Diagnosis; bn: boolean; onE
         {r.summary ? <Text style={{ color: theme.text, fontSize: 14.5, lineHeight: 22, marginTop: 12 }}>{r.summary}</Text> : null}
       </View>
       {r.notClear ? <AiNotice tone="warn" style={{ marginTop: 10 }} text={T("The photo wasn't clear enough to be sure. A closer photo in daylight will help.", "ছবিটি যথেষ্ট পরিষ্কার নয়। দিনের আলোয় কাছ থেকে তোলা ছবি দিলে ভালো হবে।")} /> : null}
-      <Section icon="eye" title={T("Signs", "লক্ষণ")} items={r.symptoms} color="#1C3F94" />
-      <Section icon="help-circle" title={T("Likely causes", "সম্ভাব্য কারণ")} items={r.causes} color="#6C4CF1" />
-      <Section icon="activity" title={T("What to do now", "এখন কী করবেন")} items={r.treatment} color="#00875A" />
-      <Section icon="shield" title={T("Prevent it next time", "পরের বার প্রতিরোধ")} items={r.prevention} color="#B25E09" />
+      <Section icon="eye" title={T("Signs", "লক্ষণ")} items={r.symptoms} color={sc("#1C3F94", "#8FB0FF")} />
+      <Section icon="help-circle" title={T("Likely causes", "সম্ভাব্য কারণ")} items={r.causes} color={sc("#6C4CF1", "#B3A2FF")} />
+      <Section icon="activity" title={T("What to do now", "এখন কী করবেন")} items={r.treatment} color={sc("#00875A", "#3DD39A")} />
+      <Section icon="shield" title={T("Prevent it next time", "পরের বার প্রতিরোধ")} items={r.prevention} color={sc("#B25E09", "#F2A54A")} />
       {r.otherPossibilities?.length ? (
         <View style={[styles.section, card]}>
           <Text style={{ color: theme.text, fontWeight: "700", fontSize: 15, marginBottom: 4 }}>{T("It could also be", "এটিও হতে পারে")}</Text>

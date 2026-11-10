@@ -186,14 +186,15 @@ export function Card({ children, style, onPress, testID }: { children: React.Rea
 }
 
 export function SectionTitle({ title, action, onAction, testID }: { title: string; action?: string; onAction?: () => void; testID?: string }) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
+  const linkC = isDark ? theme.primary : SOFT_FG;
   return (
     <View style={st.sectionRow}>
       <Text style={[st.section, DISPLAY, { color: theme.text }]} numberOfLines={1}>{title}</Text>
       {action ? (
         <Pressable testID={testID} onPress={onAction} hitSlop={8} style={{ flexDirection: "row", alignItems: "center", gap: 2 }}>
-          <Text style={{ color: theme.primary, fontWeight: "700", fontSize: 13 }}>{action}</Text>
-          <Feather name="chevron-right" size={15} color={theme.primary} />
+          <Text style={{ color: linkC, fontWeight: "700", fontSize: 13 }}>{action}</Text>
+          <Feather name="chevron-right" size={15} color={linkC} />
         </Pressable>
       ) : null}
     </View>
