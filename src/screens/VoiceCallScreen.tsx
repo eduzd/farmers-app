@@ -41,6 +41,9 @@ async function fileToBase64(uri: string): Promise<{ base64: string; mime: string
   return { base64, mime: "audio/mp4" };
 }
 
+// The server says "Nova (Omni route voice)"; farmers only need the voice's name.
+const voiceOnly = (v?: string | null) => (v ? v.replace(/\s*\([^)]*\)\s*$/, "") : v) as string;
+
 export default function VoiceCallScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
@@ -89,7 +92,7 @@ export default function VoiceCallScreen() {
       try {
         const g = await aiVoiceGreet(bn ? "bn" : "en");
         if (!live.current) return;
-        setVoiceName(g.voice);
+        setVoiceName(voiceOnly(g.voice));
         setTurns([{ role: "assistant", content: g.reply }]);
         await say(g.reply, g.audioBase64, g.mimeType);
       } catch (e: any) {
@@ -117,7 +120,7 @@ export default function VoiceCallScreen() {
       const r = await aiVoiceTurn({ audioBase64: base64, mimeType: mime, history: turnsRef.current.slice(-10), lang: bn ? "bn" : "en" });
       if (!live.current) return;
       if (!r.heard) { setError(T("I didn't catch that. Tap the mic and try again.", "ঠিক শুনতে পাইনি। মাইক চেপে আবার বলুন।")); setPhase("ready"); return; }
-      if (r.voice) setVoiceName(r.voice);
+      if (r.voice) setVoiceName(voiceOnly(r.voice));
       setTurns((t) => [...t, { role: "user", content: r.transcript }, { role: "assistant", content: r.reply }]);
       await say(r.reply, r.audioBase64, r.mimeType);
     } catch (e: any) {

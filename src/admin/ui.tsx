@@ -69,14 +69,24 @@ export const statusLabel = (s: string, L: ReturnType<typeof useL>) =>
     active: L("Active", "সক্রিয়"), suspended: L("Suspended", "স্থগিত"), hidden: L("Hidden", "লুকানো"),
   } as Record<string, string>)[s] || s);
 
+const BN_MONTHS = ["জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"];
+const bnDigits = (s: string) => s.replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]);
+const bnDayPart = (h: number) => (h < 4 ? "রাত" : h < 6 ? "ভোর" : h < 12 ? "সকাল" : h < 15 ? "দুপুর" : h < 18 ? "বিকাল" : h < 20 ? "সন্ধ্যা" : "রাত");
+
 export function fmtDate(isoS?: string | null, withTime = true) {
   if (!isoS) return "";
   const d = new Date(isoS);
   if (isNaN(d.getTime())) return "";
+  const h = d.getHours(), m = d.getMinutes();
+  const hm = `${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")}`;
+  // Dates follow the dashboard language, so a Bangla screen has no English month names.
+  if (useI18n.getState().language === "bn") {
+    const date = bnDigits(`${d.getDate()} ${BN_MONTHS[d.getMonth()]} ${d.getFullYear()}`);
+    return withTime ? `${date}, ${bnDayPart(h)} ${bnDigits(hm)}` : date;
+  }
   const date = `${d.getDate()} ${["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()]} ${d.getFullYear()}`;
   if (!withTime) return date;
-  const h = d.getHours(), m = d.getMinutes();
-  return `${date}, ${((h + 11) % 12) + 1}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+  return `${date}, ${hm} ${h < 12 ? "AM" : "PM"}`;
 }
 
 export function useLoader<T>(fn: () => Promise<T>, deps: any[]) {
@@ -256,6 +266,9 @@ export function SearchBox({ value, onChange, placeholder, testID, autoFocus }: {
   );
 }
 
+// Maya link blue darkened one step: #2E96EF on the pale-blue fill was too faint (contrast under 3:1).
+const SOFT_FG = "#1A6FC4";
+
 export function Btn({ label, onPress, icon, kind = "primary", busy, disabled, testID, small, style }: {
   label: string; onPress: () => void; icon?: keyof typeof Feather.glyphMap; kind?: "primary" | "ghost" | "danger" | "soft" | "dangerSoft"; busy?: boolean; disabled?: boolean; testID?: string; small?: boolean; style?: any;
 }) {
@@ -263,7 +276,7 @@ export function Btn({ label, onPress, icon, kind = "primary", busy, disabled, te
   // Maya buttons: solid navy primary (sky blue in dark mode), white with a dark 1px outline as the
   // second choice (ghost), pale-blue soft buttons, Maya red for destructive actions.
   const bg = kind === "primary" ? mayaSolid(isDark, theme) : kind === "danger" ? theme.error : kind === "soft" ? theme.primarySoft : kind === "dangerSoft" ? theme.error + "14" : theme.backgroundDefault;
-  const fg = kind === "primary" || kind === "danger" ? "#FFFFFF" : kind === "dangerSoft" ? theme.error : kind === "ghost" ? theme.text : isDark ? theme.link : theme.primary;
+  const fg = kind === "primary" || kind === "danger" ? "#FFFFFF" : kind === "dangerSoft" ? theme.error : kind === "ghost" ? theme.text : isDark ? theme.link : SOFT_FG;
   const border = kind === "ghost" ? theme.text : kind === "soft" ? theme.primarySoft : bg;
   return (
     <Pressable

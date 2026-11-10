@@ -48,6 +48,37 @@ const GREY = "#7A8CA3";
 const COMPANY_COLOR: Record<string, string> = { openai: "#10A37F", elevenlabs: "#111111", gemini: "#4285F4", compatible: "#6C4CF1" };
 const PROVIDER_ICON: Record<string, any> = { omniroute: "git-merge", openrouter: "shuffle", openai: "cpu", gemini: "star", custom: "link" };
 
+
+// ---------------------------------------------------------------- Bangla for server-made words
+// The server stores English labels and test messages; these keep a Bangla screen fully Bangla.
+type LFn = (en: string, bn: string) => string;
+const PRESET_BN: Record<string, { label?: string; hint: string }> = {
+  omniroute: { hint: "আপনার OmniRoute ঠিকানা, শেষে /v1 থাকবে, যেমন https://omniroute.example.com/v1" },
+  openrouter: { hint: "মডেলের নাম যেমন openai/gpt-4o-mini বা google/gemini-2.5-flash" },
+  openai: { hint: "মডেল যেমন gpt-4o-mini, gpt-4.1-mini" },
+  gemini: { hint: "মডেল যেমন gemini-2.5-flash" },
+  custom: { label: "অন্যান্য (OpenAI-সামঞ্জস্যপূর্ণ)", hint: "যেকোনো OpenAI-সামঞ্জস্যপূর্ণ ঠিকানা, শেষে /v1 থাকবে" },
+};
+const bnNum = (s: string) => s.replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]);
+const presetLabel = (L: LFn, presets: Cfg["presets"], id: string) => L(presets[id]?.label || id, PRESET_BN[id]?.label || presets[id]?.label || id);
+const presetHint = (L: LFn, presets: Cfg["presets"], id: string) => L(presets[id]?.hint || "", PRESET_BN[id]?.hint || presets[id]?.hint || "");
+/** "OmniRoute key 2" (the name given when the admin left it empty) reads "OmniRoute কী ২" in Bangla. */
+const keyLabel = (L: LFn, label: string) => {
+  const m = label.match(/^(.+) key (\d+)$/);
+  return m ? L(label, `${m[1]} কী ${bnNum(m[2])}`) : label;
+};
+const VOICE_DEFAULT: Record<string, [string, string]> = { "Omni route voice": ["Omni route voice", "Omni route ভয়েস"] };
+const provLabel = (L: LFn, label: string) => (VOICE_DEFAULT[label] ? L(...VOICE_DEFAULT[label]) : label);
+const trMsg = (L: LFn, m?: string | null) => {
+  if (!m) return "";
+  let x = m.match(/^Connected\. (\d+) models available\.$/);
+  if (x) return L(m, `সংযুক্ত। ${bnNum(x[1])}টি মডেল পাওয়া গেছে।`);
+  x = m.match(/^Working\. (.+) answered in ([\d.]+)s\.$/);
+  if (x) return L(m, `কাজ করছে। ${x[1]} ${bnNum(x[2])} সেকেন্ডে উত্তর দিয়েছে।`);
+  if (m === "Voice works") return L(m, "কণ্ঠ কাজ করছে");
+  return m;
+};
+
 // ---------------------------------------------------------------- slide-up sheet
 function Sheet({ visible, title, onClose, children, testID }: { visible: boolean; title: string; onClose: () => void; children: React.ReactNode; testID?: string }) {
   const { theme } = useTheme();
@@ -108,7 +139,7 @@ export function AiSettings() {
   const backupNote = L("Using the server's backup Gemini key until you add your own", "আপনার কী যোগ না করা পর্যন্ত সার্ভারের ব্যাকআপ Gemini কী চলছে");
   const sub = (f: "chat" | "disease" | "voice") =>
     !d.features[f].enabled ? L("Turned off", "বন্ধ") : d.usingBackup[f] ? backupNote : d.ready[f] ? `${L("Model", "মডেল")}: ${d.features[f].model}` : L("Add a key and choose a model below", "নিচে কী যোগ করে মডেল বেছে নিন");
-  const voiceSub = !d.voice.callEnabled ? L("Turned off", "বন্ধ") : [d.voiceStatus.en ? `EN: ${d.voiceStatus.en.voice}` : "", d.voiceStatus.bn ? `বাংলা: ${d.voiceStatus.bn.voice}` : ""].filter(Boolean).join(" · ") || L("No AI voice chosen yet: the phone's own voice is used", "এখনো এআই ভয়েস বাছা হয়নি: ফোনের নিজস্ব কণ্ঠ ব্যবহার হবে");
+  const voiceSub = !d.voice.callEnabled ? L("Turned off", "বন্ধ") : [d.voiceStatus.en ? `${L("EN", "ইংরেজি")}: ${d.voiceStatus.en.voice}` : "", d.voiceStatus.bn ? `বাংলা: ${d.voiceStatus.bn.voice}` : ""].filter(Boolean).join(" · ") || L("No AI voice chosen yet: the phone's own voice is used", "এখনো এআই ভয়েস বাছা হয়নি: ফোনের নিজস্ব কণ্ঠ ব্যবহার হবে");
 
   return (
     <Page onRefresh={cfg.load} testID="ai-settings">
@@ -182,8 +213,8 @@ function KeysSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onAd
                 <Feather name={PROVIDER_ICON[k.provider] || "key"} size={18} color={theme.primary} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: theme.text, fontWeight: "800", fontSize: 15 }} numberOfLines={1}>{i + 1}. {k.label}</Text>
-                <Text style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={1}>{d.presets[k.provider]?.label || k.provider} · ••••{k.keyLast4}</Text>
+                <Text style={{ color: theme.text, fontWeight: "800", fontSize: 15 }} numberOfLines={1}>{i + 1}. {keyLabel(L, k.label)}</Text>
+                <Text style={{ color: theme.textSecondary, fontSize: 12 }} numberOfLines={1}>{presetLabel(L, d.presets, k.provider)} · ••••{k.keyLast4}</Text>
               </View>
               <Switch testID={`ai-key-${i}-on`} value={k.enabled} onValueChange={(v) => act(k.id, async () => setData(await apiPut(`/api/admin/manage/ai/keys/${k.id}`, { enabled: v })))} />
             </View>
@@ -191,7 +222,7 @@ function KeysSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onAd
             {t ? (
               <View style={[st.row, { gap: 6, marginTop: 8 }]}>
                 <Feather name={t.ok ? "check-circle" : "alert-circle"} size={14} color={t.ok ? OK : BAD} />
-                <Text style={{ color: t.ok ? OK : BAD, fontSize: 12.5, flex: 1 }} numberOfLines={3}>{t.message}</Text>
+                <Text style={{ color: t.ok ? OK : BAD, fontSize: 12.5, flex: 1 }} numberOfLines={3}>{trMsg(L, t.message)}</Text>
               </View>
             ) : null}
             <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 6 }}>
@@ -255,11 +286,11 @@ function KeySheet({ state, presets, onClose, onSaved }: { state: null | { edit?:
     <Sheet visible={!!state} title={edit ? L("Edit key", "কী সম্পাদনা") : L("Add Omni route key", "Omni route কী যোগ")} onClose={onClose} testID="ai-key-sheet">
       <Text style={[st.label, { color: theme.textSecondary, marginBottom: 8 }]}>{L("Service", "সার্ভিস")}</Text>
       <ChipRow>
-        {Object.entries(presets).map(([id, p]) => <Chip key={id} testID={`ai-key-provider-${id}`} label={p.label} on={provider === id} onPress={() => pick(id)} />)}
+        {Object.entries(presets).map(([id, p]) => <Chip key={id} testID={`ai-key-provider-${id}`} label={presetLabel(L, presets, id)} on={provider === id} onPress={() => pick(id)} />)}
       </ChipRow>
       <View style={{ height: 12 }} />
       <Field testID="ai-key-label" label={L("Name", "নাম")} placeholder={L("e.g. Main key", "যেমন: মূল কী")} value={label} onChange={setLabel} maxLength={60} />
-      <Field testID="ai-key-url" label={L("Address (base URL)", "ঠিকানা (বেস URL)")} placeholder="https://.../v1" value={baseUrl} onChange={setBaseUrl} hint={presets[provider]?.hint} />
+      <Field testID="ai-key-url" label={L("Address (base URL)", "ঠিকানা (বেস URL)")} placeholder="https://.../v1" value={baseUrl} onChange={setBaseUrl} hint={presetHint(L, presets, provider)} />
       <Field testID="ai-key-value" secure label={edit ? L(`New API key (leave empty to keep ••••${edit.keyLast4})`, `নতুন API কী (••••${edit.keyLast4} রাখতে খালি রাখুন)`) : L("API key", "API কী")} placeholder="sk-..." value={key} onChange={setKey}
         hint={L("Saved encrypted on the server. After saving, only the last 4 characters are shown.", "সার্ভারে এনক্রিপ্ট করে রাখা হয়। সংরক্ষণের পর শুধু শেষ ৪টি অক্ষর দেখা যায়।")} />
       {err ? <Text testID="ai-key-err" style={{ color: BAD, marginBottom: 10 }}>{err}</Text> : null}
@@ -300,7 +331,7 @@ function ModelsSection({ d, setData, flash }: SectionProps) {
     setTrying(name);
     try {
       const r: any = await apiPost("/api/admin/manage/ai/try", { feature: name, lang: L("en", "bn") });
-      setTryOut((s) => ({ ...s, [name]: { ok: true, text: `${r.reply}\n\n${r.model} · ${(r.ms / 1000).toFixed(1)}s · ${r.via}` } }));
+      setTryOut((s) => ({ ...s, [name]: { ok: true, text: `${r.reply}\n\n${r.model} · ${L(`${(r.ms / 1000).toFixed(1)}s`, `${bnNum((r.ms / 1000).toFixed(1))} সেকেন্ড`)} · ${r.via === "Server backup key" ? L(r.via, "সার্ভারের ব্যাকআপ কী") : keyLabel(L, r.via)}` } }));
     } catch (e: any) { setTryOut((s) => ({ ...s, [name]: { ok: false, text: e?.message || "Failed" } })); } finally { setTrying(null); }
   };
   return (
@@ -323,7 +354,7 @@ function ModelsSection({ d, setData, flash }: SectionProps) {
                 <Text style={[st.label, { color: theme.textSecondary, marginTop: 10, marginBottom: 6 }]}>{L("Which key", "কোন কী")}</Text>
                 <ChipRow>
                   <Chip label={L("Any (in order)", "যেকোনো (ক্রমানুসারে)")} on={!v.keyId} onPress={() => set(name, { keyId: null })} />
-                  {d.keys.map((k) => <Chip key={k.id} label={k.label} on={v.keyId === k.id} onPress={() => set(name, { keyId: k.id })} />)}
+                  {d.keys.map((k) => <Chip key={k.id} label={keyLabel(L, k.label)} on={v.keyId === k.id} onPress={() => set(name, { keyId: k.id })} />)}
                 </ChipRow>
               </>
             ) : null}
@@ -350,11 +381,11 @@ function ModelsSection({ d, setData, flash }: SectionProps) {
 }
 
 // ---------------------------------------------------------------- voice
-const COMPANIES: { id: string; en: string; bn: string; hint: string }[] = [
-  { id: "openai", en: "OpenAI", bn: "OpenAI", hint: "11 voices · speaks Bangla and English · also listens (speech to text)" },
-  { id: "elevenlabs", en: "ElevenLabs", bn: "ElevenLabs", hint: "Your account's voices · use the eleven_v3 model for Bangla · also listens" },
-  { id: "gemini", en: "Google Gemini", bn: "Google Gemini", hint: "30 voices · speaks Bangla and English · also listens" },
-  { id: "compatible", en: "Omni route voice", bn: "Omni route ভয়েস", hint: "Any OpenAI-compatible speech address, e.g. your OmniRoute /v1" },
+const COMPANIES: { id: string; en: string; bn: string; hint: string; hintBn: string }[] = [
+  { id: "openai", en: "OpenAI", bn: "OpenAI", hint: "11 voices · speaks Bangla and English · also listens (speech to text)", hintBn: "১১টি কণ্ঠ · বাংলা ও ইংরেজিতে কথা বলে · শুনতেও পারে (কথা থেকে লেখা)" },
+  { id: "elevenlabs", en: "ElevenLabs", bn: "ElevenLabs", hint: "Your account's voices · use the eleven_v3 model for Bangla · also listens", hintBn: "আপনার অ্যাকাউন্টের কণ্ঠ · বাংলার জন্য eleven_v3 মডেল ব্যবহার করুন · শুনতেও পারে" },
+  { id: "gemini", en: "Google Gemini", bn: "Google Gemini", hint: "30 voices · speaks Bangla and English · also listens", hintBn: "৩০টি কণ্ঠ · বাংলা ও ইংরেজিতে কথা বলে · শুনতেও পারে" },
+  { id: "compatible", en: "Omni route voice", bn: "Omni route ভয়েস", hint: "Any OpenAI-compatible speech address, e.g. your OmniRoute /v1", hintBn: "যেকোনো OpenAI-সামঞ্জস্যপূর্ণ স্পিচ ঠিকানা, যেমন আপনার OmniRoute /v1" },
 ];
 const companyName = (c: string) => COMPANIES.find((x) => x.id === c)?.en || c;
 
@@ -437,15 +468,15 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
               <Feather name="mic" size={17} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: theme.text, fontWeight: "800", fontSize: 15 }} numberOfLines={1}>{p.label}</Text>
-              <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{companyName(p.company)} · ••••{p.keyLast4}{p.usage.today ? ` · ${L("used today", "আজ ব্যবহার")}: ${p.usage.today}` : ""}</Text>
+              <Text style={{ color: theme.text, fontWeight: "800", fontSize: 15 }} numberOfLines={1}>{provLabel(L, p.label)}</Text>
+              <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{provLabel(L, companyName(p.company))} · ••••{p.keyLast4}{p.usage.today ? ` · ${L("used today", "আজ ব্যবহার")}: ${p.usage.today}` : ""}</Text>
             </View>
             {busy === p.id ? <ActivityIndicator size="small" color={theme.primary} /> : <Switch testID={`ai-vprov-${i}-on`} value={p.enabled} onValueChange={(v) => toggleProv(p, v)} />}
           </View>
           {p.lastTest ? (
             <View style={[st.row, { gap: 6, marginTop: 8 }]}>
               <Feather name={p.lastTest.ok ? "check-circle" : "alert-circle"} size={14} color={p.lastTest.ok ? OK : BAD} />
-              <Text style={{ color: p.lastTest.ok ? OK : BAD, fontSize: 12.5, flex: 1 }} numberOfLines={3}>{p.lastTest.message}</Text>
+              <Text style={{ color: p.lastTest.ok ? OK : BAD, fontSize: 12.5, flex: 1 }} numberOfLines={3}>{trMsg(L, p.lastTest.message)}</Text>
             </View>
           ) : null}
           <View style={[st.row, { gap: 8, marginTop: 10, flexWrap: "wrap" }]}>
@@ -468,7 +499,7 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
             <Chip testID="ai-voice-lang-en" label={`English${sel.en ? ` · ${sel.en.voiceName}` : ""}`} on={lang === "en"} onPress={() => setLang("en")} />
           </ChipRow>
           <Text style={[st.label, { color: theme.textSecondary, marginTop: 12, marginBottom: 6 }]}>{L("Company", "কোম্পানি")}</Text>
-          <ChipRow>{enabled.map((p) => <Chip key={p.id} label={p.label} on={provId === p.id} onPress={() => setProvId(p.id)} testID="ai-voice-prov" />)}</ChipRow>
+          <ChipRow>{enabled.map((p) => <Chip key={p.id} label={provLabel(L, p.label)} on={provId === p.id} onPress={() => setProvId(p.id)} testID="ai-voice-prov" />)}</ChipRow>
           {models.length > 1 ? (
             <>
               <Text style={[st.label, { color: theme.textSecondary, marginTop: 12, marginBottom: 6 }]}>{L("Voice model", "ভয়েস মডেল")}</Text>
@@ -504,7 +535,7 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
           <Text style={[st.label, { color: theme.textSecondary, marginTop: 14, marginBottom: 6 }]}>{L("Listening (speech to text)", "শোনা (কথা থেকে লেখা)")}</Text>
           <ChipRow>
             <Chip label={L("Automatic", "স্বয়ংক্রিয়")} on={!stt} onPress={() => setStt(null)} />
-            {enabled.map((p) => <Chip key={p.id} label={p.label} on={stt === p.id} onPress={() => setStt(p.id)} />)}
+            {enabled.map((p) => <Chip key={p.id} label={provLabel(L, p.label)} on={stt === p.id} onPress={() => setStt(p.id)} />)}
           </ChipRow>
           {changed ? (
             <View style={[st.row, { gap: 10, marginTop: 14, flexWrap: "wrap" }]}>
@@ -552,7 +583,7 @@ function ProviderSheet({ state, onClose, onSaved }: { state: null | { edit?: VPr
                 <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: COMPANY_COLOR[c.id], alignItems: "center", justifyContent: "center" }}><Feather name="mic" size={15} color="#fff" /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: theme.text, fontWeight: "700" }}>{L(c.en, c.bn)}</Text>
-                  <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{c.hint}</Text>
+                  <Text style={{ color: theme.textSecondary, fontSize: 12 }}>{L(c.hint, c.hintBn)}</Text>
                 </View>
                 {on ? <Feather name="check-circle" size={18} color={theme.primary} /> : null}
               </Pressable>
@@ -560,7 +591,7 @@ function ProviderSheet({ state, onClose, onSaved }: { state: null | { edit?: VPr
           })}
         </View>
       ) : null}
-      <Field testID="ai-vprov-label" label={L("Name", "নাম")} placeholder={companyName(company)} value={label} onChange={setLabel} maxLength={60} />
+      <Field testID="ai-vprov-label" label={L("Name", "নাম")} placeholder={provLabel(L, companyName(company))} value={label} onChange={setLabel} maxLength={60} />
       {company === "compatible" ? <Field testID="ai-vprov-url" label={L("Speech address (base URL)", "স্পিচ ঠিকানা (বেস URL)")} placeholder="https://.../v1" value={baseUrl} onChange={setBaseUrl} hint={L("The app calls /audio/speech and /audio/transcriptions on this address", "অ্যাপ এই ঠিকানায় /audio/speech ও /audio/transcriptions ব্যবহার করে")} /> : null}
       <Field testID="ai-vprov-key" secure label={edit ? L(`New API key (leave empty to keep ••••${edit.keyLast4})`, `নতুন API কী (••••${edit.keyLast4} রাখতে খালি রাখুন)`) : L("API key", "API কী")} value={key} onChange={setKey}
         hint={L("Saved encrypted on the server. Only the last 4 characters are shown.", "সার্ভারে এনক্রিপ্ট করে রাখা হয়। শুধু শেষ ৪টি অক্ষর দেখা যায়।")} />

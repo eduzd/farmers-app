@@ -11,7 +11,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from playwright.async_api import async_playwright
 import sys
 sys.path.insert(0, os.path.dirname(__file__))
-from webharness import Harness, T
+from webharness import H as Harness, T
+from layout_audit import audit as _audit, report
+# Words the fake AI service answers with (always English); the app's own words are still checked.
+FAKE = ["Check the water", "Add lime", "Stop feeding", "Model: ", "Tilapia", "White spot", "Ichthyophthirius", "Small white spots",
+        "Parasite", "Salt bath", "Quarantine", "Lymphocystis", "My pond is green"]
+audit = lambda pg, lang: _audit(pg, lang, FAKE)
 
 GW_PORT = 8950
 GW = f"http://127.0.0.1:{GW_PORT}/v1"
@@ -51,13 +56,22 @@ for k in list(h.env.keys()):
 h.start()
 admin = h.signup("boss", "Admin Rahim"); farmer = h.signup("farmer", "Karim Mia")
 h.make_admin(admin)
-admin = h.login(admin); farmer = h.login(farmer)
+h.login(admin); h.login(farmer)
 ok = h.ok
+
+async def open_quick(pg, key, ms=60000):
+    """Home shows 4 quick tools until 'More tools' is tapped; AI help and Disease sit in the hidden part."""
+    if not await h.wait_for(pg, "quick-calc", ms): return False
+    if await pg.locator(T(f"quick-{key}")).count() == 0:
+        await pg.locator('[aria-label="Show more tools"], [aria-label="আরও টুলস দেখান"]').first.click(); await pg.wait_for_timeout(700)
+    if not await h.wait_for(pg, f"quick-{key}", 5000): return False
+    await pg.locator(T(f"quick-{key}")).first.click(); await pg.wait_for_timeout(1800)
+    return True
 
 async def admin_flow(b, lang, w, dark):
     tag = f"admin {lang} {w}px {'dark' if dark else 'light'}"
     ctx, pg = await h.page(b, admin, lang, w, "/admin", h=860)
-    if dark: await pg.evaluate("()=>{localStorage.setItem('admin_theme','dark');localStorage.setItem('themeMode','dark')}"); await pg.reload(); await pg.wait_for_timeout(2500)
+    if dark: await pg.evaluate("()=>localStorage.setItem('theme_preference','dark')"); await pg.reload(); await pg.wait_for_timeout(2500)
     ok(await h.wait_for(pg, "admin-app", 120000), f"{tag}: admin app opens")
     await pg.locator(T("admin-tab-more")).first.click(); await pg.wait_for_timeout(900)
     ok(await h.wait_for(pg, "more-ai"), f"{tag}: More has AI settings row")
@@ -68,6 +82,16 @@ async def admin_flow(b, lang, w, dark):
     ok(await h.wait_for(pg, "ai-status-chat") and await h.wait_for(pg, "ai-status-voice"), f"{tag}: status rows for chat, disease, call")
     ok(await h.no_overflow(pg), f"{tag}: no sideways overflow")
     await pg.screenshot(path=f"/tmp/aiweb-admin-{lang}-{w}-{'d' if dark else 'l'}.png", full_page=False)
+    report(ok, f"{tag} AI settings", await audit(pg, lang), dark=dark)
+    if await pg.locator(T("ai-key-0-edit")).count():
+        await pg.locator(T("ai-key-0-edit")).first.click(); await pg.wait_for_timeout(1000)
+        if await h.wait_for(pg, "ai-key-sheet", 5000):
+            report(ok, f"{tag} key sheet", await audit(pg, lang), dark=dark)
+            await pg.locator(T("ai-sheet-close")).first.click(); await pg.wait_for_timeout(600)
+    if await pg.locator(T("ai-vprov-0-edit")).count():
+        await pg.locator(T("ai-vprov-0-edit")).first.click(); await pg.wait_for_timeout(1000)
+        if await h.wait_for(pg, "ai-vprov-sheet", 5000):
+            report(ok, f"{tag} voice sheet", await audit(pg, lang), dark=dark)
     await ctx.close()
 
 async def admin_setup(b):
@@ -89,7 +113,7 @@ async def admin_setup(b):
     ok(card and "9876" in card and KEY not in card, f"{tag}: card shows only last 4", card)
     await pg.locator(T("ai-key-0-test")).first.click(); await pg.wait_for_timeout(2500)
     card = await h.text(pg, "ai-key-0")
-    ok(card and "Connected" in card, f"{tag}: Test shows connected", card)
+    ok(card and ("Working" in card or "Connected" in card), f"{tag}: Test shows the key works", card)
     # models
     await pg.locator(T("ai-feature-chat-model")).first.fill("gpt-4o-mini")
     await pg.locator(T("ai-feature-disease-model")).first.fill("gpt-4o")
@@ -124,9 +148,8 @@ async def admin_setup(b):
 async def farmer_flow(b, lang, w, dark):
     tag = f"farmer {lang} {w}px {'dark' if dark else 'light'}"
     ctx, pg = await h.page(b, farmer, lang, w, "/", h=860)
-    if dark: await pg.evaluate("()=>localStorage.setItem('themeMode','dark')"); await pg.reload(); await pg.wait_for_timeout(3000)
-    ok(await h.wait_for(pg, "quick-ai", 60000), f"{tag}: Home has AI help")
-    await pg.locator(T("quick-ai")).first.click(); await pg.wait_for_timeout(1800)
+    if dark: await pg.evaluate("()=>localStorage.setItem('theme_preference','dark')"); await pg.reload(); await pg.wait_for_timeout(3000)
+    ok(await open_quick(pg, "ai"), f"{tag}: Home has AI help")
     ok(await h.wait_for(pg, "ai-input"), f"{tag}: AI chat opens")
     ok(await pg.locator(T("ai-suggestion-0")).count() == 1, f"{tag}: suggestions show")
     ok(await pg.locator(T("ai-not-ready")).count() == 0, f"{tag}: no 'not set up' warning once admin set it up")
@@ -138,12 +161,14 @@ async def farmer_flow(b, lang, w, dark):
     ok(rep and "Check the water first." in rep and "**" not in rep and "gpt-4o-mini" in rep, f"{tag}: answer formatted, from the chosen model", rep)
     ok(await h.no_overflow(pg), f"{tag}: chat has no sideways overflow")
     await pg.screenshot(path=f"/tmp/aiweb-chat-{lang}-{w}-{'d' if dark else 'l'}.png")
+    report(ok, f"{tag} chat", await audit(pg, lang), dark=dark)
     # disease
-    await pg.go_back(); await pg.wait_for_timeout(1500)
-    await pg.locator(T("quick-disease")).first.click(); await pg.wait_for_timeout(1800)
+    await pg.goto(h.base + "/", wait_until="load"); await pg.wait_for_timeout(2500)
+    await open_quick(pg, "disease")
     ok(await h.wait_for(pg, "disease-screen"), f"{tag}: disease detector opens")
     ok(all([await pg.locator(T(f"disease-cat-{c}")).count() == 1 for c in ["fish", "crop", "poultry", "livestock"]]), f"{tag}: four categories")
     ok(await pg.locator(T("disease-camera")).count() == 1 and await pg.locator(T("disease-gallery")).count() == 1, f"{tag}: camera and gallery buttons")
+    report(ok, f"{tag} disease start", await audit(pg, lang), dark=dark)
     await pg.locator(T("disease-desc")).first.fill("White spots on the body, fish rubbing on the side")
     await pg.locator(T("disease-analyze")).first.click()
     ok(await h.wait_for(pg, "disease-result", 20000), f"{tag}: diagnosis shows")
@@ -153,13 +178,13 @@ async def farmer_flow(b, lang, w, dark):
     ok(res and "82%" in res and "Salt bath" in res, f"{tag}: confidence and treatment", (res or "")[:200])
     ok(await h.no_overflow(pg), f"{tag}: disease page has no sideways overflow")
     await pg.screenshot(path=f"/tmp/aiweb-disease-{lang}-{w}-{'d' if dark else 'l'}.png", full_page=True)
+    report(ok, f"{tag} disease result", await audit(pg, lang), dark=dark)
     await ctx.close()
 
 async def call_flow(b, lang, w):
     tag = f"call {lang} {w}px"
     ctx, pg = await h.page(b, farmer, lang, w, "/", h=860)
-    await h.wait_for(pg, "quick-ai", 60000)
-    await pg.locator(T("quick-ai")).first.click(); await pg.wait_for_timeout(1500)
+    await open_quick(pg, "ai")
     await pg.locator(T("ai-call-button")).first.click(); await pg.wait_for_timeout(2500)
     ok(await h.wait_for(pg, "ai-call-screen"), f"{tag}: AI call opens")
     ok(await h.wait_for(pg, "ai-call-reply", 15000), f"{tag}: greeting shows")
@@ -167,20 +192,27 @@ async def call_flow(b, lang, w):
     ok(rep and (("Krishi AI" in rep) if lang == "en" else ("কৃষি এআই" in rep)), f"{tag}: greeting in the right language", rep)
     ok(all([await pg.locator(T(t)).count() == 1 for t in ["ai-call-mic", "ai-call-end", "ai-call-mute", "ai-call-timer"]]), f"{tag}: mic, end, speaker and timer")
     await pg.screenshot(path=f"/tmp/aiweb-call-{lang}-{w}.png")
+    report(ok, f"{tag} call", await audit(pg, lang))
     await pg.locator(T("ai-call-end")).first.click(); await pg.wait_for_timeout(1200)
     ok(await pg.locator(T("ai-call-screen")).count() == 0, f"{tag}: End closes the call")
     await ctx.close()
 
+async def safe(name, coro):
+    try:
+        await coro
+    except Exception as e:
+        ok(False, f"{name}: crashed", str(e).splitlines()[0])
+
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
-        await admin_setup(b)
+        await safe("admin setup", admin_setup(b))
         for lang in ["en", "bn"]:
             for w in [390, 1280]:
-                await admin_flow(b, lang, w, dark=(w == 390 and lang == "bn"))
-                await farmer_flow(b, lang, w, dark=(w == 1280 and lang == "bn"))
-        await call_flow(b, "bn", 390)
-        await call_flow(b, "en", 1280)
+                await safe(f"admin {lang} {w}", admin_flow(b, lang, w, dark=((w == 390) == (lang == "bn"))))
+                await safe(f"farmer {lang} {w}", farmer_flow(b, lang, w, dark=((w == 1280) == (lang == "bn"))))
+        await safe("call bn 390", call_flow(b, "bn", 390))
+        await safe("call en 1280", call_flow(b, "en", 1280))
         await b.close()
 
 asyncio.run(main())
