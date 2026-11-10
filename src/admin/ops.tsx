@@ -9,6 +9,7 @@ import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import { AdminCatalogTab, AdminNotifyTab } from "@/components/admin/ManageTabs";
 import { OrderProgress, DeliveryInfo, PaymentInfo, DeliverySettings, payLabel } from "./orderflow";
 import { PaymentSettings, RocketPaymentCheck } from "./payments";
+import { AiSettings } from "./aiSettings";
 import { VoiceRoomSettings } from "./voicerooms";
 import { MarketPricesAdmin } from "./marketprices";
 import {
@@ -372,15 +373,15 @@ export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminNa
   const nav = useAdminNav();
   const { theme } = useTheme();
   const L = useL();
-  const [panel, setPanel] = useState<null | "moderation" | "notify" | "delivery" | "payments" | "voicerooms" | "prices">(null);
-  if (panel === "delivery" || panel === "payments" || panel === "voicerooms" || panel === "prices") {
+  const [panel, setPanel] = useState<null | "moderation" | "notify" | "delivery" | "payments" | "voicerooms" | "prices" | "ai">(null);
+  if (panel === "delivery" || panel === "payments" || panel === "voicerooms" || panel === "prices" || panel === "ai") {
     return (
       <View style={{ flex: 1 }}>
         <Pressable onPress={() => setPanel(null)} style={[st.row, { padding: 12, gap: 8 }]} testID="more-back">
           <Feather name="arrow-left" size={18} color={theme.primary} />
           <Text style={{ color: theme.primary, fontWeight: "700" }}>{L("More", "আরও")}</Text>
         </Pressable>
-        {panel === "payments" ? <PaymentSettings /> : panel === "voicerooms" ? <VoiceRoomSettings /> : panel === "prices" ? <MarketPricesAdmin /> : <DeliverySettings />}
+        {panel === "ai" ? <AiSettings /> : panel === "payments" ? <PaymentSettings /> : panel === "voicerooms" ? <VoiceRoomSettings /> : panel === "prices" ? <MarketPricesAdmin /> : <DeliverySettings />}
       </View>
     );
   }
@@ -403,6 +404,7 @@ export function MoreTab({ onLogout, adminName }: { onLogout: () => void; adminNa
     ["notify", L("Send notification", "নোটিফিকেশন পাঠান"), L("To everyone or one person", "সবাইকে বা একজনকে"), "bell", () => setPanel("notify")],
     ["officialAccounts", L("Official accounts", "অফিসিয়াল অ্যাকাউন্ট"), L("Farmers Official, Safety and more: create and send from them", "Farmers Official, Safety ইত্যাদি: তৈরি করুন ও পাঠান"), "check-circle", () => nav.push({ name: "officialAccounts" })],
     ["delivery", L("Delivery charges", "ডেলিভারি চার্জ"), L("Inside and outside Dhaka, free delivery, express", "ঢাকার ভেতরে ও বাইরে, ফ্রি ডেলিভারি, এক্সপ্রেস"), "truck", () => setPanel("delivery")],
+    ["ai", L("AI settings", "এআই সেটিং"), L("Omni route API keys, models and AI voice calling", "Omni route API কী, মডেল ও এআই ভয়েস কল"), "zap", () => setPanel("ai")],
     ["payments", L("Payment settings", "পেমেন্ট সেটিং"), L("Rocket and cash on delivery for every purchase", "সব কেনাকাটায় রকেট ও ক্যাশ অন ডেলিভারি"), "credit-card", () => setPanel("payments")],
     ["prices", L("Market prices", "বাজার দর"), L("Daily prices by district, price alerts", "জেলাভিত্তিক দৈনিক দর, দামের অ্যালার্ট"), "bar-chart-2", () => setPanel("prices")],
     ["voicerooms", L("Voice rooms", "ভয়েস রুম"), L("Who can start rooms, live rooms", "কারা রুম শুরু করতে পারবেন, লাইভ রুম"), "mic", () => setPanel("voicerooms")],

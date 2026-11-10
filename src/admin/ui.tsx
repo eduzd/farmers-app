@@ -279,8 +279,8 @@ export function Btn({ label, onPress, icon, kind = "primary", busy, disabled, te
   );
 }
 
-export function Field({ label, value, onChange, placeholder, multiline, keyboardType, testID, maxLength, hint, prefix }: {
-  label: string; value: string; onChange: (s: string) => void; placeholder?: string; multiline?: boolean; keyboardType?: any; testID?: string; maxLength?: number; hint?: string; prefix?: string;
+export function Field({ label, value, onChange, placeholder, multiline, keyboardType, testID, maxLength, hint, prefix, secure }: {
+  label: string; value: string; onChange: (s: string) => void; placeholder?: string; multiline?: boolean; keyboardType?: any; testID?: string; maxLength?: number; hint?: string; prefix?: string; secure?: boolean;
 }) {
   const { theme } = useTheme();
   const [focus, setFocus] = useState(false);
@@ -298,6 +298,9 @@ export function Field({ label, value, onChange, placeholder, multiline, keyboard
           multiline={multiline}
           keyboardType={keyboardType}
           maxLength={maxLength}
+          secureTextEntry={secure}
+          autoCapitalize={secure ? "none" : undefined}
+          autoCorrect={secure ? false : undefined}
           onFocus={() => setFocus(true)}
           onBlur={() => setFocus(false)}
           style={[st.input, { color: theme.text, fontFamily: FontFamily.medium }, multiline && { minHeight: 96, textAlignVertical: "top", paddingTop: 12 }, Platform.OS === "web" ? ({ outlineStyle: "none" } as any) : null]}
