@@ -26,7 +26,12 @@ const gw = createServer((req, res) => {
     let body = {}; try { body = JSON.parse(raw.toString()); } catch {}
     seen.push({ path: req.url, auth, model: body.model, voice: body.voice, body, ctype: req.headers["content-type"] || "" });
     if (auth === BAD) return json(401, { error: { message: "Invalid API key" } });
-    if (req.url === "/v1/models") return json(200, { data: [{ id: "gpt-4o-mini" }, { id: "gpt-4o" }, { id: "gemini-2.5-flash" }] });
+    if (req.url === "/v1/models") return json(200, { data: [
+      { id: "gpt-4o-mini" }, { id: "gpt-4o" }, { id: "gemini-2.5-flash" },
+      { id: "text-embedding-3-small" }, { id: "whisper-1" },
+      { id: "meta/llama-text", name: "Llama text", context_length: 128000, architecture: { input_modalities: ["text"] }, pricing: { prompt: "0", completion: "0" } },
+      { id: "acme/seer-pro", name: "Seer Pro", architecture: { input_modalities: ["text", "image"], output_modalities: ["text"] } },
+    ] });
     if (req.url === "/v1/chat/completions") {
       const msgs = body.messages || [];
       const last = msgs[msgs.length - 1];
@@ -85,6 +90,21 @@ try {
   ok(seen.some((s) => s.path === "/v1/models" && s.auth === GOOD), "server used the real key against the gateway");
   r = await call("POST", `${A}/keys/${keys[0].id}/test`, admin.token, {});
   ok(r.status === 200 && r.data.ok === false && /401|invalid/i.test(r.data.message), "test broken key: shows the failure", r.data);
+
+  // model list from the key (admin picks a model from what the key offers)
+  r = await call("GET", `${A}/keys/${keys[1].id}/models?refresh=1`, admin.token);
+  const ml = r.data?.models || [];
+  ok(r.status === 200 && !r.data.error && ml.some((m) => m.id === "gpt-4o") && ml.some((m) => m.id === "acme/seer-pro"), "key's model list read from its provider", r.data);
+  ok(!ml.some((m) => /embedding|whisper/.test(m.id)), "embeddings and speech models left out of the list", ml.map((m) => m.id));
+  ok(ml.find((m) => m.id === "acme/seer-pro")?.vision === true && ml.find((m) => m.id === "acme/seer-pro")?.visionFrom === "provider", "provider-reported image model marked Sees photos", ml.find((m) => m.id === "acme/seer-pro"));
+  ok(ml.find((m) => m.id === "meta/llama-text")?.vision === false && ml.find((m) => m.id === "meta/llama-text")?.free === true && ml.find((m) => m.id === "meta/llama-text")?.context === 128000, "text-only model, free and context shown", ml.find((m) => m.id === "meta/llama-text"));
+  ok(ml.find((m) => m.id === "gpt-4o")?.vision === true && ml.find((m) => m.id === "gpt-4o")?.visionFrom === "guess", "gpt-4o guessed as Sees photos when provider doesn't say");
+  r = await call("GET", `${A}/keys/${keys[0].id}/models`, admin.token);
+  ok(r.status === 200 && r.data.error && Array.isArray(r.data.models), "broken key: model list error shown, manual name still possible", r.data);
+  r = await call("GET", `${A}/keys/${keys[1].id}/models`, farmer.token);
+  ok(r.status === 401 || r.status === 403, "normal user can't read a key's model list", r.status);
+  r = await call("GET", A, admin.token);
+  ok(r.data.keys.every((k) => !("modelInfo" in k) && !("keyEnc" in k)) && r.data.keys.find((k) => k.id === keys[1].id)?.modelCount >= 5, "settings show model counts, not the full lists", r.data.keys.map((k) => k.modelCount));
 
   // models
   r = await call("PUT", `${A}/settings`, admin.token, { features: { chat: { enabled: true, model: "gpt-4o-mini" }, disease: { enabled: true, model: "gpt-4o" }, voice: { enabled: true, model: "gemini-2.5-flash" } } });

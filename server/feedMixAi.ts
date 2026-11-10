@@ -175,7 +175,7 @@ export function registerFeedMixAiRoutes(app: Express) {
     try {
       const inp = readFeedMixInput(req.body);
       if (!(await limit(req, res))) return;
-      const r = await runFeature("chat", [
+      const r = await runFeature("feedmix", [
         { role: "system", content: "You are a careful aquaculture feed nutrition expert. Answer only with the JSON object asked for." },
         { role: "user", content: feedMixPrompt(inp) },
       ], { maxTokens: 1400, temperature: 0.2, timeoutMs: 60000 });

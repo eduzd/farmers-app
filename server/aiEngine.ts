@@ -42,12 +42,19 @@ export type GatewayKey = {
   keyLast4: string;
   enabled: boolean;
   models?: string[];
+  modelInfo?: ModelInfo[];
+  modelsAt?: string | null;
+  modelsError?: string | null;
   lastTest?: { ok: boolean; at: string; message: string; ms?: number } | null;
   createdAt: string;
   updatedAt?: string;
 };
 
-export type FeatureName = "chat" | "disease" | "voice";
+/** One model a key offers. vision: can it read photos (from the provider when it says so, else a guess from the name). */
+export type ModelInfo = { id: string; name?: string; vision: boolean; visionFrom: "provider" | "guess"; context?: number; free?: boolean };
+
+export type FeatureName = "chat" | "disease" | "voice" | "feedmix";
+export const FEATURES: FeatureName[] = ["chat", "disease", "voice", "feedmix"];
 export type FeatureCfg = { enabled: boolean; model: string; keyId: string | null; temperature: number };
 
 export const VOICE_COMPANIES = ["openai", "elevenlabs", "gemini", "compatible"] as const;
@@ -89,6 +96,8 @@ export const DEFAULT_AI: AiConfig = {
     chat: { enabled: true, model: "", keyId: null, temperature: 0.6 },
     disease: { enabled: true, model: "", keyId: null, temperature: 0.2 },
     voice: { enabled: true, model: "", keyId: null, temperature: 0.6 },
+    // Feed mix protein check. An empty model means "use the AI help chat model and key".
+    feedmix: { enabled: true, model: "", keyId: null, temperature: 0.2 },
   },
   voice: { callEnabled: true, providers: [], en: null, bn: null, speed: 1, sttProviderId: null },
   limits: { perMinute: 8, userDaily: 150, guestDaily: 25 },
@@ -156,7 +165,7 @@ function normalize(v: any): AiConfig {
   const d: AiConfig = JSON.parse(JSON.stringify(DEFAULT_AI));
   if (!v || typeof v !== "object") return d;
   d.keys = Array.isArray(v.keys) ? v.keys : [];
-  for (const f of ["chat", "disease", "voice"] as FeatureName[]) d.features[f] = { ...d.features[f], ...(v.features?.[f] || {}) };
+  for (const f of FEATURES) d.features[f] = { ...d.features[f], ...(v.features?.[f] || {}) };
   d.voice = { ...d.voice, ...(v.voice || {}) };
   d.voice.providers = Array.isArray(v.voice?.providers) ? v.voice.providers : [];
   d.limits = { ...d.limits, ...(v.limits || {}) };
@@ -261,17 +270,78 @@ export async function callChat(t: Target, model: string, messages: ChatMsg[], op
   }
 }
 
-export async function listModels(t: Target): Promise<string[]> {
+// Models that can't answer a chat (embeddings, speech, image makers, moderation) are left out of the list.
+const NOT_CHAT = /(^|[\/:-])(text-)?embed|embedding|whisper|(^|[\/-])tts|transcribe|dall-e|imagen|moderation|^babbage|^davinci|realtime|-audio|^veo|^aqa|image-generation|rerank|^sora|lyria/i;
+// Families known to read photos, used only when the provider doesn't say.
+const VISION_GUESS = /gpt-4o|gpt-4\.1|gpt-4-turbo|gpt-4-vision|gpt-5|chatgpt-4o|(^|[\/])o[134](-|$)|gemini|gemma-3|claude-3|claude-(sonnet|opus|haiku)|claude-.*-4|vision|[-_]vl\b|-vl-|llava|pixtral|qwen.*vl|qvq|llama-4|llama-3\.2-(11|90)b|grok-(2-vision|4)|mistral-(small|medium)-3|phi-4-multimodal|minicpm-v|internvl|glm-4\.?5?v|kimi-vl|nova-(lite|pro)/i;
+const NO_VISION_GUESS = /gemini-(1\.0|pro$)|gpt-4o-mini-(audio|search|transcribe|tts)|gpt-5-(nano-)?chat-latest-audio|o1-mini|o3-mini|-instruct$|codex/i;
+
+function parseModel(m: any): ModelInfo | null {
+  const id = String(typeof m === "string" ? m : m?.id || m?.name || "").replace(/^models\//, "").trim();
+  if (!id || NOT_CHAT.test(id)) return null;
+  if (m && typeof m === "object") {
+    const methods: any = m.supportedGenerationMethods || m.supported_generation_methods;
+    if (Array.isArray(methods) && methods.length && !methods.includes("generateContent")) return null;
+    const outMods: any = m.architecture?.output_modalities || m.output_modalities;
+    if (Array.isArray(outMods) && outMods.length && !outMods.includes("text")) return null;
+  }
+  let said: boolean | null = null;
+  if (m && typeof m === "object") {
+    const mods: any = m.architecture?.input_modalities || m.input_modalities || m.modalities?.input || m.inputModalities || (Array.isArray(m.modalities) ? m.modalities : null);
+    if (Array.isArray(mods) && mods.length) said = mods.map(String).some((x: string) => /image|vision/i.test(x));
+    const arch = m.architecture?.modality || (typeof m.modality === "string" ? m.modality : "");
+    if (said === null && typeof arch === "string" && arch.includes("->")) said = /image/i.test(arch.split("->")[0]);
+    const caps: any = m.capabilities;
+    if (said === null && caps && typeof caps === "object") {
+      if (Array.isArray(caps)) { if (caps.length) said = caps.map(String).some((x: string) => /vision|image/i.test(x)); }
+      else if ("vision" in caps) said = !!caps.vision;
+      else if ("image_input" in caps) said = !!caps.image_input;
+    }
+    if (said === null && typeof m.supports_vision === "boolean") said = m.supports_vision;
+    if (said === null && typeof m.vision === "boolean") said = m.vision;
+  }
+  const guess = VISION_GUESS.test(id) && !NO_VISION_GUESS.test(id);
+  const info: ModelInfo = { id, vision: said ?? guess, visionFrom: said === null ? "guess" : "provider" };
+  if (m && typeof m === "object") {
+    const name = String(m.name && m.name !== m.id && !String(m.name).startsWith("models/") ? m.name : m.displayName || m.display_name || "").trim();
+    if (name && name !== id) info.name = name.slice(0, 80);
+    const ctx = Number(m.context_length || m.contextLength || m.inputTokenLimit || m.context_window || m.top_provider?.context_length || 0);
+    if (ctx > 0) info.context = ctx;
+    const pr = m.pricing;
+    if (pr && typeof pr === "object" && Number(pr.prompt) === 0 && Number(pr.completion) === 0) info.free = true;
+    else if (/:free$/.test(id)) info.free = true;
+  }
+  return info;
+}
+
+/** The chat models a key offers, read live from its provider's /models list. */
+export async function listModelInfo(t: Target): Promise<ModelInfo[]> {
   const to = withTimeout(15000);
   try {
     const r = await fetch(`${trimBase(t.baseUrl)}/models`, { headers: gatewayHeaders(t), signal: to.signal });
     if (!r.ok) throw new Error(await readErr(r));
-    const j: any = await r.json();
+    const j: any = await r.json().catch(() => { throw new Error("The provider's model list wasn't readable"); });
     const list = Array.isArray(j?.data) ? j.data : Array.isArray(j?.models) ? j.models : Array.isArray(j) ? j : [];
-    return list.map((m: any) => String(m?.id || m?.name || m).replace(/^models\//, "")).filter(Boolean).slice(0, 400);
+    const seen = new Set<string>();
+    const out: ModelInfo[] = [];
+    for (const m of list) {
+      const x = parseModel(m);
+      if (!x || seen.has(x.id)) continue;
+      seen.add(x.id);
+      out.push(x);
+      if (out.length >= 600) break;
+    }
+    return out.sort((a, b) => a.id.localeCompare(b.id));
+  } catch (e: any) {
+    if (e?.name === "AbortError") throw new Error("The provider took too long to send its model list");
+    throw e;
   } finally {
     to.done();
   }
+}
+
+export async function listModels(t: Target): Promise<string[]> {
+  return (await listModelInfo(t)).map((m) => m.id);
 }
 
 export function gatewayTarget(k: GatewayKey): Target | null {
@@ -293,8 +363,15 @@ export const hasServerBackup = () => backupTargets().length > 0;
 const BACKUP_MODEL = "gemini-2.5-flash";
 
 /** Which keys a feature would use, in order. */
-export function featureTargets(c: AiConfig, f: FeatureName): { target: Target; model: string }[] {
+/** The model/key settings a feature really uses: the feed mix check borrows the help chat's when it has no model of its own. */
+export function effectiveFeature(c: AiConfig, f: FeatureName): FeatureCfg {
   const fc = c.features[f];
+  if (f === "feedmix" && !fc.model.trim()) return { ...c.features.chat, enabled: fc.enabled, temperature: fc.temperature };
+  return fc;
+}
+
+export function featureTargets(c: AiConfig, f: FeatureName): { target: Target; model: string }[] {
+  const fc = effectiveFeature(c, f);
   const out: { target: Target; model: string }[] = [];
   if (fc.model.trim()) {
     const keys = c.keys.filter((k) => k.enabled && (!fc.keyId || k.id === fc.keyId));
@@ -308,20 +385,20 @@ export function featureTargets(c: AiConfig, f: FeatureName): { target: Target; m
 }
 
 export function featureReady(c: AiConfig, f: FeatureName) {
-  return c.features[f].enabled && featureTargets(c, f).length > 0;
+  return c.features[f].enabled && (f !== "feedmix" || c.features.feedmix.model.trim() || c.features.chat.enabled) && featureTargets(c, f).length > 0;
 }
 
 /** Run a chat completion for a feature, failing over across its keys. */
 export async function runFeature(f: FeatureName, messages: ChatMsg[], opts: { maxTokens?: number; temperature?: number; timeoutMs?: number } = {}) {
   const c = await aiConfig();
-  if (!c.features[f].enabled) throw new AiError("disabled", "This AI feature is turned off by the admin");
+  if (!c.features[f].enabled || (f === "feedmix" && !c.features.feedmix.model.trim() && !c.features.chat.enabled)) throw new AiError("disabled", "This AI feature is turned off by the admin");
   const targets = featureTargets(c, f);
   if (!targets.length) throw new AiError("not_configured", "AI isn't set up yet. The admin needs to add an Omni route key and choose a model in AI settings.");
   let last = "";
   for (const { target, model } of targets) {
     if ((cooldown.get(target.id) || 0) > Date.now()) continue;
     try {
-      const r = await callChat(target, model, messages, { temperature: opts.temperature ?? c.features[f].temperature, maxTokens: opts.maxTokens, timeoutMs: opts.timeoutMs });
+      const r = await callChat(target, model, messages, { temperature: opts.temperature ?? effectiveFeature(c, f).temperature, maxTokens: opts.maxTokens, timeoutMs: opts.timeoutMs });
       noteUse(target.id, true);
       return { ...r, keyId: target.id };
     } catch (e: any) {

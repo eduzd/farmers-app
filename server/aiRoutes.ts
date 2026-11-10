@@ -11,7 +11,7 @@ import jwt from "jsonwebtoken";
 import { config } from "./config";
 import { requireAdmin, audit } from "./platformRoutes";
 import {
-  aiConfig, saveAiConfig, newId, encrypt, last4, AiError, runFeature, featureReady, featureTargets, gatewayTarget, callChat, listModels,
+  aiConfig, saveAiConfig, newId, encrypt, last4, AiError, runFeature, featureReady, featureTargets, gatewayTarget, callChat, listModels, listModelInfo, FEATURES,
   tts, transcribe, speak, voiceStatus, usageOf, hasServerBackup, GATEWAY_PRESETS, VOICE_COMPANIES, OPENAI_VOICES, GEMINI_VOICES, TTS_MODELS,
   providerKey, type AiConfig, type ChatMsg, type FeatureName, type GatewayKey, type VoiceProvider,
 } from "./aiEngine";
@@ -140,18 +140,20 @@ Set notClear true if the photo isn't a ${kind} or is too unclear. Set seeSpecial
 // ---------------------------------------------------------------- admin view (masked)
 function maskedConfig(c: AiConfig) {
   return {
-    keys: c.keys.map(({ keyEnc, ...k }) => ({ ...k, usage: usageOf(k.id) })),
+    // The full model list (modelInfo) is fetched separately from /keys/:id/models to keep this small.
+    keys: c.keys.map(({ keyEnc, modelInfo, ...k }) => ({ ...k, modelCount: modelInfo?.length ?? k.models?.length ?? 0, usage: usageOf(k.id) })),
     features: c.features,
     voice: { ...c.voice, providers: c.voice.providers.map(({ keyEnc, ...p }) => ({ ...p, usage: usageOf(p.id) })) },
     limits: c.limits,
     extraInstructions: c.extraInstructions,
     useServerBackup: c.useServerBackup,
     serverBackupAvailable: hasServerBackup(),
-    ready: { chat: featureReady(c, "chat"), disease: featureReady(c, "disease"), voice: featureReady(c, "voice") && c.voice.callEnabled },
+    ready: { chat: featureReady(c, "chat"), disease: featureReady(c, "disease"), voice: featureReady(c, "voice") && c.voice.callEnabled, feedmix: featureReady(c, "feedmix") },
     usingBackup: {
       chat: featureReady(c, "chat") && featureTargets(c, "chat")[0]?.target.id.startsWith("server-backup"),
       disease: featureReady(c, "disease") && featureTargets(c, "disease")[0]?.target.id.startsWith("server-backup"),
       voice: featureReady(c, "voice") && featureTargets(c, "voice")[0]?.target.id.startsWith("server-backup"),
+      feedmix: featureReady(c, "feedmix") && featureTargets(c, "feedmix")[0]?.target.id.startsWith("server-backup"),
     },
     voiceStatus: voiceStatus(c),
     presets: GATEWAY_PRESETS,
@@ -334,12 +336,14 @@ export function registerAiRoutes(app: Express) {
     if (req.body?.baseUrl !== undefined) {
       const u = clean(req.body.baseUrl, 300);
       if (!validUrl(u)) return res.status(400).json({ error: "Enter the address (base URL), starting with https://" });
+      if (u !== k.baseUrl) { k.models = undefined; k.modelInfo = undefined; k.modelsAt = null; k.modelsError = null; }
       k.baseUrl = u;
     }
     if (req.body?.apiKey) {
       const key = clean(req.body.apiKey, 500);
       if (key.length < 8) return res.status(400).json({ error: "That key looks too short" });
       k.keyEnc = encrypt(key); k.keyLast4 = last4(key); k.lastTest = null;
+      k.models = undefined; k.modelInfo = undefined; k.modelsAt = null; k.modelsError = null;
     }
     if (typeof req.body?.enabled === "boolean") k.enabled = req.body.enabled;
     if (typeof req.body?.moveUp === "boolean") {
@@ -364,6 +368,31 @@ export function registerAiRoutes(app: Express) {
     res.json(maskedConfig(c));
   }));
 
+  // The models a key offers, read live from its provider (cached on the key for an hour; ?refresh=1 reads again).
+  // When the provider can't be reached, the last list (if any) comes back with the error, so the admin can still
+  // pick from it or type a model name by hand.
+  app.get(`${A}/keys/:id/models`, requireAdmin, wrap(async (req, res) => {
+    const c = await aiConfig(true);
+    const k = c.keys.find((x) => x.id === req.params.id);
+    if (!k) return res.status(404).json({ error: "Key not found" });
+    const fresh = k.modelInfo?.length && k.modelsAt && Date.now() - Date.parse(k.modelsAt) < 3600_000;
+    if (fresh && req.query.refresh !== "1") return res.json({ models: k.modelInfo, fetchedAt: k.modelsAt, cached: true, error: null });
+    const t = gatewayTarget(k);
+    if (!t) return res.json({ models: k.modelInfo || [], fetchedAt: k.modelsAt || null, cached: true, error: "This key can't be read any more. Enter it again." });
+    try {
+      const info = await listModelInfo(t);
+      if (!info.length) throw new Error("The provider sent back an empty model list");
+      k.modelInfo = info; k.models = info.map((m) => m.id).slice(0, 300); k.modelsAt = new Date().toISOString(); k.modelsError = null;
+      await saveAiConfig(c, by(req));
+      res.json({ models: info, fetchedAt: k.modelsAt, cached: false, error: null });
+    } catch (e: any) {
+      const msg = String(e?.message || "Couldn't read the model list").slice(0, 240);
+      k.modelsError = msg;
+      await saveAiConfig(c, by(req));
+      res.json({ models: k.modelInfo || [], fetchedAt: k.modelsAt || null, cached: true, error: msg });
+    }
+  }));
+
   // Test a key: list its models, then (if a model is given) ask it one short question
   app.post(`${A}/keys/:id/test`, requireAdmin, wrap(async (req, res) => {
     const c = await aiConfig(true);
@@ -372,9 +401,10 @@ export function registerAiRoutes(app: Express) {
     const t = gatewayTarget(k);
     if (!t) return res.status(400).json({ error: "This key can't be read any more. Enter it again." });
     const started = Date.now();
-    let models: string[] = [];
+    let info: Awaited<ReturnType<typeof listModelInfo>> = [];
     let modelsErr = "";
-    try { models = await listModels(t); } catch (e: any) { modelsErr = e?.message || ""; }
+    try { info = await listModelInfo(t); } catch (e: any) { modelsErr = e?.message || ""; }
+    const models = info.map((m) => m.id);
     const model = clean(req.body?.model, 120) || c.features.chat.model || models[0] || "";
     let reply = "";
     let ok = models.length > 0;
@@ -388,7 +418,7 @@ export function registerAiRoutes(app: Express) {
       }
     }
     k.lastTest = { ok, at: new Date().toISOString(), message: message.slice(0, 240), ms: Date.now() - started };
-    if (models.length) k.models = models.slice(0, 300);
+    if (info.length) { k.models = models.slice(0, 300); k.modelInfo = info; k.modelsAt = new Date().toISOString(); k.modelsError = null; }
     await saveAiConfig(c, by(req));
     res.json({ ok, message: k.lastTest.message, reply, models: models.slice(0, 300), config: maskedConfig(c) });
   }));
@@ -397,7 +427,7 @@ export function registerAiRoutes(app: Express) {
   app.put(`${A}/settings`, requireAdmin, wrap(async (req, res) => {
     const c = await aiConfig(true);
     const f = req.body?.features || {};
-    for (const name of ["chat", "disease", "voice"] as FeatureName[]) {
+    for (const name of FEATURES) {
       const v = f[name];
       if (!v) continue;
       if (typeof v.enabled === "boolean") c.features[name].enabled = v.enabled;
@@ -433,7 +463,7 @@ export function registerAiRoutes(app: Express) {
 
   // Try a feature with the saved settings (admin sees the real answer)
   app.post(`${A}/try`, requireAdmin, wrap(async (req, res) => {
-    const feature = (["chat", "disease", "voice"].includes(req.body?.feature) ? req.body.feature : "chat") as FeatureName;
+    const feature = ((FEATURES as string[]).includes(req.body?.feature) ? req.body.feature : "chat") as FeatureName;
     const lang = langOf(req.body?.lang);
     const c = await aiConfig(true);
     const prompt = clean(req.body?.prompt, 1000) || (lang === "bn" ? "পুকুরে মাছ ভেসে উঠছে, কী করব?" : "My pond fish are gasping at the surface in the morning. What should I do?");

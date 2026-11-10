@@ -21,20 +21,23 @@ import {
  */
 
 type Usage = { today: number; sinceRestart: number; errors: number; lastError: string | null; lastAt: string | null };
-type Key = { id: string; label: string; provider: string; baseUrl: string; keyLast4: string; enabled: boolean; models?: string[]; lastTest?: { ok: boolean; at: string; message: string } | null; usage: Usage };
+type Key = { id: string; label: string; provider: string; baseUrl: string; keyLast4: string; enabled: boolean; models?: string[]; modelCount?: number; modelsAt?: string | null; modelsError?: string | null; lastTest?: { ok: boolean; at: string; message: string } | null; usage: Usage };
+type FName = "chat" | "disease" | "voice" | "feedmix";
+type MInfo = { id: string; name?: string; vision: boolean; visionFrom: "provider" | "guess"; context?: number; free?: boolean };
+type MList = { loading: boolean; models: MInfo[]; error: string | null; fetchedAt: string | null };
 type Feature = { enabled: boolean; model: string; keyId: string | null; temperature: number };
 type VProv = { id: string; label: string; company: string; baseUrl?: string; keyLast4: string; enabled: boolean; lastTest?: { ok: boolean; at: string; message: string } | null; usage: Usage };
 type Choice = { providerId: string; voiceId: string; voiceName: string; model: string } | null;
 type Cfg = {
   keys: Key[];
-  features: Record<"chat" | "disease" | "voice", Feature>;
+  features: Record<FName, Feature>;
   voice: { callEnabled: boolean; providers: VProv[]; en: Choice; bn: Choice; speed: number; sttProviderId: string | null };
   limits: { perMinute: number; userDaily: number; guestDaily: number };
   extraInstructions: string;
   useServerBackup: boolean;
   serverBackupAvailable: boolean;
-  ready: Record<"chat" | "disease" | "voice", boolean>;
-  usingBackup: Record<"chat" | "disease" | "voice", boolean>;
+  ready: Record<FName, boolean>;
+  usingBackup: Record<FName, boolean>;
   voiceStatus: { en: any; bn: any; sttReady: boolean };
   presets: Record<string, { label: string; baseUrl: string; hint: string }>;
   ttsModels: Record<string, string[]>;
@@ -137,7 +140,8 @@ export function AiSettings() {
   const d = data;
   const flash = (ok: boolean, text: string) => { setMsg({ ok, text }); setTimeout(() => setMsg(null), 5000); };
   const backupNote = L("Using the server's backup Gemini key until you add your own", "আপনার কী যোগ না করা পর্যন্ত সার্ভারের ব্যাকআপ Gemini কী চলছে");
-  const sub = (f: "chat" | "disease" | "voice") =>
+  const sub = (f: FName) =>
+    f === "feedmix" && d.features.feedmix.enabled && !d.features.feedmix.model && d.ready.feedmix ? `${L("Uses the help chat model", "সহায়ক চ্যাটের মডেল ব্যবহার করে")}: ${d.features.chat.model || "—"}` :
     !d.features[f].enabled ? L("Turned off", "বন্ধ") : d.usingBackup[f] ? backupNote : d.ready[f] ? `${L("Model", "মডেল")}: ${d.features[f].model}` : L("Add a key and choose a model below", "নিচে কী যোগ করে মডেল বেছে নিন");
   const voiceSub = !d.voice.callEnabled ? L("Turned off", "বন্ধ") : [d.voiceStatus.en ? `${L("EN", "ইংরেজি")}: ${d.voiceStatus.en.voice}` : "", d.voiceStatus.bn ? `বাংলা: ${d.voiceStatus.bn.voice}` : ""].filter(Boolean).join(" · ") || L("No AI voice chosen yet: the phone's own voice is used", "এখনো এআই ভয়েস বাছা হয়নি: ফোনের নিজস্ব কণ্ঠ ব্যবহার হবে");
 
@@ -160,6 +164,7 @@ export function AiSettings() {
       <Card testID="ai-status">
         <StatusRow testID="ai-status-chat" icon="message-circle" label={L("AI help chat", "এআই সহায়ক চ্যাট")} ready={d.ready.chat} sub={sub("chat")} />
         <StatusRow testID="ai-status-disease" icon="camera" label={L("Disease detector", "রোগ শনাক্তকারী")} ready={d.ready.disease} sub={sub("disease")} />
+        <StatusRow testID="ai-status-feedmix" icon="layers" label={L("Feed mix check", "খাদ্য মিশ্রণ যাচাই")} ready={!!d.ready.feedmix} sub={sub("feedmix")} />
         <StatusRow testID="ai-status-voice" icon="phone-call" label={L("AI voice call", "এআই ভয়েস কল")} ready={d.ready.voice && d.voiceStatus.sttReady} sub={voiceSub} />
       </Card>
       {msg ? <Text testID="ai-msg" style={{ color: msg.ok ? OK : BAD, fontWeight: "600", marginVertical: 6 }}>{msg.text}</Text> : null}
@@ -226,7 +231,7 @@ function KeysSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onAd
               </View>
             ) : null}
             <Text style={{ color: theme.textSecondary, fontSize: 12, marginTop: 6 }}>
-              {L("Used today", "আজ ব্যবহার")}: {k.usage.today}{k.usage.errors ? ` · ${L("errors", "ত্রুটি")}: ${k.usage.errors}` : ""}{k.models?.length ? ` · ${k.models.length} ${L("models", "মডেল")}` : ""}
+              {L("Used today", "আজ ব্যবহার")}: {k.usage.today}{k.usage.errors ? ` · ${L("errors", "ত্রুটি")}: ${k.usage.errors}` : ""}{(k.modelCount || k.models?.length) ? ` · ${L(String(k.modelCount || k.models?.length), bnNum(String(k.modelCount || k.models?.length)))} ${L("models", "মডেল")}` : ""}
             </Text>
             <View style={[st.row, { gap: 8, marginTop: 10, flexWrap: "wrap" }]}>
               <Btn small kind="soft" icon="activity" label={L("Test", "টেস্ট")} busy={busy === k.id + "t"} testID={`ai-key-${i}-test`}
@@ -300,11 +305,15 @@ function KeySheet({ state, presets, onClose, onSaved }: { state: null | { edit?:
 }
 
 // ---------------------------------------------------------------- models per feature
-const SUGGESTED: Record<string, string[]> = {
+// The admin picks a key, then a model from the list that key's provider really offers (read live from its
+// /models address). Typing a model name by hand stays as a fallback when the list can't be read.
+const SUGGESTED: Record<FName, string[]> = {
   chat: ["gpt-4o-mini", "gemini-2.5-flash", "openai/gpt-4o-mini", "google/gemini-2.5-flash"],
   disease: ["gpt-4o", "gemini-2.5-flash", "openai/gpt-4o", "google/gemini-2.5-pro"],
   voice: ["gpt-4o-mini", "gemini-2.5-flash", "openai/gpt-4o-mini", "google/gemini-2.5-flash-lite"],
+  feedmix: ["gpt-4o-mini", "gemini-2.5-flash", "openai/gpt-4o-mini", "google/gemini-2.5-flash"],
 };
+const fmtCtx = (n?: number) => (!n ? "" : n >= 1_000_000 ? `${Math.round(n / 100_000) / 10}M` : `${Math.round(n / 1000)}K`);
 
 function ModelsSection({ d, setData, flash }: SectionProps) {
   const { theme } = useTheme();
@@ -314,14 +323,31 @@ function ModelsSection({ d, setData, flash }: SectionProps) {
   const [busy, setBusy] = useState(false);
   const [trying, setTrying] = useState<string | null>(null);
   const [tryOut, setTryOut] = useState<Record<string, { ok: boolean; text: string }>>({});
-  const allModels = useMemo(() => Array.from(new Set(d.keys.flatMap((k) => k.models || []))), [d.keys]);
+  const [lists, setLists] = useState<Record<string, MList>>({});
+  const [picker, setPicker] = useState<null | { feature: FName; keyId: string }>(null);
   const changed = JSON.stringify(f) !== JSON.stringify(d.features);
-  const rows: ["chat" | "disease" | "voice", string, string, any][] = [
+  const rows: [FName, string, string, any][] = [
     ["chat", L("AI help chat", "এআই সহায়ক চ্যাট"), L("Answers farmers' questions in chat", "চ্যাটে কৃষকদের প্রশ্নের উত্তর দেয়"), "message-circle"],
     ["disease", L("Disease detector", "রোগ শনাক্তকারী"), L("Reads photos: choose a model that can see images", "ছবি দেখে: ছবি বুঝতে পারে এমন মডেল বেছে নিন"), "camera"],
     ["voice", L("AI call brain", "এআই কলের মস্তিষ্ক"), L("Thinks of the answers during an AI call: a fast model works best", "এআই কলে উত্তর ঠিক করে: দ্রুত মডেল ভালো"), "phone-call"],
+    ["feedmix", L("Feed mix check", "খাদ্য মিশ্রণ যাচাই"), L("Checks the protein of a feed mix. Leave empty to use the help chat model.", "খাদ্য মিশ্রণের প্রোটিন যাচাই করে। খালি রাখলে সহায়ক চ্যাটের মডেল ব্যবহার হয়।"), "layers"],
   ];
-  const set = (name: string, patch: Partial<Feature>) => setF((s: any) => ({ ...s, [name]: { ...s[name], ...patch } }));
+  const set = (name: FName, patch: Partial<Feature>) => setF((s: any) => ({ ...s, [name]: { ...s[name], ...patch } }));
+  const listKeyOf = (v: Feature) => d.keys.find((k) => k.id === v.keyId) || d.keys.find((k) => k.enabled) || d.keys[0] || null;
+
+  const loadList = async (keyId: string, refresh = false) => {
+    setLists((s) => ({ ...s, [keyId]: { models: s[keyId]?.models || [], fetchedAt: s[keyId]?.fetchedAt || null, error: null, loading: true } }));
+    try {
+      const r: any = await apiGet(`/api/admin/manage/ai/keys/${keyId}/models${refresh ? "?refresh=1" : ""}`);
+      setLists((s) => ({ ...s, [keyId]: { loading: false, models: r.models || [], error: r.error || null, fetchedAt: r.fetchedAt || null } }));
+    } catch (e: any) {
+      setLists((s) => ({ ...s, [keyId]: { loading: false, models: s[keyId]?.models || [], fetchedAt: s[keyId]?.fetchedAt || null, error: e?.message || "Failed" } }));
+    }
+  };
+  // Read each key's list once, so the cards can show whether the chosen model sees photos.
+  const keyIds = d.keys.map((k) => k.id).join(",");
+  useEffect(() => { for (const k of d.keys) if (!lists[k.id]) loadList(k.id); }, [keyIds]);
+
   const save = async () => {
     setBusy(true);
     try { setData(await apiPut("/api/admin/manage/ai/settings", { features: f })); flash(true, L("Models saved. The app uses them now.", "মডেল সংরক্ষিত। অ্যাপ এখন এগুলো ব্যবহার করছে।")); }
@@ -334,30 +360,59 @@ function ModelsSection({ d, setData, flash }: SectionProps) {
       setTryOut((s) => ({ ...s, [name]: { ok: true, text: `${r.reply}\n\n${r.model} · ${L(`${(r.ms / 1000).toFixed(1)}s`, `${bnNum((r.ms / 1000).toFixed(1))} সেকেন্ড`)} · ${r.via === "Server backup key" ? L(r.via, "সার্ভারের ব্যাকআপ কী") : keyLabel(L, r.via)}` } }));
     } catch (e: any) { setTryOut((s) => ({ ...s, [name]: { ok: false, text: e?.message || "Failed" } })); } finally { setTrying(null); }
   };
+  const pickKey = picker ? d.keys.find((k) => k.id === picker.keyId) || null : null;
+
   return (
     <>
       <SectionTitle title={L("Model for each feature", "প্রতিটি ফিচারের মডেল")} />
       {rows.map(([name, title, hint, icon]) => {
         const v = f[name];
-        const q = v.model.trim().toLowerCase();
-        const options = (allModels.length ? allModels : SUGGESTED[name]).filter((m) => !q || m.toLowerCase().includes(q)).slice(0, 8);
+        const lk = listKeyOf(v);
+        const list = lk ? lists[lk.id] : undefined;
+        const info = v.model ? list?.models.find((m) => m.id === v.model) : undefined;
+        const borrow = name === "feedmix" && !v.model;
         return (
           <Card key={name} testID={`ai-feature-${name}`}>
             <ToggleRow testID={`ai-feature-${name}-on`} icon={icon} label={title} sub={hint} value={v.enabled} onChange={(on) => set(name, { enabled: on })} />
-            <Field testID={`ai-feature-${name}-model`} label={L("Model", "মডেল")} placeholder={SUGGESTED[name][0]} value={v.model} onChange={(m) => set(name, { model: m })}
-              hint={allModels.length ? L("Tap one below or type its exact name", "নিচ থেকে বেছে নিন বা ঠিক নাম লিখুন") : L("Test a key above to see its full model list", "পুরো মডেল তালিকা দেখতে উপরে একটি কী টেস্ট করুন")} />
-            {options.length && !(options.length === 1 && options[0] === v.model) ? (
-              <ChipRow>{options.map((m) => <Chip key={m} label={m} on={v.model === m} onPress={() => set(name, { model: m })} testID={`ai-feature-${name}-opt`} />)}</ChipRow>
-            ) : null}
-            {d.keys.length > 1 ? (
+            {d.keys.length === 0 ? (
               <>
-                <Text style={[st.label, { color: theme.textSecondary, marginTop: 10, marginBottom: 6 }]}>{L("Which key", "কোন কী")}</Text>
-                <ChipRow>
-                  <Chip label={L("Any (in order)", "যেকোনো (ক্রমানুসারে)")} on={!v.keyId} onPress={() => set(name, { keyId: null })} />
-                  {d.keys.map((k) => <Chip key={k.id} label={keyLabel(L, k.label)} on={v.keyId === k.id} onPress={() => set(name, { keyId: k.id })} />)}
-                </ChipRow>
+                <Text style={{ color: theme.textSecondary, fontSize: 12.5, marginTop: 8 }}>{L("Add a key above first. Its model list shows up here.", "আগে উপরে একটি কী যোগ করুন। তার মডেল তালিকা এখানে দেখা যাবে।")}</Text>
+                <Field testID={`ai-feature-${name}-model`} label={L("Model name", "মডেলের নাম")} placeholder={SUGGESTED[name][0]} value={v.model} onChange={(m) => set(name, { model: m })} />
               </>
-            ) : null}
+            ) : (
+              <>
+                <Text style={[st.label, { color: theme.textSecondary, marginTop: 10, marginBottom: 6 }]}>{L("1. API key", "১. API কী")}</Text>
+                <ChipRow>
+                  {d.keys.length > 1 ? <Chip label={L("Any (in order)", "যেকোনো (ক্রমানুসারে)")} on={!v.keyId} onPress={() => set(name, { keyId: null })} testID={`ai-feature-${name}-key-any`} /> : null}
+                  {d.keys.map((k, i) => <Chip key={k.id} label={`${keyLabel(L, k.label)} ••${k.keyLast4}`} on={v.keyId === k.id || (d.keys.length === 1 && !v.keyId)} onPress={() => set(name, { keyId: k.id })} testID={`ai-feature-${name}-key-${i}`} />)}
+                </ChipRow>
+                <Text style={[st.label, { color: theme.textSecondary, marginBottom: 6 }]}>{L("2. Model", "২. মডেল")}</Text>
+                <Pressable testID={`ai-feature-${name}-pick`} onPress={() => { if (!lk) return; setPicker({ feature: name, keyId: lk.id }); if (!lists[lk.id]?.models.length) loadList(lk.id); }}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderColor: theme.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, backgroundColor: theme.backgroundDefault }}>
+                  <Feather name="cpu" size={16} color={theme.primary} />
+                  <View style={{ flex: 1 }}>
+                    <Text testID={`ai-feature-${name}-model-value`} style={{ color: v.model ? theme.text : theme.textTertiary, fontWeight: v.model ? "700" : "500", fontSize: 14 }} numberOfLines={1}>
+                      {v.model || (borrow ? `${L("Same as help chat", "সহায়ক চ্যাটের মতো")}${f.chat.model ? `: ${f.chat.model}` : ""}` : L("Choose a model", "মডেল বেছে নিন"))}
+                    </Text>
+                    <Text style={{ color: theme.textSecondary, fontSize: 11.5 }} numberOfLines={1}>
+                      {lk ? `${L("From", "উৎস")}: ${keyLabel(L, lk.label)}${list?.models.length ? ` · ${L(String(list.models.length), bnNum(String(list.models.length)))} ${L("models", "মডেল")}` : ""}` : ""}
+                    </Text>
+                  </View>
+                  {info ? <Pill label={info.vision ? L("Sees photos", "ছবি দেখে") : L("Text only", "শুধু লেখা")} color={info.vision ? OK : GREY} icon={info.vision ? "eye" : "type"} /> : null}
+                  <Feather name="chevron-down" size={18} color={theme.textSecondary} />
+                </Pressable>
+                {name === "disease" && info && !info.vision ? (
+                  <Text testID="ai-feature-disease-novision" style={{ color: WARN, fontSize: 12.5, marginTop: 8 }}>{L("This model may not read photos. Pick one marked \"Sees photos\" for the disease detector.", "এই মডেল হয়তো ছবি পড়তে পারে না। রোগ শনাক্তকারীর জন্য \"ছবি দেখে\" চিহ্নিত একটি মডেল বেছে নিন।")}</Text>
+                ) : null}
+                {v.model && list && !list.loading && list.models.length > 0 && !info ? (
+                  <Text style={{ color: WARN, fontSize: 12.5, marginTop: 8 }}>{L("This name isn't in this key's model list. Check the spelling, or pick from the list.", "এই নামটি এই কী-এর মডেল তালিকায় নেই। বানান দেখুন, বা তালিকা থেকে বেছে নিন।")}</Text>
+                ) : null}
+                {d.keys.length > 1 && !v.keyId ? (
+                  <Text style={{ color: theme.textTertiary, fontSize: 11.5, marginTop: 6 }}>{L("With \"Any\", every key in the list must offer this model.", "\"যেকোনো\" বাছলে তালিকার প্রতিটি কী-তে এই মডেল থাকতে হবে।")}</Text>
+                ) : null}
+                {name === "feedmix" && v.model ? <Btn style={{ marginTop: 8, alignSelf: "flex-start" }} small kind="ghost" icon="corner-up-left" label={L("Use the help chat model", "সহায়ক চ্যাটের মডেল ব্যবহার করুন")} onPress={() => set(name, { model: "", keyId: null })} testID="ai-feature-feedmix-borrow" /> : null}
+              </>
+            )}
             <View style={[st.row, { gap: 8, marginTop: 10 }]}>
               <Btn small kind="soft" icon="play" label={L("Try it", "চেষ্টা করুন")} busy={trying === name} disabled={changed} onPress={() => tryIt(name)} testID={`ai-feature-${name}-try`} />
               {changed ? <Text style={{ color: theme.textTertiary, fontSize: 12 }}>{L("Save first to try", "চেষ্টার আগে সংরক্ষণ করুন")}</Text> : null}
@@ -376,7 +431,90 @@ function ModelsSection({ d, setData, flash }: SectionProps) {
           <Btn kind="ghost" label={L("Undo", "বাতিল")} onPress={() => setF(d.features)} />
         </View>
       ) : null}
+      <ModelPickerSheet
+        visible={!!picker && !!pickKey}
+        feature={picker?.feature || "chat"}
+        keyName={pickKey ? keyLabel(L, pickKey.label) : ""}
+        list={pickKey ? lists[pickKey.id] : undefined}
+        current={picker ? f[picker.feature].model : ""}
+        onRefresh={() => pickKey && loadList(pickKey.id, true)}
+        onClose={() => setPicker(null)}
+        onPick={(m) => { if (picker) set(picker.feature, { model: m, keyId: d.keys.length > 1 ? f[picker.feature].keyId : f[picker.feature].keyId }); setPicker(null); }}
+      />
     </>
+  );
+}
+
+function ModelPickerSheet({ visible, feature, keyName, list, current, onRefresh, onClose, onPick }: {
+  visible: boolean; feature: FName; keyName: string; list?: MList; current: string; onRefresh: () => void; onClose: () => void; onPick: (m: string) => void;
+}) {
+  const { theme } = useTheme();
+  const L = useL();
+  const [q, setQ] = useState("");
+  const [onlyVision, setOnlyVision] = useState(false);
+  const [manual, setManual] = useState("");
+  useEffect(() => { if (visible) { setQ(""); setOnlyVision(feature === "disease"); setManual(current || ""); } }, [visible, feature]);
+  const all = list?.models || [];
+  const needle = q.trim().toLowerCase();
+  const shown = all.filter((m) => (!onlyVision || m.vision) && (!needle || m.id.toLowerCase().includes(needle) || (m.name || "").toLowerCase().includes(needle)));
+  const MAX = 80;
+  const n = (x: number) => L(String(x), bnNum(String(x)));
+  return (
+    <Sheet visible={visible} title={L("Choose a model", "মডেল বেছে নিন")} onClose={onClose} testID="ai-model-sheet">
+      <View style={[st.row, { gap: 8, marginBottom: 10 }]}>
+        <Text style={{ color: theme.textSecondary, fontSize: 12.5, flex: 1 }} numberOfLines={2}>
+          {L("Models on", "যে কী-এর মডেল")}: <Text style={{ color: theme.text, fontWeight: "700" }}>{keyName}</Text>{all.length ? ` · ${n(all.length)} ${L("models", "মডেল")}` : ""}
+        </Text>
+        <Btn small kind="ghost" icon="refresh-cw" label={L("Refresh", "রিফ্রেশ")} busy={!!list?.loading} onPress={onRefresh} testID="ai-models-refresh" />
+      </View>
+      <Field testID="ai-models-search" label={L("Search models", "মডেল খুঁজুন")} placeholder={L("e.g. gemini, gpt-4o, claude", "যেমন gemini, gpt-4o, claude")} value={q} onChange={setQ} />
+      <ChipRow>
+        <Chip label={L("All", "সব")} on={!onlyVision} onPress={() => setOnlyVision(false)} testID="ai-models-filter-all" />
+        <Chip label={L("Sees photos", "ছবি দেখে")} on={onlyVision} onPress={() => setOnlyVision(true)} testID="ai-models-filter-vision" count={all.filter((m) => m.vision).length || undefined} />
+      </ChipRow>
+      {list?.error ? (
+        <View testID="ai-models-error" style={{ padding: 12, borderRadius: 12, backgroundColor: BAD + "12", marginBottom: 10 }}>
+          <Text style={{ color: BAD, fontSize: 12.5, lineHeight: 18 }}>
+            {L("Couldn't read this key's model list", "এই কী-এর মডেল তালিকা পড়া যায়নি")}: {list.error}{"\n"}
+            {all.length ? L("Showing the last list we got. ", "শেষ পাওয়া তালিকা দেখানো হচ্ছে। ") : ""}{L("You can type the model name below.", "নিচে মডেলের নাম লিখে দিতে পারেন।")}
+          </Text>
+        </View>
+      ) : null}
+      {list?.loading && !all.length ? <View style={{ paddingVertical: 18 }}><ActivityIndicator color={theme.primary} /></View> : null}
+      {!list?.loading && all.length > 0 && shown.length === 0 ? (
+        <Text style={{ color: theme.textSecondary, textAlign: "center", paddingVertical: 14 }}>{L("No model matches. Try another word, or type the name below.", "কোনো মডেল মেলেনি। অন্য শব্দ দিন, বা নিচে নাম লিখুন।")}</Text>
+      ) : null}
+      {shown.slice(0, MAX).map((m) => {
+        const on = m.id === current;
+        return (
+          <Pressable key={m.id} testID="ai-model-row" onPress={() => onPick(m.id)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 10, paddingHorizontal: 10, borderRadius: 12, marginBottom: 4, backgroundColor: on ? theme.primary + "14" : "transparent" }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: theme.text, fontWeight: "700", fontSize: 13.5 }} numberOfLines={1}>{m.id}</Text>
+              {m.name || m.context || m.free ? (
+                <Text style={{ color: theme.textSecondary, fontSize: 11.5 }} numberOfLines={1}>
+                  {[m.name, m.context ? `${L("context", "কনটেক্সট")} ${fmtCtx(m.context)}` : "", m.free ? L("free", "ফ্রি") : ""].filter(Boolean).join(" · ")}
+                </Text>
+              ) : null}
+            </View>
+            {m.vision ? <Pill label={m.visionFrom === "guess" ? L("Sees photos?", "ছবি দেখে?") : L("Sees photos", "ছবি দেখে")} color={OK} icon="eye" /> : null}
+            {on ? <Feather name="check" size={18} color={theme.primary} /> : null}
+          </Pressable>
+        );
+      })}
+      {shown.length > MAX ? (
+        <Text style={{ color: theme.textTertiary, fontSize: 12, textAlign: "center", marginVertical: 6 }}>
+          {L(`Showing ${MAX} of ${shown.length}. Search to narrow the list.`, `${bnNum(String(shown.length))}টির মধ্যে ${bnNum(String(MAX))}টি দেখানো হচ্ছে। খুঁজে তালিকা ছোট করুন।`)}
+        </Text>
+      ) : null}
+      {all.some((m) => m.vision && m.visionFrom === "guess") ? (
+        <Text style={{ color: theme.textTertiary, fontSize: 11.5, marginTop: 6 }}>{L("\"Sees photos?\" is a guess from the model's name, because this provider doesn't say.", "\"ছবি দেখে?\" মডেলের নাম দেখে অনুমান, কারণ এই প্রোভাইডার তা জানায় না।")}</Text>
+      ) : null}
+      <View style={{ height: 1, backgroundColor: theme.border, marginVertical: 12 }} />
+      <Field testID="ai-models-manual" label={L("Or type a model name", "অথবা মডেলের নাম লিখুন")} placeholder={SUGGESTED[feature][0]} value={manual} onChange={setManual}
+        hint={L("Use the exact name your provider gives.", "প্রোভাইডারের দেওয়া ঠিক নামটি লিখুন।")} />
+      <Btn style={{ marginTop: 4, alignSelf: "flex-start" }} icon="check" label={L("Use this name", "এই নাম ব্যবহার করুন")} disabled={!manual.trim()} onPress={() => onPick(manual.trim())} testID="ai-models-manual-use" />
+    </Sheet>
   );
 }
 
