@@ -8,6 +8,7 @@ import { registerCheckoutRoutes } from "./checkoutRoutes";
 import { registerLiveDataRoutes } from "./liveDataRoutes";
 import { registerPaymentRoutes } from "./paymentRoutes";
 import { registerAiRoutes } from "./aiRoutes";
+import { registerFeedMixAiRoutes } from "./feedMixAi";
 import { registerMarketPriceRoutes } from "./marketPriceRoutes";
 import { registerPlatformRoutes, platformGuard } from "./platformRoutes";
 import { registerAdminAppRoutes } from "./adminAppRoutes";
@@ -153,6 +154,7 @@ function setupErrorHandler(app: express.Application) {
   registerLiveDataRoutes(app);
   registerPaymentRoutes(app);
   registerAiRoutes(app);
+  registerFeedMixAiRoutes(app);
   registerMarketPriceRoutes(app);
   app.use("/api/admin", adminRoutes);
   app.use("/api", communityRoutes);

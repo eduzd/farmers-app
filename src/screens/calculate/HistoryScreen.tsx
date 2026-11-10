@@ -35,6 +35,7 @@ const recordTypeLabels: Record<RecordType, { bn: string; icon: keyof typeof Feat
   FEED_TOOL: { bn: 'পশু খাদ্য', icon: 'package' },
   LOAN: { bn: 'ঋণ', icon: 'credit-card' },
   INSURANCE: { bn: 'বীমা', icon: 'shield' },
+  FEED_MIX: { bn: 'খাদ্য তৈরি', icon: 'layers' },
 };
 
 export function HistoryScreen() {
@@ -54,6 +55,7 @@ export function HistoryScreen() {
     { key: 'BEPARI', label: 'ব্যাপারী' },
     { key: 'ARAT', label: 'আড়ত' },
     { key: 'FEED', label: 'খাদ্য' },
+    { key: 'FEED_MIX', label: 'খাদ্য তৈরি' },
     { key: 'FERTILIZER', label: 'সার' },
     { key: 'PROFIT', label: 'লাভ-ক্ষতি' },
     { key: 'FEED_TOOL', label: 'পশু খাদ্য' },

@@ -10,7 +10,7 @@ import { syncRecordsToServer } from './syncService';
  */
 export const ARCHIVED_DELETED = 2;
 
-export type RecordType = 'BEPARI' | 'ARAT' | 'FEED' | 'FERTILIZER' | 'PROFIT' | 'FEED_TOOL' | 'LOAN' | 'INSURANCE';
+export type RecordType = 'BEPARI' | 'ARAT' | 'FEED' | 'FERTILIZER' | 'PROFIT' | 'FEED_TOOL' | 'LOAN' | 'INSURANCE' | 'FEED_MIX';
 
 export type SyncStatus = 'pending' | 'synced' | 'error';
 

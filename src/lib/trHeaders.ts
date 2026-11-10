@@ -23,6 +23,7 @@ export const HEADER_BN_OF_EN: Record<string, string> = {
   Activity: "অ্যাক্টিভিটি",
   "Achievement Badges": "অ্যাচিভমেন্ট ব্যাজ",
   "Arat Calculator": "আড়ত ক্যালকুলেটর",
+  "Feed Making Calculator": "খাদ্য তৈরির ক্যালকুলেটর",
   Weather: "আবহাওয়া",
   "Weather Forecast": "আবহাওয়া পূর্বাভাস",
   Applications: "আবেদনসমূহ",

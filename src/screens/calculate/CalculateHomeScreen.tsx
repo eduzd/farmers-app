@@ -41,6 +41,7 @@ export function CalculateHomeScreen() {
     { label: L('ব্যাপারী ক্যালকুলেটর', 'Bepari calculator'), onPress: () => navigation.navigate('CalculateBepari'), icon: 'dollar-sign' as const },
     { label: L('আড়ত ক্যালকুলেটর', 'Arat calculator'), onPress: () => navigation.navigate('CalculateArat'), icon: 'percent' as const },
     { label: L('খাদ্য ক্যালকুলেটর', 'Feed calculator'), onPress: () => navigation.navigate('CalculateFeed'), icon: 'box' as const },
+    { label: L('খাদ্য তৈরির ক্যালকুলেটর', 'Feed making calculator'), onPress: () => navigation.navigate('CalculateFeedMix'), icon: 'layers' as const },
     { label: L('খাতা', 'Ledger'), onPress: () => navigation.navigate('CalculateLedger'), icon: 'book' as const },
     { label: L('সেটিংস', 'Settings'), onPress: () => navigation.navigate('CalculateSettings'), icon: 'settings' as const },
   ];
@@ -87,6 +88,14 @@ export function CalculateHomeScreen() {
           icon="box"
           iconColor="#B25E09"
           onPress={() => navigation.navigate('CalculateFeed')}
+        />
+
+        <ModuleCard
+          title={t('feedMixCalculator', lang)}
+          subtitle={L('উপকরণ, মিলিং, ঘাটতি, বস্তা ও প্রোটিন', 'Ingredients, milling, loss, bags and protein')}
+          icon="layers"
+          iconColor="#0E7C66"
+          onPress={() => navigation.navigate('CalculateFeedMix')}
         />
 
         <ThemedText style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>{L('হিসাব খাতা', 'Ledger')}</ThemedText>

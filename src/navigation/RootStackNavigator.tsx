@@ -49,6 +49,7 @@ import {
   BepariCalculatorScreen,
   AratCalculatorScreen,
   FeedCalculatorScreen,
+  FeedMixCalculatorScreen,
   LedgerScreen,
   LedgerEntryScreen,
   HistoryScreen,
@@ -250,6 +251,7 @@ export type RootStackParamList = {
   CalculateBepari: undefined;
   CalculateArat: undefined;
   CalculateFeed: undefined;
+  CalculateFeedMix: { recordId?: string; openedAt?: number } | undefined;
   CalculateLedger: undefined;
   CalculateLedgerEntry: { id: string | null };
   CalculateHistory: undefined;
@@ -723,6 +725,14 @@ export default function RootStackNavigator() {
             component={FeedCalculatorScreen}
             options={{
               headerTitle: tr("খাদ্য ক্যালকুলেটর"),
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="CalculateFeedMix"
+            component={FeedMixCalculatorScreen}
+            options={{
+              headerTitle: tr("খাদ্য তৈরির ক্যালকুলেটর"),
               headerBackTitle: "Back",
             }}
           />

@@ -43,6 +43,7 @@ const recordTypeLabels = {
   FEED_TOOL: { bn: 'পশু খাদ্য ক্যালকুলেটর', en: 'Animal Feed Calculator' },
   LOAN: { bn: 'ঋণ ক্যালকুলেটর', en: 'Loan Calculator' },
   INSURANCE: { bn: 'বীমা ক্যালকুলেটর', en: 'Insurance Calculator' },
+  FEED_MIX: { bn: 'খাদ্য তৈরির ক্যালকুলেটর', en: 'Feed Making Calculator' },
 };
 
 export function RecordDetailScreen() {
@@ -191,11 +192,11 @@ export function RecordDetailScreen() {
   const num = (...vals: any[]) => { for (const v of vals) { const x = Number(v); if (v !== undefined && v !== null && v !== '' && Number.isFinite(x)) return x; } return 0; };
   // Arat / Bepari calculations keep their whole table in inputs.rows and can be reopened for editing.
   const tableRows: any[] = Array.isArray(inputs.rows)
-    ? inputs.rows.filter((r: any) => record.record_type === 'ARAT' ? (parseFloat(r?.rate) > 0 && parseFloat(r?.weight) > 0) : (parseFloat(r?.weight) > 0 && parseFloat(r?.pieces) > 0))
+    ? record.record_type === 'FEED_MIX' ? [] : inputs.rows.filter((r: any) => record.record_type === 'ARAT' ? (parseFloat(r?.rate) > 0 && parseFloat(r?.weight) > 0) : (parseFloat(r?.weight) > 0 && parseFloat(r?.pieces) > 0))
     : [];
-  const canEdit = (record.record_type === 'ARAT' || record.record_type === 'BEPARI') && Array.isArray(inputs.rows);
+  const canEdit = (record.record_type === 'ARAT' || record.record_type === 'BEPARI' || record.record_type === 'FEED_MIX') && Array.isArray(inputs.rows);
   const handleEdit = () => {
-    navigation.navigate(record.record_type === 'ARAT' ? 'CalculateArat' : 'CalculateBepari', { recordId: record.id, openedAt: Date.now() });
+    navigation.navigate(record.record_type === 'ARAT' ? 'CalculateArat' : record.record_type === 'FEED_MIX' ? 'CalculateFeedMix' : 'CalculateBepari', { recordId: record.id, openedAt: Date.now() });
   };
 
   return (
