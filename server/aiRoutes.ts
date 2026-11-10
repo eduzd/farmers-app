@@ -11,17 +11,31 @@ import jwt from "jsonwebtoken";
 import { config } from "./config";
 import { requireAdmin, audit } from "./platformRoutes";
 import {
-  aiConfig, saveAiConfig, newId, encrypt, last4, AiError, runFeature, featureReady, featureTargets, gatewayTarget, callChat, listModels, listModelInfo, FEATURES,
-  tts, transcribe, speak, voiceStatus, usageOf, hasServerBackup, GATEWAY_PRESETS, VOICE_COMPANIES, OPENAI_VOICES, GEMINI_VOICES, TTS_MODELS,
+  aiConfig, saveAiConfig, newId, encrypt, last4, AiError, runFeature, runFeatureJson, featureReady, featureTargets, gatewayTarget, callChat, listModels, listModelInfo, FEATURES,
+  tts, transcribe, speak, voiceStatus, usageOf, hasServerBackup, GATEWAY_PRESETS, VOICE_COMPANIES, OPENAI_VOICES, GEMINI_VOICES, TTS_MODELS, HEYGEN_API,
   providerKey, type AiConfig, type ChatMsg, type FeatureName, type GatewayKey, type VoiceProvider,
 } from "./aiEngine";
 
 const A = "/api/admin/manage/ai";
+// The app's language decides the answer's language. Bangla is the default: only a request that says
+// English, or (from old app versions that send no language) a message written only in English, gets English.
 const langOf = (v: any, sample = ""): "en" | "bn" => {
   const s = String(v || "").toLowerCase();
   if (s.startsWith("bn") || s.startsWith("ban")) return "bn";
   if (s) return "en";
-  return /[\u0980-\u09FF]/.test(sample) ? "bn" : "en";
+  return /[A-Za-z]/.test(sample) && !/[\u0980-\u09FF]/.test(sample) ? "en" : "bn";
+};
+// A last word to the model so a question typed in English still gets a Bangla answer when the app is in Bangla.
+const langNudgeText = (lang: "en" | "bn") => lang === "bn"
+  ? "\n\nReply ONLY in Bangla (বাংলা), even if the farmer wrote in English. Keep technical or medicine names in English inside brackets."
+  : "\n\nReply in English.";
+/** Adds the language rule to the system prompt (first message), keeping the farmer's question last. */
+const withLang = (msgs: ChatMsg[], lang: "en" | "bn"): ChatMsg[] => {
+  const i = msgs.findIndex((m) => m.role === "system" && typeof m.content === "string");
+  if (i < 0) return [{ role: "system", content: langNudgeText(lang).trim() }, ...msgs];
+  const out = msgs.slice();
+  out[i] = { ...out[i], content: String(out[i].content) + langNudgeText(lang) };
+  return out;
 };
 
 function uidOf(req: Request): string | null {
@@ -87,13 +101,6 @@ function cleanHistory(h: any, max = 12): ChatMsg[] {
   })).filter((m) => String(m.content).trim());
 }
 
-const parseJson = (t: string): any => {
-  const s = t.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
-  try { return JSON.parse(s); } catch {}
-  const m = s.match(/\{[\s\S]*\}/);
-  if (m) { try { return JSON.parse(m[0]); } catch {} }
-  return null;
-};
 
 const CATEGORY: Record<string, string> = { fish: "fish or shrimp (aquaculture)", crop: "crop or plant", livestock: "livestock (cattle, goat)", poultry: "poultry (chicken, duck)" };
 
@@ -112,9 +119,8 @@ Reply with ONLY a JSON object, no other text, in this shape:
 Set notClear true if the photo isn't a ${kind} or is too unclear. Set seeSpecialist true when confidence is under 70, severity is high, or animals are dying. ${L}`;
   const content: any[] = [{ type: "text", text: prompt }];
   if (img) content.push({ type: "image_url", image_url: { url: `data:${input.mimeType || "image/jpeg"};base64,${img}` } });
-  const r = await runFeature("disease", [{ role: "user", content }], { maxTokens: 1400, timeoutMs: 60000 });
-  const j = parseJson(r.text);
-  if (!j) throw new AiError("failed", "The AI's answer couldn't be read. Please try again.", 502);
+  const r = await runFeatureJson("disease", [{ role: "user", content }], { maxTokens: 2500, timeoutMs: 90000 });
+  const j = r.json;
   const arr = (v: any) => (Array.isArray(v) ? v.map((x) => String(x)).filter(Boolean).slice(0, 8) : []);
   const confidence = Math.max(0, Math.min(100, Math.round(Number(j.confidence) || 0)));
   const severity = ["low", "medium", "high"].includes(j.severity) ? j.severity : "medium";
@@ -174,6 +180,7 @@ export function registerAiRoutes(app: Express) {
       res.json({
         chat: featureReady(c, "chat"),
         disease: featureReady(c, "disease"),
+        feedmix: featureReady(c, "feedmix"),
         voiceCall: c.voice.callEnabled && featureReady(c, "voice") && v.sttReady,
         voice: { en: v.en?.voice || null, bn: v.bn?.voice || null, natural: !!(v.en || v.bn) },
       });
@@ -195,7 +202,7 @@ export function registerAiRoutes(app: Express) {
           ? { role: "user", content: [{ type: "text", text: message }, { type: "image_url", image_url: { url: `data:${req.body?.mimeType || "image/jpeg"};base64,${img}` } }] }
           : { role: "user", content: message });
       }
-      const r = await runFeature(img ? "disease" : "chat", msgs, { maxTokens: legacy ? 400 : 1000 });
+      const r = await runFeature(img ? "disease" : "chat", withLang(msgs, lang), { maxTokens: legacy ? 400 : 1200, timeoutMs: img ? 90000 : 60000 });
       res.json({ reply: r.text, response: r.text, success: true, timestamp: new Date().toISOString() });
     } catch (e: any) {
       // Older app versions expect a 200 with a "response" text
@@ -278,7 +285,7 @@ export function registerAiRoutes(app: Express) {
       }
       if (!transcript) return res.json({ transcript: "", reply: "", heard: false });
       const msgs: ChatMsg[] = [{ role: "system", content: advisorPrompt(c, lang, true) }, ...cleanHistory(req.body?.history, 10), { role: "user", content: transcript }];
-      const r = await runFeature("voice", msgs, { maxTokens: 300, timeoutMs: 30000 });
+      const r = await runFeature("voice", withLang(msgs, lang), { maxTokens: 300, timeoutMs: 30000 });
       const reply = r.text.replace(/[*#_`>]/g, "").trim();
       const audio = req.body?.wantAudio === false ? null : await speak(c, reply, lang);
       res.json({ heard: true, transcript, reply, audioBase64: audio?.base64 || null, mimeType: audio?.mime || null, voice: audio?.voice || null });
@@ -480,7 +487,7 @@ export function registerAiRoutes(app: Express) {
     if (!key || key.length < 8) return res.status(400).json({ error: "Paste the API key" });
     const baseUrl = clean(req.body?.baseUrl, 300);
     if (company === "compatible" && !validUrl(baseUrl)) return res.status(400).json({ error: "Enter the speech address (base URL), starting with https://" });
-    const names: Record<string, string> = { openai: "OpenAI", elevenlabs: "ElevenLabs", gemini: "Google Gemini", compatible: "Omni route voice" };
+    const names: Record<string, string> = { openai: "OpenAI", elevenlabs: "ElevenLabs", gemini: "Google Gemini", heygen: "HeyGen Voice", compatible: "Omni route voice" };
     const p: VoiceProvider = {
       id: newId(), label: clean(req.body?.label, 60) || names[company], company, baseUrl: company === "compatible" ? baseUrl : undefined,
       keyEnc: encrypt(key), keyLast4: last4(key), enabled: true, lastTest: null, createdAt: new Date().toISOString(),
@@ -533,6 +540,36 @@ export function registerAiRoutes(app: Express) {
     let voices: { id: string; name: string; note?: string; previewUrl?: string }[] = [];
     if (p.company === "openai" || p.company === "compatible") voices = OPENAI_VOICES.map((v) => ({ id: v, name: v[0].toUpperCase() + v.slice(1) }));
     else if (p.company === "gemini") voices = GEMINI_VOICES.map(([v, note]) => ({ id: v, name: v, note }));
+    else if (p.company === "heygen") {
+      // HeyGen: the account's own voices first, then HeyGen's public voices. The turbo models don't take
+      // professional clones, so those are marked.
+      const key = providerKey(p);
+      if (!key) return res.status(400).json({ error: "This key can't be read any more. Enter it again." });
+      const seen = new Set<string>();
+      let lastErr = "";
+      for (const type of ["private", "public"]) {
+        let token = "";
+        for (let page = 0; page < 6; page++) {
+          const r = await fetch(`${HEYGEN_API}/v3/models/audio/voices?type=${type}&limit=100${token ? `&token=${encodeURIComponent(token)}` : ""}`, { headers: { "X-Api-Key": key, Accept: "application/json" } }).catch((e) => ({ ok: false, status: 0, json: async () => ({ error: { message: e?.message } }) } as any));
+          const j: any = await r.json().catch(() => ({}));
+          if (!r.ok) { lastErr = `HeyGen said ${r.status || "no answer"}${j?.error?.message ? `: ${String(j.error.message).slice(0, 120)}` : ""}. Check the key.`; break; }
+          for (const v of j?.data || []) {
+            if (!v?.voice_id || seen.has(v.voice_id) || (v.status && v.status !== "ACTIVE")) continue;
+            seen.add(v.voice_id);
+            voices.push({ id: v.voice_id, name: String(v.name || v.voice_id).slice(0, 60), previewUrl: v.preview_audio_url || undefined,
+              note: [type === "private" ? "My voice" : "", v.language, v.mode === "professional" ? "Not on turbo models" : ""].filter(Boolean).join(" · ") });
+          }
+          if (!j?.has_more || !j?.next_token || voices.length >= 500) break;
+          token = j.next_token;
+        }
+      }
+      if (!voices.length && lastErr) {
+        p.lastTest = { ok: false, at: new Date().toISOString(), message: lastErr };
+        await saveAiConfig(c, by(req));
+        return res.status(400).json({ error: lastErr, models: TTS_MODELS.heygen });
+      }
+      voices.sort((a, b) => Number(/^My voice/.test(b.note || "")) - Number(/^My voice/.test(a.note || "")) || Number(/english/i.test(b.note || "")) - Number(/english/i.test(a.note || "")));
+    }
     else {
       const key = providerKey(p);
       if (!key) return res.status(400).json({ error: "This key can't be read any more. Enter it again." });

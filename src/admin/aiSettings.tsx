@@ -48,7 +48,7 @@ const OK = "#00875A";
 const BAD = "#DA2F2F";
 const WARN = "#B25E09";
 const GREY = "#7A8CA3";
-const COMPANY_COLOR: Record<string, string> = { openai: "#10A37F", elevenlabs: "#111111", gemini: "#4285F4", compatible: "#6C4CF1" };
+const COMPANY_COLOR: Record<string, string> = { openai: "#10A37F", elevenlabs: "#111111", gemini: "#4285F4", heygen: "#7559FF", compatible: "#6C4CF1" };
 const PROVIDER_ICON: Record<string, any> = { omniroute: "git-merge", openrouter: "shuffle", openai: "cpu", gemini: "star", custom: "link" };
 
 
@@ -523,6 +523,7 @@ const COMPANIES: { id: string; en: string; bn: string; hint: string; hintBn: str
   { id: "openai", en: "OpenAI", bn: "OpenAI", hint: "11 voices · speaks Bangla and English · also listens (speech to text)", hintBn: "১১টি কণ্ঠ · বাংলা ও ইংরেজিতে কথা বলে · শুনতেও পারে (কথা থেকে লেখা)" },
   { id: "elevenlabs", en: "ElevenLabs", bn: "ElevenLabs", hint: "Your account's voices · use the eleven_v3 model for Bangla · also listens", hintBn: "আপনার অ্যাকাউন্টের কণ্ঠ · বাংলার জন্য eleven_v3 মডেল ব্যবহার করুন · শুনতেও পারে" },
   { id: "gemini", en: "Google Gemini", bn: "Google Gemini", hint: "30 voices · speaks Bangla and English · also listens", hintBn: "৩০টি কণ্ঠ · বাংলা ও ইংরেজিতে কথা বলে · শুনতেও পারে" },
+  { id: "heygen", en: "HeyGen Voice", bn: "HeyGen ভয়েস", hint: "Starfish turbo voices, with a free model · English and 30+ languages, no Bangla · speaks only", hintBn: "Starfish টার্বো কণ্ঠ, ফ্রি মডেলসহ · ইংরেজি ও ৩০টির বেশি ভাষা, বাংলা নেই · শুধু কথা বলে" },
   { id: "compatible", en: "Omni route voice", bn: "Omni route ভয়েস", hint: "Any OpenAI-compatible speech address, e.g. your OmniRoute /v1", hintBn: "যেকোনো OpenAI-সামঞ্জস্যপূর্ণ স্পিচ ঠিকানা, যেমন আপনার OmniRoute /v1" },
 ];
 const companyName = (c: string) => COMPANIES.find((x) => x.id === c)?.en || c;
@@ -541,6 +542,8 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
   useEffect(() => { setProvId(sel[lang]?.providerId || enabled[0]?.id || null); }, [lang, d.voice.providers.length]);
   const prov = d.voice.providers.find((p) => p.id === provId) || null;
   const [voices, setVoices] = useState<{ id: string; name: string; note?: string }[]>([]);
+  const [vq, setVq] = useState("");
+  const [manualId, setManualId] = useState("");
   const [models, setModels] = useState<string[]>([]);
   const [model, setModel] = useState<string>(cur?.model || "");
   const [vLoading, setVLoading] = useState(false);
@@ -556,6 +559,7 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
       setVoices(r.voices || []); setModels(r.models || []);
       const keep = sel[lang]?.providerId === prov.id ? sel[lang]?.model : "";
       setModel(keep || (prov.company === "elevenlabs" ? "eleven_v3" : (r.models || [])[0] || ""));
+      setVq(""); setManualId("");
     }).catch((e: any) => live && setVErr(e?.message || "Failed")).finally(() => live && setVLoading(false));
     return () => { live = false; };
   }, [prov?.id, prov?.keyLast4]);
@@ -594,7 +598,7 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
         <Card testID="ai-voice-empty">
           <View style={{ alignItems: "center", paddingVertical: 10 }}>
             <Feather name="mic" size={26} color={theme.textTertiary} />
-            <Text style={{ color: theme.textSecondary, marginTop: 8, textAlign: "center" }}>{L("Add a voice company (OpenAI, ElevenLabs, Google Gemini or Omni route) to give Krishi AI a natural voice.", "কৃষি এআই-কে স্বাভাবিক কণ্ঠ দিতে একটি ভয়েস কোম্পানি যোগ করুন (OpenAI, ElevenLabs, Google Gemini বা Omni route)।")}</Text>
+            <Text style={{ color: theme.textSecondary, marginTop: 8, textAlign: "center" }}>{L("Add a voice company (OpenAI, ElevenLabs, Google Gemini, HeyGen or Omni route) to give Krishi AI a natural voice.", "কৃষি এআই-কে স্বাভাবিক কণ্ঠ দিতে একটি ভয়েস কোম্পানি যোগ করুন (OpenAI, ElevenLabs, Google Gemini, HeyGen বা Omni route)।")}</Text>
             <Btn style={{ marginTop: 12 }} icon="plus" label={L("Add provider", "প্রোভাইডার যোগ")} onPress={onAdd} testID="ai-voice-add" />
           </View>
         </Card>
@@ -646,8 +650,13 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
           ) : null}
           <View style={{ height: 10 }} />
           {vLoading ? <ActivityIndicator color={theme.primary} style={{ marginVertical: 14 }} /> : vErr ? <Text style={{ color: BAD, marginVertical: 8 }}>{vErr}</Text> : (
+            <>
+            {prov?.company === "heygen" && lang === "bn" ? (
+              <Text testID="ai-voice-heygen-nobn" style={{ color: WARN, fontSize: 12.5, marginBottom: 8 }}>{L("HeyGen Voice has no Bangla. For the Bangla voice, choose OpenAI, ElevenLabs (eleven_v3) or Google Gemini. Use HeyGen for the English voice.", "HeyGen ভয়েসে বাংলা নেই। বাংলা কণ্ঠের জন্য OpenAI, ElevenLabs (eleven_v3) বা Google Gemini বেছে নিন। ইংরেজি কণ্ঠে HeyGen ব্যবহার করুন।")}</Text>
+            ) : null}
+            {voices.length > 12 ? <Field testID="ai-voice-search" label={L("Search voices", "কণ্ঠ খুঁজুন")} placeholder={L("Name or language", "নাম বা ভাষা")} value={vq} onChange={setVq} /> : null}
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-              {voices.map((v) => {
+              {voices.filter((v) => !vq.trim() || `${v.name} ${v.note || ""} ${v.id}`.toLowerCase().includes(vq.trim().toLowerCase())).slice(0, 60).map((v) => {
                 const on = cur?.providerId === prov?.id && cur?.voiceId === v.id;
                 return (
                   <Pressable key={v.id} testID={`ai-voice-${v.id}`} onPress={() => choose(v)}
@@ -665,7 +674,17 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
                 );
               })}
             </View>
+            {voices.length > 60 && !vq.trim() ? <Text style={{ color: theme.textTertiary, fontSize: 12, marginTop: 6 }}>{L(`Showing 60 of ${voices.length}. Search to find more.`, `${bnNum(String(voices.length))}টির মধ্যে ৬০টি দেখানো হচ্ছে। আরও পেতে খুঁজুন।`)}</Text> : null}
+            </>
           )}
+          {prov ? (
+            <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 8, marginTop: 10 }}>
+              <View style={{ flex: 1 }}>
+                <Field testID="ai-voice-manual" label={L("Or type a voice ID", "অথবা ভয়েস আইডি লিখুন")} placeholder={prov.company === "heygen" ? "e.g. 1bd001e7e50f421d891986aad5158bc8" : L("Voice ID", "ভয়েস আইডি")} value={manualId} onChange={setManualId} />
+              </View>
+              <Btn testID="ai-voice-manual-use" small icon="check" label={L("Use", "ব্যবহার")} disabled={!manualId.trim()} onPress={() => choose({ id: manualId.trim(), name: voices.find((v) => v.id === manualId.trim())?.name || manualId.trim() })} style={{ marginBottom: 12 }} />
+            </View>
+          ) : null}
           <Text style={[st.label, { color: theme.textSecondary, marginTop: 14, marginBottom: 6 }]}>{L("Speaking speed", "কথার গতি")}</Text>
           <ChipRow>
             {[[0.85, L("Slow", "ধীর")], [1, L("Normal", "স্বাভাবিক")], [1.15, L("Fast", "দ্রুত")]].map(([v, l]) => <Chip key={String(v)} label={String(l)} on={Math.abs(speed - Number(v)) < 0.01} onPress={() => setSpeed(Number(v))} />)}
@@ -673,7 +692,7 @@ function VoiceSection({ d, setData, flash, onAdd, onEdit }: SectionProps & { onA
           <Text style={[st.label, { color: theme.textSecondary, marginTop: 14, marginBottom: 6 }]}>{L("Listening (speech to text)", "শোনা (কথা থেকে লেখা)")}</Text>
           <ChipRow>
             <Chip label={L("Automatic", "স্বয়ংক্রিয়")} on={!stt} onPress={() => setStt(null)} />
-            {enabled.map((p) => <Chip key={p.id} label={provLabel(L, p.label)} on={stt === p.id} onPress={() => setStt(p.id)} />)}
+            {enabled.filter((p) => p.company !== "heygen").map((p) => <Chip key={p.id} label={provLabel(L, p.label)} on={stt === p.id} onPress={() => setStt(p.id)} />)}
           </ChipRow>
           {changed ? (
             <View style={[st.row, { gap: 10, marginTop: 14, flexWrap: "wrap" }]}>

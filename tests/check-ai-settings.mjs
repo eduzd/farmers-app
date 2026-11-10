@@ -12,6 +12,8 @@ const { ok, call, setup, finish } = await import("./harness.mjs");
 
 const GW_PORT = 8100 + Math.floor(Math.random() * 800);
 const GW = `http://127.0.0.1:${GW_PORT}/v1`;
+process.env.HEYGEN_API_BASE = `http://127.0.0.1:${GW_PORT}`;
+const HG = "hg-key-good-1234567";
 const GOOD = "sk-omni-good-key-1234";
 const GOOD2 = "sk-omni-second-key-5678";
 const BAD = "sk-omni-broken-key-0000";
@@ -43,6 +45,17 @@ const gw = createServer((req, res) => {
       if (last?.content === "Reply with just: OK") return json(200, { choices: [{ message: { content: "OK" } }], model: body.model });
       return json(200, { choices: [{ message: { content: `**Answer** from ${body.model} via ${auth.slice(-4)}${hasImage ? " (saw photo)" : ""}${/বাংলা|Bangla/.test(sys) ? " [bn-aware]" : ""}` } }], model: body.model });
     }
+    if (req.url.startsWith("/v3/models/audio/voices")) {
+      if (req.headers["x-api-key"] !== HG) return json(401, { error: { code: "unauthorized", message: "Invalid API key" } });
+      const priv = req.url.includes("type=private");
+      return json(200, { data: priv ? [{ voice_id: "myvoice1", name: "My farm voice", language: "English", mode: "instant", status: "ACTIVE" }]
+        : [{ voice_id: "hgv-en-1", name: "Ava", language: "English", preview_audio_url: "http://x/a.mp3", status: "ACTIVE" }, { voice_id: "hgv-hi-1", name: "Ravi", language: "Hindi", status: "ACTIVE" }, { voice_id: "pro1", name: "Pro clone", language: "English", mode: "professional", status: "ACTIVE" }], has_more: false });
+    }
+    if (req.url === "/v3/models/audio/tts") {
+      if (req.headers["x-api-key"] !== HG) return json(401, { error: { message: "Invalid API key" } });
+      return json(200, { data: { audio_url: `http://127.0.0.1:${GW_PORT}/hgaudio/${body.voice_id}/${body.model}`, duration: 1.2 } });
+    }
+    if (req.url.startsWith("/hgaudio/")) { res.writeHead(200, { "Content-Type": "audio/mpeg" }); return res.end(Buffer.from("ID3heygen-" + req.url.split("/").slice(2).join("|"))); }
     if (req.url === "/v1/audio/speech") { res.writeHead(200, { "Content-Type": "audio/mpeg" }); return res.end(Buffer.from("ID3fakeaudio-" + body.voice)); }
     if (req.url === "/v1/audio/transcriptions") return json(200, { text: raw.length > 1500 ? "My fish are gasping at dawn" : "" });
     json(404, { error: { message: "not found " + req.url } });
@@ -190,6 +203,39 @@ try {
   r = await call("POST", "/api/ai/voice/greet", farmer.token, { lang: "en" });
   ok(r.status >= 400, "AI call turned off by admin -> refused", r);
   await call("PUT", `${A}/settings`, admin.token, { voice: { callEnabled: true } });
+
+  // HeyGen Voice (speaks English, free turbo model, no Bangla, never listens)
+  r = await call("POST", `${A}/voice/providers`, admin.token, { company: "heygen", apiKey: HG });
+  const hgp = r.data?.voice?.providers?.find((p) => p.company === "heygen");
+  ok(r.status === 200 && hgp && !JSON.stringify(r.data).includes(HG), "admin adds a HeyGen voice provider (key hidden)", r.data?.voice);
+  r = await call("GET", `${A}/voice/providers/${hgp.id}/voices`, admin.token);
+  ok(r.status === 200 && r.data.voices[0]?.id === "myvoice1" && r.data.voices.some((v) => v.id === "hgv-en-1") && r.data.models[0] === "heygen-voice-1-turbo-free", "HeyGen voices fetched with the key (own voices first), free turbo model offered first", r.data);
+  ok(/Not on turbo/.test(r.data.voices.find((v) => v.id === "pro1")?.note || ""), "professional clones marked as not for turbo models");
+  r = await call("POST", `${A}/voice/preview`, admin.token, { providerId: hgp.id, voiceId: "hgv-en-1", model: "heygen-voice-1-turbo-free", lang: "en" });
+  ok(r.status === 200 && Buffer.from(r.data.audioBase64 || "", "base64").toString() === "ID3heygen-hgv-en-1|heygen-voice-1-turbo-free", "HeyGen sample plays (audio downloaded from HeyGen's link)", r.data);
+  r = await call("POST", `${A}/voice/preview`, admin.token, { providerId: hgp.id, voiceId: "hgv-en-1", model: "heygen-voice-1-turbo-free", lang: "bn" });
+  ok(r.status >= 400 && /Bangla/.test(JSON.stringify(r.data)), "HeyGen asked for Bangla -> clear 'no Bangla' message", r.data);
+  r = await call("PUT", `${A}/settings`, admin.token, { voice: { en: { providerId: hgp.id, voiceId: "hgv-en-1", voiceName: "Ava", model: "heygen-voice-1-turbo-free" }, sttProviderId: null } });
+  r = await call("POST", "/api/ai/voice/turn", farmer.token, { audioBase64: audio, mimeType: "audio/webm", lang: "en", history: [] });
+  ok(r.status === 200 && r.data.heard && /^Ava/.test(r.data.voice) && Buffer.from(r.data.audioBase64, "base64").toString().startsWith("ID3heygen-hgv-en-1"), "AI call: listens with another provider, answers in the HeyGen English voice", { voice: r.data.voice, t: r.data.transcript });
+  await call("PUT", `${A}/settings`, admin.token, { voice: { en: { providerId: vp.id, voiceId: "onyx", voiceName: "Onyx", model: "gpt-4o-mini-tts" } } });
+  await call("DELETE", `${A}/voice/providers/${hgp.id}`, admin.token);
+
+  // Bangla is the default answer language
+  seen.length = 0;
+  r = await call("POST", "/api/ai/chat", farmer.token, { message: "How much lime per decimal?", lang: "bn", history: [] });
+  ok(r.status === 200 && JSON.stringify(seen.find((x) => x.path === "/v1/chat/completions")?.body?.messages || []).includes("Reply ONLY in Bangla"), "app in Bangla + English question -> model told to answer in Bangla", r.data);
+
+  // feed mix check: own model, or borrows the help chat's
+  seen.length = 0;
+  r = await call("POST", "/api/ai/feed-mix", farmer.token, { lang: "bn", feedType: "Tilapia grower", ingredients: [{ name: "DORB", kg: 500, protein: 14 }, { name: "Soybean meal", kg: 300, protein: 44 }] });
+  const fmModel1 = seen.find((x) => x.path === "/v1/chat/completions")?.model;
+  r = await call("PUT", `${A}/settings`, admin.token, { features: { feedmix: { model: "acme/seer-pro" } } });
+  ok(r.status === 200 && r.data.features.feedmix.model === "acme/seer-pro", "admin sets a model for the feed mix check", r.data?.features?.feedmix);
+  seen.length = 0;
+  r = await call("POST", "/api/ai/feed-mix", farmer.token, { lang: "bn", feedType: "Tilapia grower", ingredients: [{ name: "DORB", kg: 500, protein: 14 }, { name: "Soybean meal", kg: 300, protein: 44 }] });
+  ok(seen.find((x) => x.path === "/v1/chat/completions")?.model === "acme/seer-pro" && fmModel1 && fmModel1 !== "acme/seer-pro", "feed mix check uses its own model, else the help chat's", { before: fmModel1, after: seen.find((x) => x.path === "/v1/chat/completions")?.model });
+  await call("PUT", `${A}/settings`, admin.token, { features: { feedmix: { model: "" } } });
 
   // limits
   r = await call("PUT", `${A}/settings`, admin.token, { limits: { perMinute: 2, userDaily: 100, guestDaily: 10 }, extraInstructions: "Recommend our marketplace." });

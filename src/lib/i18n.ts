@@ -747,14 +747,14 @@ interface I18nState {
 const makeT = (language: Language) => (key: string) => translations[language][key] || translations.en[key] || key;
 
 export const useI18n = create<I18nState>((set, get) => ({
-  language: "en",
+  language: "bn", // Bangla is the default; a saved choice (English or Bangla) wins in loadLanguage
   
   setLanguage: async (lang: Language) => {
     set({ language: lang, t: makeT(lang) });
     await AsyncStorage.setItem("language", lang);
   },
   
-  t: makeT("en"),
+  t: makeT("bn"),
   
   loadLanguage: async () => {
     const saved = await AsyncStorage.getItem("language");

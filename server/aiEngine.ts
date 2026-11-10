@@ -57,7 +57,7 @@ export type FeatureName = "chat" | "disease" | "voice" | "feedmix";
 export const FEATURES: FeatureName[] = ["chat", "disease", "voice", "feedmix"];
 export type FeatureCfg = { enabled: boolean; model: string; keyId: string | null; temperature: number };
 
-export const VOICE_COMPANIES = ["openai", "elevenlabs", "gemini", "compatible"] as const;
+export const VOICE_COMPANIES = ["openai", "elevenlabs", "gemini", "heygen", "compatible"] as const;
 export type VoiceCompany = (typeof VOICE_COMPANIES)[number];
 export type VoiceProvider = {
   id: string;
@@ -121,8 +121,13 @@ export const TTS_MODELS: Record<VoiceCompany, string[]> = {
   openai: ["gpt-4o-mini-tts", "tts-1", "tts-1-hd"],
   elevenlabs: ["eleven_v3", "eleven_multilingual_v2", "eleven_flash_v2_5", "eleven_turbo_v2_5"],
   gemini: ["gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"],
+  // HeyGen Voice (Starfish): the free turbo tier first. It speaks only (no speech to text) and has no Bangla.
+  heygen: ["heygen-voice-1-turbo-free", "heygen-voice-1-turbo", "heygen-voice-1"],
   compatible: ["gpt-4o-mini-tts", "tts-1"],
 };
+export const HEYGEN_API = process.env.HEYGEN_API_BASE || "https://api.heygen.com";
+/** Text HeyGen can't say: its voices don't include Bangla, so Bangla script goes to another voice or the phone. */
+export const hasBangla = (t: string) => /[\u0980-\u09FF]/.test(t);
 
 // ---------------------------------------------------------------- encryption
 function secretKey(): Buffer {
@@ -411,6 +416,44 @@ export async function runFeature(f: FeatureName, messages: ChatMsg[], opts: { ma
   throw new AiError("failed", `The AI service didn't answer. ${last ? `(${last.slice(0, 140)})` : ""}`.trim(), 502);
 }
 
+/** Read a JSON object out of a model's answer: drops thinking blocks and code fences, finds the first
+ *  balanced {...}, and mends trailing commas and smart quotes. Returns null when nothing usable is there. */
+export function extractJson(t: string): any {
+  let s = String(t || "").replace(/<think>[\s\S]*?<\/think>/gi, "").replace(/<think>[\s\S]*$/i, "");
+  s = s.replace(/```(?:json|JSON)?/g, "").trim();
+  const tryParse = (x: string) => { try { const v = JSON.parse(x); return v && typeof v === "object" ? v : null; } catch { return null; } };
+  const direct = tryParse(s);
+  if (direct) return direct;
+  for (let start = s.indexOf("{"); start >= 0; start = s.indexOf("{", start + 1)) {
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < s.length; i++) {
+      const ch = s[i];
+      if (inStr) { if (esc) esc = false; else if (ch === "\\") esc = true; else if (ch === '"') inStr = false; continue; }
+      if (ch === '"') inStr = true;
+      else if (ch === "{") depth++;
+      else if (ch === "}" && --depth === 0) {
+        const chunk = s.slice(start, i + 1);
+        const v = tryParse(chunk) || tryParse(chunk.replace(/,\s*([}\]])/g, "$1").replace(/[\u201C\u201D]/g, '"'));
+        if (v) return v;
+        break;
+      }
+    }
+  }
+  return null;
+}
+
+/** Run a feature that must answer with JSON; asks once more, more firmly, when the first answer isn't readable. */
+export async function runFeatureJson(f: FeatureName, messages: ChatMsg[], opts: { maxTokens?: number; temperature?: number; timeoutMs?: number } = {}) {
+  const r = await runFeature(f, messages, opts);
+  let j = extractJson(r.text);
+  if (j) return { ...r, json: j };
+  console.warn(`[ai] ${f}: answer wasn't JSON, asking again. Start: ${String(r.text).slice(0, 160)}`);
+  const again = await runFeature(f, [...messages, { role: "assistant", content: String(r.text).slice(0, 2000) }, { role: "user", content: "That wasn't valid JSON. Send ONLY the JSON object, starting with { and ending with }, nothing else." }], opts);
+  j = extractJson(again.text);
+  if (!j) throw new AiError("failed", "The AI's answer couldn't be read. Please try again.", 502);
+  return { ...again, json: j };
+}
+
 // ---------------------------------------------------------------- voice: text to speech
 export type Audio = { base64: string; mime: string };
 
@@ -452,6 +495,20 @@ export async function tts(p: VoiceProvider, voiceId: string, model: string, text
       if (!r.ok) throw new Error(await readErr(r));
       return { base64: Buffer.from(await r.arrayBuffer()).toString("base64"), mime: "audio/mpeg" };
     }
+    if (p.company === "heygen") {
+      if (!voiceId) throw new AiError("bad_request", "Choose a HeyGen voice or type its voice ID", 400);
+      if (hasBangla(input)) throw new AiError("bad_request", "HeyGen Voice doesn't speak Bangla. Pick a Bangla voice from OpenAI, ElevenLabs or Gemini.", 400);
+      const body: any = { voice_id: voiceId, text: input.slice(0, 5000), model: model || "heygen-voice-1-turbo-free", speed: Math.min(2, Math.max(0.5, speed)), output_format: "mp3", sample_rate: 44100 };
+      if (lang === "en") body.language = "en";
+      const r = await fetch(`${HEYGEN_API}/v3/models/audio/tts`, { method: "POST", headers: { "Content-Type": "application/json", "X-Api-Key": key, Accept: "application/json" }, body: JSON.stringify(body), signal: to.signal });
+      if (!r.ok) throw new Error(await readErr(r));
+      const j: any = await r.json().catch(() => ({}));
+      const url = j?.data?.audio_url || j?.audio_url;
+      if (!url) throw new Error(j?.error?.message || "HeyGen sent no audio");
+      const a = await fetch(url, { signal: to.signal });
+      if (!a.ok) throw new Error(`HeyGen audio download failed (${a.status})`);
+      return { base64: Buffer.from(await a.arrayBuffer()).toString("base64"), mime: "audio/mpeg" };
+    }
     // Google Gemini
     const m = model || "gemini-2.5-flash-preview-tts";
     const say = lang === "bn" ? `Say this in warm, natural Bangladeshi Bangla: ${input}` : `Say this warmly and clearly: ${input}`;
@@ -483,6 +540,7 @@ export async function stt(p: VoiceProvider, audio: Buffer, mime: string, lang: "
   const key = providerKey(p);
   if (!key) throw new AiError("not_configured", "This voice provider's key can't be read. Enter the key again.");
   const ext = mime.includes("webm") ? "webm" : mime.includes("ogg") ? "ogg" : mime.includes("wav") ? "wav" : mime.includes("mpeg") ? "mp3" : "m4a";
+  if (p.company === "heygen") throw new AiError("bad_request", "HeyGen Voice only speaks; it can't listen (speech to text).", 400);
   const to = withTimeout(45000);
   try {
     if (p.company === "openai" || p.company === "compatible") {
@@ -542,6 +600,8 @@ export async function transcribe(c: AiConfig, audio: Buffer, mime: string, lang:
   for (const id of first) { const p = ps.find((x) => x.id === id); if (p && !order.includes(p)) order.push(p); }
   for (const p of ps) if (!order.includes(p) && p.company !== "compatible") order.push(p);
   for (const p of ps) if (!order.includes(p)) order.push(p);
+  // HeyGen only speaks, so it never listens.
+  for (let i = order.length - 1; i >= 0; i--) if (order[i].company === "heygen") order.splice(i, 1);
   let last = "";
   for (const p of order) {
     try {
@@ -592,6 +652,6 @@ export function voiceStatus(c: AiConfig) {
     const p = ch && ps.find((x) => x.id === ch.providerId);
     return ch && p ? { voice: ch.voiceName, provider: p.label, company: p.company } : null;
   };
-  const sttReady = ps.length > 0 || (c.useServerBackup && hasServerBackup());
+  const sttReady = ps.some((p) => p.company !== "heygen") || (c.useServerBackup && hasServerBackup());
   return { en: pick("en"), bn: pick("bn"), sttReady };
 }

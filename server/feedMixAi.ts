@@ -14,10 +14,10 @@
 import type { Express, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { config } from "./config";
-import { aiConfig, AiError, runFeature } from "./aiEngine";
+import { aiConfig, AiError, runFeature, runFeatureJson } from "./aiEngine";
 
 type Lang = "en" | "bn";
-const langOf = (v: any): Lang => (String(v || "").toLowerCase().startsWith("bn") ? "bn" : "en");
+const langOf = (v: any): Lang => (String(v || "").toLowerCase().startsWith("en") ? "en" : "bn"); // Bangla unless the app says English
 const clean = (v: any, n = 200) => String(v ?? "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, n);
 const num = (v: any): number | null => {
   if (v === null || v === undefined || v === "") return null;
@@ -59,13 +59,6 @@ async function limit(req: Request, res: Response): Promise<boolean> {
   return true;
 }
 
-const parseJson = (t: string): any => {
-  const s = String(t || "").replace(/^```(?:json)?/i, "").replace(/```\s*$/, "").trim();
-  try { return JSON.parse(s); } catch {}
-  const m = s.match(/\{[\s\S]*\}/);
-  if (m) { try { return JSON.parse(m[0]); } catch {} }
-  return null;
-};
 
 export interface FeedMixInput {
   lang: Lang;
@@ -175,11 +168,11 @@ export function registerFeedMixAiRoutes(app: Express) {
     try {
       const inp = readFeedMixInput(req.body);
       if (!(await limit(req, res))) return;
-      const r = await runFeature("feedmix", [
+      const r = await runFeatureJson("feedmix", [
         { role: "system", content: "You are a careful aquaculture feed nutrition expert. Answer only with the JSON object asked for." },
         { role: "user", content: feedMixPrompt(inp) },
-      ], { maxTokens: 1400, temperature: 0.2, timeoutMs: 60000 });
-      const result = combineFeedMix(inp, parseJson(r.text));
+      ], { maxTokens: 2500, temperature: 0.2, timeoutMs: 75000 });
+      const result = combineFeedMix(inp, r.json);
       res.json({ success: true, result: { ...result, model: r.model, checkedAt: new Date().toISOString() } });
     } catch (e: any) {
       if (e instanceof AiError) return res.status(e.status).json({ error: e.message, code: e.code });
