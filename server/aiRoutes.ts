@@ -12,7 +12,7 @@ import { config } from "./config";
 import { requireAdmin, audit } from "./platformRoutes";
 import {
   aiConfig, saveAiConfig, newId, encrypt, last4, AiError, runFeature, runFeatureJson, featureReady, featureTargets, gatewayTarget, callChat, listModels, listModelInfo, FEATURES,
-  tts, transcribe, speak, voiceStatus, usageOf, hasServerBackup, GATEWAY_PRESETS, VOICE_COMPANIES, OPENAI_VOICES, GEMINI_VOICES, TTS_MODELS, HEYGEN_API,
+  tts, transcribe, speak, voiceStatus, usageOf, hasServerBackup, GATEWAY_PRESETS, VOICE_COMPANIES, OPENAI_VOICES, GEMINI_VOICES, TTS_MODELS, HEYGEN_API, lastSpeakError,
   providerKey, type AiConfig, type ChatMsg, type FeatureName, type GatewayKey, type VoiceProvider,
 } from "./aiEngine";
 
@@ -35,6 +35,18 @@ const withLang = (msgs: ChatMsg[], lang: "en" | "bn"): ChatMsg[] => {
   if (i < 0) return [{ role: "system", content: langNudgeText(lang).trim() }, ...msgs];
   const out = msgs.slice();
   out[i] = { ...out[i], content: String(out[i].content) + langNudgeText(lang) };
+  // Models follow the language of the question more than the system prompt, so a Bangla-app question typed
+  // in English also carries the rule at its end.
+  const u = out.length - 1;
+  if (lang === "bn" && u >= 0 && out[u].role === "user") {
+    const tail = "\n\n(Answer in Bangla / বাংলায় উত্তর দিন)";
+    const c: any = out[u].content;
+    if (typeof c === "string" && !/[\u0980-\u09FF]/.test(c)) out[u] = { ...out[u], content: c + tail };
+    else if (Array.isArray(c)) {
+      const txt = c.filter((x: any) => x?.type === "text").map((x: any) => x.text).join(" ");
+      if (!/[\u0980-\u09FF]/.test(txt)) out[u] = { ...out[u], content: [...c, { type: "text", text: tail.trim() }] as any };
+    }
+  }
   return out;
 };
 
@@ -265,7 +277,10 @@ export function registerAiRoutes(app: Express) {
       if (!(await limit(req, res))) return;
       const c = await aiConfig();
       const a = await speak(c, text, langOf(req.body?.language ?? req.body?.lang));
-      if (!a) return res.status(503).json({ error: "No AI voice is set up", code: "not_configured", useDeviceVoice: true });
+      if (!a) {
+        if (lastSpeakError.message) return res.status(502).json({ error: `The AI voice didn't work (${lastSpeakError.message}). The phone's voice reads it instead.`, code: "voice_failed", useDeviceVoice: true });
+        return res.status(503).json({ error: "No AI voice is set up", code: "not_configured", useDeviceVoice: true });
+      }
       res.json({ success: true, audioContent: a.base64, audioBase64: a.base64, mimeType: a.mime });
     } catch (e) { fail(res, e); }
   });
@@ -538,7 +553,11 @@ export function registerAiRoutes(app: Express) {
     const p = c.voice.providers.find((x) => x.id === req.params.id);
     if (!p) return res.status(404).json({ error: "Provider not found" });
     let voices: { id: string; name: string; note?: string; previewUrl?: string }[] = [];
-    if (p.company === "openai" || p.company === "compatible") voices = OPENAI_VOICES.map((v) => ({ id: v, name: v[0].toUpperCase() + v.slice(1) }));
+    if (p.company === "openai") voices = OPENAI_VOICES.map((v) => ({ id: v, name: v[0].toUpperCase() + v.slice(1) }));
+    else if (p.company === "compatible") voices = [
+      ...OPENAI_VOICES.map((v) => ({ id: v, name: v[0].toUpperCase() + v.slice(1), note: "OpenAI models (tts-1, gpt-4o-mini-tts)" })),
+      ...GEMINI_VOICES.map(([v, note]) => ({ id: v, name: v, note: `Gemini models · ${note}` })),
+    ];
     else if (p.company === "gemini") voices = GEMINI_VOICES.map(([v, note]) => ({ id: v, name: v, note }));
     else if (p.company === "heygen") {
       // HeyGen: the account's own voices first, then HeyGen's public voices. The turbo models don't take

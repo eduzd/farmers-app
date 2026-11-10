@@ -123,7 +123,8 @@ export const TTS_MODELS: Record<VoiceCompany, string[]> = {
   gemini: ["gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"],
   // HeyGen Voice (Starfish): the free turbo tier first. It speaks only (no speech to text) and has no Bangla.
   heygen: ["heygen-voice-1-turbo-free", "heygen-voice-1-turbo", "heygen-voice-1"],
-  compatible: ["gpt-4o-mini-tts", "tts-1"],
+  // Omni route: OpenAI speech needs OpenAI set up in Omni route; Gemini speech works with a Gemini voice name (Kore, Puck...).
+  compatible: ["gpt-4o-mini-tts", "tts-1", "gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"],
 };
 export const HEYGEN_API = process.env.HEYGEN_API_BASE || "https://api.heygen.com";
 /** Text HeyGen can't say: its voices don't include Bangla, so Bangla script goes to another voice or the phone. */
@@ -403,7 +404,15 @@ export async function runFeature(f: FeatureName, messages: ChatMsg[], opts: { ma
   for (const { target, model } of targets) {
     if ((cooldown.get(target.id) || 0) > Date.now()) continue;
     try {
-      const r = await callChat(target, model, messages, { temperature: opts.temperature ?? effectiveFeature(c, f).temperature, maxTokens: opts.maxTokens, timeoutMs: opts.timeoutMs });
+      const o = { temperature: opts.temperature ?? effectiveFeature(c, f).temperature, maxTokens: opts.maxTokens, timeoutMs: opts.timeoutMs };
+      let r;
+      try { r = await callChat(target, model, messages, o); }
+      catch (e: any) {
+        // Routers sometimes hand back an empty answer once; one more try on the same key usually works.
+        if (!/empty answer/i.test(e?.message || "")) throw e;
+        console.warn(`[ai] ${f} via ${target.label} (${model}): empty answer, trying once more`);
+        r = await callChat(target, model, messages, { ...o, temperature: Math.min(1, (o.temperature ?? 0.5) + 0.2) });
+      }
       noteUse(target.id, true);
       return { ...r, keyId: target.id };
     } catch (e: any) {
@@ -483,7 +492,11 @@ export async function tts(p: VoiceProvider, voiceId: string, model: string, text
       if (m.includes("gpt-4o")) body.instructions = lang === "bn" ? "Speak natural, warm Bangladeshi Bangla, clearly and at a relaxed pace, like a friendly farm advisor." : "Speak warmly and clearly, like a friendly farm advisor.";
       const r = await fetch(`${base}/audio/speech`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` }, body: JSON.stringify(body), signal: to.signal });
       if (!r.ok) throw new Error(await readErr(r));
-      return { base64: Buffer.from(await r.arrayBuffer()).toString("base64"), mime: "audio/mpeg" };
+      const buf = Buffer.from(await r.arrayBuffer());
+      // A gateway may answer with WAV (Gemini speech through Omni route) even when MP3 was asked for.
+      const ct = String(r.headers.get("content-type") || "");
+      const mime = buf.slice(0, 4).toString("latin1") === "RIFF" ? "audio/wav" : buf.slice(0, 4).toString("latin1") === "OggS" ? "audio/ogg" : /audio\/(wav|x-wav|ogg|aac|flac)/.test(ct) ? ct.split(";")[0] : "audio/mpeg";
+      return { base64: buf.toString("base64"), mime };
     }
     if (p.company === "elevenlabs") {
       if (!voiceId) throw new AiError("bad_request", "Choose an ElevenLabs voice", 400);
@@ -628,7 +641,9 @@ export async function transcribe(c: AiConfig, audio: Buffer, mime: string, lang:
 }
 
 /** Speak with the voice the admin chose for this language. Falls back to the other language's voice, then null (the app uses the phone's voice). */
+export const lastSpeakError = { message: "" };
 export async function speak(c: AiConfig, text: string, lang: "en" | "bn"): Promise<(Audio & { voice: string }) | null> {
+  lastSpeakError.message = "";
   const choices = [c.voice[lang], c.voice[lang === "bn" ? "en" : "bn"]].filter(Boolean) as VoiceChoice[];
   for (const ch of choices) {
     const p = c.voice.providers.find((x) => x.id === ch.providerId && x.enabled);
@@ -639,6 +654,7 @@ export async function speak(c: AiConfig, text: string, lang: "en" | "bn"): Promi
       return { ...a, voice: `${ch.voiceName} (${p.label})` };
     } catch (e: any) {
       noteUse(p.id, false, e?.message);
+      lastSpeakError.message = `${p.label}: ${String(e?.message || "failed").slice(0, 160)}`;
       console.warn(`[ai] tts via ${p.label} failed: ${e?.message}`);
     }
   }
