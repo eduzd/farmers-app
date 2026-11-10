@@ -3,6 +3,7 @@ import { Feather } from "@expo/vector-icons";
 import { StyleSheet } from "react-native";
 import Svg, { Circle, Ellipse, Line, Path, Polygon, Polyline, Rect } from "react-native-svg";
 import { ChatIcon } from "./ChatIcon";
+import { ShareIcon, isShareIconName } from "./ShareIcon";
 import { FEATHER_PATHS } from "./featherPaths";
 import { useThemeScope } from "@/contexts/ThemeScope";
 import { MAYA_ICON_STROKE, liftForDark } from "@/constants/mayaTheme";
@@ -85,6 +86,9 @@ export function AppIcon(props: Props) {
   const color = liftForDark((props as any).color, isDark) ?? (props as any).color;
   if (isChatIconName(name)) {
     return <ChatIcon size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} />;
+  }
+  if (isShareIconName(name)) {
+    return <ShareIcon size={size} color={typeof color === "string" ? color : undefined} style={style} testID={testID} />;
   }
   // Maya marketplace: thin outline icons instead of the Feather font's 2px stroke.
   if (scope === "maya" && typeof name === "string" && FEATHER_PATHS[name]) {

@@ -119,6 +119,10 @@ async def main():
         check("test posts saved", made == [201, 201, 201], made)
         api("POST", f"/api/follows/{me['user']['id']}", {}, other["token"])
         api("PUT", "/api/me/about", {"bio": "Fish farmer from Mymensingh", "location": "Mymensingh"}, other["token"])
+        # A real review: Karim sells tilapia, Rahim gives it 5 stars with a comment.
+        st_item, item = api("POST", "/api/catalog/listings", {"name": "Fresh tilapia 1kg"}, other["token"])
+        st_rev = api("POST", f"/api/reviews/{item['id']}", {"rating": 5, "comment": "Very fresh fish, fast delivery"}, me["token"])[0]
+        check("test review saved", st_rev == 201, (st_item, st_rev))
 
         async with async_playwright() as p:
             b = await p.chromium.launch(args=["--no-sandbox"])
@@ -159,6 +163,21 @@ async def main():
                         await tid(pg, "profile-tab-about").first.click()
                         await pg.wait_for_timeout(500)
                         check(f"{tag} own: about tab", await visible(pg, "profile-about"))
+                        tabs = await pg.locator('[data-testid^="profile-tab-"]').evaluate_all("els => els.filter(e => e.offsetParent).map(e => e.dataset.testid)")
+                        check(f"{tag} own: tabs are Posts, Reviews, About, Achievements (no Photos)", tabs == ["profile-tab-posts", "profile-tab-reviews", "profile-tab-about", "profile-tab-achievements"], tabs)
+                        await tid(pg, "profile-tab-reviews").first.click()
+                        await pg.wait_for_timeout(800)
+                        check(f"{tag} own: Reviews tab empty state (no listings reviewed)", await visible(pg, "user-reviews-empty"))
+                        await tid(pg, "profile-tab-achievements").first.click()
+                        await pg.wait_for_timeout(600)
+                        check(f"{tag} own: achievements list shows", await visible(pg, "profile-achievements"))
+                        check(f"{tag} own: First post earned (1 real post)", await tid(pg, "achievement-first-post-earned").count() > 0)
+                        fp = (await tid(pg, "achievement-followers-10-progress").first.inner_text()).strip() if await tid(pg, "achievement-followers-10-progress").count() else ""
+                        check(f"{tag} own: followers badge shows real progress 1/10", fp in ("1/10", "১/১০"), fp)
+                        check(f"{tag} own: Verified not earned", await tid(pg, "achievement-verified-earned").count() == 0)
+                        summ = (await tid(pg, "achievements-summary").first.inner_text()).strip()
+                        check(f"{tag} own: summary says 1 of 9", ("1 of 9" in summ) if lang == "en" else ("৯টির মধ্যে ১টি" in summ), summ)
+                        await pg.screenshot(path=f"{SHOTS}/achievements-own-{lang}-{w}-{'dark' if dark else 'light'}.png", full_page=True)
                         check(f"{tag} own: no sideways overflow", await overflow(pg) <= 1, await overflow(pg))
 
                         # ---- someone else's profile
@@ -177,9 +196,27 @@ async def main():
                         uf = (await tid(pg, "user-stat-following").last.inner_text()).strip() if await tid(pg, "user-stat-following").count() else ""
                         check(f"{tag} other: following count is real (1)", uf == "1", uf)
                         check(f"{tag} other: their real posts", "Pond water looks green today" in body and "Fresh tilapia harvest" in body)
-                        await tid(pg, "profile-tab-photos").last.click()
+                        tabs = await pg.locator('[data-testid="user-profile-screen"]').last.locator('[data-testid^="profile-tab-"]').evaluate_all("els => els.map(e => e.dataset.testid)")
+                        check(f"{tag} other: tabs are Posts, Reviews, About, Achievements (no Photos)", tabs == ["profile-tab-posts", "profile-tab-reviews", "profile-tab-about", "profile-tab-achievements"], tabs)
+                        scr = pg.locator('[data-testid="user-profile-screen"]').last
+                        rcount = (await scr.locator('[data-testid="profile-tab-reviews"]').inner_text()).strip()
+                        check(f"{tag} other: Reviews tab shows count 1", rcount.endswith("1") or rcount.endswith("১"), rcount.replace("\n", " "))
+                        await tid(pg, "profile-tab-reviews").last.click()
+                        await pg.wait_for_timeout(800)
+                        rtxt = (await scr.locator('[data-testid="profile-reviews"]').inner_text()) if await scr.locator('[data-testid="profile-reviews"]').count() else ""
+                        check(f"{tag} other: review shows comment, product and reviewer", "Very fresh fish, fast delivery" in rtxt and "Fresh tilapia 1kg" in rtxt and "Rahim Hossain" in rtxt, rtxt[:120].replace("\n", " | "))
+                        avg = (await scr.locator('[data-testid="reviews-average"]').inner_text()).strip() if await scr.locator('[data-testid="reviews-average"]').count() else ""
+                        check(f"{tag} other: average 5.0", avg in ("5.0", "৫.০"), avg)
+                        await pg.screenshot(path=f"{SHOTS}/reviews-other-{lang}-{w}-{'dark' if dark else 'light'}.png", full_page=True)
+                        await tid(pg, "profile-tab-achievements").last.click()
                         await pg.wait_for_timeout(600)
-                        check(f"{tag} other: photos grid has the photo post", await tid(pg, "user-photos-grid").count() > 0)
+                        check(f"{tag} other: First post earned (2 real posts)", await scr.locator('[data-testid="achievement-first-post-earned"]').count() > 0)
+                        rp = scr.locator('[data-testid="achievement-posts-10-progress"]')
+                        rpt = (await rp.first.inner_text()).strip() if await rp.count() else ""
+                        check(f"{tag} other: Regular poster progress 2/10", rpt in ("2/10", "২/১০"), rpt)
+                        await pg.screenshot(path=f"{SHOTS}/achievements-other-{lang}-{w}-{'dark' if dark else 'light'}.png", full_page=True)
+                        await tid(pg, "profile-tab-posts").last.click()
+                        await pg.wait_for_timeout(400)
                         await tid(pg, "user-profile-more").last.click()
                         await pg.wait_for_timeout(900)
                         menu = await visible(pg, "visitor-profile-menu")

@@ -11,8 +11,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { AdCarousel, AdCard } from "@/components/AdCarousel";
 import { useCarouselAds, adsToCards } from "@/lib/carouselAds";
 import { HelpFab } from "@/components/HelpButton";
-import { VoiceRoomTile } from "@/components/VoiceRoomTile";
-import { fetchVoicePermission } from "@/lib/voiceRoomApi";
+import { fetchVoicePermission, fetchVoiceRooms } from "@/lib/voiceRoomApi";
 import { ModalBottomInset } from "@/components/ModalBottomInset";
 import { useTheme } from "@/hooks/useTheme";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -71,7 +70,6 @@ export default function ConnectScreen() {
   const signedInId = useAuthStore((s) => s.user?.id);
   const adminAds = useCarouselAds("connect");
 
-  const [topRowWidth, setTopRowWidth] = useState(0);
   const [fields, setFields] = useState<Field[]>([]);
   const [field, setField] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -100,6 +98,29 @@ export default function ConnectScreen() {
       fetchVoicePermission()
         .then((p) => alive && setCanCreateRoom(!!p.canCreate))
         .catch(() => alive && setCanCreateRoom(false));
+      return () => {
+        alive = false;
+      };
+    }, [signedInId]),
+  );
+
+  // Live / coming-up room counts for the Voice rooms card in the carousel (signed-in only).
+  const [liveRooms, setLiveRooms] = useState<number | null>(null);
+  const [upcomingRooms, setUpcomingRooms] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
+      if (!isLoggedIn()) {
+        setLiveRooms(null);
+        return;
+      }
+      fetchVoiceRooms()
+        .then((r) => {
+          if (!alive) return;
+          setLiveRooms(r.rooms?.length ?? 0);
+          setUpcomingRooms(r.scheduled?.length ?? 0);
+        })
+        .catch(() => alive && setLiveRooms(null));
       return () => {
         alive = false;
       };
@@ -277,19 +298,29 @@ export default function ConnectScreen() {
       onPress: () => setField("fish"),
     },
   ];
-  const adCards: AdCard[] = adminAds && adminAds.length ? adsToCards(adminAds, bn, navigation) : builtInCards;
+  // Voice rooms: the first card of the carousel, same shape and design as the ads, moves with them.
+  // Tapping it opens the Voice rooms list. No create button: starting a room is only the mic icon.
+  const num = (x: number) => (bn ? x.toLocaleString("bn-BD") : String(x));
+  const voiceCard: AdCard = {
+    key: "voice-rooms",
+    icon: "mic",
+    title: L("Voice rooms", "ভয়েস রুম"),
+    subtitle:
+      liveRooms && liveRooms > 0
+        ? L(`${num(liveRooms)} live now. Tap to listen and join.`, `এখন ${num(liveRooms)}টি লাইভ। শুনতে ও যোগ দিতে ট্যাপ করুন।`)
+        : upcomingRooms > 0 && liveRooms === 0
+          ? L(`None live now, ${num(upcomingRooms)} coming up.`, `এখন লাইভ নেই, ${num(upcomingRooms)}টি আসছে।`)
+          : L("Listen to farmers and experts talk live.", "কৃষক ও বিশেষজ্ঞদের লাইভ আলোচনা শুনুন।"),
+    cta: L("Open", "খুলুন"),
+    colors: ["#3D38D0", "#FF4BB7"],
+    onPress: () => (navigation as any).navigate("VoiceRooms"),
+  };
+  const adCards: AdCard[] = [voiceCard, ...(adminAds && adminAds.length ? adsToCards(adminAds, bn, navigation) : builtInCards)];
 
   const header = (
     <View>
-      <View
-        style={{ marginBottom: Spacing.md, flexDirection: "row", alignItems: "flex-start", gap: Spacing.sm }}
-        onLayout={(e) => setTopRowWidth(Math.round(e.nativeEvent.layout.width))}
-        testID="connect-top-row"
-      >
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <AdCarousel cards={adCards} loading={adminAds === null} testID="connect-carousel" />
-        </View>
-        {topRowWidth ? <VoiceRoomTile width={Math.max(96, Math.min(176, Math.round(topRowWidth * 0.28)))} /> : null}
+      <View style={{ marginBottom: Spacing.md }}>
+        <AdCarousel cards={adCards} loading={adminAds === null} testID="connect-carousel" />
       </View>
       <View style={[styles.search, { backgroundColor: theme.backgroundDefault, borderColor: theme.border }]}>
         <Feather name="search" size={16} color={theme.textSecondary} />

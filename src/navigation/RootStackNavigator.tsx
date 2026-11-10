@@ -506,7 +506,7 @@ export default function RootStackNavigator() {
             name="ProfileOptions"
             component={ProfileOptionsScreen}
             options={{
-              headerTitle: tr("Profile options"),
+              headerTitle: tr("Profile"),
               headerBackTitle: "Back",
             }}
           />

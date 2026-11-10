@@ -29,7 +29,6 @@ import { useAuthStore } from "@/lib/authStore";
 import { useCommunityStore, CommunityType } from "@/lib/communityStore";
 
 import { tr, useTr } from "@/lib/tr";
-import { useRecentlyViewedStore } from "@/lib/recentlyViewedStore";
 import { DIVISIONS, divisionOf, divisionLabel } from "@/lib/bdLocations";
 import { AppIcon } from "@/components/icons/AppIcon";
 import { CountBadge } from "@/components/CountBadge";
@@ -223,10 +222,6 @@ export default function MarketScreen() {
   const [maxPrice, setMaxPrice] = useState("");
   const [division, setDivision] = useState<string | null>(null);
   const [inStockOnly, setInStockOnly] = useState(false);
-  const recentItems = useRecentlyViewedStore((st) => st.items);
-  useEffect(() => {
-    useRecentlyViewedStore.getState().load();
-  }, []);
   const myDivision = useMemo(() => {
     const u: any = authUser || {};
     const a = (u.addresses || []).find((x: any) => x.isDefault) || (u.addresses || [])[0];
@@ -614,31 +609,6 @@ export default function MarketScreen() {
         ListHeaderComponent={
           <View>
 
-            {recentItems.length > 0 && !searchQuery ? (
-              <View style={styles.recentSection}>
-                <View style={styles.sectionHeader}>
-                  <ThemedText type="h4" style={{ color: theme.text }}>{tr("Recently viewed")}</ThemedText>
-                  <Pressable onPress={() => useRecentlyViewedStore.getState().clear()} style={styles.seeAllButton}>
-                    <ThemedText style={[styles.seeAllText, { color: theme.primary }]}>{tr("Clear")}</ThemedText>
-                  </Pressable>
-                </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: Spacing.sm }}>
-                  {recentItems.map((p: any) => (
-                    <Pressable
-                      key={`recent-${p.id}`}
-                      onPress={() => handleProductPress(p)}
-                      style={[styles.recentCard, { backgroundColor: theme.card, borderColor: theme.cardBorder }]}
-                    >
-                      <Image source={{ uri: p.image }} style={styles.recentImage} contentFit="cover" />
-                      <ThemedText style={[styles.recentName, { color: theme.text }]} numberOfLines={1}>{p.name}</ThemedText>
-                      <ThemedText style={[styles.recentPrice, { color: theme.accent }]} numberOfLines={1}>
-                        {p.currency || "৳"}{p.price}{p.unit ? `/${p.unit}` : ""}
-                      </ThemedText>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-            ) : null}
 
             <View style={styles.resultRow}>
               <ThemedText style={{ color: theme.textSecondary, fontSize: 13 }}>
@@ -821,11 +791,6 @@ const styles = StyleSheet.create({
     maxWidth: "90%",
   },
   stockBadgeText: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
-  recentSection: { marginBottom: Spacing.md },
-  recentCard: { width: 112, borderRadius: MayaRadius.md, borderWidth: 1, overflow: "hidden", paddingBottom: Spacing.xs },
-  recentImage: { width: "100%", height: 72 },
-  recentName: { fontSize: 12, fontWeight: "600", paddingHorizontal: 6, marginTop: 4 },
-  recentPrice: { fontSize: 12, fontWeight: "700", paddingHorizontal: 6 },
   resultRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: Spacing.sm },
   searchSection: {
     paddingHorizontal: Spacing.lg,

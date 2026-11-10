@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, Pressable, ScrollView } from "react-native";
 import * as Haptics from "expo-haptics";
 
@@ -17,14 +17,28 @@ export interface ProfileTab<K extends string> {
 /**
  * Pill tabs under the profile buttons, as in the reference: the open tab is a filled pill with
  * its icon, the others are plain words. Navy pill in light mode, white pill in dark mode.
+ *
+ * `fill`: the tabs share the whole bar (no sideways scrolling), each sized to its words plus an equal
+ * share of the spare space. On a narrow phone the open tab drops its icon, the words get a little
+ * smaller and only the open tab shows its count, so labels and counts never collide or get cut off.
  */
-export function ProfileTabs<K extends string>({ tabs, value, onChange }: { tabs: ProfileTab<K>[]; value: K; onChange: (k: K) => void }) {
+export function ProfileTabs<K extends string>({ tabs, value, onChange, fill }: { tabs: ProfileTab<K>[]; value: K; onChange: (k: K) => void; fill?: boolean }) {
   const { theme, isDark } = useTheme();
+  const [barW, setBarW] = useState(0);
+  // Fill mode: tabs share the whole bar, each as wide as its words need plus an equal share of the
+  // space left, so a long label (Achievements) is never cut off. On a narrow phone the open tab drops
+  // its icon, the words get a little smaller and only the open tab shows its count.
+  const compact = fill && barW > 0 && barW < 420;
+  const showIcon = !fill || barW === 0 || barW >= 480;
   // Dark mode: the selected tab is the app's blue with white text, not a bright white pill.
   const onBg = isDark ? theme.primary : theme.text;
   return (
-    <View style={[styles.bar, { borderBottomColor: theme.divider }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <View
+      style={[styles.bar, { borderBottomColor: theme.divider }]}
+      onLayout={fill ? (e) => setBarW(e.nativeEvent.layout.width) : undefined}
+      testID="profile-tabs"
+    >
+      <Wrap fill={fill}>
         {tabs.map((t) => {
           const on = t.key === value;
           const fg = on ? (isDark ? theme.buttonText : theme.backgroundRoot) : theme.textSecondary;
@@ -41,30 +55,55 @@ export function ProfileTabs<K extends string>({ tabs, value, onChange }: { tabs:
               }}
               style={({ pressed }) => [
                 styles.pill,
+                fill ? styles.pillFill : null,
+                compact ? styles.pillCompact : null,
                 on ? { backgroundColor: onBg } : null,
                 pressed && !on ? { backgroundColor: theme.backgroundSecondary } : null,
               ]}
             >
-              {on ? <AppIcon name={t.icon as any} size={16} color={fg} /> : null}
-              <ThemedText style={[styles.label, { color: fg }, on && styles.labelOn]}>{t.label}</ThemedText>
-              {t.count !== undefined && t.count !== "" ? (
-                <ThemedText style={[styles.count, { color: on ? fg : theme.textTertiary || theme.textSecondary }]}>{String(t.count)}</ThemedText>
+              {on && showIcon ? <AppIcon name={t.icon as any} size={16} color={fg} /> : null}
+              <ThemedText
+                numberOfLines={1}
+                style={[styles.label, fill && styles.labelFill, compact && styles.labelCompact, { color: fg }, on && styles.labelOn]}
+              >
+                {t.label}
+              </ThemedText>
+              {t.count !== undefined && t.count !== "" && (!compact || on) ? (
+                <ThemedText numberOfLines={1} style={[styles.count, compact && styles.countCompact, { color: on ? fg : theme.textTertiary || theme.textSecondary }]}>
+                  {String(t.count)}
+                </ThemedText>
               ) : null}
             </Pressable>
           );
         })}
-      </ScrollView>
+      </Wrap>
     </View>
+  );
+}
+
+/** Equal-width row that fills the bar (fill), or the original sideways-scrolling row. */
+function Wrap({ fill, children }: { fill?: boolean; children: React.ReactNode }) {
+  if (fill) return <View style={styles.rowFill}>{children}</View>;
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      {children}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   bar: { borderBottomWidth: StyleSheet.hairlineWidth, marginTop: Spacing.xl },
   row: { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md, gap: Spacing.xs },
+  rowFill: { flexDirection: "row", paddingHorizontal: Spacing.sm, paddingBottom: Spacing.md, gap: Spacing.xs },
   pill: { flexDirection: "row", alignItems: "center", gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 18 },
+  pillFill: { flexGrow: 1, flexShrink: 1, flexBasis: "auto", minWidth: 0, justifyContent: "center", paddingHorizontal: 10 },
+  pillCompact: { gap: 3, paddingHorizontal: 6 },
   label: { fontSize: 14, lineHeight: 20, fontFamily: FontFamily.medium },
+  labelFill: { flexShrink: 1, minWidth: 0 },
+  labelCompact: { fontSize: 13, lineHeight: 18 },
   labelOn: { fontFamily: FontFamily.semibold },
-  count: { fontSize: 13, lineHeight: 18, fontFamily: FontFamily.medium },
+  count: { fontSize: 13, lineHeight: 18, fontFamily: FontFamily.medium, flexShrink: 0 },
+  countCompact: { fontSize: 12, lineHeight: 16 },
 });
 
 export default ProfileTabs;
