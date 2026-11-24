@@ -1,0 +1,14 @@
+import fs from 'fs';
+const a = JSON.parse(fs.readFileSync('app.json', 'utf8'));
+a.expo.version = '1.0.9';
+a.expo.android.versionCode = 109;
+fs.writeFileSync('app.json', JSON.stringify(a, null, 2));
+const f = 'src/lib/authStore.ts';
+let s = fs.readFileSync(f, 'utf8');
+const marker = '/api/auth/me`, {';
+const i = s.indexOf(marker);
+if (i < 0) throw new Error('auth/me fetch not found');
+s = s.slice(0, i + marker.length) + ' signal: farmersTimeout(8000),' + s.slice(i + marker.length);
+s += '\nfunction farmersTimeout(ms: number) { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal; }\n';
+fs.writeFileSync(f, s);
+console.log('Prepared v1.0.9 with 8 second server timeout');
